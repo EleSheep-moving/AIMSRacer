@@ -41,6 +41,7 @@ from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from rcl_interfaces.msg import ParameterDescriptor, FloatingPointRange, IntegerRange
+from visualization_msgs.msg import Marker
 
 
 def _angle_wrap(angle: float) -> float:
@@ -167,6 +168,9 @@ class AdaptivePurePursuit:
         heading_error_gain: float,
         curvature_ff_gain: float,
         max_steering: float,
+        steering_limit_start_speed: float = 4.0,
+        steering_limit_full_speed: float = 6.0,
+        high_speed_max_steering: float = 0.18,
     ):
         self.wheelbase = wheelbase
         self.lookahead_gain = lookahead_gain
@@ -175,16 +179,49 @@ class AdaptivePurePursuit:
         self.lateral_error_gain = lateral_error_gain
         self.heading_error_gain = heading_error_gain
         self.curvature_ff_gain = curvature_ff_gain
-        self.max_steering = max_steering
+        self.max_steering_angle = max_steering
+        self.steering_limit_start_speed = steering_limit_start_speed
+        self.steering_limit_full_speed = steering_limit_full_speed
+        self.high_speed_max_steering_angle = high_speed_max_steering
+        self._sanitize_limits()
 
     def update(self, **kwargs: float) -> None:
         for name, value in kwargs.items():
+            if name == "max_steering":
+                name = "max_steering_angle"
             if hasattr(self, name):
                 setattr(self, name, float(value))
+        self._sanitize_limits()
+
+    def _sanitize_limits(self) -> None:
+        self.max_steering_angle = abs(float(self.max_steering_angle))
+        self.max_steering = self.max_steering_angle
+        self.steering_limit_start_speed = max(0.0, float(self.steering_limit_start_speed))
+        self.steering_limit_full_speed = max(
+            self.steering_limit_start_speed,
+            float(self.steering_limit_full_speed),
+        )
+        self.high_speed_max_steering_angle = max(
+            0.0,
+            min(self.max_steering_angle, abs(float(self.high_speed_max_steering_angle))),
+        )
 
     def compute_lookahead(self, velocity: float) -> float:
         ld = self.lookahead_gain * abs(velocity) + self.min_lookahead
         return float(np.clip(ld, self.min_lookahead, self.max_lookahead))
+
+    def steering_limit_for_speed(self, velocity: float) -> float:
+        low_limit = abs(float(self.max_steering_angle))
+        high_limit = min(low_limit, abs(float(self.high_speed_max_steering_angle)))
+        start_speed = max(0.0, float(self.steering_limit_start_speed))
+        full_speed = max(start_speed, float(self.steering_limit_full_speed))
+        speed = abs(float(velocity))
+        if speed <= start_speed:
+            return low_limit
+        if full_speed <= start_speed + 1e-6 or speed >= full_speed:
+            return high_limit
+        ratio = (speed - start_speed) / max(full_speed - start_speed, 1e-6)
+        return float(low_limit + ratio * (high_limit - low_limit))
 
     def compute(
         self,
@@ -195,7 +232,6 @@ class AdaptivePurePursuit:
         path_curvature: float,
         velocity: float,
         cross_track_error: float,
-        speed_scale_params: Optional[Tuple[float, float, float]] = None,
     ) -> Tuple[float, Dict[str, float]]:
         ld = max(self.compute_lookahead(velocity), 1e-3)
         dx = lookahead_point[0] - current_pos[0]
@@ -209,30 +245,19 @@ class AdaptivePurePursuit:
         heading_error = _angle_wrap(lookahead_heading - current_yaw)
         steering += self.heading_error_gain * heading_error
         steering += self.curvature_ff_gain * path_curvature
-        
-        # 应用基本转向限制
-        max_steer = self.max_steering
-        
-        # 高速转向衰减
-        speed_scale = 1.0
-        if speed_scale_params is not None:
-            start_speed, end_speed, downscale = speed_scale_params
-            speed = abs(velocity)
-            if speed >= start_speed:
-                if speed >= end_speed:
-                    speed_scale = downscale
-                else:
-                    # 线性插值
-                    alpha = (speed - start_speed) / (end_speed - start_speed)
-                    speed_scale = 1.0 - alpha * (1.0 - downscale)
-                max_steer *= speed_scale
-        
-        steering = float(np.clip(steering, -max_steer, max_steer))
+        raw_steering = float(steering)
+        steering_limit = self.steering_limit_for_speed(velocity)
+        steering = float(np.clip(raw_steering, -steering_limit, steering_limit))
+        clipped = abs(raw_steering - steering) > 1e-6
+        speed_scale = steering_limit / max(self.max_steering_angle, 1e-6)
         debug = {
             "lookahead": ld,
             "heading_error": heading_error,
             "curvature_term": curvature_term,
             "cross_track_error": cross_track_error,
+            "raw_steering": raw_steering,
+            "steering_limit": steering_limit,
+            "steering_clipped": clipped,
             "speed_scale": speed_scale,
         }
         return steering, debug
@@ -309,7 +334,9 @@ class PPTuningNode(Node):
         )
         
         self.wheelbase = self.declare_parameter('wheelbase', 0.33).value
-        self.max_steering = self.declare_parameter('max_steering', 0.35).value
+        self.max_steering_angle = self.declare_parameter('max_steering_angle', 0.35).value
+        self.max_steering = self.declare_parameter('max_steering', self.max_steering_angle).value
+        self.max_steering_angle = float(max(0.0, self.max_steering))
         self.lookahead_gain = self.declare_parameter('lookahead_gain', 1.0, lookahead_desc).value
         self.min_lookahead = self.declare_parameter('min_lookahead', 0.30, min_lookahead_desc).value
         self.max_lookahead = self.declare_parameter('max_lookahead', 4.5, max_lookahead_desc).value
@@ -318,22 +345,35 @@ class PPTuningNode(Node):
         self.curvature_ff_gain = self.declare_parameter('curvature_ff_gain', 0.1, curvature_desc).value
         self.command_frequency = self.declare_parameter('command_frequency', 50.0).value
         
-        # 高速转向衰减参数
-        steer_scale_desc = ParameterDescriptor(
-            description='Speed at which steering scaling starts (m/s)',
+        # High-speed steering limit parameters.
+        steer_limit_start_desc = ParameterDescriptor(
+            description='Speed where steering limit starts shrinking (m/s)',
             floating_point_range=[FloatingPointRange(from_value=3.0, to_value=15.0, step=0.5)]
         )
-        downscale_desc = ParameterDescriptor(
-            description='Downscale factor for steering at high speed (0-1)',
-            floating_point_range=[FloatingPointRange(from_value=0.5, to_value=1.0, step=0.05)]
-        )
-        end_scale_desc = ParameterDescriptor(
-            description='Speed at which max downscale is reached (m/s)',
+        steer_limit_full_desc = ParameterDescriptor(
+            description='Speed where high-speed steering limit is fully applied (m/s)',
             floating_point_range=[FloatingPointRange(from_value=5.0, to_value=20.0, step=0.5)]
         )
-        self.start_scale_speed = self.declare_parameter('start_scale_speed', 5.0, steer_scale_desc).value
-        self.end_scale_speed = self.declare_parameter('end_scale_speed', 7.0, end_scale_desc).value
-        self.steer_downscale_factor = self.declare_parameter('steer_downscale_factor', 0.80, downscale_desc).value
+        high_speed_steer_desc = ParameterDescriptor(
+            description='Absolute steering limit at and above steering_limit_full_speed (rad)',
+            floating_point_range=[FloatingPointRange(from_value=0.0, to_value=0.6, step=0.01)]
+        )
+        self.steering_limit_start_speed = self.declare_parameter(
+            'steering_limit_start_speed', 4.0, steer_limit_start_desc
+        ).value
+        self.steering_limit_full_speed = self.declare_parameter(
+            'steering_limit_full_speed', 6.0, steer_limit_full_desc
+        ).value
+        self.high_speed_max_steering_angle = self.declare_parameter(
+            'high_speed_max_steering_angle', 0.18, high_speed_steer_desc
+        ).value
+        self.steering_limit_start_speed = float(max(0.0, self.steering_limit_start_speed))
+        self.steering_limit_full_speed = float(
+            max(self.steering_limit_start_speed, self.steering_limit_full_speed)
+        )
+        self.high_speed_max_steering_angle = float(
+            max(0.0, min(self.max_steering_angle, self.high_speed_max_steering_angle))
+        )
         
         # Racetrack trajectory parameters with descriptors for live tuning
         track_radius_desc = ParameterDescriptor(
@@ -342,7 +382,7 @@ class PPTuningNode(Node):
         )
         track_straight_desc = ParameterDescriptor(
             description='Length of straight sections (m)',
-            floating_point_range=[FloatingPointRange(from_value=1.0, to_value=40.0, step=0.5)]
+            floating_point_range=[FloatingPointRange(from_value=1.0, to_value=100.0, step=0.5)]
         )
         track_pts_straight_desc = ParameterDescriptor(
             description='Number of points per straight section',
@@ -385,6 +425,9 @@ class PPTuningNode(Node):
         self.traj_offset_x = self.declare_parameter('traj_offset_x', 0.0, traj_offset_x_desc).value
         self.traj_offset_y = self.declare_parameter('traj_offset_y', 0.0, traj_offset_y_desc).value
         self.traj_offset_yaw = self.declare_parameter('traj_offset_yaw', 0.0, traj_offset_yaw_desc).value
+        self.use_first_odom_as_origin = bool(self.declare_parameter(
+            'use_first_odom_as_origin', True
+        ).value)
 
         self.add_on_set_parameters_callback(self._on_parameter_change)
 
@@ -404,16 +447,20 @@ class PPTuningNode(Node):
             lateral_error_gain=self.lateral_error_gain,
             heading_error_gain=self.heading_error_gain,
             curvature_ff_gain=self.curvature_ff_gain,
-            max_steering=self.max_steering,
+            max_steering=self.max_steering_angle,
+            steering_limit_start_speed=self.steering_limit_start_speed,
+            steering_limit_full_speed=self.steering_limit_full_speed,
+            high_speed_max_steering=self.high_speed_max_steering_angle,
         )
         self.metrics = TrackingMetrics(window=self.metrics_window)
         self.current_pos = np.array([0.0, 0.0])
         self.current_yaw = 0.0
         self.current_velocity = 0.0
         self.trajectory_initialized = False
-        # Initialize offset from parameters
-        self.trajectory_offset = np.array([self.traj_offset_x, self.traj_offset_y])
-        self.trajectory_rotation = self.traj_offset_yaw
+        self._first_odom_origin: Optional[np.ndarray] = None
+        self.trajectory_offset = np.zeros(2, dtype=float)
+        self.trajectory_rotation = 0.0
+        self._update_trajectory_transform()
 
     def _setup_interfaces(self) -> None:
         qos = QoSProfile(
@@ -424,8 +471,9 @@ class PPTuningNode(Node):
         self.create_subscription(Odometry, '/odometry/filtered', self._odom_callback, qos)
         self.create_subscription(Path, '/pp/reference_path', self._path_callback, qos)
         self.publisher = self.create_publisher(AckermannDriveStamped, '/drive', 10)
-        self.trajectory_pub = self.create_publisher(Path, '/pp/current_trajectory', 10)
-        self.lookahead_pub = self.create_publisher(PointStamped, '/pp/lookahead_point', 10)
+        self.trajectory_pub = self.create_publisher(Path, '/calib/current_trajectory', 10)
+        self.lookahead_pub = self.create_publisher(PointStamped, '/calib/lookahead_point', 10)
+        self.status_pub = self.create_publisher(Marker, '/calib/status_text', 10)
         self.create_timer(1.0 / max(self.command_frequency, 1.0), self._control_loop)
         self.create_timer(2.0, self._publish_trajectory)  # Publish trajectory every 5 seconds
 
@@ -436,15 +484,33 @@ class PPTuningNode(Node):
             value = param.value
             if name in {
                 'lookahead_gain', 'min_lookahead', 'max_lookahead', 'lateral_error_gain',
-                'heading_error_gain', 'curvature_ff_gain', 'max_steering'
+                'heading_error_gain', 'curvature_ff_gain'
             }:
                 controller_updates[name] = float(value)
+            elif name in {'max_steering', 'max_steering_angle'}:
+                self.max_steering_angle = float(max(0.0, value))
+                self.max_steering = self.max_steering_angle
+                controller_updates['max_steering_angle'] = self.max_steering_angle
+            elif name == 'steering_limit_start_speed':
+                self.steering_limit_start_speed = float(max(0.0, value))
+                if self.steering_limit_full_speed < self.steering_limit_start_speed:
+                    self.steering_limit_full_speed = self.steering_limit_start_speed
+                controller_updates[name] = self.steering_limit_start_speed
+                controller_updates['steering_limit_full_speed'] = self.steering_limit_full_speed
+            elif name == 'steering_limit_full_speed':
+                self.steering_limit_full_speed = float(
+                    max(self.steering_limit_start_speed, value)
+                )
+                controller_updates[name] = self.steering_limit_full_speed
+            elif name == 'high_speed_max_steering_angle':
+                self.high_speed_max_steering_angle = float(
+                    max(0.0, min(self.max_steering_angle, value))
+                )
+                controller_updates[name] = self.high_speed_max_steering_angle
             elif name == 'target_speed':
                 self.target_speed = float(value)
             elif name == 'log_interval':
                 self.log_interval = max(float(value), 0.1)
-            elif name in ['start_scale_speed', 'end_scale_speed', 'steer_downscale_factor']:
-                setattr(self, name, float(value))
             elif name == 'track_radius':
                 self.track_radius = float(value)
                 self.figure8.regenerate(self.track_radius)
@@ -468,18 +534,27 @@ class PPTuningNode(Node):
                 self.metrics = TrackingMetrics(window=self.metrics_window)
             elif name == 'use_external_path':
                 self.use_external_path = bool(value)
+                self._update_trajectory_transform()
             elif name == 'traj_offset_x':
                 self.traj_offset_x = float(value)
-                self.trajectory_offset[0] = self.traj_offset_x
+                self._update_trajectory_transform()
             elif name == 'traj_offset_y':
                 self.traj_offset_y = float(value)
-                self.trajectory_offset[1] = self.traj_offset_y
+                self._update_trajectory_transform()
             elif name == 'traj_offset_yaw':
                 self.traj_offset_yaw = float(value)
-                self.trajectory_rotation = self.traj_offset_yaw
+                self._update_trajectory_transform()
+            elif name == 'use_first_odom_as_origin':
+                self.use_first_odom_as_origin = bool(value)
+                self._update_trajectory_transform()
 
         if controller_updates:
             self.controller.update(**controller_updates)
+            self.max_steering_angle = self.controller.max_steering_angle
+            self.max_steering = self.max_steering_angle
+            self.steering_limit_start_speed = self.controller.steering_limit_start_speed
+            self.steering_limit_full_speed = self.controller.steering_limit_full_speed
+            self.high_speed_max_steering_angle = self.controller.high_speed_max_steering_angle
 
         return SetParametersResult(successful=True)
 
@@ -497,6 +572,9 @@ class PPTuningNode(Node):
         self.current_velocity = math.sqrt(
             msg.twist.twist.linear.x**2 + msg.twist.twist.linear.y**2
         )
+        if self._first_odom_origin is None:
+            self._first_odom_origin = self.current_pos.astype(float).copy()
+            self._update_trajectory_transform()
         self._odom_ready = True
 
     def _path_callback(self, msg: Path) -> None:
@@ -507,6 +585,7 @@ class PPTuningNode(Node):
             self.get_logger().warning('Received external path with <2 points, ignoring')
             return
         self.external_traj = TrajectoryHelper(points)
+        self._update_trajectory_transform()
         self.get_logger().info(f'Loaded external path with {len(points)} points')
 
     # Core control loop -------------------------------------------------------
@@ -527,24 +606,41 @@ class PPTuningNode(Node):
         # Translate by initial position
         return rotated + self.trajectory_offset
 
+    def _trajectory_origin_base(self) -> np.ndarray:
+        if self.use_external_path and self.external_traj is not None:
+            return np.zeros(2, dtype=float)
+        if self.use_first_odom_as_origin and self._first_odom_origin is not None:
+            return self._first_odom_origin
+        return np.zeros(2, dtype=float)
+
+    def _update_trajectory_transform(self) -> None:
+        base = self._trajectory_origin_base()
+        manual_offset = np.array([self.traj_offset_x, self.traj_offset_y], dtype=float)
+        self.trajectory_offset = base + manual_offset
+        self.trajectory_rotation = float(self.traj_offset_yaw)
+
     def _control_loop(self) -> None:
         if not self._odom_ready:
             return
         
         # Initialize trajectory at first odometry message (add user offset on top)
         if not self.trajectory_initialized:
-            self.trajectory_offset = np.array([self.traj_offset_x, self.traj_offset_y])
-            self.trajectory_rotation = self.traj_offset_yaw
+            self._update_trajectory_transform()
             self.trajectory_initialized = True
+            origin = (
+                self._first_odom_origin
+                if self._first_odom_origin is not None
+                else np.zeros(2, dtype=float)
+            )
             self.get_logger().info(
                 f'Trajectory initialized at pos=({self.current_pos[0]:.2f}, {self.current_pos[1]:.2f}), '
-                f'yaw={self.current_yaw:.2f}rad with offset=({self.trajectory_offset[0]:.2f}, {self.trajectory_offset[1]:.2f}), '
+                f'yaw={self.current_yaw:.2f}rad with first_odom_origin=({origin[0]:.2f}, {origin[1]:.2f}), '
+                f'offset=({self.trajectory_offset[0]:.2f}, {self.trajectory_offset[1]:.2f}), '
                 f'yaw_offset={self.trajectory_rotation:.2f}rad'
             )
         else:
             # Update offset from current parameters on every cycle (enables live tuning)
-            self.trajectory_offset = np.array([self.traj_offset_x, self.traj_offset_y])
-            self.trajectory_rotation = self.traj_offset_yaw
+            self._update_trajectory_transform()
         
         now = self.get_clock().now().nanoseconds * 1e-9
         trajectory = self._active_trajectory()
@@ -580,13 +676,6 @@ class PPTuningNode(Node):
         # Transform lookahead heading to odom frame
         lookahead_heading = lookahead_heading_local + self.trajectory_rotation
         
-        # Prepare speed scale parameters for high-speed steering limit
-        speed_scale_params = (
-            self.start_scale_speed,
-            self.end_scale_speed,
-            self.steer_downscale_factor
-        )
-        
         steering_cmd, debug = self.controller.compute(
             self.current_pos,
             self.current_yaw,
@@ -595,7 +684,6 @@ class PPTuningNode(Node):
             path_curvature,
             self.current_velocity,
             cross_track,
-            speed_scale_params=speed_scale_params,
         )
         
         # Publish lookahead point for visualization
@@ -615,15 +703,64 @@ class PPTuningNode(Node):
         cmd.drive.speed = float(self.target_speed)
         cmd.drive.steering_angle = steering_cmd
         self.publisher.publish(cmd)
+        self._publish_status_text(steering_cmd, cross_track, debug)
 
         if now - self._last_log_time > self.log_interval:
             self._last_log_time = now
-            speed_scale_info = f"scale={debug.get('speed_scale', 1.0):.2f}" if abs(self.current_velocity) > self.start_scale_speed else ""
+            clipped = bool(debug.get('steering_clipped', False))
             self.get_logger().info(
                 f"v={self.current_velocity:.2f}m/s -> target={self.target_speed:.2f} | "
-                f"δ={steering_cmd:.3f}rad {speed_scale_info} | ld={debug['lookahead']:.2f}m | "
+                f"δ={steering_cmd:.3f}rad raw={debug['raw_steering']:.3f}rad | "
+                f"steer_limit={debug['steering_limit']:.3f}rad clipped={clipped} | "
+                f"ld={debug['lookahead']:.2f}m | "
                 f"cte={cross_track:.3f}m | {self.metrics.summary()}"
             )
+
+    def _publish_status_text(
+        self,
+        steering_cmd: float,
+        cross_track: float,
+        debug: Dict[str, float],
+    ) -> None:
+        marker = Marker()
+        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.header.frame_id = 'odom'
+        marker.ns = 'pp_param_tuner'
+        marker.id = 0
+        marker.type = Marker.TEXT_VIEW_FACING
+        marker.action = Marker.ADD
+        marker.pose.position.x = float(self.current_pos[0])
+        marker.pose.position.y = float(self.current_pos[1])
+        marker.pose.position.z = 1.0
+        marker.pose.orientation.w = 1.0
+        marker.scale.z = 0.35
+        marker.color.r = 0.2
+        marker.color.g = 0.9
+        marker.color.b = 1.0
+        marker.color.a = 1.0
+        marker.lifetime.sec = 1
+
+        clipped = bool(debug.get('steering_clipped', False))
+        marker.text = (
+            f"pp_param_tuner | target={self.target_speed:.2f}m/s\n"
+            f"v={self.current_velocity:.2f}m/s | ld={debug['lookahead']:.2f}m | "
+            f"cte={cross_track:.2f}m\n"
+            f"steer={steering_cmd:.3f}rad raw={debug['raw_steering']:.3f}rad | "
+            f"steer_limit={debug['steering_limit']:.3f}rad clipped={clipped}"
+        )
+        self.status_pub.publish(marker)
+
+    def _publish_stop(self, repeat: int = 10) -> None:
+        for _ in range(max(1, int(repeat))):
+            cmd = AckermannDriveStamped()
+            cmd.header.stamp = self.get_clock().now().to_msg()
+            cmd.header.frame_id = 'base_link'
+            cmd.drive.speed = 0.0
+            cmd.drive.steering_angle = 0.0
+            cmd.drive.steering_angle_velocity = 0.0
+            cmd.drive.acceleration = 0.0
+            cmd.drive.jerk = 0.0
+            self.publisher.publish(cmd)
 
     def _publish_trajectory(self) -> None:
         """Publish the current active trajectory as a Path message for visualization."""
@@ -657,6 +794,11 @@ def main(args: Optional[List[str]] = None) -> None:
     except KeyboardInterrupt:
         node.get_logger().info('Shutting down PP tuner...')
     finally:
+        try:
+            node._publish_stop()
+            node.get_logger().info('Published stop command: speed=0')
+        except Exception as exc:
+            node.get_logger().warn(f'Failed to publish stop command during shutdown: {exc}')
         node.destroy_node()
         # When the process is interrupted/killed, shutdown might already be called.
         try:
@@ -667,4 +809,3 @@ def main(args: Optional[List[str]] = None) -> None:
 
 if __name__ == '__main__':
     main()
-

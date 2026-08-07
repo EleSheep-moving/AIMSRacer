@@ -38,25 +38,49 @@ class JoystickControl(Node):
         
         self.ackermann_publisher = self.create_publisher(AckermannDriveStamped, "/ackermann_cmd", 10)
 
-        self.channel8_min_value = self.declare_parameter("channel8_min_value", 191).value
-        self.channel8_max_value = self.declare_parameter("channel8_max_value", 1792).value
-        
         self.direction_reverse = self.declare_parameter("direction_reverse", False).value
-        self.speed_channel = self.declare_parameter("speed_channel", 3).value # channel x is x, don't worry
-        self.steering_channel = self.declare_parameter("steering_channel", 4).value
 
-        self.speed_channel8_min_speed = self.declare_parameter("speed_channel8_min_speed", 2.0).value
-        self.speed_channel8_max_speed = self.declare_parameter("speed_channel8_max_speed", 12.0).value
+        # CRSF channel numbers are 1-based here: self.channel[1] == msg.ch1.
+        self.speed_channel = self.declare_parameter("speed_channel", 1).value
+        self.steering_channel = self.declare_parameter("steering_channel", 2).value
+        self.lock_channel = self.declare_parameter("lock_channel", 3).value
+        self.esc_mode_channel = self.declare_parameter("esc_mode_channel", 4).value
+        self.control_source_channel = self.declare_parameter("control_source_channel", 5).value
+        self.limit_channel = self.declare_parameter("limit_channel", 6).value
+        self.calib_mode_channel = self.declare_parameter("calib_mode_channel", 7).value
+
+        # Keep the old channel8 parameter names as fallbacks for existing launch files.
+        old_limit_min_value = self.declare_parameter("channel8_min_value", 172).value
+        old_limit_max_value = self.declare_parameter("channel8_max_value", 1810).value
+        self.limit_min_value = self.declare_parameter("limit_min_value", old_limit_min_value).value
+        self.limit_max_value = self.declare_parameter("limit_max_value", old_limit_max_value).value
+
+        old_speed_limit_min_speed = self.declare_parameter("speed_channel8_min_speed", 2.0).value
+        old_speed_limit_max_speed = self.declare_parameter("speed_channel8_max_speed", 12.0).value
+        self.speed_limit_min_speed = self.declare_parameter(
+            "speed_limit_min_speed", old_speed_limit_min_speed
+        ).value
+        self.speed_limit_max_speed = self.declare_parameter(
+            "speed_limit_max_speed", old_speed_limit_max_speed
+        ).value
         self.steering_limit = self.declare_parameter("steering_limit", 0.40).value
         self.steering_reverse = self.declare_parameter("steering_reverse", True).value
-        self.channel_mid = self.declare_parameter(
-            "steering_channel_mid", 975
-        ).value  # depand by servo channel, servo didn't have deadzone
+        old_channel_mid = self.declare_parameter("steering_channel_mid", 992).value
+        self.channel_mid = self.declare_parameter("channel_mid", old_channel_mid).value
         self.channel_deadzone = self.declare_parameter(
             "channel_deadzone", 100
         ).value
-        self.channel_max_range = 2000
-        self.channel_min_range = 0
+        self.channel_min_range = self.declare_parameter("channel_min_range", 172).value
+        self.channel_max_range = self.declare_parameter("channel_max_range", 1810).value
+        self.switch_mid_value = self.declare_parameter("switch_mid_value", self.channel_mid).value
+        default_switch_low_threshold = (self.channel_min_range + self.switch_mid_value) / 2.0
+        default_switch_high_threshold = (self.switch_mid_value + self.channel_max_range) / 2.0
+        self.switch_low_threshold = self.declare_parameter(
+            "switch_low_threshold", default_switch_low_threshold
+        ).value
+        self.switch_high_threshold = self.declare_parameter(
+            "switch_high_threshold", default_switch_high_threshold
+        ).value
 
         self.channel = None
         self.nav_ackermann_msg = None
@@ -64,8 +88,14 @@ class JoystickControl(Node):
 
         
 
-        self.current_channel8_min_current = self.declare_parameter("current_channel8_min_current", 3.0).value
-        self.current_channel8_max_current = self.declare_parameter("current_channel8_max_current", 20.0).value
+        old_current_limit_min_current = self.declare_parameter("current_channel8_min_current", 3.0).value
+        old_current_limit_max_current = self.declare_parameter("current_channel8_max_current", 20.0).value
+        self.current_limit_min_current = self.declare_parameter(
+            "current_limit_min_current", old_current_limit_min_current
+        ).value
+        self.current_limit_max_current = self.declare_parameter(
+            "current_limit_max_current", old_current_limit_max_current
+        ).value
         
         # 状态变量
         self.rc_connected = False
@@ -85,18 +115,23 @@ class JoystickControl(Node):
         self.get_logger().info("direction_reverse: %s" % self.direction_reverse)
         self.get_logger().info("speed_channel: %d" % self.speed_channel)
         self.get_logger().info("steering_channel: %d" % self.steering_channel)
-        self.get_logger().info("channel8_min_value: %d, max_value: %d" % (self.channel8_min_value, self.channel8_max_value))
-        self.get_logger().info("speed_channel8_min_speed: %f, max_speed: %f" % (self.speed_channel8_min_speed, self.speed_channel8_max_speed))
+        self.get_logger().info("lock_channel: %d" % self.lock_channel)
+        self.get_logger().info("esc_mode_channel: %d" % self.esc_mode_channel)
+        self.get_logger().info("control_source_channel: %d" % self.control_source_channel)
+        self.get_logger().info("limit_channel: %d" % self.limit_channel)
+        self.get_logger().info("calib_mode_channel: %d" % self.calib_mode_channel)
+        self.get_logger().info("limit_min_value: %d, max_value: %d" % (self.limit_min_value, self.limit_max_value))
+        self.get_logger().info("speed_limit_min_speed: %f, max_speed: %f" % (self.speed_limit_min_speed, self.speed_limit_max_speed))
         self.get_logger().info("steering_limit: %f" % self.steering_limit)
         self.get_logger().info("steering_reverse: %s" % self.steering_reverse)
-        self.get_logger().info("steering_channel_mid: %d" % self.channel_mid)
+        self.get_logger().info("channel_min/mid/max: %d / %d / %d" % (self.channel_min_range, self.channel_mid, self.channel_max_range))
         self.get_logger().info("channel_deadzone: %d" % self.channel_deadzone)
+        self.get_logger().info("switch_mid_value: %d" % self.switch_mid_value)
+        self.get_logger().info("switch_low/high_threshold: %.1f / %.1f" % (self.switch_low_threshold, self.switch_high_threshold))
         # 200hz
         self.timer = self.create_timer(0.005, self.timer_callback)
 
     def joystick_callback(self, msg):
-        # 假设通道5和6为bool值，具体实现可能需要调整
-        # 200 992 1810
         self.channel = [
             0,
             msg.ch1,
@@ -117,18 +152,17 @@ class JoystickControl(Node):
             msg.ch16,
         ]
 
-        self.locked = self.channel[5] < 1200
-        # 修改：使用字符串表示控制模式
-        self.control_mode = "teleop" if self.channel[7] < 1200 else "nav"
+        self.locked = self.channel[self.lock_channel] < self.switch_mid_value
+        self.control_mode = "teleop" if self.channel[self.control_source_channel] < self.switch_mid_value else "nav"
         
-        if self.channel[6] < 600:
+        if self.channel[self.esc_mode_channel] < self.switch_low_threshold:
             self.esc_control_mode = "speed"
-        elif self.channel[6] < 1200:
+        elif self.channel[self.esc_mode_channel] < self.switch_high_threshold:
             self.esc_control_mode = "current"
         else:
             self.esc_control_mode = "duty"
             
-        if self.channel[10] > 1000:
+        if self.channel[self.calib_mode_channel] > self.switch_mid_value:
             self.calib_mode = True
         else:
             self.calib_mode = False
@@ -163,17 +197,19 @@ class JoystickControl(Node):
     def calib_ackermann_callback(self, msg):
         self.calib_ackermann_msg = msg
     def handle_channel_input(self, channel_index,
-                            channel8_min_value, channel8_max_value, 
-                            channel8_min_range, channel8_max_range):
+                            limit_min_value, limit_max_value,
+                            limit_min_range, limit_max_range):
         raw_value = self.channel[channel_index]
         
-        # 处理channel8缩放
-        channel8_value = self.channel[8]
-        channel8_value = max(channel8_min_value, min(channel8_value, channel8_max_value))
-        ratio = (channel8_value - channel8_min_value) / (
-            channel8_max_value - channel8_min_value
-        )
-        current_max = channel8_min_range + ratio * (channel8_max_range - channel8_min_range)
+        limit_value = self.channel[self.limit_channel]
+        limit_value = max(limit_min_value, min(limit_value, limit_max_value))
+        if limit_max_value <= limit_min_value:
+            ratio = 1.0
+        else:
+            ratio = (limit_value - limit_min_value) / (
+                limit_max_value - limit_min_value
+            )
+        current_max = limit_min_range + ratio * (limit_max_range - limit_min_range)
         current_min = -current_max
 
         # 处理死区
@@ -201,10 +237,10 @@ class JoystickControl(Node):
     def handle_teleop_speed(self):
         speed_value = self.handle_channel_input(
             self.speed_channel,
-            self.channel8_min_value,
-            self.channel8_max_value,
-            self.speed_channel8_min_speed,
-            self.speed_channel8_max_speed
+            self.limit_min_value,
+            self.limit_max_value,
+            self.speed_limit_min_speed,
+            self.speed_limit_max_speed
         )
         
         if self.direction_reverse:
@@ -215,10 +251,10 @@ class JoystickControl(Node):
     def handle_teleop_current(self):
         current_value = self.handle_channel_input(
             self.speed_channel,
-            self.channel8_min_value,
-            self.channel8_max_value,
-            self.current_channel8_min_current,
-            self.current_channel8_max_current
+            self.limit_min_value,
+            self.limit_max_value,
+            self.current_limit_min_current,
+            self.current_limit_max_current
         )
         
         if self.direction_reverse:
@@ -230,8 +266,8 @@ class JoystickControl(Node):
     def handle_teleop_duty(self):
         duty_value = self.handle_channel_input(
             self.speed_channel,
-            self.channel8_min_value,
-            self.channel8_max_value,
+            self.limit_min_value,
+            self.limit_max_value,
             0.0, # 0.0 to 1.0 min 
             0.8 # 0.0 to 1.0 max
         )

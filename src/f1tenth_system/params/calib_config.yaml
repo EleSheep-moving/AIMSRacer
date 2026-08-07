@@ -1,5 +1,5 @@
 # Current-Acceleration Calibration Parameters
-# Used by: current_acc_calib.py
+# Used by: longitudinal_calib.py
 
 # Vehicle Parameters
 wheelbase: 0.33  # Distance from front to rear axle (meters)

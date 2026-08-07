@@ -40,6 +40,18 @@ The modified VESC interface is based on the VESC interface provided by Veddar VE
 
 ## 🚀 Main Launch Files
 
+### 🛡️ Vehicle-Safe ROS Network
+
+Before vehicle bringup, keep the ROS2 control graph on localhost so Wi-Fi loss cannot break local control traffic:
+
+```bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export ROS_LOCALHOST_ONLY=0
+export CYCLONEDDS_URI=file:///home/nuc/cyclonedds.xml
+```
+
+`/home/nuc/cyclonedds.xml` should bind CycloneDDS to `lo`. The Livox driver still communicates with the Mid-360 on the wired `192.168.1.x` network through its own UDP sockets.
+
 ### ⚡ Quick Start (Recommended)
 ```bash
 # 🔌 Hardware bringup (V3 - Point-LIO, Latest)
@@ -75,8 +87,9 @@ ros2 launch f1tenth_system nav.launch.py
 
 It includes:
 - `/calib/ackermann_cmd` jerk convention (speed/current)
-- Localization-based (Pure Pursuit) and RC-intervention (Manual Steer) data collection
-- Recommended **two-stage workflow** (Stage A speed-hold current + Stage B interval accel sweep)
+- `/calib/current_trajectory`, `/calib/lookahead_point`, and `/calib/status_text` RViz topics
+- Localization-based (Pure Pursuit) and RC-intervention data collection
+- Recommended **three-stage PP workflow** (Stage A speed-hold current + Stage B interval accel sweep + Stage C decel sweep)
 
 
 ### ⚡ Longitudinal Calibration (Recommended)
@@ -88,7 +101,25 @@ This option requires stable odometry and a relatively large open area/track (lon
 See [src/f1tenth_system/scripts/README_EN.md](src/f1tenth_system/scripts/README_EN.md) → Localization-based (Pure Pursuit).
 
 ```bash
-ros2 run f1tenth_system pp_current_acc_calib.py
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+    -p workflow:=pp_speed_hold \
+    -p speeds:="[1,2,3,4,5,6,7,8]" \
+    -p hold_time_sec:=10.0 \
+    -p output_path:=speed_hold_current_results.txt
+
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+    -p workflow:=pp_accel_interval \
+    -p v_start:=1.0 -p v_end:=8.0 -p dv:=1.0 \
+    -p base_current_file:=speed_hold_current_results.txt \
+    -p current_step:=3.0 -p current_max:=80.0 \
+    -p output_path:=speed_interval_accel_results.txt
+
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+    -p workflow:=pp_decel_current \
+    -p v_start:=3.0 -p v_end:=8.0 -p dv:=1.0 \
+    -p decel_low_speed:=1.0 \
+    -p decel_current_step:=3.0 -p decel_current_min:=-20.0 \
+    -p output_path:=decel_current_sweep_results.txt
 ```
 
 #### Option B (Recommended): RC-intervention (No localization) — Two-stage workflow
@@ -98,9 +129,11 @@ This is the recommended workflow when odometry/localization is unstable, or when
 Stage A (speed hold → mean current):
 
 ```bash
-ros2 run f1tenth_system speed_hold_current_logger.py --ros-args \
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+    -p workflow:=speed_hold \
     -p speeds:="[1,2,3,4,5,6,7,8]" \
     -p hold_time_sec:=10.0 \
+    -p use_rc_steering:=false \
     -p vesc_topic:=/sensors/core \
     -p output_path:=speed_hold_current_results.txt
 ```
@@ -108,10 +141,12 @@ ros2 run f1tenth_system speed_hold_current_logger.py --ros-args \
 Stage B (per speed interval → accel vs current, speed from `/odom`):
 
 ```bash
-ros2 run f1tenth_system speed_interval_accel_sweep.py --ros-args \
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+    -p workflow:=accel_interval \
     -p v_start:=1.0 -p v_end:=8.0 -p dv:=1.0 \
     -p base_current_file:=speed_hold_current_results.txt \
     -p current_step:=3.0 -p current_max:=80.0 \
+    -p use_rc_steering:=false \
     -p vesc_topic:=/sensors/core \
     -p odom_topic:=/odom \
     -p output_path:=speed_interval_accel_results.txt
@@ -122,11 +157,13 @@ If you need RC steering intervention during data collection, enable it and the s
 - Wait `post_turn_settle_sec` after returning straight before resuming
 
 ```bash
-ros2 run f1tenth_system speed_hold_current_logger.py --ros-args \
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+    -p workflow:=speed_hold \
     -p use_rc_steering:=true -p rc_topic:=/rc/channels -p rc_timeout_sec:=0.25 \
     -p post_turn_settle_sec:=0.8
 
-ros2 run f1tenth_system speed_interval_accel_sweep.py --ros-args \
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+    -p workflow:=accel_interval \
     -p use_rc_steering:=true -p rc_topic:=/rc/channels -p rc_timeout_sec:=0.25 \
     -p post_turn_settle_sec:=0.8
 ```
@@ -256,12 +293,6 @@ This project would not be possible without the use of multiple great open-source
 - 🎮 Use a better simulation environment, like ISAAC Lab, Autodrive
 - 🤖 Use RL to learn end-to-end policies
 - 🗺️ Integrate additional LIO backends (LVI-SAM, DLIO, etc.)
-
-
-
-
-
-
 
 
 

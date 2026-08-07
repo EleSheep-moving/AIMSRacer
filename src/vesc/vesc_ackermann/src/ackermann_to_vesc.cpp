@@ -30,6 +30,7 @@
 
 #include "vesc_ackermann/ackermann_to_vesc.hpp"
 
+#include <chrono>
 #include <cmath>
 #include <sstream>
 #include <string>
@@ -59,6 +60,8 @@ AckermannToVesc::AckermannToVesc(const rclcpp::NodeOptions & options)
   // Motor startup parameters
   startup_duty_current_ = declare_parameter<double>("startup_duty_current", 40.0);
   startup_timeout_ms_ = declare_parameter<double>("startup_timeout_ms", 100.0);
+  ackermann_watchdog_enabled_ = declare_parameter<bool>("ackermann_watchdog_enabled", true);
+  ackermann_timeout_sec_ = declare_parameter<double>("ackermann_timeout_sec", 0.10);
 
   // create publishers to vesc electric-RPM (speed) and servo commands
   erpm_pub_ = create_publisher<Float64>("commands/motor/speed", 10);
@@ -77,15 +80,25 @@ AckermannToVesc::AckermannToVesc(const rclcpp::NodeOptions & options)
   
   // Initialize startup state machine
   last_nonzero_speed_time_ = now();
+  last_ackermann_command_time_ = now();
   last_current_command_ = 0.0;
   last_steering_command_ = 0.0;
   last_motor_speed_ = 0.0;
+  has_received_ackermann_command_ = false;
   motor_has_detected_motion_ = false;
   motor_is_running_ = false;
+  ackermann_watchdog_active_ = false;
+
+  watchdog_timer_ = create_wall_timer(
+    std::chrono::milliseconds(20), std::bind(&AckermannToVesc::watchdogTimerCallback, this));
 }
 
 void AckermannToVesc::ackermannCmdCallback(const AckermannDriveStamped::SharedPtr cmd)
 {
+  last_ackermann_command_time_ = now();
+  has_received_ackermann_command_ = true;
+  ackermann_watchdog_active_ = false;
+
   // calc steering angle (servo) - published in all modes
   Float64 servo_msg;
   servo_msg.data = steering_to_servo_gain_ * cmd->drive.steering_angle + steering_to_servo_offset_;
@@ -145,6 +158,38 @@ void AckermannToVesc::ackermannCmdCallback(const AckermannDriveStamped::SharedPt
       duty_msg.data = cmd->drive.acceleration;
       duty_pub_->publish(duty_msg);
     }
+  }
+}
+
+void AckermannToVesc::publishSafeSpeedCommand()
+{
+  Float64 erpm_msg;
+  erpm_msg.data = 0.0;
+  erpm_pub_->publish(erpm_msg);
+}
+
+void AckermannToVesc::watchdogTimerCallback()
+{
+  if (!ackermann_watchdog_enabled_ || !has_received_ackermann_command_ ||
+    ackermann_timeout_sec_ <= 0.0)
+  {
+    return;
+  }
+
+  const double elapsed_sec = (now() - last_ackermann_command_time_).seconds();
+  if (elapsed_sec <= ackermann_timeout_sec_) {
+    return;
+  }
+
+  publishSafeSpeedCommand();
+
+  if (!ackermann_watchdog_active_) {
+    RCLCPP_WARN(
+      get_logger(),
+      "No ackermann_cmd for %.3fs (> %.3fs); publishing zero speed command.",
+      elapsed_sec,
+      ackermann_timeout_sec_);
+    ackermann_watchdog_active_ = true;
   }
 }
 

@@ -1,8 +1,13 @@
-# Longitudinal Calibration Data Collection (With / Without Localization)
+# Calibration Data Collection Tools (Longitudinal / Lateral)
 
-This folder currently provides two longitudinal calibration data-collection approaches:
+This folder currently maintains two types of calibration tools:
 
-- **Localization-based (Pure Pursuit Auto Looping)**: requires stable odometry/localization. The vehicle follows a “stadium / figure-8” style trajectory automatically; it sweeps motor current on straights and holds speed on curves. This is suitable for long, repeatable data collection, but typically requires a relatively large open area/track.
+- **Longitudinal calibration**: maps speed, current, acceleration, and deceleration for current control and speed planning.
+- **Lateral grip / slip calibration**: drives fixed-radius circles with stepped speed targets to estimate centripetal acceleration, lateral force, effective friction, and slip onset.
+
+Longitudinal calibration provides two data-collection approaches:
+
+- **Localization-based (Pure Pursuit Auto Looping)**: requires stable odometry/localization. The vehicle follows a “stadium / figure-8” style trajectory automatically; Stage A/B/C collection runs on straights and curves are handled in speed mode. This is suitable for long, repeatable data collection, but typically requires a relatively large open area/track.
 - **RC-intervention (Manual Steer, No Localization)**: does not rely on localization. The scripts publish longitudinal commands ("current sweep on straights / speed hold on turns"), while lateral control (steering) is provided by the RC transmitter. This is recommended when odometry drifts (e.g., fastlio/IMU issues) or when you do not have a large enough track.
 
 Both approaches publish the same topic: `/calib/ackermann_cmd` (downstream must parse the `jerk` convention below).
@@ -45,6 +50,93 @@ This repository uses `AckermannDriveStamped.drive.jerk` as a "mode flag" to mult
 
 ---
 
+## 0.3) Lateral Grip / Slip Calibration: Fixed-Radius Speed Steps
+
+Script: `src/f1tenth_system/scripts/lateral_grip_calib.py`
+
+Purpose: actively drive fixed-radius circles, increase speed step by step, and estimate lateral capacity from **odometry speed + IMU yaw rate**:
+
+- `ay_yaw = v_odom * yaw_rate_imu`
+- `mu_y = abs(ay_yaw) / 9.81`
+- `Fy = vehicle_mass * ay_yaw`
+- `radius_est = v_odom / yaw_rate_imu`
+
+Default vehicle mass is `vehicle_mass:=4.5` kg. The first version only tests fixed-radius circles; it does not scan a full race line. `/odom.angular.z` is diagnostic only because the current VESC odom yaw rate may be model-derived.
+
+Subscribes:
+- `/odom` (`nav_msgs/Odometry`, default speed source)
+- `/livox/imu_ekf` (`sensor_msgs/Imu`, default yaw-rate / lateral-accel source)
+- `/sensors/core` (`vesc_msgs/VescStateStamped`, telemetry and safety check)
+
+Publishes:
+- `/calib/ackermann_cmd` (`AckermannDriveStamped`, `jerk=0.0` speed mode)
+- `/calib/lateral_status_text` (`visualization_msgs/Marker`, RViz status text)
+
+Safety default: with `armed:=false`, the node publishes **no motion command**. It only waits for/checks topics and prints the configuration. Real vehicle runs must explicitly enable arming:
+
+```bash
+ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+   armed:=true \
+   vehicle_mass:=4.5 \
+   test_radius:=3.0 \
+   speed_start:=0.5 \
+   speed_end:=4.0 \
+   speed_step:=0.25
+```
+
+Common parameters:
+
+```bash
+# topics / outputs
+ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+   armed:=true \
+   odom_topic:=/odom \
+   imu_topic:=/livox/imu_ekf \
+   vesc_topic:=/sensors/core \
+   output_dir:=lateral_grip_run1
+
+# If IMU signs are inverted, validate at low speed and then adjust signs.
+ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+   armed:=true \
+   imu_yaw_axis_sign:=-1.0 \
+   imu_lateral_axis_sign:=1.0
+```
+
+Output files:
+- `lateral_grip_samples.csv`: per-sample data.
+- `lateral_grip_results.csv`: per direction/speed statistics, including `mu_y`, `Fy`, and radius error.
+- `lateral_grip_summary.yaml`: `mu_left`, `mu_right`, `mu_safe`, and safe lateral-accel limit for later controller use.
+
+Slip / limit detection:
+- IMU yaw rate deviates from `v/R` for longer than the confirmation window.
+- Estimated radius `radius_est` deviates from commanded radius.
+- `mu_y` exceeds `mu_abort`.
+- Speed keeps increasing but lateral acceleration stops increasing.
+- odom/IMU/VESC timeout or user interruption.
+
+Start with a low-speed sign check:
+
+```bash
+ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+   armed:=true \
+   speed_end:=1.5 \
+   test_radius:=3.0
+```
+
+Suggested rosbag recording:
+
+```bash
+ros2 bag record -o lateral_grip \
+   /odom \
+   /livox/imu_ekf \
+   /sensors/core \
+   /calib/ackermann_cmd \
+   /calib/lateral_status_text \
+   /tf /tf_static
+```
+
+---
+
 ## 1) Localization-based: Pure Pursuit Auto Loop Calibration (Requires `/odom`)
 
 ### 1.1 When to Use
@@ -55,9 +147,9 @@ This repository uses `AckermannDriveStamped.drive.jerk` as a "mode flag" to mult
 
 ### 1.2 Core Scripts
 
-#### (1) `pp_current_acc_calib.py`: Auto loop + segmented current/speed calibration
+#### (1) `longitudinal_calib.py`: Auto loop + segmented current/speed calibration
 
-Script: `src/f1tenth_system/scripts/pp_current_acc_calib.py`
+Script: `src/f1tenth_system/scripts/longitudinal_calib.py`
 
 Subscribes:
 - `/odom` (`nav_msgs/Odometry`)
@@ -65,45 +157,81 @@ Subscribes:
 
 Publishes:
 - `/calib/ackermann_cmd` (`ackermann_msgs/AckermannDriveStamped`)
-- `/calib/lookahead_point` (`geometry_msgs/PointStamped`, visualization)
+- `/calib/current_trajectory` (`nav_msgs/Path`, generated global trajectory for RViz)
+- `/calib/lookahead_point` (`geometry_msgs/PointStamped`, PP lookahead point for RViz)
+- `/calib/status_text` (`visualization_msgs/Marker`, stage/speed/current status for RViz)
 
-Run:
+RViz: open `src/f1tenth_system/rviz/pp.rviz`; `Calib Trajectory`, `Calib Lookahead`, and `Calib Status` show the generated path, PP lookahead point, and live speed/current/stage text.
+
+Recommended three-stage PP workflow:
 
 ```bash
-ros2 run f1tenth_system pp_current_acc_calib.py
+# Stage A: hold speeds and measure mean current
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+   -p workflow:=pp_speed_hold \
+   -p speeds:="[1,2,3,4,5,6,7,8]" \
+   -p hold_time_sec:=10.0 \
+   -p output_path:=speed_hold_current_results.txt
+
+# Stage B: current-step acceleration trials based on Stage-A current map
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+   -p workflow:=pp_accel_interval \
+   -p v_start:=1.0 -p v_end:=8.0 -p dv:=1.0 \
+   -p base_current_file:=speed_hold_current_results.txt \
+   -p current_step:=3.0 -p current_max:=80.0 \
+   -p output_path:=speed_interval_accel_results.txt
+
+# Stage C: negative-current deceleration trials
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+   -p workflow:=pp_decel_current \
+   -p v_start:=3.0 -p v_end:=8.0 -p dv:=1.0 \
+   -p decel_low_speed:=1.0 \
+   -p decel_current_step:=3.0 -p decel_current_min:=-20.0 \
+   -p output_path:=decel_current_sweep_results.txt
 ```
 
 Common parameters (examples):
 
 ```bash
-# calibration mode: acceleration (positive current sweep) / braking (negative-current braking)
-ros2 param set /current_acc_calib calibration_mode acceleration
-
-# current ramp slope in acceleration mode (A/s)
-ros2 param set /current_acc_calib current_ramp_rate 5.0
-
 # track geometry (start with larger radius/longer straights to reduce lateral disturbance)
-ros2 param set /current_acc_calib track_radius 3.0
-ros2 param set /current_acc_calib track_straight_length 10.0
+ros2 param set /longitudinal_calib track_radius 3.0
+ros2 param set /longitudinal_calib track_straight_length 10.0
 
 # PP parameters (tune with pp_param_tuner first, then copy here)
-ros2 param set /current_acc_calib lookahead_gain 1.6
-ros2 param set /current_acc_calib min_lookahead 0.3
-ros2 param set /current_acc_calib max_lookahead 3.5
-ros2 param set /current_acc_calib lateral_error_gain 1.0
-ros2 param set /current_acc_calib heading_error_gain 0.4
-ros2 param set /current_acc_calib curvature_ff_gain 0.1
+ros2 param set /longitudinal_calib lookahead_gain 1.0
+ros2 param set /longitudinal_calib min_lookahead 0.3
+ros2 param set /longitudinal_calib max_lookahead 4.5
+ros2 param set /longitudinal_calib lateral_error_gain 1.0
+ros2 param set /longitudinal_calib heading_error_gain 0.1
+ros2 param set /longitudinal_calib curvature_ff_gain 0.1
+
+# PP high-speed steering limit (only limits PP-generated steering)
+ros2 param set /longitudinal_calib max_steering_angle 0.35
+ros2 param set /longitudinal_calib steering_limit_start_speed 4.0
+ros2 param set /longitudinal_calib steering_limit_full_speed 6.0
+ros2 param set /longitudinal_calib high_speed_max_steering_angle 0.18
 
 # trajectory offsets w.r.t. localization frame (for on-site alignment)
-ros2 param set /current_acc_calib traj_offset_x 0.0
-ros2 param set /current_acc_calib traj_offset_y 0.0
-ros2 param set /current_acc_calib traj_offset_yaw 0.0
+# default true: place the trajectory local origin at the first odom (x,y), then apply x/y below as fine offsets
+ros2 param set /longitudinal_calib use_first_odom_as_origin true
+ros2 param set /longitudinal_calib traj_offset_x 0.0
+ros2 param set /longitudinal_calib traj_offset_y 0.0
+ros2 param set /longitudinal_calib traj_offset_yaw 0.0
 ```
 
 Logic summary:
-- Closed-loop “stadium / figure-8”: straights for calibration, curves for safe speed holding.
-- **Straights**: publish `jerk=2.0` (current mode); ramp `drive.acceleration` (A) using `current_ramp_rate`.
-- **Curves**: publish `jerk=0.0` (speed mode); hold a tiered target speed.
+- Closed-loop “stadium / figure-8”: straights for collection, curves for speed-mode recovery/holding.
+- By default, after the first odom message arrives, the trajectory local origin is translated to that odom `(x,y)`. `traj_offset_x/y/yaw` remain live fine-tuning offsets. Set `use_first_odom_as_origin:=false` to restore the old behavior where the trajectory origin is the odom origin.
+- PP defaults now match `pp_param_tuner.py`: `lookahead_gain=1.0`, `max_lookahead=4.5`, and `heading_error_gain=0.1`. If the car oscillates above 2m/s, first watch `ld` in RViz/logs, then slightly increase `lookahead_gain/max_lookahead` or lower `heading_error_gain`.
+- PP steering has a speed-dependent limit: `v<=4.0m/s` allows up to `0.35rad`, `4.0<v<6.0m/s` linearly tightens to `0.18rad`, and `v>=6.0m/s` stays at `0.18rad`. This applies only to `pp_speed_hold / pp_accel_interval / pp_decel_current`; RC/manual no-localization workflows are unchanged.
+- `/calib/status_text` and node logs show raw steering, effective `steer_limit`, `ld`, and whether the command was `clipped`.
+- **Stage A / `pp_speed_hold`**: for each speed point, stabilize first, then accumulate `hold_time_sec` of current samples only on straights.
+- **Stage B / `pp_accel_interval`**: for each `v0→v1` interval, reset to `v0`, then run current-mode trials only on straights; entering a curve aborts the current trial and resets to `v0`.
+- **Stage C / `pp_decel_current`**: stabilize at each target speed, then apply negative current only on straights; entering a curve aborts the current decel trial and recovers target speed.
+
+The old `workflow:=pp_auto` continuous sweep behavior has been removed; PP collection now uses Stage A/B/C only. Stage B / `pp_accel_interval` uses `current_start_step_index` plus its own current-list index to control the starting current.
+
+End behavior: when a workflow completes, Ctrl-C is pressed, or the node exits, it publishes repeated stop commands: first zero-current current-mode commands, then speed-mode commands with `speed=0`.
 
 Suggested rosbag topics:
 
@@ -112,7 +240,9 @@ ros2 bag record -o pp_calib \
    /odom \
    /vesc/sensors \
    /calib/ackermann_cmd \
+   /calib/current_trajectory \
    /calib/lookahead_point \
+   /calib/status_text \
    /tf /tf_static
 ```
 
@@ -123,6 +253,8 @@ Script: `src/f1tenth_system/scripts/pp_param_tuner.py`
 Note: default interface differs from the calibration node:
 - Subscribes: `/odometry/filtered`
 - Publishes: `/drive`
+- Visualization: `/calib/current_trajectory`, `/calib/lookahead_point`, and `/calib/status_text`, matching `longitudinal_calib.py` and `src/f1tenth_system/rviz/pp.rviz`.
+- Shutdown: on Ctrl-C / node exit, it publishes repeated stop commands with `speed=0`.
 
 If your system uses `/odom` or needs output to `/ackermann_cmd`, use remap/bridge without changing code.
 
@@ -130,6 +262,16 @@ Quick run:
 
 ```bash
 ros2 run f1tenth_system pp_param_tuner.py --ros-args -p target_speed:=2.0
+```
+
+The tuner uses the same high-speed steering limit defaults and supports live tuning:
+
+```bash
+ros2 param set /pp_param_tuner max_steering_angle 0.35
+ros2 param set /pp_param_tuner steering_limit_start_speed 4.0
+ros2 param set /pp_param_tuner steering_limit_full_speed 6.0
+ros2 param set /pp_param_tuner high_speed_max_steering_angle 0.18
+ros2 param set /pp_param_tuner use_first_odom_as_origin true
 ```
 
 Remap examples:
@@ -146,14 +288,19 @@ ros2 run f1tenth_system pp_param_tuner.py --ros-args \
 
 ---
 
-## 2) RC-intervention: Manual Steer Calibration (No Localization)
+## 2) RC-intervention Calibration (No Localization)
 
 Goal: avoid dependence on localization when odometry drifts.
 
-Core logic (cooperating with downstream controller):
-- **Straight** (RC steering within deadzone): publish **current mode**, sweep current 0→60A (for calibration)
-- **Turning** (RC steering outside deadzone): publish **speed mode**, hold a predefined speed (for safety and to return to the target speed range)
-- **Steering**: controlled by RC; straight forces steering=0, turning uses RC steering
+The recommended entrypoint is `longitudinal_calib.py`; select the no-localization collection path with `workflow`:
+- `workflow:=speed_hold`: Stage A, hold speeds and measure mean current.
+- `workflow:=accel_interval`: Stage B, run current-step trials for each speed interval.
+- `workflow:=decel_current`: optional Stage C, negative-current decel trials.
+
+RC intervention behavior:
+- **Straight** (RC steering within deadzone): allow sampling/trials and optionally force `steering=0`.
+- **Turning** (RC steering outside deadzone): pause sampling/trials and hold a safe speed in speed mode.
+- **Steering**: controlled by RC; after returning straight, wait `post_turn_settle_sec` before resuming.
 
 Output: `/calib/ackermann_cmd`
 
@@ -167,12 +314,13 @@ When the previous methods do not work well, use this two-stage workflow.
 
 Goal: on straight segments (`steering=0`), measure the mean current required to hold each speed.
 
-Script: `src/f1tenth_system/scripts/speed_hold_current_logger.py`
+Script: `src/f1tenth_system/scripts/longitudinal_calib.py`
 
 Run example:
 
 ```bash
-ros2 run f1tenth_system speed_hold_current_logger.py --ros-args \
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+   -p workflow:=speed_hold \
    -p speeds:="[1,2,3,4,5,6,7,8]" \
    -p hold_time_sec:=10.0 \
    -p use_rc_steering:=false \
@@ -183,7 +331,8 @@ ros2 run f1tenth_system speed_hold_current_logger.py --ros-args \
 If you must enable RC steering intervention:
 
 ```bash
-ros2 run f1tenth_system speed_hold_current_logger.py --ros-args \
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+   -p workflow:=speed_hold \
    -p use_rc_steering:=true \
    -p rc_topic:=/rc/channels \
    -p rc_timeout_sec:=0.25 \
@@ -194,19 +343,69 @@ Output:
 - `speed_hold_current_results.txt`: mean current per speed (the default strategy is: wait until speed reaches target and remains stable for a while, then sample)
 - optional `csv_path`: full time series for debugging
 
+#### 3.1.1 Voltage / SOC Stratified Collection
+
+`I0(v)` will not be perfect across all battery states. For the first voltage-aware workflow, run Stage A in three loaded-voltage bands and build a 2D baseline table:
+
+```text
+I0 = I0(v, V)
+```
+
+Use VESC `/sensors/core.state.voltage_input` during motion, not open-circuit resting voltage:
+
+```text
+High: voltage_input >= 15.8V
+Mid:  15.4V <= voltage_input < 15.8V
+Low:  15.0V <= voltage_input < 15.4V
+```
+
+Recommended collection:
+- Stage A: run `2~6m/s` speed hold once in each High / Mid / Low voltage band to build `I0(v,V)`.
+- Stage B: run `2->6m/s` accel interval in at least High / Mid bands; add Low only if it is safe for the battery and VESC.
+- The low-voltage boundary must respect your battery and VESC safety limits; do not force Low-band data below a safe voltage.
+
+Reference post-processing formulas:
+
+```text
+# Stage A: hold current per speed point / voltage band
+I0(v_i, V_bin) = mean(I_q)
+V_bin_mean(v_i) = mean(voltage_input)
+
+# Stage B: each accel trial
+a_fit = slope(linear_fit(t, v_odom))
+I_q_mean = mean(state.avg_iq)       # fallback: state.current_motor
+V_mean = mean(voltage_input)
+I_net = I_q_mean - interp2d(I0_table, v_mid, V_mean)
+v_mid = 0.5 * (v0 + v1)
+
+# Calibrate net-current effectiveness
+a_fit = I_net * (k0 + k1*(v_mid - v_ref) + k2*(V_mean - V_ref))
+```
+
+Recommended feed-forward inversion:
+
+```text
+I_cmd = I0(v,V) + a_ref / k_eff(v,V)
+k_eff(v,V) = k0 + k1*(v - v_ref) + k2*(V - V_ref)
+k_eff(v,V) = clamp(k_eff, k_min, k_max)
+```
+
 ### 3.2 Stage B: for each speed interval v→v+1, sweep current steps to estimate acceleration
 
 Goal: for each interval (1→2, 2→3, …), start near the Stage-A baseline current and increase by `current_step` until `current_max`, measure time-to-reach and estimate acceleration via $a=\Delta v / t$.
 
-Script: `src/f1tenth_system/scripts/speed_interval_accel_sweep.py`
+If the baseline current is already known to only hold speed and does not need to be repeated, set `current_start_step_index:=1` so each interval starts from `base_current + current_step`. The default `0` still starts from `base_current`.
+
+Script: `src/f1tenth_system/scripts/longitudinal_calib.py`
 
 Run example:
 
 ```bash
-ros2 run f1tenth_system speed_interval_accel_sweep.py --ros-args \
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+   -p workflow:=accel_interval \
    -p v_start:=1.0 -p v_end:=8.0 -p dv:=1.0 \
    -p base_current_file:=speed_hold_current_results.txt \
-   -p current_step:=3.0 -p current_max:=80.0 \
+   -p current_step:=3.0 -p current_start_step_index:=1 -p current_max:=80.0 \
    -p vesc_topic:=/sensors/core \
    -p odom_topic:=/odom \
    -p output_path:=speed_interval_accel_results.txt
@@ -215,7 +414,8 @@ ros2 run f1tenth_system speed_interval_accel_sweep.py --ros-args \
 If you must enable RC steering intervention and only run trials on straights:
 
 ```bash
-ros2 run f1tenth_system speed_interval_accel_sweep.py --ros-args \
+ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+   -p workflow:=accel_interval \
    -p use_rc_steering:=true \
    -p rc_topic:=/rc/channels \
    -p rc_timeout_sec:=0.25 \
@@ -231,7 +431,66 @@ Notes:
 
 ---
 
-### 3.3 Offline Analysis Prompt (Stage A + B outputs)
+### 3.3 Offline Longitudinal Model Verification
+
+Script: `src/f1tenth_system/scripts/longitudinal_model_verify.py`
+
+The first-pass model intentionally keeps temperature out of the main fit and compares three net-current models:
+
+```text
+I_net = I_q_mean - I0(v0)
+
+Model A: a = k * I_net
+Model B: a = I_net * (k0 + k1*(v_mid - v_ref))
+Model C: a = I_net * (k0 + k1*(v_mid - v_ref) + k2*(V_mean - V_ref))
+```
+
+`I_q_mean` prefers `state.avg_iq` and falls back to `state.current_motor`. Temperature is better treated as a later derating/limit diagnostic; voltage and duty are still exported to the verification table to check battery sag and duty saturation. The current verifier still uses the one-dimensional Stage-A `I0(v0)` baseline. Once enough High / Mid / Low voltage-stratified data exists, upgrade the baseline to:
+
+```text
+I_net = I_q_mean - I0(v_mid,V)
+I_cmd = I0(v,V) + a_ref / k_eff(v,V)
+```
+
+CSV-only quick check:
+
+```bash
+python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
+   --base speed_hold_current_results.txt \
+   --samples speed_interval_accel_samples.csv \
+   --valid-v-end 6.0 \
+   --out-prefix longitudinal_model_verify_csv
+```
+
+Recommended bag-based check with measured `avg_iq / voltage / duty / accel_fit`:
+
+```bash
+python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
+   --base speed_hold_current_results.txt \
+   --bag /home/nuc/RallyCore/bag/pp_accel_interval2 \
+   --valid-v-end 6.0 \
+   --model-accel-max 2.5 \
+   --out-prefix longitudinal_model_verify_bag
+```
+
+Recommended multi-bag voltage-modulation check:
+
+```bash
+python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
+   --base speed_hold_current_results.txt \
+   --bags /home/nuc/RallyCore/bag/pp_accel_interval1 /home/nuc/RallyCore/bag/pp_accel_interval2 \
+   --valid-v-end 6.0 \
+   --model-accel-max 2.5 \
+   --out-prefix longitudinal_model_verify_pp_accel_1_2_voltage
+```
+
+Outputs:
+- `*_trials.csv`: per-trial `bag_id`, `bag_path`, `v_mid_mps`, `iq_mean_a`, `i_net_a`, `voltage_mean_v`, `duty_max`, `accel_fit_mps2`, and reject reason.
+- `*_model.json`: legacy per-speed/global `k`, `b`, `R2`, `RMSE`, plus aggregate Model A/B/C coefficients, `R2`, `RMSE`, voltage range, duty range, and Model-C-vs-Model-B RMSE improvement.
+
+---
+
+### 3.4 Offline Analysis Prompt (Stage A + B outputs)
 
 Replace the file paths below with your actual generated outputs and send the prompt to your analysis assistant.
 
@@ -293,77 +552,12 @@ Output requirements:
 ## IMPORTANT NOTE
 
 This document is currently maintained mainly for the “two-stage workflow” in Section 3.
-Content below is supplemental / historical and may not be fully synchronized with code. When in doubt, the code and Section 3 take precedence.
+The old `speed_hold_current_logger.py`, `speed_interval_accel_sweep.py`, `manual_steer_speed_stages.py`, and `manual_steer_current_sweep_stages.py` scripts have been removed; their useful behavior is covered by `longitudinal_calib.py` with `workflow:=speed_hold/accel_interval/decel_current`.
+Content below is supplemental recording / analysis guidance. When in doubt, the code and Section 3 take precedence.
 
 ---
 
-## Appendix A) Additional Nodes (Historical / Supplemental)
-
-### A.1 Strict current sweep stages
-
-Script: `src/f1tenth_system/scripts/manual_steer_current_sweep_stages.py`
-
-Run:
-
-```bash
-ros2 run f1tenth_system manual_steer_current_sweep_stages.py
-```
-
-Common parameters:
-
-```bash
-# three stage speeds (m/s)
-ros2 param set /manual_steer_current_sweep_stages stage_speeds "[1.5, 3.0, 5.0]"
-
-# current sweep: 0..60A, ramp 5A/s
-ros2 param set /manual_steer_current_sweep_stages current_min 0.0
-ros2 param set /manual_steer_current_sweep_stages current_max 60.0
-ros2 param set /manual_steer_current_sweep_stages current_ramp_rate 5.0
-
-# straight/turning detection and steering mapping (aligned with joystick_control_v2 naming)
-ros2 param set /manual_steer_current_sweep_stages steering_channel 4
-ros2 param set /manual_steer_current_sweep_stages steering_channel_mid 984
-ros2 param set /manual_steer_current_sweep_stages channel_deadzone 100
-ros2 param set /manual_steer_current_sweep_stages steering_limit 0.40
-ros2 param set /manual_steer_current_sweep_stages steering_reverse true
-```
-
-End behavior: after all stages complete, publishes `speed=0` and `current=0` and prints `[DONE]`.
-
-### A.2 Speed-only stages (for link debugging / comparison)
-
-Script: `src/f1tenth_system/scripts/manual_steer_speed_stages.py`
-
-Run:
-
-```bash
-ros2 run f1tenth_system manual_steer_speed_stages.py
-```
-
-Common parameters:
-
-```bash
-# three stage speeds (m/s) and durations (s)
-ros2 param set /manual_steer_speed_stages stage_speeds "[1.5, 3.0, 5.0]"
-ros2 param set /manual_steer_speed_stages stage_durations "[60.0, 60.0, 60.0]"
-
-# RC topic and output topic
-ros2 param set /manual_steer_speed_stages rc_topic /rc/channels
-ros2 param set /manual_steer_speed_stages cmd_topic /calib/ackermann_cmd
-
-# steering deadzone and mapping (aligned with joystick_control_v2 naming)
-ros2 param set /manual_steer_speed_stages steering_channel 4
-ros2 param set /manual_steer_speed_stages steering_channel_mid 984
-ros2 param set /manual_steer_speed_stages channel_deadzone 100
-ros2 param set /manual_steer_speed_stages steering_limit 0.40
-ros2 param set /manual_steer_speed_stages steering_reverse true
-```
-
-End behavior: after all stages complete, publishes `speed=0, steering=0` and prints `[DONE]`.
-
----
-
-## Appendix B) Rosbag Recording (Suggested)
+## Appendix A) Rosbag Recording (Suggested)
 
 Your current command:
 
@@ -397,7 +591,7 @@ Suggested additional topics (priority order):
 
 ---
 
-## Appendix C) Rosbag Analysis Prompt
+## Appendix B) Rosbag Analysis Prompt
 
 Replace `{bag_dir}` with your bag path.
 
@@ -441,13 +635,14 @@ Output requirements:
 
 ---
 
-## Appendix D) How to Hook `/calib/ackermann_cmd` Into Your Stack
+## Appendix C) How to Hook `/calib/ackermann_cmd` Into Your Stack
 
 These nodes only publish `/calib/ackermann_cmd`. If your control chain uses a different command topic, use launch remap without modifying upstream/downstream code.
 
 Example (remap to the actual command input):
 
 ```bash
-ros2 run f1tenth_system manual_steer_speed_stages.py \
-  --ros-args -r /calib/ackermann_cmd:=/ackermann_cmd
+ros2 run f1tenth_system longitudinal_calib.py \
+  --ros-args -p workflow:=speed_hold \
+  -r /calib/ackermann_cmd:=/ackermann_cmd
 ```

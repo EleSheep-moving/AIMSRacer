@@ -302,7 +302,13 @@ sudo apt remove brltty
 # For Livox Mid-360, LiDAR IP should be: 192.168.1.1xx
 ```
 
-### CycloneDDS Configuration (Optional)
+### CycloneDDS Configuration (Vehicle-Safe)
+
+For vehicle bringup, keep the ROS 2 control graph on localhost. The Livox
+driver still talks to the Mid-360 through the wired `192.168.1.x` interface
+using its own UDP sockets; DDS does not need to use the LiDAR network or Wi-Fi.
+Do not bind CycloneDDS to `wlo1` for bringup, because Wi-Fi loss can break
+local ROS 2 control traffic.
 
 ```bash
 # Create CycloneDDS config file
@@ -311,14 +317,21 @@ cat > ~/cyclonedds.xml << 'EOF'
 <CycloneDDS xmlns="https://cdds.io/config">
   <Domain id="any">
     <General>
-      <NetworkInterfaceAddress>auto</NetworkInterfaceAddress>
+      <Interfaces>
+        <NetworkInterface name="lo"/>
+      </Interfaces>
     </General>
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>64</MaxAutoParticipantIndex>
+    </Discovery>
   </Domain>
 </CycloneDDS>
 EOF
 
 # Add to shell config
 echo "export CYCLONEDDS_URI=~/cyclonedds.xml" >> ~/.bashrc
+echo "export ROS_LOCALHOST_ONLY=0" >> ~/.bashrc
 ```
 
 ---
@@ -346,7 +359,7 @@ ros2 pkg list | grep -E "(f1tenth|vesc|ackermann|livox)"
 
 # Check executables
 ros2 run f1tenth_system pp_param_tuner --help
-ros2 run f1tenth_system current_acc_calib --help
+ros2 run f1tenth_system longitudinal_calib.py --help
 
 # Verify launch files
 ros2 launch f1tenth_system base_orin_livox_bringup_v2.launch.py --show-args

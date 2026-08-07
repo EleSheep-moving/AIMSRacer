@@ -80,18 +80,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # IMU Driver
-    imu_driver = Node(
-        package="wheeltec_n100_imu",
-        executable="imu_node",
-        parameters=[{
-            'if_debug_': False,
-            'serial_port': '/dev/ttyIMU',
-            'serial_baud': 921600
-        }],
-        output="screen"
-    )
-
     ################### Livox LiDAR Configuration ###################
     xfer_format   = 1    # 0-Pointcloud2(PointXYZRTL), 1-customized pointcloud format
     multi_topic   = 0    # 0-All LiDARs share the same topic, 1-One LiDAR one topic
@@ -127,6 +115,13 @@ def generate_launch_description():
         output='screen',
         parameters=livox_ros2_params
     )
+
+    livox_imu_to_ekf_node = Node(
+        package='f1tenth_system',
+        executable='livox_imu_to_ekf.py',
+        name='livox_imu_to_ekf',
+        output='screen'
+    )
     
     # 🆕 使用 joystick_control_v2.py（集成了mux功能）
     joystick_control_v2_node = Node(
@@ -136,23 +131,32 @@ def generate_launch_description():
         output='screen',
         parameters=[
             # 遥控器通道配置
-            {'speed_channel': 3},
-            {'steering_channel': 4},
-            {'channel8_min_value': 191},
-            {'channel8_max_value': 1792},
+            {'speed_channel': 1},
+            {'steering_channel': 2},
+            {'lock_channel': 3},
+            {'esc_mode_channel': 4},
+            {'control_source_channel': 5},
+            {'limit_channel': 6},
+            {'calib_mode_channel': 7},
+            {'limit_min_value': 172},
+            {'limit_max_value': 1810},
+            {'channel_min_range': 172},
+            {'channel_mid': 992},
+            {'channel_max_range': 1810},
+            {'switch_mid_value': 992},
             
             # 速度模式参数
-            {'speed_channel8_min_speed': 2.0},
-            {'speed_channel8_max_speed': 12.0},
+            {'speed_limit_min_speed': 2.0},
+            {'speed_limit_max_speed': 12.0},
             
             # 电流模式参数
-            {'current_channel8_min_current': 3.0},
-            {'current_channel8_max_current': 120.0},
+            {'current_limit_min_current': 3.0},
+            {'current_limit_max_current': 100.0},
             
             # 转向参数
             {'steering_limit': 0.40},
             {'steering_reverse': True},
-            {'steering_channel_mid': 984},
+            {'steering_channel_mid': 992},
             {'channel_deadzone': 100},
             
             # 方向反转
@@ -224,14 +228,14 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_baselink_to_laser',
-        arguments=['0.13', '0.0', '0.03', '0.0', '0.261799', '0.0', 'base_link', 'laser']
+        arguments=['0.13', '0.0', '0.03', '0.0', '0.0', '0.0', 'base_link', 'laser']
     )
     
     static_tf_node_bi = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_baselink_to_imu',
-        arguments=['0.00', '0.0', '0.05', '0.0', '0.0', '0.0', 'base_link', 'imu_link']
+        arguments=['0.13', '0.0', '0.03', '0.0', '0.0', '0.0', 'base_link', 'imu_link']
     )
     
     base_footprint_to_base_link = Node(
@@ -248,7 +252,7 @@ def generate_launch_description():
     ld.add_action(vesc_driver_node)
     ld.add_action(crsf_receiver_node)
     ld.add_action(joystick_control_v2_node)  # 🆕 使用v2版本，无需mux
-    ld.add_action(imu_driver)
+    ld.add_action(livox_imu_to_ekf_node)
     ld.add_action(lidar_driver)
     ld.add_action(robot_localization_node)
     ld.add_action(static_tf_node_bl)

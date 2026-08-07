@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
 """
-Launch file for current-acceleration calibration with physics-based modeling.
+Launch file for longitudinal calibration.
 
-Supports both acceleration and braking calibration modes with three-tier speed collection.
+Starts longitudinal_calib.py, which supports Pure Pursuit auto-loop
+Stage A/B/C calibration plus RC-intervention Stage A/B/C workflows.
 
 Usage:
   ros2 launch f1tenth_system calib_launch.py
   
 Optional arguments:
-  calibration_mode:=acceleration  # Default: acceleration calibration
-  calibration_mode:=braking       # Braking calibration (negative current)
+  workflow:=pp_speed_hold         # pp_speed_hold, pp_accel_interval, pp_decel_current
+                                  # speed_hold, accel_interval, decel_current
   track_radius:=2.0               # Racetrack semicircle radius (m)
   track_straight_length:=6.0      # Racetrack straight length (m)
-  vehicle_mass:=6.0               # Vehicle mass (kg)
   command_frequency:=50           # Control loop frequency (Hz)
+  odom_topic:=/odometry/filtered  # Odometry topic
+  vesc_topic:=/sensors/core       # VESC telemetry topic
+  cmd_topic:=/calib/ackermann_cmd # Calibration command output
   
 Example:
-  ros2 launch f1tenth_system calib_launch.py calibration_mode:=braking
+  ros2 launch f1tenth_system calib_launch.py workflow:=pp_accel_interval
 """
 
 from launch import LaunchDescription
@@ -26,13 +29,13 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    """Generate launch description for physics-based calibration node."""
+    """Generate launch description for the unified calibration node."""
     
     # Declare launch arguments
-    calibration_mode_arg = DeclareLaunchArgument(
-        'calibration_mode',
-        default_value='acceleration',
-        description='Calibration mode: "acceleration" (default) or "braking"'
+    workflow_arg = DeclareLaunchArgument(
+        'workflow',
+        default_value='pp_speed_hold',
+        description='Workflow: pp_speed_hold, pp_accel_interval, pp_decel_current, speed_hold, accel_interval, or decel_current'
     )
     
     wheelbase_arg = DeclareLaunchArgument(
@@ -76,22 +79,34 @@ def generate_launch_description():
         default_value='50',
         description='Control loop frequency (Hz)'
     )
-    
-    vehicle_mass_arg = DeclareLaunchArgument(
-        'vehicle_mass',
-        default_value='6.0',
-        description='Vehicle mass (kg) for physics model'
+
+    odom_topic_arg = DeclareLaunchArgument(
+        'odom_topic',
+        default_value='/odometry/filtered',
+        description='Odometry input topic'
+    )
+
+    vesc_topic_arg = DeclareLaunchArgument(
+        'vesc_topic',
+        default_value='/sensors/core',
+        description='VESC telemetry topic'
+    )
+
+    cmd_topic_arg = DeclareLaunchArgument(
+        'cmd_topic',
+        default_value='/calib/ackermann_cmd',
+        description='Calibration command output topic'
     )
     
-    # Current-acceleration calibration node with physics-based modeling
+    # Unified longitudinal calibration node
     calib_node = Node(
         package='f1tenth_system',
-        executable='current_acc_calib.py',
-        name='current_acc_calib',
+        executable='longitudinal_calib.py',
+        name='longitudinal_calib',
         output='screen',
         parameters=[
             {
-                'calibration_mode': LaunchConfiguration('calibration_mode'),
+                'workflow': LaunchConfiguration('workflow'),
                 'wheelbase': LaunchConfiguration('wheelbase'),
                 'lookahead_gain': LaunchConfiguration('lookahead_gain'),
                 'track_radius': LaunchConfiguration('track_radius'),
@@ -99,20 +114,17 @@ def generate_launch_description():
                 'track_points_per_straight': LaunchConfiguration('track_points_per_straight'),
                 'track_points_per_semicircle': LaunchConfiguration('track_points_per_semicircle'),
                 'command_frequency': LaunchConfiguration('command_frequency'),
-                'vehicle_mass': LaunchConfiguration('vehicle_mass'),
+                'odom_topic': LaunchConfiguration('odom_topic'),
+                'vesc_topic': LaunchConfiguration('vesc_topic'),
+                'cmd_topic': LaunchConfiguration('cmd_topic'),
             }
         ],
-        remappings=[
-            ('/odom', '/odom'),  # EKF-filtered odometry
-            ('/vesc/sensors', '/vesc/sensors'),  # VESC state (ERPM)
-            ('/calib/ackermann_cmd', '/calib/ackermann_cmd'),  # Output command
-        ]
     )
     
     ld = LaunchDescription()
     
     # Add arguments
-    ld.add_action(calibration_mode_arg)
+    ld.add_action(workflow_arg)
     ld.add_action(wheelbase_arg)
     ld.add_action(lookahead_gain_arg)
     ld.add_action(track_radius_arg)
@@ -120,14 +132,18 @@ def generate_launch_description():
     ld.add_action(track_points_per_straight_arg)
     ld.add_action(track_points_per_semicircle_arg)
     ld.add_action(command_frequency_arg)
-    ld.add_action(vehicle_mass_arg)
+    ld.add_action(odom_topic_arg)
+    ld.add_action(vesc_topic_arg)
+    ld.add_action(cmd_topic_arg)
     
     # Add info messages
-    ld.add_action(LogInfo(msg=['Starting Physics-Based Current-Acceleration Calibration']))
-    ld.add_action(LogInfo(msg=['Calibration Mode: ', LaunchConfiguration('calibration_mode')]))
+    ld.add_action(LogInfo(msg=['Starting Unified Longitudinal Calibration']))
+    ld.add_action(LogInfo(msg=['Workflow: ', LaunchConfiguration('workflow')]))
+    ld.add_action(LogInfo(msg=['Odometry Topic: ', LaunchConfiguration('odom_topic')]))
+    ld.add_action(LogInfo(msg=['VESC Topic: ', LaunchConfiguration('vesc_topic')]))
+    ld.add_action(LogInfo(msg=['Command Topic: ', LaunchConfiguration('cmd_topic')]))
     ld.add_action(LogInfo(msg=['Racetrack Radius: ', LaunchConfiguration('track_radius'), ' m']))
     ld.add_action(LogInfo(msg=['Straight Length: ', LaunchConfiguration('track_straight_length'), ' m']))
-    ld.add_action(LogInfo(msg=['Vehicle Mass: ', LaunchConfiguration('vehicle_mass'), ' kg']))
     
     # Add node
     ld.add_action(calib_node)

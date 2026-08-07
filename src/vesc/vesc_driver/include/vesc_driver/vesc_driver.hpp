@@ -90,6 +90,9 @@ private:
   CommandLimit speed_limit_;
   CommandLimit position_limit_;
   CommandLimit servo_limit_;
+  bool command_watchdog_enabled_;
+  double command_timeout_sec_;
+  double watchdog_safe_erpm_;
 
   // ROS services
   rclcpp::Publisher<VescStateStamped>::SharedPtr state_pub_;
@@ -117,6 +120,9 @@ private:
   driver_mode_t driver_mode_;           ///< driver state machine mode (state)
   int fw_version_major_;                ///< firmware major version reported by vesc
   int fw_version_minor_;                ///< firmware minor version reported by vesc
+  rclcpp::Time last_motor_command_time_;
+  bool has_received_motor_command_;
+  bool command_watchdog_active_;
 
   // ROS callbacks
   void brakeCallback(const Float64::SharedPtr brake);
@@ -126,6 +132,8 @@ private:
   void servoCallback(const Float64::SharedPtr servo);
   void speedCallback(const Float64::SharedPtr speed);
   void timerCallback();
+  void markMotorCommandReceived();
+  void checkCommandWatchdog();
 };
 
 }  // namespace vesc_driver
