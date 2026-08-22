@@ -1,9 +1,9 @@
 # 🏎️ AIMSRacer
 
 ## 🌟 Overview
-AIMSRacer is a ROS2- and Nav2-based software stack designed for a rally car and autonomous vehicle development across complex terrain.
+AIMSRacer is a ROS 2 autonomous-racing stack and experimental vehicle platform for RoboRacer competition and high-performance autonomous-driving research. It supports reproducible work on state estimation, LiDAR/stereo perception, vehicle-dynamics calibration, trajectory tracking, motion planning, and learning-based racing.
 
-The hardware setup and basic software framework were developed during my time as a Research Assistant at [ZJU FAST Lab](https://github.com/ZJU-FAST-Lab). I am deeply grateful to the wonderful people at ZJU FAST Lab for their invaluable support and guidance. Currently, I am pursuing my MPhil at PolyU, working in the AIMS Lab. Advanced algorithm development and features will be gradually implemented during my spare time throughout my graduate studies. Stay tuned for more updates!
+The hardware setup and basic software framework were developed during my time as a Research Assistant at [ZJU FAST Lab](https://github.com/ZJU-FAST-Lab). I am deeply grateful to the wonderful people at ZJU FAST Lab for their invaluable support and guidance. The platform is now maintained in PolyU AIMS Lab as a dedicated RoboRacer vehicle for competition development and racing-focused research papers.
 
 ## 📦 Installation
 
@@ -13,20 +13,18 @@ I provide an installation guide [here](install.md) 📖, for ROS2 Humble on Ubun
 
 ## 🔨 Modification & Customization
 
-### 🛠️ Hardware Details
-**💻 Computing Platform:** NVIDIA Orin or NUC (recommended)
+### 🛠️ RoboRacer Platform
+**💻 Computing Platform:** NVIDIA Jetson Orin NX 16 GB
 
-**🔦 Lidar:** mid360 (main sensor)
+**🔦 LiDAR:** Livox Mid-360 (main sensor)
 
-**📷 Camera:** Coming soon...
+**📷 Stereo Camera:** ZED 2i (CUDA/GPU-accelerated depth and perception)
 
 **🧭 IMU:** fdilink Deta10 (optional, yaw estimation)
 
 **🎮 Remote Controller:** RadioMaster Pocket ELRS version (much better than XBOX series controller) 
 
-📝 **For more hardware details:** Coming soon.
-
-### ⚙️ VESC Interface
+### ⚙️ RoboRacer Drive Interface
 The modified VESC interface is based on the VESC interface provided by Veddar VESC Interface. 
 
 **Modifications:**
@@ -287,13 +285,12 @@ This project would not be possible without the use of multiple great open-source
 ---
 
 ## 🚀 Future Work
-- 🌄 Add terrain traversability or elevation estimation module
-- 🛣️ Add flexible path planning module
+- 🏁 Add racing-line estimation and track-boundary perception
+- 🛣️ Add racing-aware trajectory planning and optimization
 - ✅ ~~Add current&acceleration calibration and control module~~ (Completed ✨)
-- 🎮 Use a better simulation environment, like ISAAC Lab, Autodrive
-- 🤖 Use RL to learn end-to-end policies
+- 🎮 Use a racing simulator, such as Isaac Lab or a dedicated track simulator
+- 🤖 Use RL for racing-policy and lap-time optimization
 - 🗺️ Integrate additional LIO backends (LVI-SAM, DLIO, etc.)
-
 
 
 
