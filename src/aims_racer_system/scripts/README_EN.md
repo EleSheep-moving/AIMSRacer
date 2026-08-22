@@ -19,8 +19,8 @@ Both approaches publish the same topic: `/calib/ackermann_cmd` (downstream must 
 These scripts are installed as executables via `ament_python`. After the first use or after script updates, rebuild:
 
 ```bash
-cd ~/RallyCore
-colcon build --packages-select f1tenth_system
+cd ~/AIMSRacer
+colcon build --packages-select aims_racer_system
 ```
 
 Then source in the **current terminal** (pick the one matching your shell):
@@ -52,7 +52,7 @@ This repository uses `AckermannDriveStamped.drive.jerk` as a "mode flag" to mult
 
 ## 0.3) Lateral Grip / Slip Calibration: Fixed-Radius Speed Steps
 
-Script: `src/f1tenth_system/scripts/lateral_grip_calib.py`
+Script: `src/aims_racer_system/scripts/lateral_grip_calib.py`
 
 Purpose: actively drive fixed-radius circles, increase speed step by step, and estimate lateral capacity from **odometry speed + IMU yaw rate**:
 
@@ -75,7 +75,7 @@ Publishes:
 Safety default: with `armed:=false`, the node publishes **no motion command**. It only waits for/checks topics and prints the configuration. Real vehicle runs must explicitly enable arming:
 
 ```bash
-ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+ros2 launch aims_racer_system lateral_grip_calib.launch.py \
    armed:=true \
    vehicle_mass:=4.5 \
    test_radius:=3.0 \
@@ -88,7 +88,7 @@ Common parameters:
 
 ```bash
 # topics / outputs
-ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+ros2 launch aims_racer_system lateral_grip_calib.launch.py \
    armed:=true \
    odom_topic:=/odom \
    imu_topic:=/livox/imu_ekf \
@@ -96,7 +96,7 @@ ros2 launch f1tenth_system lateral_grip_calib.launch.py \
    output_dir:=lateral_grip_run1
 
 # If IMU signs are inverted, validate at low speed and then adjust signs.
-ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+ros2 launch aims_racer_system lateral_grip_calib.launch.py \
    armed:=true \
    imu_yaw_axis_sign:=-1.0 \
    imu_lateral_axis_sign:=1.0
@@ -117,7 +117,7 @@ Slip / limit detection:
 Start with a low-speed sign check:
 
 ```bash
-ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+ros2 launch aims_racer_system lateral_grip_calib.launch.py \
    armed:=true \
    speed_end:=1.5 \
    test_radius:=3.0
@@ -149,7 +149,7 @@ ros2 bag record -o lateral_grip \
 
 #### (1) `longitudinal_calib.py`: Auto loop + segmented current/speed calibration
 
-Script: `src/f1tenth_system/scripts/longitudinal_calib.py`
+Script: `src/aims_racer_system/scripts/longitudinal_calib.py`
 
 Subscribes:
 - `/odom` (`nav_msgs/Odometry`)
@@ -161,20 +161,20 @@ Publishes:
 - `/calib/lookahead_point` (`geometry_msgs/PointStamped`, PP lookahead point for RViz)
 - `/calib/status_text` (`visualization_msgs/Marker`, stage/speed/current status for RViz)
 
-RViz: open `src/f1tenth_system/rviz/pp.rviz`; `Calib Trajectory`, `Calib Lookahead`, and `Calib Status` show the generated path, PP lookahead point, and live speed/current/stage text.
+RViz: open `src/aims_racer_system/rviz/pp.rviz`; `Calib Trajectory`, `Calib Lookahead`, and `Calib Status` show the generated path, PP lookahead point, and live speed/current/stage text.
 
 Recommended three-stage PP workflow:
 
 ```bash
 # Stage A: hold speeds and measure mean current
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=pp_speed_hold \
    -p speeds:="[1,2,3,4,5,6,7,8]" \
    -p hold_time_sec:=10.0 \
    -p output_path:=speed_hold_current_results.txt
 
 # Stage B: current-step acceleration trials based on Stage-A current map
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=pp_accel_interval \
    -p v_start:=1.0 -p v_end:=8.0 -p dv:=1.0 \
    -p base_current_file:=speed_hold_current_results.txt \
@@ -182,7 +182,7 @@ ros2 run f1tenth_system longitudinal_calib.py --ros-args \
    -p output_path:=speed_interval_accel_results.txt
 
 # Stage C: negative-current deceleration trials
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=pp_decel_current \
    -p v_start:=3.0 -p v_end:=8.0 -p dv:=1.0 \
    -p decel_low_speed:=1.0 \
@@ -206,7 +206,7 @@ ros2 param set /longitudinal_calib heading_error_gain 0.1
 ros2 param set /longitudinal_calib curvature_ff_gain 0.1
 
 # PP high-speed steering limit (only limits PP-generated steering)
-ros2 param set /longitudinal_calib max_steering_angle 0.35
+ros2 param set /longitudinal_calib max_steering_angle 0.4751
 ros2 param set /longitudinal_calib steering_limit_start_speed 4.0
 ros2 param set /longitudinal_calib steering_limit_full_speed 6.0
 ros2 param set /longitudinal_calib high_speed_max_steering_angle 0.18
@@ -223,7 +223,7 @@ Logic summary:
 - Closed-loop “stadium / figure-8”: straights for collection, curves for speed-mode recovery/holding.
 - By default, after the first odom message arrives, the trajectory local origin is translated to that odom `(x,y)`. `traj_offset_x/y/yaw` remain live fine-tuning offsets. Set `use_first_odom_as_origin:=false` to restore the old behavior where the trajectory origin is the odom origin.
 - PP defaults now match `pp_param_tuner.py`: `lookahead_gain=1.0`, `max_lookahead=4.5`, and `heading_error_gain=0.1`. If the car oscillates above 2m/s, first watch `ld` in RViz/logs, then slightly increase `lookahead_gain/max_lookahead` or lower `heading_error_gain`.
-- PP steering has a speed-dependent limit: `v<=4.0m/s` allows up to `0.35rad`, `4.0<v<6.0m/s` linearly tightens to `0.18rad`, and `v>=6.0m/s` stays at `0.18rad`. This applies only to `pp_speed_hold / pp_accel_interval / pp_decel_current`; RC/manual no-localization workflows are unchanged.
+- PP steering has a speed-dependent limit: `v<=4.0m/s` allows up to `0.4751rad` (derived from the `0.36m` wheelbase and measured `0.70m` minimum turn radius), `4.0<v<6.0m/s` linearly tightens to `0.18rad`, and `v>=6.0m/s` stays at `0.18rad`. This applies only to `pp_speed_hold / pp_accel_interval / pp_decel_current`; RC/manual no-localization workflows are unchanged.
 - `/calib/status_text` and node logs show raw steering, effective `steer_limit`, `ld`, and whether the command was `clipped`.
 - **Stage A / `pp_speed_hold`**: for each speed point, stabilize first, then accumulate `hold_time_sec` of current samples only on straights.
 - **Stage B / `pp_accel_interval`**: for each `v0→v1` interval, reset to `v0`, then run current-mode trials only on straights; entering a curve aborts the current trial and resets to `v0`.
@@ -248,12 +248,12 @@ ros2 bag record -o pp_calib \
 
 #### (2) `pp_param_tuner.py`: PP parameter tuning helper (optional but strongly recommended)
 
-Script: `src/f1tenth_system/scripts/pp_param_tuner.py`
+Script: `src/aims_racer_system/scripts/pp_param_tuner.py`
 
 Note: default interface differs from the calibration node:
 - Subscribes: `/odometry/filtered`
 - Publishes: `/drive`
-- Visualization: `/calib/current_trajectory`, `/calib/lookahead_point`, and `/calib/status_text`, matching `longitudinal_calib.py` and `src/f1tenth_system/rviz/pp.rviz`.
+- Visualization: `/calib/current_trajectory`, `/calib/lookahead_point`, and `/calib/status_text`, matching `longitudinal_calib.py` and `src/aims_racer_system/rviz/pp.rviz`.
 - Shutdown: on Ctrl-C / node exit, it publishes repeated stop commands with `speed=0`.
 
 If your system uses `/odom` or needs output to `/ackermann_cmd`, use remap/bridge without changing code.
@@ -261,13 +261,13 @@ If your system uses `/odom` or needs output to `/ackermann_cmd`, use remap/bridg
 Quick run:
 
 ```bash
-ros2 run f1tenth_system pp_param_tuner.py --ros-args -p target_speed:=2.0
+ros2 run aims_racer_system pp_param_tuner.py --ros-args -p target_speed:=2.0
 ```
 
 The tuner uses the same high-speed steering limit defaults and supports live tuning:
 
 ```bash
-ros2 param set /pp_param_tuner max_steering_angle 0.35
+ros2 param set /pp_param_tuner max_steering_angle 0.4751
 ros2 param set /pp_param_tuner steering_limit_start_speed 4.0
 ros2 param set /pp_param_tuner steering_limit_full_speed 6.0
 ros2 param set /pp_param_tuner high_speed_max_steering_angle 0.18
@@ -278,11 +278,11 @@ Remap examples:
 
 ```bash
 # 1) Use /odom instead of /odometry/filtered
-ros2 run f1tenth_system pp_param_tuner.py --ros-args \
+ros2 run aims_racer_system pp_param_tuner.py --ros-args \
    -r /odometry/filtered:=/odom
 
 # 2) Publish to /ackermann_cmd instead of /drive
-ros2 run f1tenth_system pp_param_tuner.py --ros-args \
+ros2 run aims_racer_system pp_param_tuner.py --ros-args \
    -r /drive:=/ackermann_cmd
 ```
 
@@ -314,12 +314,12 @@ When the previous methods do not work well, use this two-stage workflow.
 
 Goal: on straight segments (`steering=0`), measure the mean current required to hold each speed.
 
-Script: `src/f1tenth_system/scripts/longitudinal_calib.py`
+Script: `src/aims_racer_system/scripts/longitudinal_calib.py`
 
 Run example:
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=speed_hold \
    -p speeds:="[1,2,3,4,5,6,7,8]" \
    -p hold_time_sec:=10.0 \
@@ -331,7 +331,7 @@ ros2 run f1tenth_system longitudinal_calib.py --ros-args \
 If you must enable RC steering intervention:
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=speed_hold \
    -p use_rc_steering:=true \
    -p rc_topic:=/rc/channels \
@@ -396,12 +396,12 @@ Goal: for each interval (1→2, 2→3, …), start near the Stage-A baseline cur
 
 If the baseline current is already known to only hold speed and does not need to be repeated, set `current_start_step_index:=1` so each interval starts from `base_current + current_step`. The default `0` still starts from `base_current`.
 
-Script: `src/f1tenth_system/scripts/longitudinal_calib.py`
+Script: `src/aims_racer_system/scripts/longitudinal_calib.py`
 
 Run example:
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=accel_interval \
    -p v_start:=1.0 -p v_end:=8.0 -p dv:=1.0 \
    -p base_current_file:=speed_hold_current_results.txt \
@@ -414,7 +414,7 @@ ros2 run f1tenth_system longitudinal_calib.py --ros-args \
 If you must enable RC steering intervention and only run trials on straights:
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=accel_interval \
    -p use_rc_steering:=true \
    -p rc_topic:=/rc/channels \
@@ -433,7 +433,7 @@ Notes:
 
 ### 3.3 Offline Longitudinal Model Verification
 
-Script: `src/f1tenth_system/scripts/longitudinal_model_verify.py`
+Script: `src/aims_racer_system/scripts/longitudinal_model_verify.py`
 
 The first-pass model intentionally keeps temperature out of the main fit and compares three net-current models:
 
@@ -455,7 +455,7 @@ I_cmd = I0(v,V) + a_ref / k_eff(v,V)
 CSV-only quick check:
 
 ```bash
-python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
+python3 src/aims_racer_system/scripts/longitudinal_model_verify.py \
    --base speed_hold_current_results.txt \
    --samples speed_interval_accel_samples.csv \
    --valid-v-end 6.0 \
@@ -465,9 +465,9 @@ python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
 Recommended bag-based check with measured `avg_iq / voltage / duty / accel_fit`:
 
 ```bash
-python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
+python3 src/aims_racer_system/scripts/longitudinal_model_verify.py \
    --base speed_hold_current_results.txt \
-   --bag /home/nuc/RallyCore/bag/pp_accel_interval2 \
+   --bag /home/nuc/AIMSRacer/bag/pp_accel_interval2 \
    --valid-v-end 6.0 \
    --model-accel-max 2.5 \
    --out-prefix longitudinal_model_verify_bag
@@ -476,9 +476,9 @@ python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
 Recommended multi-bag voltage-modulation check:
 
 ```bash
-python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
+python3 src/aims_racer_system/scripts/longitudinal_model_verify.py \
    --base speed_hold_current_results.txt \
-   --bags /home/nuc/RallyCore/bag/pp_accel_interval1 /home/nuc/RallyCore/bag/pp_accel_interval2 \
+   --bags /home/nuc/AIMSRacer/bag/pp_accel_interval1 /home/nuc/AIMSRacer/bag/pp_accel_interval2 \
    --valid-v-end 6.0 \
    --model-accel-max 2.5 \
    --out-prefix longitudinal_model_verify_pp_accel_1_2_voltage
@@ -642,7 +642,7 @@ These nodes only publish `/calib/ackermann_cmd`. If your control chain uses a di
 Example (remap to the actual command input):
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py \
+ros2 run aims_racer_system longitudinal_calib.py \
   --ros-args -p workflow:=speed_hold \
   -r /calib/ackermann_cmd:=/ackermann_cmd
 ```

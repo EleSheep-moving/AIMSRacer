@@ -30,7 +30,7 @@ import os
 def generate_launch_description():
 
     vesc_config = os.path.join(
-        get_package_share_directory('f1tenth_system'),
+        get_package_share_directory('aims_racer_system'),
         'params',
         'vesc.yaml'
     )
@@ -42,15 +42,15 @@ def generate_launch_description():
 
     # Declare config paths for LIO and Localizer
     lio_config = os.path.join(
-        get_package_share_directory('f1tenth_system'),
+        get_package_share_directory('aims_racer_system'),
         'params',
         'fastlio.yaml'
     )
     
-    pgo_config = os.path.join(
-        get_package_share_directory('f1tenth_system'),
+    localizer_config = os.path.join(
+        get_package_share_directory('aims_racer_system'),
         'params',
-        'pgo.yaml'
+        'fastlio_localizer.yaml'
     )
 
     lio_la = DeclareLaunchArgument(
@@ -59,13 +59,13 @@ def generate_launch_description():
         description='Configuration for LIO node'
     )
 
-    pgo_la = DeclareLaunchArgument(
-        'pgo_config',
-        default_value=pgo_config,
-        description='Configuration for PGO node'
+    localizer_la = DeclareLaunchArgument(
+        'localizer_config',
+        default_value=localizer_config,
+        description='Configuration for Localizer node'
     )
 
-    ld = LaunchDescription([vesc_la, lio_la, pgo_la])
+    ld = LaunchDescription([vesc_la, lio_la, localizer_la])
 
     # CRSF Receiver (ELRS遥控器接收器)
     crsf_receiver_node = Node(
@@ -74,7 +74,7 @@ def generate_launch_description():
         name='crsf_receiver_node',
         parameters=[
             {'device': '/dev/ttyELRS'},
-            {'baud_rate': 420000},
+            {'baudrate': 420000},
             {'link_stats': True}
         ],
         output='screen'
@@ -91,7 +91,7 @@ def generate_launch_description():
     cmdline_bd_code = 'livox0000000001'
 
     user_config_path = os.path.join(
-        get_package_share_directory("f1tenth_system"), 
+        get_package_share_directory("aims_racer_system"),
         'params', 
         'MID360_config.json'
     )
@@ -117,27 +117,19 @@ def generate_launch_description():
     )
 
     livox_imu_to_ekf_node = Node(
-        package='f1tenth_system',
+        package='aims_racer_system',
         executable='livox_imu_to_ekf.py',
         name='livox_imu_to_ekf',
         output='screen'
     )
     
-    # 🆕 使用 joystick_control_v2.py（集成了mux功能）
+    # 当前车辆：CH3 油门、CH1 转向、CH8 标定、CH10 限幅。
     joystick_control_v2_node = Node(
         package='ackermann_mux',
-        executable='joystick_control_v2.py',
-        name='joystick_control_v2',
+        executable='joystick_control_v2_ch3_ch1.py',
+        name='joystick_control_v2_ch3_ch1',
         output='screen',
         parameters=[
-            # 遥控器通道配置
-            {'speed_channel': 1},
-            {'steering_channel': 2},
-            {'lock_channel': 3},
-            {'esc_mode_channel': 4},
-            {'control_source_channel': 5},
-            {'limit_channel': 6},
-            {'calib_mode_channel': 7},
             {'limit_min_value': 172},
             {'limit_max_value': 1810},
             {'channel_min_range': 172},
@@ -151,22 +143,24 @@ def generate_launch_description():
             
             # 电流模式参数
             {'current_limit_min_current': 3.0},
-            {'current_limit_max_current': 20.0},
-            
-            # 占空比模式参数
-            {'duty_channel8_min_duty': 0.05},
-            {'duty_channel8_max_duty': 0.3},
+            {'current_limit_max_current': 100.0},
             
             # 转向参数
-            {'steering_channel_8_min_value': -0.35},
-            {'steering_channel_8_max_value': 0.35},
+            {'steering_limit': 0.4751},
+            {'steering_reverse': True},
+            {'steering_channel_mid': 992},
+            {'channel_deadzone': 100},
             
-            # 控制模式选择 (SPEED, CURRENT, DUTY)
-            {'esc_mode': 'SPEED'}
+            # 方向反转
+            {'direction_reverse': False},
+        ],
+        remappings=[
+            # joystick_control_v2输出 -> vesc输入
+            ('/ackermann_cmd', '/ackermann_cmd'),
         ]
     )
     
-    # VESC Ackermann Driver
+    # VESC驱动节点
     ackermann_to_vesc_node = Node(
         package='vesc_ackermann',
         executable='ackermann_to_vesc_node',
@@ -185,12 +179,24 @@ def generate_launch_description():
         package='vesc_driver',
         executable='vesc_driver_node',
         name='vesc_driver_node',
-        output='screen',
         parameters=[LaunchConfiguration('vesc_config')]
     )
-
-    # FAST-LIO2 Mapping Node
-    lio_node = Node(
+    
+    # EKF融合里程计
+    robot_localization_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[os.path.join(
+            get_package_share_directory("aims_racer_system"),
+            'params', 
+            'ekf.yaml'
+        )],
+    )
+    
+    # FAST-LIO2 (如果需要建图/定位)
+    lio = Node(
         package="fastlio2",
         namespace="fastlio2",
         executable="lio_node",
@@ -198,18 +204,18 @@ def generate_launch_description():
         output="screen",
         parameters=[{'config_path': LaunchConfiguration('lio_config')}]
     )
-    
-    # PGO (Pose Graph Optimization) Node for Loop Closure
-    pgo_node = Node(
-        package="pgo",
-        namespace="pgo",
-        executable="pgo_node",
-        name="pgo_node",
+
+    # Localizer (重定位节点)
+    localizer_node = Node(
+        package="localizer",
+        namespace="localizer",
+        executable="localizer_node",
+        name="localizer_node",
         output="screen",
-        parameters=[{'config_path': LaunchConfiguration('pgo_config')}]
+        parameters=[{'config_path': LaunchConfiguration('localizer_config')}]
     )
 
-    # Static TF: base_link -> laser
+    # 静态TF变换
     static_tf_node_bl = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -217,7 +223,6 @@ def generate_launch_description():
         arguments=['0.13', '0.0', '0.03', '0.0', '0.0', '0.0', 'base_link', 'laser']
     )
     
-    # Static TF: base_link -> imu_link
     static_tf_node_bi = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -225,7 +230,6 @@ def generate_launch_description():
         arguments=['0.13', '0.0', '0.03', '0.0', '0.0', '0.0', 'base_link', 'imu_link']
     )
     
-    # Static TF: base_link -> base_footprint
     base_footprint_to_base_link = Node(
         package="tf2_ros", 
         executable="static_transform_publisher",
@@ -233,26 +237,18 @@ def generate_launch_description():
         arguments=["0", "0", "0", "0", "0", "0", "base_link", "base_footprint"]
     )
 
-    # Add all nodes to launch description
-    ld.add_action(crsf_receiver_node)
-    ld.add_action(livox_imu_to_ekf_node)
-    ld.add_action(lidar_driver)
-    
-    ld.add_action(joystick_control_v2_node)
-    
+    # 添加所有节点到LaunchDescription
+    ld.add_action(base_footprint_to_base_link)
     ld.add_action(ackermann_to_vesc_node)
     ld.add_action(vesc_to_odom_node)
     ld.add_action(vesc_driver_node)
-    
-    # Note: robot_localization EKF is not needed for mapping
-    # LIO provides high-rate odometry directly
-    # If 3D terrain navigation is needed, consider adding EKF back
-    
-    ld.add_action(lio_node)
-    ld.add_action(pgo_node)
-    
+    ld.add_action(crsf_receiver_node)
+    ld.add_action(joystick_control_v2_node)  # 🆕 使用v2版本，无需mux
+    ld.add_action(livox_imu_to_ekf_node)
+    ld.add_action(lidar_driver)
+    ld.add_action(robot_localization_node)
     ld.add_action(static_tf_node_bl)
     ld.add_action(static_tf_node_bi)
-    ld.add_action(base_footprint_to_base_link)
+    ld.add_action(lio)
 
     return ld

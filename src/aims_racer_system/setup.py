@@ -88,7 +88,7 @@ class ColconDevelopCompat(setuptools_develop):
             if os.path.lexists(dst):
                 os.remove(dst)
 
-package_name = "f1tenth_system"
+package_name = "aims_racer_system"
 
 setup(
     name=package_name,
@@ -123,7 +123,7 @@ setup(
     zip_safe=True,
     maintainer="EleSheep",
     maintainer_email="ZhizhaoZhang@gmail.com",
-    description="TODO: Package description",
+    description="AIMSRacer vehicle bringup, localization, navigation, and calibration tools.",
     license="MIT",
     extras_require={
         "test": ["pytest"],

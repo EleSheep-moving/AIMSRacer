@@ -310,14 +310,14 @@ class Figure8Trajectory:
 class PurePursuitController:
     def __init__(
         self,
-        wheelbase: float = 0.33,
+        wheelbase: float = 0.36,
         lookahead_gain: float = 1.0,
         min_lookahead: float = 0.3,
         max_lookahead: float = 4.5,
         lateral_error_gain: float = 1.0,
         heading_error_gain: float = 0.1,
         curvature_ff_gain: float = 0.1,
-        max_steering: float = 0.35,
+        max_steering: float = 0.4751,
         steering_limit_start_speed: float = 4.0,
         steering_limit_full_speed: float = 6.0,
         high_speed_max_steering: float = 0.18,
@@ -472,7 +472,7 @@ class LongitudinalCalibNode(Node):
             self.declare_parameter("post_turn_settle_sec", 0.8).value
         )
         self.steering_channel = int(self.declare_parameter("steering_channel", 4).value)
-        self.steering_limit = float(self.declare_parameter("steering_limit", 0.40).value)
+        self.steering_limit = float(self.declare_parameter("steering_limit", 0.4751).value)
         self.steering_reverse = bool(self.declare_parameter("steering_reverse", True).value)
         self.channel_mid = int(self.declare_parameter("steering_channel_mid", 968).value)
         self.channel_deadzone = int(self.declare_parameter("channel_deadzone", 100).value)
@@ -651,7 +651,7 @@ class LongitudinalCalibNode(Node):
         self._phase_t0 = self.get_clock().now()
 
     def _init_pp_workflow(self) -> None:
-        self.wheelbase = self.declare_parameter("wheelbase", 0.33).value
+        self.wheelbase = self.declare_parameter("wheelbase", 0.36).value
         self.lookahead_gain = self.declare_parameter("lookahead_gain", 1.0).value
         self.min_lookahead = self.declare_parameter("min_lookahead", 0.3).value
         self.max_lookahead = self.declare_parameter("max_lookahead", 4.5).value
@@ -659,7 +659,7 @@ class LongitudinalCalibNode(Node):
         self.heading_error_gain = self.declare_parameter("heading_error_gain", 0.1).value
         self.curvature_ff_gain = self.declare_parameter("curvature_ff_gain", 0.1).value
         self.max_steering_angle = float(
-            self.declare_parameter("max_steering_angle", 0.35).value
+            self.declare_parameter("max_steering_angle", 0.4751).value
         )
         self.steering_limit_start_speed = float(
             self.declare_parameter("steering_limit_start_speed", 4.0).value
@@ -2047,19 +2047,19 @@ def main(args=None) -> None:
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info("KeyboardInterrupt -> stopping")
-        node._finish("KeyboardInterrupt")
+        if rclpy.ok():
+            node.get_logger().info("KeyboardInterrupt -> stopping")
+            node._finish("KeyboardInterrupt")
     finally:
-        try:
-            node._publish_stop()
-            node.get_logger().info("Published stop command: speed=0")
-        except Exception as exc:
-            node.get_logger().warn(f"Failed to publish stop command during shutdown: {exc}")
+        if rclpy.ok():
+            try:
+                node._publish_stop()
+                node.get_logger().info("Published stop command: speed=0")
+            except Exception as exc:
+                node.get_logger().warn(f"Failed to publish stop command during shutdown: {exc}")
         node.destroy_node()
-        try:
+        if rclpy.ok():
             rclpy.shutdown()
-        except Exception:
-            pass
 
 
 if __name__ == "__main__":

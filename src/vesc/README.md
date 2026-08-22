@@ -14,7 +14,7 @@ This is a ROS2 implementation of the ROS1 driver using the new serial driver loc
 4. Modify `vesc/vesc_driver/params/vesc_config.yaml` to reflect any changes.
 5. Build the packages `colcon build`
 6. `ros2 launch vesc_driver vesc_driver_node.launch.py`
-7. If prompted "permission denied" on the serial port: `sudo chmod 777 /dev/ttyACM0`
+7. Install the repository's `rules/99-vesc.rules` udev rule and use `/dev/ttyVESC`; do not grant the serial device mode `0777`.
 
 ## Modification
 1. Modify the odometry computation, as the original method causes a speed delay when decelerating from high velocities to a stop.

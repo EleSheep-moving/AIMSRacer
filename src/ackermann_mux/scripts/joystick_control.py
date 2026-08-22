@@ -34,7 +34,7 @@ class JoystickControl(Node):
         self.speed_channel8_max_value = self.declare_parameter("speed_channel8_max_value", 1792).value
         self.speed_channel8_min_speed = self.declare_parameter("speed_channel8_min_speed", 2.0).value
         self.speed_channel8_max_speed = self.declare_parameter("speed_channel8_max_speed", 12.0).value
-        self.steering_limit = self.declare_parameter("steering_limit", 0.40).value
+        self.steering_limit = self.declare_parameter("steering_limit", 0.4751).value
         self.steering_reverse = self.declare_parameter("steering_reverse", True).value
         self.channel_mid = self.declare_parameter(
             "steering_channel_mid", 984

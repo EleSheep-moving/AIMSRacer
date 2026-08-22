@@ -33,7 +33,7 @@ import os
 def generate_launch_description():
 
     vesc_config = os.path.join(
-        get_package_share_directory('f1tenth_system'),
+        get_package_share_directory('aims_racer_system'),
         'params',
         'vesc.yaml'
     )
@@ -44,7 +44,7 @@ def generate_launch_description():
         description='Descriptions for vesc configs')
 
     mux_config = os.path.join(
-        get_package_share_directory('f1tenth_system'),
+        get_package_share_directory('aims_racer_system'),
         'params',
         'mux.yaml'
     )
@@ -56,13 +56,13 @@ def generate_launch_description():
 
     # Declare config paths for LIO and Localizer
     lio_config = os.path.join(
-        get_package_share_directory('f1tenth_system'),
+        get_package_share_directory('aims_racer_system'),
         'params',
         'fastlio.yaml'
     )
     
     localizer_config = os.path.join(
-        get_package_share_directory('f1tenth_system'),
+        get_package_share_directory('aims_racer_system'),
         'params',
         'fastlio_localizer.yaml'
     )
@@ -87,7 +87,7 @@ def generate_launch_description():
         name='crsf_receiver_node',
         parameters=[
             {'device': '/dev/ttyELRS'},
-            {'baud_rate': 420000},
+            {'baudrate': 420000},
             {'link_stats': True}
         ],
         output='screen'
@@ -106,7 +106,7 @@ def generate_launch_description():
     # cur_path = os.path.split(os.path.realpath(__file__))[0] + '/'
     # cur_config_path = cur_path + '../config'
     # user_config_path = os.path.join(cur_config_path, 'MID360_config.json')
-    user_config_path = os.path.join(get_package_share_directory("f1tenth_system"), 'params', 'MID360_config.json')
+    user_config_path = os.path.join(get_package_share_directory("aims_racer_system"), 'params', 'MID360_config.json')
     ################### user configure parameters for ros2 end #####################
 
     livox_ros2_params = [
@@ -130,7 +130,7 @@ def generate_launch_description():
             )
 
     livox_imu_to_ekf_node = Node(
-        package='f1tenth_system',
+        package='aims_racer_system',
         executable='livox_imu_to_ekf.py',
         name='livox_imu_to_ekf',
         output='screen'
@@ -175,7 +175,7 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         output='screen',
-        parameters=[os.path.join(get_package_share_directory("f1tenth_system"), 'params', 'ekf.yaml')],
+        parameters=[os.path.join(get_package_share_directory("aims_racer_system"), 'params', 'ekf.yaml')],
     )
     
     lio = Node(
@@ -231,35 +231,5 @@ def generate_launch_description():
 
     ld.add_action(static_tf_node_bl)
     ld.add_action(static_tf_node_bi)
-
-    CmdVelToAckermannDrive = Node(
-        package="ackermann_mux",
-        executable="cmd_vel_to_ackermann_drive.py",
-        name="cmd_vel_to_ackermann_drive_node",
-        output="screen",
-    )
-    ld.add_action(CmdVelToAckermannDrive)
-
-    pc2laser = Node(
-            package='pointcloud_to_laserscan', executable='pointcloud_to_laserscan_node',
-            remappings=[('cloud_in', '/fastlio2/body_cloud'),
-                        ('scan', '/scan')],
-            parameters=[{
-                'target_frame': 'laser',
-                'transform_tolerance': 0.01,
-                'min_height': 0.0,
-                'max_height': 1.0,
-                'angle_min': -1.5708,  # -M_PI/2
-                'angle_max': 1.5708,  # M_PI/2
-                'angle_increment': 0.0087,  # M_PI/360.0
-                'scan_time': 0.1,
-                'range_min': 0.1,
-                'range_max': 10.0,
-                'use_inf': True,
-                'inf_epsilon': 1.0
-            }],
-            name='pointcloud_to_laserscan'
-        )
-    ld.add_action(pc2laser)
 
     return ld

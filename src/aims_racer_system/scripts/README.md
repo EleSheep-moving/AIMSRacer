@@ -19,8 +19,8 @@
 本目录脚本通过 `ament_python` 安装为可执行文件，首次使用或脚本更新后请先编译：
 
 ```bash
-cd ~/RallyCore
-colcon build --packages-select f1tenth_system
+cd ~/AIMSRacer
+colcon build --packages-select aims_racer_system
 ```
 
 然后在**当前终端** `source`（按你当前 shell 选择对应脚本）：
@@ -52,7 +52,7 @@ source install/setup.zsh
 
 ## 0.3) 横向附着 / 侧滑标定：固定半径圆逐级升速
 
-脚本：`src/f1tenth_system/scripts/lateral_grip_calib.py`
+脚本：`src/aims_racer_system/scripts/lateral_grip_calib.py`
 
 用途：主动跑固定半径圆，逐级提高速度，并用 **odom 速度 + IMU yaw rate** 估算横向能力：
 
@@ -75,7 +75,7 @@ source install/setup.zsh
 安全默认：`armed:=false` 时**不会发布运动命令**，只等待/检查 topic 并打印配置。实车运行必须显式打开：
 
 ```bash
-ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+ros2 launch aims_racer_system lateral_grip_calib.launch.py \
    armed:=true \
    vehicle_mass:=4.5 \
    test_radius:=3.0 \
@@ -88,7 +88,7 @@ ros2 launch f1tenth_system lateral_grip_calib.launch.py \
 
 ```bash
 # topic / 输出
-ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+ros2 launch aims_racer_system lateral_grip_calib.launch.py \
    armed:=true \
    odom_topic:=/odom \
    imu_topic:=/livox/imu_ekf \
@@ -96,7 +96,7 @@ ros2 launch f1tenth_system lateral_grip_calib.launch.py \
    output_dir:=lateral_grip_run1
 
 # 如果 IMU 方向相反，可先低速验证后调整符号
-ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+ros2 launch aims_racer_system lateral_grip_calib.launch.py \
    armed:=true \
    imu_yaw_axis_sign:=-1.0 \
    imu_lateral_axis_sign:=1.0
@@ -117,7 +117,7 @@ ros2 launch f1tenth_system lateral_grip_calib.launch.py \
 建议先低速验证方向和符号：
 
 ```bash
-ros2 launch f1tenth_system lateral_grip_calib.launch.py \
+ros2 launch aims_racer_system lateral_grip_calib.launch.py \
    armed:=true \
    speed_end:=1.5 \
    test_radius:=3.0
@@ -148,7 +148,7 @@ ros2 bag record -o lateral_grip \
 
 #### (1) `longitudinal_calib.py`：自动跑圈 + 电流/速度分段标定
 
-脚本：`src/f1tenth_system/scripts/longitudinal_calib.py`
+脚本：`src/aims_racer_system/scripts/longitudinal_calib.py`
 
 订阅：
 - `/odom`（`nav_msgs/Odometry`）
@@ -160,20 +160,20 @@ ros2 bag record -o lateral_grip \
 - `/calib/lookahead_point`（`geometry_msgs/PointStamped`，用于 RViz 显示 PP 前视点）
 - `/calib/status_text`（`visualization_msgs/Marker`，用于 RViz 显示阶段、速度、电流状态）
 
-RViz：可直接打开 `src/f1tenth_system/rviz/pp.rviz`，其中 `Calib Trajectory` / `Calib Lookahead` / `Calib Status` 分别显示全局轨迹、PP 前视点、当前速度/目标速度/电流/阶段状态。
+RViz：可直接打开 `src/aims_racer_system/rviz/pp.rviz`，其中 `Calib Trajectory` / `Calib Lookahead` / `Calib Status` 分别显示全局轨迹、PP 前视点、当前速度/目标速度/电流/阶段状态。
 
 推荐按三阶段运行：
 
 ```bash
 # Stage A：定速保持，统计每个速度点的平均电流
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=pp_speed_hold \
    -p speeds:="[1,2,3,4,5,6]" \
    -p hold_time_sec:=10.0 \
    -p output_path:=speed_hold_current_results.txt
 
 # Stage B：基于 Stage A 的保持电流，对速度区间做电流阶梯加速试验
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=pp_accel_interval \
    -p v_start:=1.0 -p v_end:=6.0 -p dv:=1.0 \
    -p base_current_file:=speed_hold_current_results.txt \
@@ -181,7 +181,7 @@ ros2 run f1tenth_system longitudinal_calib.py --ros-args \
    -p output_path:=speed_interval_accel_results.txt
 
 # Stage C：负电流减速试验
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=pp_decel_current \
    -p v_start:=3.0 -p v_end:=8.0 -p dv:=1.0 \
    -p decel_low_speed:=1.0 \
@@ -205,7 +205,7 @@ ros2 param set /longitudinal_calib heading_error_gain 0.1
 ros2 param set /longitudinal_calib curvature_ff_gain 0.1
 
 # PP 高速转向限幅（只限制 PP 自动生成的 steering）
-ros2 param set /longitudinal_calib max_steering_angle 0.35
+ros2 param set /longitudinal_calib max_steering_angle 0.4751
 ros2 param set /longitudinal_calib steering_limit_start_speed 4.0
 ros2 param set /longitudinal_calib steering_limit_full_speed 6.0
 ros2 param set /longitudinal_calib high_speed_max_steering_angle 0.18
@@ -222,7 +222,7 @@ ros2 param set /longitudinal_calib traj_offset_yaw 0.0
 - 轨迹为“跑道/8字”闭环：直线段用于采集，弯道段自动 speed mode 通过。
 - 轨迹默认在收到第一帧 odom 后，把局部原点平移到该 odom 的 `(x,y)`；`traj_offset_x/y/yaw` 仍可在线微调。如果要恢复“以 odom 原点为轨迹原点”的旧行为，设置 `use_first_odom_as_origin:=false`。
 - PP 默认参数已和 `pp_param_tuner.py` 对齐：`lookahead_gain=1.0`、`max_lookahead=4.5`、`heading_error_gain=0.1`。如果超过 2m/s 左右震荡，优先观察日志/RViz 里的 `ld`，再小幅增加 `lookahead_gain/max_lookahead` 或降低 `heading_error_gain`。
-- PP 自动转向带速度相关限幅：`v<=4.0m/s` 时最大 `0.35rad`，`4.0<v<6.0m/s` 线性收紧到 `0.18rad`，`v>=6.0m/s` 保持 `0.18rad`。该限制只作用于 `pp_speed_hold / pp_accel_interval / pp_decel_current`，不影响 RC/manual 无定位 workflow。
+- PP 自动转向带速度相关限幅：`v<=4.0m/s` 时最大 `0.4751rad`（由 `0.36m` 轴距和实测 `0.70m` 最小转弯半径换算），`4.0<v<6.0m/s` 线性收紧到 `0.18rad`，`v>=6.0m/s` 保持 `0.18rad`。该限制只作用于 `pp_speed_hold / pp_accel_interval / pp_decel_current`，不影响 RC/manual 无定位 workflow。
 - `/calib/status_text` 和节点日志会显示 `raw steering`、当前 `steer_limit`、`ld` 以及 `clipped`，用于确认高速是否被限幅、lookahead 是否合适。
 - **Stage A / `pp_speed_hold`**：每个速度点先稳定，再只在直线累计 `hold_time_sec` 的电流样本，输出 `speed_hold_current_results.txt`。
 - **Stage B / `pp_accel_interval`**：每个区间 `v0→v1` 先回到 `v0`，再只在直线用 current mode 做阶梯电流 trial；入弯会中止当前 trial 并回到 `v0` 重来。
@@ -247,14 +247,14 @@ ros2 bag record -o pp_calib \
 
 #### (2) `pp_param_tuner.py`：仅用于 Pure Pursuit 参数调参（非必需，但强烈建议先跑）
 
-脚本：`src/f1tenth_system/scripts/pp_param_tuner.py`
+脚本：`src/aims_racer_system/scripts/pp_param_tuner.py`
 
 用途：把 PP 的 lookahead / gain / 高速转向限幅 / 轨迹尺寸等调到“不会扭来扭去、不会冲出弯”的状态，再去跑 `longitudinal_calib.py` 的标定采集。
 
 注意：该节点默认接口与标定节点不同：
 - 订阅：`/odometry/filtered`
 - 发布：`/drive`
-- 可视化：`/calib/current_trajectory`、`/calib/lookahead_point`、`/calib/status_text`，与 `longitudinal_calib.py` 和 `src/f1tenth_system/rviz/pp.rviz` 保持一致。
+- 可视化：`/calib/current_trajectory`、`/calib/lookahead_point`、`/calib/status_text`，与 `longitudinal_calib.py` 和 `src/aims_racer_system/rviz/pp.rviz` 保持一致。
 - 退出：Ctrl-C / 节点退出时会连续发布 `speed=0` 的停止命令。
 
 如果你的系统实际使用的是 `/odom` 或需要输出到 `/ackermann_cmd`，建议用 remap/bridge 适配（不改代码）。
@@ -262,13 +262,13 @@ ros2 bag record -o pp_calib \
 快速运行：
 
 ```bash
-ros2 run f1tenth_system pp_param_tuner.py --ros-args -p target_speed:=2.0
+ros2 run aims_racer_system pp_param_tuner.py --ros-args -p target_speed:=2.0
 ```
 
 调参节点使用同一套高速转向限幅默认值，也可以在线调整：
 
 ```bash
-ros2 param set /pp_param_tuner max_steering_angle 0.35
+ros2 param set /pp_param_tuner max_steering_angle 0.4751
 ros2 param set /pp_param_tuner steering_limit_start_speed 4.0
 ros2 param set /pp_param_tuner steering_limit_full_speed 6.0
 ros2 param set /pp_param_tuner high_speed_max_steering_angle 0.18
@@ -284,11 +284,11 @@ ros2 param set /pp_param_tuner use_first_odom_as_origin true
 
 ```bash
 # 1) 如果你的定位里程计话题是 /odom（pp_param_tuner 默认订阅 /odometry/filtered）
-ros2 run f1tenth_system pp_param_tuner.py --ros-args \
+ros2 run aims_racer_system pp_param_tuner.py --ros-args \
    -r /odometry/filtered:=/odom
 
 # 2) 如果你的车辆执行入口是 /ackermann_cmd（pp_param_tuner 默认发布 /drive）
-ros2 run f1tenth_system pp_param_tuner.py --ros-args \
+ros2 run aims_racer_system pp_param_tuner.py --ros-args \
    -r /drive:=/ackermann_cmd
 ```
 
@@ -326,12 +326,12 @@ RC 介入逻辑（与中控配合）：
 
 > 如果开启了 `use_rc_steering:=true`：脚本会在“转弯（出死区）”期间不采样；并在“转弯结束回到直线（进死区）”后额外等待 `post_turn_settle_sec`，再开始采样，避免弯道残余电流抬升污染结果。
 
-脚本：`src/f1tenth_system/scripts/longitudinal_calib.py`
+脚本：`src/aims_racer_system/scripts/longitudinal_calib.py`
 
 运行示例：
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=speed_hold \
    -p speeds:="[1,2,3,4,5,6,7,8]" \
    -p hold_time_sec:=10.0 \
@@ -343,7 +343,7 @@ ros2 run f1tenth_system longitudinal_calib.py --ros-args \
 （如确实需要 RC 介入运行）
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=speed_hold \
    -p use_rc_steering:=true \
    -p rc_topic:=/rc/channels \
@@ -408,12 +408,12 @@ k_eff(v,V) = clamp(k_eff, k_min, k_max)
 
 如果已经确认“基础电流”只会维持匀速、没有必要重复跑，可以设置 `current_start_step_index:=1`，让每个区间从 `base_current + current_step` 开始；默认 `0` 表示仍从 `base_current` 开始。
 
-脚本：`src/f1tenth_system/scripts/longitudinal_calib.py`
+脚本：`src/aims_racer_system/scripts/longitudinal_calib.py`
 
 运行示例：
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=accel_interval \
    -p v_start:=1.0 -p v_end:=8.0 -p dv:=1.0 \
    -p base_current_file:=speed_hold_current_results.txt \
@@ -426,7 +426,7 @@ ros2 run f1tenth_system longitudinal_calib.py --ros-args \
 （如确实需要 RC 介入运行，且只在直线段做 trial）
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=accel_interval \
    -p use_rc_steering:=true \
    -p rc_topic:=/rc/channels \
@@ -448,7 +448,7 @@ ros2 run f1tenth_system longitudinal_calib.py --ros-args \
 运行示例：
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p workflow:=decel_current \
    -p v_start:=3.0 -p v_end:=8.0 -p dv:=1.0 \
    -p decel_low_speed:=1.0 \
@@ -472,7 +472,7 @@ RC 介入规则（`use_rc_steering:=true`）：转向出死区会暂停 current 
 
 ### 3.3 离线验证纵向模型
 
-脚本：`src/f1tenth_system/scripts/longitudinal_model_verify.py`
+脚本：`src/aims_racer_system/scripts/longitudinal_model_verify.py`
 
 第一版验证模型暂时不把温度放进主方程，重点比较三种净电流模型：
 
@@ -494,7 +494,7 @@ I_cmd = I0(v,V) + a_ref / k_eff(v,V)
 如果只有 Stage A/B 文本结果，可以先用命令电流快速验证：
 
 ```bash
-python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
+python3 src/aims_racer_system/scripts/longitudinal_model_verify.py \
    --base speed_hold_current_results.txt \
    --samples speed_interval_accel_samples.csv \
    --valid-v-end 6.0 \
@@ -504,9 +504,9 @@ python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
 如果有 rosbag，推荐从 bag 里重建 `avg_iq / voltage / duty / accel_fit`：
 
 ```bash
-python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
+python3 src/aims_racer_system/scripts/longitudinal_model_verify.py \
    --base speed_hold_current_results.txt \
-   --bag /home/nuc/RallyCore/bag/pp_accel_interval2 \
+   --bag /home/nuc/AIMSRacer/bag/pp_accel_interval2 \
    --valid-v-end 6.0 \
    --model-accel-max 2.5 \
    --out-prefix longitudinal_model_verify_bag
@@ -515,9 +515,9 @@ python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
 如果要用两包或多包做电压调制粗验证，使用 `--bags` 聚合：
 
 ```bash
-python3 src/f1tenth_system/scripts/longitudinal_model_verify.py \
+python3 src/aims_racer_system/scripts/longitudinal_model_verify.py \
    --base speed_hold_current_results.txt \
-   --bags /home/nuc/RallyCore/bag/pp_accel_interval1 /home/nuc/RallyCore/bag/pp_accel_interval2 \
+   --bags /home/nuc/AIMSRacer/bag/pp_accel_interval1 /home/nuc/AIMSRacer/bag/pp_accel_interval2 \
    --valid-v-end 6.0 \
    --model-accel-max 2.5 \
    --out-prefix longitudinal_model_verify_pp_accel_1_2_voltage
@@ -745,7 +745,7 @@ ros2 bag record -o manual_control1 \
 示例（把输出 remap 到真正生效的 ackermann 入口）：
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py \
+ros2 run aims_racer_system longitudinal_calib.py \
   --ros-args -p workflow:=speed_hold \
   -r /calib/ackermann_cmd:=/ackermann_cmd
 ```

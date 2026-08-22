@@ -28,7 +28,7 @@ from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
     # Get the launch directory
-    bringup_dir = get_package_share_directory("f1tenth_system")
+    bringup_dir = get_package_share_directory("aims_racer_system")
 
     namespace = LaunchConfiguration("namespace")
     autostart = LaunchConfiguration("autostart")
@@ -60,7 +60,7 @@ def generate_launch_description():
     # behaviour tree xml file location
     # uncomment the XML you want to test
     to_pose_bt_xml = os.path.join(
-        get_package_share_directory("f1tenth_system"),
+        get_package_share_directory("aims_racer_system"),
         "behaviour_trees",
         # 'plan_to_pose.xml')
         # 'replan_to_pose.xml')
@@ -70,7 +70,7 @@ def generate_launch_description():
     # 'follow_path.xml')
 
     through_poses_bt_xml = os.path.join(
-        get_package_share_directory("f1tenth_system"),
+        get_package_share_directory("aims_racer_system"),
         "behaviour_trees",
         "plan_through_poses_and_follow.xml",
     )

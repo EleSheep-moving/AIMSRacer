@@ -30,7 +30,7 @@ def generate_launch_description():
     args = [
         _arg("armed", "false", "If false, only checks topics and publishes no motion commands"),
         _arg("vehicle_mass", "4.5", "Vehicle mass in kg"),
-        _arg("wheelbase", "0.33", "Vehicle wheelbase in m"),
+        _arg("wheelbase", "0.36", "Vehicle wheelbase in m"),
         _arg("test_radius", "3.0", "Fixed circle radius in m"),
         _arg("speed_start", "0.5", "First target speed in m/s"),
         _arg("speed_end", "5.0", "Last target speed in m/s"),
@@ -49,7 +49,7 @@ def generate_launch_description():
         _arg("status_topic", "/calib/lateral_status_text", "RViz text marker topic"),
         _arg("require_vesc", "true", "Require VESC telemetry before motion"),
         _arg("directions", "left,right", "Comma-separated directions: left,right"),
-        _arg("max_abs_steering", "0.35", "Maximum allowed steering command in rad"),
+        _arg("max_abs_steering", "0.4751", "Maximum allowed steering command in rad"),
         _arg("max_speed", "6.0", "Hard speed command limit in m/s"),
         _arg("sensor_timeout_sec", "0.5", "Sensor freshness timeout in seconds"),
         _arg("imu_bias_samples", "150", "Stationary IMU samples for bias estimation"),
@@ -68,7 +68,7 @@ def generate_launch_description():
     ]
 
     node = Node(
-        package="f1tenth_system",
+        package="aims_racer_system",
         executable="lateral_grip_calib.py",
         name="lateral_grip_calib",
         output="screen",

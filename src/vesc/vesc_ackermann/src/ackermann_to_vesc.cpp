@@ -30,9 +30,11 @@
 
 #include "vesc_ackermann/ackermann_to_vesc.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
@@ -56,6 +58,18 @@ AckermannToVesc::AckermannToVesc(const rclcpp::NodeOptions & options)
     declare_parameter<double>("steering_angle_to_servo_gain");
   steering_to_servo_offset_ =
     declare_parameter<double>("steering_angle_to_servo_offset");
+  servo_min_ = declare_parameter<double>("servo_min");
+  servo_max_ = declare_parameter<double>("servo_max");
+
+  if (!std::isfinite(servo_min_) || !std::isfinite(servo_max_) ||
+    servo_min_ < 0.0 || servo_max_ > 1.0 || servo_min_ >= servo_max_)
+  {
+    throw std::invalid_argument(
+            "servo_min and servo_max must satisfy 0.0 <= servo_min < servo_max <= 1.0");
+  }
+
+  RCLCPP_INFO(
+    get_logger(), "Servo command safety range: [%.3f, %.3f]", servo_min_, servo_max_);
   
   // Motor startup parameters
   startup_duty_current_ = declare_parameter<double>("startup_duty_current", 40.0);
@@ -99,9 +113,19 @@ void AckermannToVesc::ackermannCmdCallback(const AckermannDriveStamped::SharedPt
   has_received_ackermann_command_ = true;
   ackermann_watchdog_active_ = false;
 
-  // calc steering angle (servo) - published in all modes
+  // Convert steering angle to servo position and clip before publishing. The VESC driver
+  // independently applies the same limits as a second hardware-safety layer.
   Float64 servo_msg;
-  servo_msg.data = steering_to_servo_gain_ * cmd->drive.steering_angle + steering_to_servo_offset_;
+  const double raw_servo =
+    steering_to_servo_gain_ * cmd->drive.steering_angle + steering_to_servo_offset_;
+  servo_msg.data = std::max(servo_min_, std::min(raw_servo, servo_max_));
+
+  if (servo_msg.data != raw_servo) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 2000,
+      "Servo command %.3f exceeds mechanical range [%.3f, %.3f]; clipped to %.3f.",
+      raw_servo, servo_min_, servo_max_, servo_msg.data);
+  }
 
   // Determine control mode based on jerk field (state flag)
   // jerk = 0.0: speed mode (regular mode)

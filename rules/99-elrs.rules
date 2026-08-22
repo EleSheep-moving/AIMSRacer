@@ -1,0 +1,2 @@
+# Jetson Orin 40-pin header UART (ttyTHS1) used by the ELRS receiver.
+SUBSYSTEM=="tty", KERNEL=="ttyTHS1", GROUP:="dialout", MODE:="0660", SYMLINK+="ttyELRS"

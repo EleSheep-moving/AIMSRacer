@@ -253,7 +253,7 @@ class LateralGripCalib(Node):
 
     def _declare_parameters(self) -> None:
         self.declare_parameter("vehicle_mass", 4.5)
-        self.declare_parameter("wheelbase", 0.33)
+        self.declare_parameter("wheelbase", 0.36)
         self.declare_parameter("test_radius", 3.0)
         self.declare_parameter("speed_start", 0.5)
         self.declare_parameter("speed_end", 5.0)
@@ -276,7 +276,7 @@ class LateralGripCalib(Node):
         self.declare_parameter("armed", False)
         self.declare_parameter("require_vesc", True)
         self.declare_parameter("directions", "left,right")
-        self.declare_parameter("max_abs_steering", 0.35)
+        self.declare_parameter("max_abs_steering", 0.4751)
         self.declare_parameter("max_speed", 6.0)
         self.declare_parameter("sensor_timeout_sec", 0.5)
         self.declare_parameter("stationary_speed_threshold", 0.05)
@@ -1141,11 +1141,14 @@ def main(args: Optional[List[str]] = None) -> None:
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().warn("keyboard interrupt")
-        node.shutdown_safely()
+        if rclpy.ok():
+            node.get_logger().warn("keyboard interrupt")
+            node.shutdown_safely()
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        # ROS launch may already have shut down the shared context on SIGINT.
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

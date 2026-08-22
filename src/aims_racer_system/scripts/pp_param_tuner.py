@@ -15,7 +15,7 @@ Features
 
 Quick start::
 
-    ros2 run f1tenth_system pp_param_tuner --ros-args \
+    ros2 run aims_racer_system pp_param_tuner --ros-args \
         -p lookahead_gain:=1.8 -p steering_rate_limit:=3.0 \
         -p target_speed:=2.0
 
@@ -333,8 +333,8 @@ class PPTuningNode(Node):
             floating_point_range=[FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)]
         )
         
-        self.wheelbase = self.declare_parameter('wheelbase', 0.33).value
-        self.max_steering_angle = self.declare_parameter('max_steering_angle', 0.35).value
+        self.wheelbase = self.declare_parameter('wheelbase', 0.36).value
+        self.max_steering_angle = self.declare_parameter('max_steering_angle', 0.4751).value
         self.max_steering = self.declare_parameter('max_steering', self.max_steering_angle).value
         self.max_steering_angle = float(max(0.0, self.max_steering))
         self.lookahead_gain = self.declare_parameter('lookahead_gain', 1.0, lookahead_desc).value
@@ -792,19 +792,18 @@ def main(args: Optional[List[str]] = None) -> None:
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info('Shutting down PP tuner...')
+        if rclpy.ok():
+            node.get_logger().info('Shutting down PP tuner...')
     finally:
-        try:
-            node._publish_stop()
-            node.get_logger().info('Published stop command: speed=0')
-        except Exception as exc:
-            node.get_logger().warn(f'Failed to publish stop command during shutdown: {exc}')
+        if rclpy.ok():
+            try:
+                node._publish_stop()
+                node.get_logger().info('Published stop command: speed=0')
+            except Exception as exc:
+                node.get_logger().warn(f'Failed to publish stop command during shutdown: {exc}')
         node.destroy_node()
-        # When the process is interrupted/killed, shutdown might already be called.
-        try:
+        if rclpy.ok():
             rclpy.shutdown()
-        except Exception:
-            pass
 
 
 if __name__ == '__main__':

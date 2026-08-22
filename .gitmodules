@@ -14,3 +14,15 @@
 	path = src/point_lio_ros2
 	url = https://github.com/ZhihaoZhang0618/point_lio_ros2.git
 	branch = fix-livox-custommsg
+[submodule "src/zed-ros2-wrapper"]
+	path = src/zed-ros2-wrapper
+	url = https://github.com/stereolabs/zed-ros2-wrapper.git
+[submodule "src/zed-ros2-interfaces"]
+	path = src/zed-ros2-interfaces
+	url = https://github.com/stereolabs/zed-ros2-interfaces.git
+[submodule "src/zed-ros2-description"]
+	path = src/zed-ros2-description
+	url = https://github.com/stereolabs/zed-ros2-description.git
+[submodule "src/zed-ros2-examples"]
+	path = src/zed-ros2-examples
+	url = https://github.com/stereolabs/zed-ros2-examples.git

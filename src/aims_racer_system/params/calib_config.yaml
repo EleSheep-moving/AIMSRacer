@@ -2,8 +2,8 @@
 # Used by: longitudinal_calib.py
 
 # Vehicle Parameters
-wheelbase: 0.33  # Distance from front to rear axle (meters)
-max_steering_angle: 0.30  # Maximum steering angle (radians, ≈ 17°)
+wheelbase: 0.36  # Distance from front to rear axle (meters)
+max_steering_angle: 0.4751  # atan(0.36 / 0.70), radians (≈ 27.2°)
 
 # Pure Pursuit Controller Parameters
 lookahead_gain: 1.5  # Lookahead distance gain: ld = k * v + ld_min
@@ -41,8 +41,8 @@ calibration_stages:
     current: 20.0
 
 # Expected Vehicle Parameters (for reference)
-# R = L / tan(δ) = 0.33 / tan(0.3) ≈ 1.1 m (minimum turning radius)
-expected_min_turning_radius: 1.1  # meters
+# R = L / tan(δ) = 0.36 / tan(0.4751) ≈ 0.70 m
+expected_min_turning_radius: 0.7  # Rear-axle-center path radius, meters
 
 # Logging
 log_frequency: 5  # Status log interval (seconds)

@@ -33,11 +33,10 @@ import os
 def generate_launch_description():
 
     vesc_config = os.path.join(
-        get_package_share_directory('f1tenth_system'),
+        get_package_share_directory('aims_racer_system'),
         'params',
         'vesc.yaml'
     )
-
 
     vesc_la = DeclareLaunchArgument(
         'vesc_config',
@@ -45,26 +44,42 @@ def generate_launch_description():
         description='Descriptions for vesc configs')
 
     mux_config = os.path.join(
-        get_package_share_directory('f1tenth_system'),
+        get_package_share_directory('aims_racer_system'),
         'params',
         'mux.yaml'
     )
-    # ekf_config = os.path.join(
-    #     get_package_share_directory('f1tenth_system'),
-    #     'params',
-    #     'ekf.yaml'
-    # )
+
     mux_la = DeclareLaunchArgument(
         'mux_config',
         default_value=mux_config,
         description='Descriptions for ackermann mux configs')
 
-    # ekf_la = DeclareLaunchArgument(
-    #     'ekf_config',
-    #     default_value=ekf_config,
-    #     description='Descriptions for ackermann mux configs')
-    ld = LaunchDescription([vesc_la,mux_la])
+    # Declare config paths for LIO and Localizer
+    lio_config = os.path.join(
+        get_package_share_directory('aims_racer_system'),
+        'params',
+        'fastlio.yaml'
+    )
+    
+    localizer_config = os.path.join(
+        get_package_share_directory('aims_racer_system'),
+        'params',
+        'fastlio_localizer.yaml'
+    )
 
+    lio_la = DeclareLaunchArgument(
+        'lio_config',
+        default_value=lio_config,
+        description='Configuration for LIO node'
+    )
+
+    localizer_la = DeclareLaunchArgument(
+        'localizer_config',
+        default_value=localizer_config,
+        description='Configuration for Localizer node'
+    )
+
+    ld = LaunchDescription([vesc_la, mux_la, lio_la, localizer_la])
 
     crsf_receiver_node = Node(
         package='crsf_receiver',
@@ -72,7 +87,7 @@ def generate_launch_description():
         name='crsf_receiver_node',
         parameters=[
             {'device': '/dev/ttyELRS'},
-            {'baud_rate': 420000},
+            {'baudrate': 420000},
             {'link_stats': True}
         ],
         output='screen'
@@ -91,7 +106,7 @@ def generate_launch_description():
     # cur_path = os.path.split(os.path.realpath(__file__))[0] + '/'
     # cur_config_path = cur_path + '../config'
     # user_config_path = os.path.join(cur_config_path, 'MID360_config.json')
-    user_config_path = os.path.join(get_package_share_directory("f1tenth_system"), 'params', 'MID360_config.json')
+    user_config_path = os.path.join(get_package_share_directory("aims_racer_system"), 'params', 'MID360_config.json')
     ################### user configure parameters for ros2 end #####################
 
     livox_ros2_params = [
@@ -115,7 +130,7 @@ def generate_launch_description():
             )
 
     livox_imu_to_ekf_node = Node(
-        package='f1tenth_system',
+        package='aims_racer_system',
         executable='livox_imu_to_ekf.py',
         name='livox_imu_to_ekf',
         output='screen'
@@ -152,7 +167,6 @@ def generate_launch_description():
         package='vesc_driver',
         executable='vesc_driver_node',
         name='vesc_driver_node',
-                output='screen',
         parameters=[LaunchConfiguration('vesc_config')]
     )
     robot_localization_node = Node(
@@ -160,30 +174,26 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         output='screen',
-        parameters=[os.path.join(get_package_share_directory("f1tenth_system"), 'params', 'ekf.yaml')],
+        parameters=[os.path.join(get_package_share_directory("aims_racer_system"), 'params', 'ekf.yaml')],
     )
     
-    
-    lio_config_path = os.path.join(get_package_share_directory("f1tenth_system"), 'params', 'fastlio.yaml')
-    pgo_config_path = os.path.join(get_package_share_directory("f1tenth_system"), 'params', 'pgo.yaml')
-
-    lio=Node(
-    package="fastlio2",
-    namespace="fastlio2",
-    executable="lio_node",
-    name="lio_node",
-    output="screen",
-    parameters=[{'config_path': lio_config_path}]
-    )
-    pgo_node = Node(
-        package="pgo",
-        namespace="pgo",
-        executable="pgo_node",
-        name="pgo_node",
+    lio = Node(
+        package="fastlio2",
+        namespace="fastlio2",
+        executable="lio_node",
+        name="lio_node",
         output="screen",
-        parameters=[{'config_path': pgo_config_path}]
+        parameters=[{'config_path': LaunchConfiguration('lio_config')}]
     )
 
+    localizer_node = Node(
+        package="localizer",
+        namespace="localizer",
+        executable="localizer_node",
+        name="localizer_node",
+        output="screen",
+        parameters=[{'config_path': LaunchConfiguration('localizer_config')}]
+    )
 
     static_tf_node_bl = Node(
         package='tf2_ros',
@@ -212,17 +222,10 @@ def generate_launch_description():
     ld.add_action(joystick_control_node)
     ld.add_action(ackermann_mux_node)
     ld.add_action(livox_imu_to_ekf_node)
-    ld.add_action(lidar_driver)
-
-    # robot_localization_node is mainly used for imporve odom rate and improve localization accuracy in yaw(2d)
-    # we don't need it in mapping
-    # if we trying to running in 3d terrian, please to improve it.
-    # ld.add_action(robot_localization_node)
+    #ld.add_action(lidar_driver)
+    ld.add_action(robot_localization_node)
     
-    ld.add_action(lio)
-    ld.add_action(pgo_node)
-
-
+    
 
     ld.add_action(static_tf_node_bl)
     ld.add_action(static_tf_node_bi)

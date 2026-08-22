@@ -1,7 +1,7 @@
-# 🏎️ RallyCore
+# 🏎️ AIMSRacer
 
 ## 🌟 Overview
-RallyCore is a ROS2- and Nav2-based software stack designed for rally car, which is a rally car for autonomous vehicle development at all kinds of complex terrains. 
+AIMSRacer is a ROS2- and Nav2-based software stack designed for a rally car and autonomous vehicle development across complex terrain.
 
 The hardware setup and basic software framework were developed during my time as a Research Assistant at [ZJU FAST Lab](https://github.com/ZJU-FAST-Lab). I am deeply grateful to the wonderful people at ZJU FAST Lab for their invaluable support and guidance. Currently, I am pursuing my MPhil at PolyU, working in the AIMS Lab. Advanced algorithm development and features will be gradually implemented during my spare time throughout my graduate studies. Stay tuned for more updates!
 
@@ -55,16 +55,16 @@ export CYCLONEDDS_URI=file:///home/nuc/cyclonedds.xml
 ### ⚡ Quick Start (Recommended)
 ```bash
 # 🔌 Hardware bringup (V3 - Point-LIO, Latest)
-ros2 launch f1tenth_system base_orin_livox_bringup_v3.launch.py
+ros2 launch aims_racer_system base_orin_livox_bringup_v3.launch.py
 
 # Alternative: V2 - FAST-LIO2 with EKF fusion
-ros2 launch f1tenth_system base_orin_livox_bringup_v2.launch.py
+ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
 
 # 🗺️ SLAM/Localization
-ros2 launch f1tenth_system slam.launch.py
+ros2 launch aims_racer_system slam.launch.py
 
 # 🧭 Navigation
-ros2 launch f1tenth_system nav.launch.py
+ros2 launch aims_racer_system nav.launch.py
 ```
 
 ### 🏗️ Hardware Bringup Versions
@@ -77,13 +77,13 @@ ros2 launch f1tenth_system nav.launch.py
 **⚠️ V3 Status:** Point-LIO integrates well with mid360 structurally, but odometry drift/accuracy performance is currently **below expectations**. Recommend **V2 (FAST-LIO2)** for reliable localization and calibration work.
 **⚙️ V2 Advantages:** Single control node • Built-in arbitration • Current control support • Easier debugging • Proven odometry accuracy
 
-📚 **Calibration docs (maintained):** [src/f1tenth_system/scripts/README_EN.md](src/f1tenth_system/scripts/README_EN.md)
+📚 **Calibration docs (maintained):** [src/aims_racer_system/scripts/README_EN.md](src/aims_racer_system/scripts/README_EN.md)
 
 ## 🔧 Calibration & Tuning
 
 ✅ The longitudinal calibration workflow is documented and maintained in:
 
-- [src/f1tenth_system/scripts/README_EN.md](src/f1tenth_system/scripts/README_EN.md)
+- [src/aims_racer_system/scripts/README_EN.md](src/aims_racer_system/scripts/README_EN.md)
 
 It includes:
 - `/calib/ackermann_cmd` jerk convention (speed/current)
@@ -98,23 +98,23 @@ It includes:
 
 This option requires stable odometry and a relatively large open area/track (long straights and safe turn radius), because the vehicle needs enough space to run repeatable loops.
 
-See [src/f1tenth_system/scripts/README_EN.md](src/f1tenth_system/scripts/README_EN.md) → Localization-based (Pure Pursuit).
+See [src/aims_racer_system/scripts/README_EN.md](src/aims_racer_system/scripts/README_EN.md) → Localization-based (Pure Pursuit).
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
     -p workflow:=pp_speed_hold \
     -p speeds:="[1,2,3,4,5,6,7,8]" \
     -p hold_time_sec:=10.0 \
     -p output_path:=speed_hold_current_results.txt
 
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
     -p workflow:=pp_accel_interval \
     -p v_start:=1.0 -p v_end:=8.0 -p dv:=1.0 \
     -p base_current_file:=speed_hold_current_results.txt \
     -p current_step:=3.0 -p current_max:=80.0 \
     -p output_path:=speed_interval_accel_results.txt
 
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
     -p workflow:=pp_decel_current \
     -p v_start:=3.0 -p v_end:=8.0 -p dv:=1.0 \
     -p decel_low_speed:=1.0 \
@@ -129,7 +129,7 @@ This is the recommended workflow when odometry/localization is unstable, or when
 Stage A (speed hold → mean current):
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
     -p workflow:=speed_hold \
     -p speeds:="[1,2,3,4,5,6,7,8]" \
     -p hold_time_sec:=10.0 \
@@ -141,7 +141,7 @@ ros2 run f1tenth_system longitudinal_calib.py --ros-args \
 Stage B (per speed interval → accel vs current, speed from `/odom`):
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
     -p workflow:=accel_interval \
     -p v_start:=1.0 -p v_end:=8.0 -p dv:=1.0 \
     -p base_current_file:=speed_hold_current_results.txt \
@@ -157,18 +157,18 @@ If you need RC steering intervention during data collection, enable it and the s
 - Wait `post_turn_settle_sec` after returning straight before resuming
 
 ```bash
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
     -p workflow:=speed_hold \
     -p use_rc_steering:=true -p rc_topic:=/rc/channels -p rc_timeout_sec:=0.25 \
     -p post_turn_settle_sec:=0.8
 
-ros2 run f1tenth_system longitudinal_calib.py --ros-args \
+ros2 run aims_racer_system longitudinal_calib.py --ros-args \
     -p workflow:=accel_interval \
     -p use_rc_steering:=true -p rc_topic:=/rc/channels -p rc_timeout_sec:=0.25 \
     -p post_turn_settle_sec:=0.8
 ```
 
-📊 Analysis prompt templates live in: [src/f1tenth_system/scripts/README_EN.md](src/f1tenth_system/scripts/README_EN.md).
+📊 Analysis prompt templates live in: [src/aims_racer_system/scripts/README_EN.md](src/aims_racer_system/scripts/README_EN.md).
 
 ## 🏗️ Architecture: V1 vs V2
 
@@ -274,7 +274,7 @@ This project would not be possible without the use of multiple great open-source
 
 - 🏎️ [ForzaETH Race Stack](https://github.com/ForzaETH/race_stack)
 - 🏁 [QUTMS_Driverless](https://github.com/QUT-Motorsport/QUTMS_Driverless)
-- 🎯 [f1tenth_system](https://github.com/f1tenth/f1tenth_system)
+- 🎯 [Original upstream system package](https://github.com/f1tenth/f1tenth_system)
 - 📡 [ros2_crsf_receiver](https://github.com/AndreyTulyakov/ros2_crsf_receiver.git)
 - 🔀 [ackermann_mux](https://github.com/z1047941150/ackermann_mux.git)
 - ⚡ [Veddar VESC Interface](https://github.com/f1tenth/vesc)
@@ -293,8 +293,6 @@ This project would not be possible without the use of multiple great open-source
 - 🎮 Use a better simulation environment, like ISAAC Lab, Autodrive
 - 🤖 Use RL to learn end-to-end policies
 - 🗺️ Integrate additional LIO backends (LVI-SAM, DLIO, etc.)
-
-
 
 
 

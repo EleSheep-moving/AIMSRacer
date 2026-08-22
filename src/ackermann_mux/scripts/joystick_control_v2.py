@@ -9,9 +9,23 @@ from std_msgs.msg import Float32
 
 
 class JoystickControl(Node):
+    CHANNEL_PROFILE = "sequential_ch1_ch2"
+    DEFAULT_CHANNELS = {
+        "speed_channel": 1,
+        "steering_channel": 2,
+        "lock_channel": 3,
+        "esc_mode_channel": 4,
+        "control_source_channel": 5,
+        "limit_channel": 6,
+        "calib_mode_channel": 7,
+    }
+
     def __init__(self):
         super().__init__("joystick_control")
-        self.get_logger().info("joystick_control started")
+        self.get_logger().info(
+            "joystick_control started with channel profile: %s"
+            % self.CHANNEL_PROFILE
+        )
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST,
@@ -41,13 +55,28 @@ class JoystickControl(Node):
         self.direction_reverse = self.declare_parameter("direction_reverse", False).value
 
         # CRSF channel numbers are 1-based here: self.channel[1] == msg.ch1.
-        self.speed_channel = self.declare_parameter("speed_channel", 1).value
-        self.steering_channel = self.declare_parameter("steering_channel", 2).value
-        self.lock_channel = self.declare_parameter("lock_channel", 3).value
-        self.esc_mode_channel = self.declare_parameter("esc_mode_channel", 4).value
-        self.control_source_channel = self.declare_parameter("control_source_channel", 5).value
-        self.limit_channel = self.declare_parameter("limit_channel", 6).value
-        self.calib_mode_channel = self.declare_parameter("calib_mode_channel", 7).value
+        self.speed_channel = self.declare_parameter(
+            "speed_channel", self.DEFAULT_CHANNELS["speed_channel"]
+        ).value
+        self.steering_channel = self.declare_parameter(
+            "steering_channel", self.DEFAULT_CHANNELS["steering_channel"]
+        ).value
+        self.lock_channel = self.declare_parameter(
+            "lock_channel", self.DEFAULT_CHANNELS["lock_channel"]
+        ).value
+        self.esc_mode_channel = self.declare_parameter(
+            "esc_mode_channel", self.DEFAULT_CHANNELS["esc_mode_channel"]
+        ).value
+        self.control_source_channel = self.declare_parameter(
+            "control_source_channel",
+            self.DEFAULT_CHANNELS["control_source_channel"],
+        ).value
+        self.limit_channel = self.declare_parameter(
+            "limit_channel", self.DEFAULT_CHANNELS["limit_channel"]
+        ).value
+        self.calib_mode_channel = self.declare_parameter(
+            "calib_mode_channel", self.DEFAULT_CHANNELS["calib_mode_channel"]
+        ).value
 
         # Keep the old channel8 parameter names as fallbacks for existing launch files.
         old_limit_min_value = self.declare_parameter("channel8_min_value", 172).value
@@ -63,7 +92,7 @@ class JoystickControl(Node):
         self.speed_limit_max_speed = self.declare_parameter(
             "speed_limit_max_speed", old_speed_limit_max_speed
         ).value
-        self.steering_limit = self.declare_parameter("steering_limit", 0.40).value
+        self.steering_limit = self.declare_parameter("steering_limit", 0.4751).value
         self.steering_reverse = self.declare_parameter("steering_reverse", True).value
         old_channel_mid = self.declare_parameter("steering_channel_mid", 992).value
         self.channel_mid = self.declare_parameter("channel_mid", old_channel_mid).value

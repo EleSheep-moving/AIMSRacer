@@ -27,7 +27,7 @@ class CmdVelToAckermannDrive(Node):
         
         self.twist_cmd_topic = self.declare_parameter('twist_cmd_topic', '/cmd_vel').value
         self.ackermann_cmd_topic = self.declare_parameter('ackermann_cmd_topic', '/drive').value
-        self.wheelbase = self.declare_parameter('wheelbase', 0.33).value
+        self.wheelbase = self.declare_parameter('wheelbase', 0.36).value
         qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,  # 或者使用 ReliabilityPolicy.BEST_EFFORT
             history=HistoryPolicy.KEEP_LAST,  # KEEP_LAST 表示只保留最后N条消息
