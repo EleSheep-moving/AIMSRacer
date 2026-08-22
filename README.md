@@ -16,6 +16,8 @@ I provide an installation guide [here](install.md) 📖, for ROS2 Humble on Ubun
 ### 🛠️ RoboRacer Platform
 **💻 Computing Platform:** NVIDIA Jetson Orin NX 16 GB
 
+**🏎️ Chassis:** KKPIT ZQR "Zhuque" 1/7-scale electric 4WD on-road chassis
+
 **🔦 LiDAR:** Livox Mid-360 (main sensor)
 
 **📷 Stereo Camera:** ZED 2i (CUDA/GPU-accelerated depth and perception)
@@ -23,6 +25,10 @@ I provide an installation guide [here](install.md) 📖, for ROS2 Humble on Ubun
 **🧭 IMU:** fdilink Deta10 (optional, yaw estimation)
 
 **🎮 Remote Controller:** RadioMaster Pocket ELRS version (much better than XBOX series controller) 
+
+### ⚠️ KKPIT ZQR "Zhuque" Reverse-Transition Limitation
+
+On this chassis, the initial transient when reverse is engaged produces an approximately **2 g vertical (Z-axis) vibration/shock**. This event can violate FAST-LIO2's IMU motion assumptions and cause the estimator to fail. Treat this as a chassis-specific operating limitation: avoid relying on FAST-LIO2 through a reverse transition, and stop or reinitialize localization before resuming autonomous operation if the event occurs.
 
 ### ⚙️ RoboRacer Drive Interface
 The modified VESC interface is based on the VESC interface provided by Veddar VESC Interface. 
@@ -291,7 +297,6 @@ This project would not be possible without the use of multiple great open-source
 - 🎮 Use a racing simulator, such as Isaac Lab or a dedicated track simulator
 - 🤖 Use RL for racing-policy and lap-time optimization
 - 🗺️ Integrate additional LIO backends (LVI-SAM, DLIO, etc.)
-
 
 
 
