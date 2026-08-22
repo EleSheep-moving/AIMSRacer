@@ -634,11 +634,10 @@ Expected results include `All system dependencies have been satisfied` and
 
 ```bash
 ros2 pkg list | grep -E \
-  '^(ackermann_mux|crsf_receiver|aims_racer_system|fastlio2|hba|livox_ros_driver2|localizer|pgo|point_lio|vesc|wheeltec_n100_imu|zed_components|zed_description|zed_display_rviz2|zed_msgs|zed_ros2|zed_wrapper)$'
+  '^(ackermann_mux|crsf_receiver|aims_racer_system|fastlio2|hba|livox_ros_driver2|localizer|pgo|vesc|wheeltec_n100_imu|zed_components|zed_description|zed_display_rviz2|zed_msgs|zed_ros2|zed_wrapper)$'
 
 ros2 pkg executables aims_racer_system
 ros2 pkg executables fastlio2
-ros2 pkg executables point_lio
 ros2 pkg prefix zed_components
 ros2 pkg prefix zed_wrapper
 ```

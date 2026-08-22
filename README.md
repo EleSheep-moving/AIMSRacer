@@ -58,10 +58,7 @@ export CYCLONEDDS_URI=file:///home/nuc/cyclonedds.xml
 
 ### ⚡ Quick Start (Recommended)
 ```bash
-# 🔌 Hardware bringup (V3 - Point-LIO, Latest)
-ros2 launch aims_racer_system base_orin_livox_bringup_v3.launch.py
-
-# Alternative: V2 - FAST-LIO2 with EKF fusion
+# 🔌 Hardware bringup (V2 - FAST-LIO2 with EKF fusion)
 ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
 
 # 🗺️ SLAM/Localization
@@ -74,11 +71,9 @@ ros2 launch aims_racer_system nav.launch.py
 ### 🏗️ Hardware Bringup Versions
 | Version | Launch File | LIO Backend | Features |
 |---------|-------------|-------------|----------|
-| **🚀 V3 (Latest)** | `base_orin_livox_bringup_v3.launch.py` | **Point-LIO** | 🎯 Point-LIO odometry • 🚫 No EKF fusion • ⚠️ **Accuracy not stable** |
-| **✨ V2** | `base_orin_livox_bringup_v2.launch.py` | **FAST-LIO2** | 🎯 Integrated control (joystick_v2) • 🔋 Speed/current/duty modes • 🤖 EKF fusion |
+| **✨ V2 (Recommended)** | `base_orin_livox_bringup_v2.launch.py` | **FAST-LIO2** | 🎯 Integrated control (joystick_v2) • 🔋 Speed/current/duty modes • 🤖 EKF fusion |
 | 📦 V1 (Legacy) | `base_orin_livox_bringup.launch.py` | **FAST-LIO2** | 🔀 Separate mux node • 🏛️ Traditional architecture • 🤖 EKF fusion |
 
-**⚠️ V3 Status:** Point-LIO integrates well with mid360 structurally, but odometry drift/accuracy performance is currently **below expectations**. Recommend **V2 (FAST-LIO2)** for reliable localization and calibration work.
 **⚙️ V2 Advantages:** Single control node • Built-in arbitration • Current control support • Easier debugging • Proven odometry accuracy
 
 📚 **Calibration docs (maintained):** [src/aims_racer_system/scripts/README_EN.md](src/aims_racer_system/scripts/README_EN.md)
@@ -283,7 +278,6 @@ This project would not be possible without the use of multiple great open-source
 - 🔀 [ackermann_mux](https://github.com/z1047941150/ackermann_mux.git)
 - ⚡ [Veddar VESC Interface](https://github.com/f1tenth/vesc)
 - 🗺️ [FAST-LIO2_ROS2](https://github.com/liangheming/FASTLIO2_ROS2.git)
-- 🎯 [Point-LIO_ROS2](https://github.com/dfloreaa/point_lio_ros2.git)
 
 ##### 🏛️ Hardware and basic software were developed at FAST Lab, Zhejiang University.
 ##### 🎓 Currently pursuing MPhil at PolyU AIMS Lab, with ongoing development in progress.
@@ -297,6 +291,5 @@ This project would not be possible without the use of multiple great open-source
 - 🎮 Use a racing simulator, such as Isaac Lab or a dedicated track simulator
 - 🤖 Use RL for racing-policy and lap-time optimization
 - 🗺️ Integrate additional LIO backends (LVI-SAM, DLIO, etc.)
-
 
 
