@@ -58,7 +58,10 @@ export CYCLONEDDS_URI=file:///home/nuc/cyclonedds.xml
 
 ### ⚡ Quick Start (Recommended)
 ```bash
-# 🔌 Hardware bringup (V2 - FAST-LIO2 with EKF fusion)
+# 🔌 Hardware bringup (V3 - FAST-LIO2/EKF + ZED 2i neural-depth perception)
+ros2 launch aims_racer_system base_orin_livox_bringup_v3.launch.py
+
+# LiDAR-only alternative: V2 - FAST-LIO2 with EKF fusion
 ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
 
 # 🗺️ SLAM/Localization
@@ -71,10 +74,20 @@ ros2 launch aims_racer_system nav.launch.py
 ### 🏗️ Hardware Bringup Versions
 | Version | Launch File | LIO Backend | Features |
 |---------|-------------|-------------|----------|
+| **🚀 V3 (Perception)** | `base_orin_livox_bringup_v3.launch.py` | **FAST-LIO2 + EKF** | V2 control/localization • ZED 2i `NEURAL_LIGHT` RGB/depth/IMU • ZED tracking and dynamic TF disabled |
 | **✨ V2 (Recommended)** | `base_orin_livox_bringup_v2.launch.py` | **FAST-LIO2** | 🎯 Integrated control (joystick_v2) • 🔋 Speed/current/duty modes • 🤖 EKF fusion |
 | 📦 V1 (Legacy) | `base_orin_livox_bringup.launch.py` | **FAST-LIO2** | 🔀 Separate mux node • 🏛️ Traditional architecture • 🤖 EKF fusion |
 
 **⚙️ V2 Advantages:** Single control node • Built-in arbitration • Current control support • Easier debugging • Proven odometry accuracy
+
+**📷 V3 ZED policy:** ZED 2i runs at 30 Hz with `NEURAL_LIGHT`, RGB, depth, and IMU telemetry. ZED positional tracking, map/odom TF, object detection, body tracking, and point-cloud publication are disabled by default so FAST-LIO2/EKF remain the only vehicle-localization chain. After measuring the camera installation, provide its transform explicitly, for example:
+
+```bash
+ros2 launch aims_racer_system base_orin_livox_bringup_v3.launch.py \
+  zed_publish_base_tf:=true \
+  zed_tf_x:=<x_m> zed_tf_y:=<y_m> zed_tf_z:=<z_m> \
+  zed_tf_roll:=<roll_rad> zed_tf_pitch:=<pitch_rad> zed_tf_yaw:=<yaw_rad>
+```
 
 📚 **Calibration docs (maintained):** [src/aims_racer_system/scripts/README_EN.md](src/aims_racer_system/scripts/README_EN.md)
 
@@ -291,5 +304,4 @@ This project would not be possible without the use of multiple great open-source
 - 🎮 Use a racing simulator, such as Isaac Lab or a dedicated track simulator
 - 🤖 Use RL for racing-policy and lap-time optimization
 - 🗺️ Integrate additional LIO backends (LVI-SAM, DLIO, etc.)
-
 

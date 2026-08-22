@@ -1,0 +1,61 @@
+# ZED 2i perception profile for the Orin NX 16 GB RoboRacer platform.
+# FAST-LIO2 and the EKF remain the sole vehicle-localization source.
+/**:
+  ros__parameters:
+    general:
+      grab_compute_capping_fps: 30.0
+      pub_frame_rate: 30.0
+      gpu_id: 0
+      pub_resolution: 'NATIVE'
+      enable_image_validity_check: 1
+
+    video:
+      enable_24bit_output: true
+      publish_rgb: true
+      publish_left_right: false
+      publish_raw: false
+      publish_gray: false
+      publish_stereo: false
+
+    sensors:
+      # Kept available for diagnostics and future sensor fusion, but not
+      # connected to the FAST-LIO2/EKF chain by this bringup.
+      sensors_pub_rate: 100.0
+      publish_imu: true
+      publish_imu_raw: false
+      publish_imu_tf: false
+      publish_mag: false
+      publish_baro: false
+      publish_temp: false
+
+    depth:
+      depth_mode: 'NEURAL_LIGHT'
+      depth_stabilization: -1
+      max_depth: 15.0
+      publish_depth_map: true
+      publish_depth_info: false
+      # Livox supplies the production 3D geometry. Enable a ZED point cloud
+      # only in a dedicated experiment after bandwidth/GPU profiling.
+      publish_point_cloud: false
+      point_cloud_freq: 0.0
+      publish_depth_confidence: false
+      publish_disparity: false
+
+    pos_tracking:
+      # Prevent a second odometry source and duplicate map/odom TF tree.
+      pos_tracking_enabled: false
+      publish_tf: false
+      publish_map_tf: false
+      publish_odom_pose: false
+      publish_pose_cov: false
+      publish_cam_path: false
+
+    object_detection:
+      # Enable only in a separately profiled detection experiment.
+      od_enabled: false
+
+    body_tracking:
+      bt_enabled: false
+
+    mapping:
+      mapping_enabled: false
