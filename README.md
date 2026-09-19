@@ -3,7 +3,7 @@
 ## 🌟 Overview
 AIMSRacer is a ROS 2 autonomous-racing stack and experimental vehicle platform for RoboRacer competition and high-performance autonomous-driving research. It supports reproducible work on state estimation, LiDAR/stereo perception, vehicle-dynamics calibration, trajectory tracking, motion planning, and learning-based racing.
 
-The hardware setup and basic software framework were developed during my time as a Research Assistant at [ZJU FAST Lab](https://github.com/ZJU-FAST-Lab). I am deeply grateful to the wonderful people at ZJU FAST Lab for their invaluable support and guidance. The platform is now maintained in PolyU AIMS Lab as a dedicated RoboRacer vehicle for competition development and racing-focused research papers.
+This vehicle was designed at the PolyU AIMS Lab as a dedicated RoboRacer platform for competition development and racing-focused research.
 
 ## 📦 Installation
 
@@ -21,8 +21,6 @@ I provide an installation guide [here](install.md) 📖, for ROS2 Humble on Ubun
 **🔦 LiDAR:** Livox Mid-360 (main sensor)
 
 **📷 Stereo Camera:** ZED 2i (CUDA/GPU-accelerated depth and perception)
-
-**🧭 IMU:** fdilink Deta10 (optional, yaw estimation)
 
 **🎮 Remote Controller:** RadioMaster Pocket ELRS version (much better than XBOX series controller) 
 
@@ -304,4 +302,3 @@ This project would not be possible without the use of multiple great open-source
 - 🎮 Use a racing simulator, such as Isaac Lab or a dedicated track simulator
 - 🤖 Use RL for racing-policy and lap-time optimization
 - 🗺️ Integrate additional LIO backends (LVI-SAM, DLIO, etc.)
-
