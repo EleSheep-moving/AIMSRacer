@@ -49,9 +49,12 @@ Existing Nav2 footprint vertices were shifted forward by 0.17 m (`x=[-0.33,0.67]
 
 Re-record/re-prepare reference laps after fixing localization frames. Do not merely relabel old recorded sensor poses. Confirm straight-driving yaw, left-turn positive yaw rate, TF ownership and actual mounting on the Orin before enabling MPCC.
 
-## Reproduce isolated validation
+## Local isolated validation
 
-From the AIMSRacer root (requires the existing `aimsracer-mpcc:humble` image):
+The test directories and controller Docker tooling are excluded from Git. The
+commands below require a development workspace retaining those local files and
+the existing `aimsracer-mpcc:humble` image; a fresh checkout alone is insufficient.
+From the AIMSRacer root:
 
 ```bash
 docker build -f src/aims_racer_system/docker/Dockerfile.frames -t aimsracer-mpcc:rear-frames .

@@ -1,7 +1,11 @@
 # Docker validation — 2026-09-20
 
 The first section records the original controller-only checkpoint. See the
-pre-push section below for the current combined regression and acceptance results.
+pre-push section below for the combined regression and acceptance results.
+
+The test directories and `src/controller/docker/` are now local-only and
+excluded from Git. These recorded results remain valid for the tested code;
+re-running the commands requires those local files in addition to the checkout.
 
 Image: `aimsracer-mpcc:humble`.
 Image ID: `sha256:eb1b802bd857960908e1bc5734f0efb391236cb72c91136025ee5dd122b14f32`.
@@ -28,7 +32,7 @@ The full evidence pack is [`results/acceptance-20260920`](../results/acceptance-
 per-scenario results, controller JSONL, RC/converter logs, raw and prepared reference,
 trajectory CSV, and tracking PNG. Generated result files are intentionally gitignored.
 
-Reproduce from the AIMSRacer root:
+Reproduce from the original development workspace with the local test tooling:
 
 ```bash
 bash src/controller/docker/test.sh
@@ -83,7 +87,7 @@ The FAST-LIO patch was applied to a clean checkout of its pinned revision and co
 
 Installed controller/localization Python, RC/VESC source and parsed localization/VESC configuration were compared with the workspace. Independent source review covered localization and controller changes. Staged whitespace, generated-artifact exclusion and credential-pattern checks passed.
 
-Generated logs and per-scenario outputs are local under `src/controller/results/prepush-20260920/` and intentionally gitignored. The table preserves the reviewable results in Git. Reproduce from a fresh checkout (Docker required):
+Generated logs and per-scenario outputs are local under `src/controller/results/prepush-20260920/` and intentionally gitignored. The table preserves the reviewable results in Git. Reproduce in a workspace retaining the local test directories and controller Docker tooling (Docker required):
 
 ```bash
 docker build -f src/controller/docker/Dockerfile -t aimsracer-mpcc:humble .

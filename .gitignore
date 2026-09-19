@@ -34,3 +34,8 @@ rosbag2_*/
 .env
 .env.local
 /config/local/
+
+# Local-only validation files; keep these out of repository pushes
+/src/aims_racer_system/test/
+/src/controller/test/
+/src/controller/docker/

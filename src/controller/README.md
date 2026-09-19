@@ -10,9 +10,13 @@ MPCC optimizes local progress and produces physical speed (m/s) and steering
 control, racing-line optimization, obstacle avoidance and tire modeling are not
 part of this implementation.
 
-## Build and test in Docker
+## Local Docker validation
 
-From the AIMSRacer root:
+The test directories and `src/controller/docker/` are local-only and excluded
+from Git. The commands below apply to the development workspace that retains
+those files; they are not available from a fresh checkout alone.
+
+From the AIMSRacer root in that workspace:
 
 ```bash
 docker build -f src/controller/docker/Dockerfile -t aimsracer-mpcc:humble .
@@ -47,8 +51,8 @@ source install/setup.bash
 ```
 
 Install the controller Python dependencies in the vehicle's isolated Humble
-environment: CasADi 3.7.2, NumPy 1.26.4, SciPy 1.15.3, PyYAML 6.0.2. The Dockerfile
-contains the complete tested build recipe. Measure solve latency on the Orin.
+environment: CasADi 3.7.2, NumPy 1.26.4, SciPy 1.15.3, PyYAML 6.0.2. The local-only Dockerfile
+contains the tested build recipe. Measure solve latency on the Orin.
 
 V2/V3 now use a rear-axle `base_link`; see [frame migration](../aims_racer_system/docs/rear-axle-frames.md). Use `rear_offset: 0` with that pipeline and re-record references after migrating localization.
 

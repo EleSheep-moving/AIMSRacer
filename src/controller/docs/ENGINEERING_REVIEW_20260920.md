@@ -49,7 +49,7 @@ Synthetic 5 m/s, radius-5 m constant-speed circle; yaw rate 1 rad/s; true body l
 
 Output timestamp age p95 stayed around 4–5 ms in delayed cases, demonstrating that fresh publication timestamps do not prove accurate compensation of measurement latency. Longitudinal velocity RMS in these short trials was about 0.16–0.22 m/s, so the smoothing trial is not complete estimator acceptance.
 
-Historical diagnostic scripts and output are stored locally under `src/controller/results/engineering-review-20260920/` (gitignored and not included in a fresh clone). They were mounted at `/audit` and run with `python3 -m pytest -q -s -p no:cacheprovider /audit/<script>`; the files are `test_estimator_audit.py`, `test_lag_smoothing_audit.py`, `estimator.txt`, and `smoothing.txt`. These diagnostics overrode configuration only inside isolated containers. The table records that earlier experiment, not a current-binary benchmark; tracked regression tests cover the current yaw-only/VESC configuration.
+Historical diagnostic scripts and output are stored locally under `src/controller/results/engineering-review-20260920/` (gitignored and not included in a fresh clone). They were mounted at `/audit` and run with `python3 -m pytest -q -s -p no:cacheprovider /audit/<script>`; the files are `test_estimator_audit.py`, `test_lag_smoothing_audit.py`, `estimator.txt`, and `smoothing.txt`. These diagnostics overrode configuration only inside isolated containers. The table records that earlier experiment, not a current-binary benchmark; local regression tests cover the current yaw-only/VESC configuration.
 
 ## 3. P1 before faster driving: prediction and command application time are not fully aligned
 

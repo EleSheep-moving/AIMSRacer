@@ -1,9 +1,0 @@
-.git
-**/__pycache__
-**/.pytest_cache
-**/*.egg-info
-src/controller/results
-src/controller/jit_tmp*
-build
-install
-log
