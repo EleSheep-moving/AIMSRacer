@@ -39,3 +39,9 @@ rosbag2_*/
 /src/aims_racer_system/test/
 /src/controller/test/
 /src/controller/docker/
+
+# Local-only plans, patch tooling and localization Docker files
+/docs/superpowers/plans/
+/patches/
+/scripts/
+/src/aims_racer_system/docker/

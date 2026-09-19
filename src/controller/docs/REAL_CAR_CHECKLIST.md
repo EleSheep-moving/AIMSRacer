@@ -25,9 +25,14 @@ MPCC sends speed and steering through `/drive -> joystick_control_v2 ->
 watchdogs remain in that chain. No additional LIO-loss watchdog is implemented,
 as requested. Fresh EKF output alone does not prove that LIO is still updating.
 
-## Prepare a reproducible checkout
+## Prepare the vehicle workspace
 
-From the AIMSRacer root, with the existing ROS 2 Humble workspace/dependencies:
+The required FAST-LIO TF modification, its patch file and the root helper scripts
+are local-only and excluded from Git. A fresh checkout is therefore incomplete
+for the revised TF ownership. Supply the local patch/tooling or equivalent
+modified FAST-LIO source before deploying V2/V3.
+
+In a workspace retaining those local files, with ROS 2 Humble dependencies:
 
 ```bash
 git submodule update --init src/FASTLIO2_ROS2
@@ -36,11 +41,12 @@ colcon build --packages-up-to fastlio2 aims_racer_system vesc_ackermann ackerman
 source install/setup.bash
 ```
 
-The script applies the tracked [FAST-LIO patch](../../../patches/README.md)
-to its pinned upstream revision. It is idempotent and intentionally leaves that
-submodule modified. A parent-only push cannot carry an unrecorded submodule edit;
-this patch is how a fresh checkout reproduces the change. Reapply after resetting
-the submodule. Rebuild `fastlio2`: an old binary ignores `publish_tf: false`.
+The local script applies the TF modification to upstream revision
+`f516daac08bc46e50e814a2e7d6c8352ed8141bb`. It is idempotent and intentionally
+leaves the submodule modified. The parent gitlink still points to unmodified
+upstream; it does not carry this edit. Reapply the local patch after resetting
+the submodule. Rebuild `fastlio2`: an old or unmodified binary ignores
+`publish_tf: false` and can publish conflicting TF.
 Custom LIO configs must explicitly disable TF, retain the required frames, and
 keep online extrinsic estimation disabled.
 

@@ -41,7 +41,10 @@ before enabling motion. It lists the current estimator contract, missing measure
 known controller limitations, and the required FAST-LIO patch.
 
 Use the existing V2/V3 bringup, which supplies EKF odometry and the RC/VESC chain.
-Prepare the pinned FAST-LIO patch and rebuild the changed packages in the Humble workspace:
+The required FAST-LIO TF patch and root `scripts/` directory are local-only and
+excluded from Git. A fresh checkout does not include that modification: supply
+the local patch/tooling or equivalent modified FAST-LIO source before building.
+In the development workspace retaining the local tooling:
 
 ```bash
 git submodule update --init src/FASTLIO2_ROS2

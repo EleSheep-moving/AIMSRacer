@@ -37,7 +37,7 @@ VESC converts motor ERPM using the existing gain 4650 and zero offset. `vesc_to_
 
 The adapter uses the latest raw gyro at or before each LIO timestamp, at most 50 ms old. Missing/stale samples cause dropped output, never an uncorrected velocity. It subtracts the rotational lever-arm velocity. Raw gyro bias is not estimated by this adapter; configured covariance floors reflect assumed uncertainty, not measured calibration. FAST-LIO's currently zero covariances receive nonzero floors.
 
-The local FAST-LIO submodule now reads its YAML `publish_tf` flag and guards TF publication. V2 uses `publish_tf: false`; the temporary TF-topic remapping has been removed. Rebuild `fastlio2` together with `aims_racer_system` before deploying these launch changes; an older FAST-LIO binary ignores the flag. Omitted flags default to true, preserving upstream behavior. This change is distributed as a [versioned patch](../../../patches/README.md); run `bash scripts/apply_fastlio_patch.sh` on a fresh checkout before building. The upstream gitlink stays pinned and the patched submodule working tree is intentionally modified. During driving, EKF alone owns `odom -> base_link`. During mapping (without EKF), the adapter owns that transform. Mapping PGO uses `local_frame: odom` and retains the raw IMU cloud/pose pairing.
+The local FAST-LIO submodule now reads its YAML `publish_tf` flag and guards TF publication. V2 uses `publish_tf: false`; the temporary TF-topic remapping has been removed. Rebuild `fastlio2` together with `aims_racer_system` before deploying these launch changes; an older FAST-LIO binary ignores the flag. Omitted flags default to true, preserving upstream behavior. The patch and root application script are local-only and excluded from Git. A fresh checkout needs the local patch/tooling or equivalent modified FAST-LIO source supplied separately before building; the unmodified upstream binary ignores `publish_tf: false`. In the development workspace retaining the local files, use `bash scripts/apply_fastlio_patch.sh`. The upstream gitlink stays pinned and the patched submodule working tree is intentionally modified. During driving, EKF alone owns `odom -> base_link`. During mapping (without EKF), the adapter owns that transform. Mapping PGO uses `local_frame: odom` and retains the raw IMU cloud/pose pairing.
 
 ## MPCC and footprint migration
 
@@ -51,7 +51,7 @@ Re-record/re-prepare reference laps after fixing localization frames. Do not mer
 
 ## Local isolated validation
 
-The test directories and controller Docker tooling are excluded from Git. The
+The test directories and both controller/localization Docker directories are excluded from Git. The
 commands below require a development workspace retaining those local files and
 the existing `aimsracer-mpcc:humble` image; a fresh checkout alone is insufficient.
 From the AIMSRacer root:

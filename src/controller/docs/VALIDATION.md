@@ -3,8 +3,8 @@
 The first section records the original controller-only checkpoint. See the
 pre-push section below for the combined regression and acceptance results.
 
-The test directories and `src/controller/docker/` are now local-only and
-excluded from Git. These recorded results remain valid for the tested code;
+The test directories, `src/controller/docker/` and
+`src/aims_racer_system/docker/` are local-only and excluded from Git. These recorded results remain valid for the tested code;
 re-running the commands requires those local files in addition to the checkout.
 
 Image: `aimsracer-mpcc:humble`.
@@ -87,7 +87,7 @@ The FAST-LIO patch was applied to a clean checkout of its pinned revision and co
 
 Installed controller/localization Python, RC/VESC source and parsed localization/VESC configuration were compared with the workspace. Independent source review covered localization and controller changes. Staged whitespace, generated-artifact exclusion and credential-pattern checks passed.
 
-Generated logs and per-scenario outputs are local under `src/controller/results/prepush-20260920/` and intentionally gitignored. The table preserves the reviewable results in Git. Reproduce in a workspace retaining the local test directories and controller Docker tooling (Docker required):
+Generated logs and per-scenario outputs are local under `src/controller/results/prepush-20260920/` and intentionally gitignored. The table preserves the reviewable results in Git. Reproduce in a workspace retaining the local test directories and both controller/localization Docker directories (Docker required):
 
 ```bash
 docker build -f src/controller/docker/Dockerfile -t aimsracer-mpcc:humble .

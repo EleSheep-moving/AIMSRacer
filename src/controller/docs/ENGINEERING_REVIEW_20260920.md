@@ -7,8 +7,8 @@ IMU fusion was restricted to yaw rate and VESC vx was added with nonzero configu
 variance; synthetic turning and input-selection regressions cover that change.
 Finding 1 is addressed for the selected yaw-only configuration. Findings 2–7 remain
 open as described in the [real-car checklist](REAL_CAR_CHECKLIST.md). The FAST-LIO
-TF change is now distributed as a pinned patch with an application script, rather
-than relying on an unrecorded submodule edit. Full FAST-LIO build/runtime is still
+TF change and its patch/application script are now local-only and excluded from
+Git; a fresh checkout needs that modification supplied separately. Full FAST-LIO build/runtime is still
 unverified. Historical test counts and diagnostics below remain historical evidence.
 
 ## Assessment
