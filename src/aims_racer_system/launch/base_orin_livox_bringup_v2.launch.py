@@ -23,7 +23,8 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -44,7 +45,7 @@ def generate_launch_description():
     lio_config = os.path.join(
         get_package_share_directory('aims_racer_system'),
         'params',
-        'fastlio.yaml'
+        'fastlio_rear.yaml'
     )
     
     localizer_config = os.path.join(
@@ -116,12 +117,6 @@ def generate_launch_description():
         parameters=livox_ros2_params
     )
 
-    livox_imu_to_ekf_node = Node(
-        package='aims_racer_system',
-        executable='livox_imu_to_ekf.py',
-        name='livox_imu_to_ekf',
-        output='screen'
-    )
     
     # 当前车辆：CH3 油门、CH1 转向、CH8 标定、CH10 限幅。
     joystick_control_v2_node = Node(
@@ -191,7 +186,7 @@ def generate_launch_description():
         parameters=[os.path.join(
             get_package_share_directory("aims_racer_system"),
             'params', 
-            'ekf.yaml'
+            'ekf_rear.yaml'
         )],
     )
     
@@ -215,40 +210,22 @@ def generate_launch_description():
         parameters=[{'config_path': LaunchConfiguration('localizer_config')}]
     )
 
-    # 静态TF变换
-    static_tf_node_bl = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_baselink_to_laser',
-        arguments=['0.13', '0.0', '0.03', '0.0', '0.0', '0.0', 'base_link', 'laser']
-    )
-    
-    static_tf_node_bi = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_baselink_to_imu',
-        arguments=['0.13', '0.0', '0.03', '0.0', '0.0', '0.0', 'base_link', 'imu_link']
-    )
-    
-    base_footprint_to_base_link = Node(
-        package="tf2_ros", 
-        executable="static_transform_publisher",
-        name="base_link_to_base_footprint",
-        arguments=["0", "0", "0", "0", "0", "0", "base_link", "base_footprint"]
-    )
+    # Rear-axle frame conversion and consistent sensor extrinsics.
+    rear_frames = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('aims_racer_system'), 'launch', 'rear_axle_frames.launch.py')),
+        launch_arguments={'lio_config': LaunchConfiguration('lio_config'),
+                          'publish_odom_tf': 'false'}.items())
 
     # 添加所有节点到LaunchDescription
-    ld.add_action(base_footprint_to_base_link)
     ld.add_action(ackermann_to_vesc_node)
     ld.add_action(vesc_to_odom_node)
     ld.add_action(vesc_driver_node)
     ld.add_action(crsf_receiver_node)
     ld.add_action(joystick_control_v2_node)  # 🆕 使用v2版本，无需mux
-    ld.add_action(livox_imu_to_ekf_node)
     ld.add_action(lidar_driver)
     ld.add_action(robot_localization_node)
-    ld.add_action(static_tf_node_bl)
-    ld.add_action(static_tf_node_bi)
     ld.add_action(lio)
 
+    ld.add_action(rear_frames)
     return ld

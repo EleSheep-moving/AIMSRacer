@@ -1,0 +1,39 @@
+diff --git a/fastlio2/src/lio_node.cpp b/fastlio2/src/lio_node.cpp
+index fdc8f20..7a0bfe4 100644
+--- a/fastlio2/src/lio_node.cpp
++++ b/fastlio2/src/lio_node.cpp
+@@ -29,6 +29,7 @@ struct NodeConfig
+     std::string body_frame = "body";
+     std::string world_frame = "lidar";
+     bool print_time_cost = false;
++    bool publish_tf = true;
+ };
+ struct StateData
+ {
+@@ -87,6 +88,7 @@ public:
+         m_node_config.body_frame = config["body_frame"].as<std::string>();
+         m_node_config.world_frame = config["world_frame"].as<std::string>();
+         m_node_config.print_time_cost = config["print_time_cost"].as<bool>();
++        m_node_config.publish_tf = config["publish_tf"].as<bool>(true);
+ 
+         m_builder_config.lidar_filter_num = config["lidar_filter_num"].as<int>();
+         m_builder_config.lidar_min_range = config["lidar_min_range"].as<double>();
+@@ -257,7 +259,10 @@ public:
+         if (m_builder->status() != BuilderStatus::MAPPING)
+             return;
+ 
+-        broadCastTF(m_tf_broadcaster, m_node_config.world_frame, m_node_config.body_frame, m_package.cloud_end_time);
++        if (m_node_config.publish_tf)
++        {
++            broadCastTF(m_tf_broadcaster, m_node_config.world_frame, m_node_config.body_frame, m_package.cloud_end_time);
++        }
+ 
+         publishOdometry(m_odom_pub, m_node_config.world_frame, m_node_config.body_frame, m_package.cloud_end_time);
+ 
+@@ -297,4 +302,4 @@ int main(int argc, char **argv)
+     rclcpp::spin(std::make_shared<LIONode>());
+     rclcpp::shutdown();
+     return 0;
+-}
+\ No newline at end of file
++}

@@ -1,0 +1,4 @@
+# Unified patches use a single space for empty context lines.
+patches/*.patch whitespace=-blank-at-eol
+# Preserve upstream source bytes and recorded provenance hashes.
+src/controller/aims_mpcc/vendor/*.py whitespace=-blank-at-eof

@@ -1,0 +1,11 @@
+# Build from the previously validated CPU MPCC image; host ROS remains untouched.
+FROM aimsracer-mpcc:humble
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN apt-get update && apt-get install -y --no-install-recommends ros-humble-robot-localization \
+    && rm -rf /var/lib/apt/lists/*
+COPY src/aims_racer_system /ws/src/aims_racer_system
+COPY src/controller /ws/src/controller
+COPY src/vesc/vesc_ackermann /ws/src/vesc_ackermann
+RUN source /opt/ros/humble/setup.bash && source /ws/install/setup.bash && \
+    colcon build --packages-select vesc_ackermann aims_racer_system aims_mpcc
+CMD ["python3", "-m", "pytest", "-q", "-p", "no:cacheprovider", "/ws/src/aims_racer_system/test/test_rear_axle_odometry.py", "/ws/src/aims_racer_system/test/test_rear_axle_ros.py", "/ws/src/aims_racer_system/test/test_rear_axle_ekf.py", "/ws/src/aims_racer_system/test/test_rear_axle_imu.py", "/ws/src/aims_racer_system/test/test_rear_axle_imu_ros.py", "/ws/src/aims_racer_system/test/test_vesc_ekf.py", "/ws/src/controller/test"]

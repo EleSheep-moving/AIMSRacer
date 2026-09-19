@@ -11,6 +11,16 @@ I provide an installation guide [here](install.md) 📖, for ROS2 Humble on Ubun
 
 ⚠️ May have some issues with the installation guide, please let me know if you have any questions.
 
+## Recorded-lap MPCC prototype
+
+The new [controller package](src/controller/README.md) tracks a manually recorded
+closed lap using speed-mode MPCC. V2/V3 now use rear-axle `base_link` odometry,
+IMU yaw rate and VESC longitudinal speed in EKF. Read the
+[real-car deployment checklist](src/controller/docs/REAL_CAR_CHECKLIST.md) and
+apply the [pinned FAST-LIO patch](patches/README.md) before rebuilding. Measured
+footprint values are still required; Docker results are software validation,
+not real-car acceptance.
+
 ## 🔨 Modification & Customization
 
 ### 🛠️ RoboRacer Platform

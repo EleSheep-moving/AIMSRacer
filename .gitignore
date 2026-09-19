@@ -8,3 +8,29 @@ bag/
 .venv/
 __pycache__/
 *.pyc
+
+# Python tooling and local environments
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
+venv/
+
+# Generated MPCC logs, references and validation artifacts
+/src/controller/results/
+/src/controller/runs/
+/src/controller/recordings/
+jit_tmp*
+
+# ROS bag recordings (keep source/test fixtures and calibration YAML trackable)
+*.db3-shm
+*.db3-wal
+*.mcap
+rosbag2_*/
+
+# Machine-local overrides and credentials; examples remain trackable
+.env
+.env.local
+/config/local/

@@ -1,0 +1,7 @@
+# base_link is at the rear-axle midpoint, at the old base_link height.
+# Forward offset confirmed approximately by the owner; remeasure before high-speed use.
+lidar_translation: [0.30, 0.0, 0.03]
+# Rotation and height inherited from the old laser TF, not newly measured.
+lidar_rpy: [0.0, 0.0, 0.0]
+# V2/V3 IMU output is explicitly corrected to base_link; no extra 180-degree
+# data rotation or fixed-vector gravity subtraction is applied here.

@@ -5,7 +5,7 @@
     local_frame: odom
     robot_base_frame: base_link
     # robot_radius: 1.0
-    footprint: "[ [0.5, 0.3], [0.5, -0.3], [-0.5, -0.3], [-0.5, 0.3] ]"
+    footprint: "[ [0.67, 0.3], [0.67, -0.3], [-0.33, -0.3], [-0.33, 0.3] ]"
 
 bt_navigator:
   ros__parameters:

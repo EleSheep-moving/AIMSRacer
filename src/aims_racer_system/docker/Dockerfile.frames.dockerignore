@@ -1,0 +1,12 @@
+**
+!src/
+!src/aims_racer_system/
+!src/aims_racer_system/**
+!src/controller/
+!src/controller/**
+!src/vesc/
+!src/vesc/vesc_ackermann/
+!src/vesc/vesc_ackermann/**
+src/controller/results/
+**/__pycache__/
+**/.pytest_cache/

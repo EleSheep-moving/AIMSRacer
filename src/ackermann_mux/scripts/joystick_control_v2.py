@@ -5,7 +5,7 @@ from rclpy.node import Node
 from ackermann_msgs.msg import AckermannDriveStamped
 from crsf_receiver_msg.msg import CRSFChannels16
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Bool
 
 
 class JoystickControl(Node):
@@ -51,6 +51,10 @@ class JoystickControl(Node):
         )
         
         self.ackermann_publisher = self.create_publisher(AckermannDriveStamped, "/ackermann_cmd", 10)
+        # Selection status is independent of /drive availability (no enable cycle).
+        self.autonomy_status_publisher = self.create_publisher(
+            Bool, "/control/autonomy_speed_enabled", 10
+        )
 
         self.direction_reverse = self.declare_parameter("direction_reverse", False).value
 
@@ -387,6 +391,13 @@ class JoystickControl(Node):
 
         
     def timer_callback(self):
+        selection = Bool()
+        rc_fresh = (self.channel is not None and
+                    0.0 <= (self.get_clock().now() - self.last_joystick_time).nanoseconds / 1e9 <= 0.2)
+        selection.data = bool(rc_fresh and not self.locked and
+                              self.control_mode == "nav" and
+                              self.esc_control_mode == "speed" and not self.calib_mode)
+        self.autonomy_status_publisher.publish(selection)
         
         if self.channel is None:
             self.get_logger().warn("Waiting for RC input...")
@@ -466,6 +477,7 @@ class JoystickControl(Node):
                     return
                 elif nav_timeout:
                     self.get_logger().warn("No nav message received for 0.2 seconds")
+                    self.publish_ackermann_none()
                 else:    
                     self.publish_ackermann(
                         self.nav_ackermann_msg.drive.steering_angle,
