@@ -129,32 +129,3 @@ output directly; they do not exercise FAST-LIO scan matching or vehicle motion.
 A powered-vehicle stationary check also passed the frame/TF/position/velocity
 contract; see [the hardware report](v2-frame-hardware-check-20260921.md) for measured
 rates, remaining gyro bias and LIO latency, and the localhost DDS configuration.
-
-The following historical results describe earlier frame conventions and are retained
-as history, not evidence for the current changes.
-
-## Historical validation — initial frame migration (2026-09-20)
-
-Image `aimsracer-mpcc:rear-frames`, ID `sha256:846fde410d0138d9d3c9243553eaba841ebedc4476abdf7caf8c533d5024a77a`: **74 tests passed in 23.86 s** (62 existing MPCC tests and 12 frame/pipeline tests). Both installed V2 launch descriptions and the shared frame launch passed argument expansion; MPCC config loading verified rear_offset=0, steering limit=0.45 and rate=2.0. At that historical validation checkpoint, FAST-LIO was unchanged at f516daac08bc46e50e814a2e7d6c8352ed8141bb; the current local patch described above was added later.
-
-Build/test logs and image ID: `src/controller/results/rear-frames-20260920/` (generated, gitignored). Full ten-scenario MPCC acceptance from the previous image was not repeated for this localization migration. Hardware data and FAST-LIO scan matching were not exercised.
-
-## Historical validation — yaw-rate-only baseline (superseded)
-
-At that checkpoint, the rear-axle adapter and matching IMU TF were retained, and V2/V3 fused only IMU yaw rate. The current configuration above supersedes that baseline. The raw IMU topic remains unchanged for FAST-LIO. No additional LIO freshness watchdog is added, as explicitly requested. Legacy `ekf.yaml` is unchanged; V2 uses `ekf_rear.yaml`.
-
-The integration regression injects incorrect IMU acceleration while keeping synthetic LIO motion correct. Before the configuration change, estimated forward speed was about 9.67 m/s instead of 1 m/s and the test failed. That earlier yaw-only configuration passed the corrupted-acceleration case. The subsequent acceleration-enabled checkpoint instead tested physically valid compensated acceleration. The current VESC-plus-gyro configuration again excludes IMU acceleration and tests rejection of those unselected fields.
-
-Yaw-only validation: **75 tests passed in 30.17 s**, including both ordinary and corrupted-acceleration EKF cases. Rebuilt image `aimsracer-mpcc:rear-frames`, ID `sha256:a6a7b089d2794a43f8af4a35cc3cb1fd2c017a53c0f869382f4fa844672aff68`. Evidence: `src/controller/results/yaw-only-20260920/`. Installed V2 config was also checked to use the rear-axle odometry topic and only IMU update index 11 (yaw rate). These are Docker software tests, not real-car acceptance.
-
-## Historical validation — compensated IMU acceleration
-
-**86 tests passed in 43.13 s**, including 3D centripetal/tangential corrections, causal differentiation and attitude propagation, covariance checks, invalid timestamps/data, startup/stale-attitude gyro-only behavior, and real-EKF cases for turning, changing yaw rate, straight acceleration and tilted rest. Image `aimsracer-mpcc:rear-frames`: `sha256:22560eb61d10f2aa58697ecf73289d58bdf65b6979916975a8db171fad833eff`. Installed configuration was verified to fuse only indices 11, 12, 13 with EKF gravity removal enabled. Evidence: `src/controller/results/rear-imu-20260920/`. These are synthetic software tests, not measured hardware timing or sensor calibration.
-
-## VESC longitudinal-speed fusion (2026-09-20)
-
-V2/V3 use LIO rear-axle odometry, IMU yaw rate only, and VESC longitudinal speed only. Mapping still uses the rear-axle adapter without EKF. No LIO-loss watchdog has been added. Delayed LIO handling and other controller findings in `controller/docs/ENGINEERING_REVIEW_20260920.md` remain separate outstanding work.
-
-After updating the workspace, rebuild `vesc_ackermann` and `aims_racer_system` and restart bringup to load both the new covariance publication and EKF configuration. The earlier local FAST-LIO TF patch also requires rebuilding `fastlio2` if it has not already been rebuilt.
-
-Validation: **90 tests passed in 58.49 s** in image `sha256:7b625a39a26000e27ac8478cb232dfc8f428ca3a8f7a008f2d1cd684e6101d67`. Includes the real VESC converter with two variance settings, rejection of unselected wheel/IMU fields, and the synthetic 5 m/s turn. Evidence: `src/controller/results/vesc-fusion-20260920/`. This validates software behavior with synthetic inputs, not wheel-slip calibration or real-car high-speed operation.

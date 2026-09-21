@@ -10,35 +10,11 @@ MPCC optimizes local progress and produces physical speed (m/s) and steering
 control, racing-line optimization, obstacle avoidance and tire modeling are not
 part of this implementation.
 
-## Local Docker validation
-
-The test directories and `src/controller/docker/` are local-only and excluded
-from Git. The commands below apply to the development workspace that retains
-those files; they are not available from a fresh checkout alone.
-
-From the AIMSRacer root in that workspace:
-
-```bash
-docker build -f src/controller/docker/Dockerfile -t aimsracer-mpcc:humble .
-docker run --rm --network none -e ROS_DOMAIN_ID=83 aimsracer-mpcc:humble
-bash src/controller/docker/test.sh
-```
-
-The last command runs the complete acceptance suite and exports results under
-`src/controller/results/<UTC timestamp>`. Set `MPCC_RESULTS_DIR` to choose another
-new results directory. No serial devices, GPU, host network or host Python
-installation are used. The original F1TENTH images remain available.
-
-The test plant independently integrates a lagged bicycle and consumes the actual
-VESC converter's ERPM/servo outputs. Synthetic RC messages exercise the real
-joystick selector. This establishes software integration, not tire accuracy or
-real-car validation. The x86 Docker image does not establish Orin timing.
-
 ## Prepare the real car
 
 Read the [remaining real-car work and deployment checklist](docs/REAL_CAR_CHECKLIST.md)
 before enabling motion. It lists the current estimator contract, missing measurements,
-known controller limitations, and the required FAST-LIO patch.
+known controller limitations and the current frame contract.
 
 Use the V2/V3 bringup, which supplies rear-axle EKF odometry and the RC/VESC chain.
 Livox point cloud, raw IMU and raw LIO use one external `livox_frame`; FAST-LIO
@@ -225,5 +201,5 @@ ros2 bag record -o /data/run-bag /odometry/filtered /drive /ackermann_cmd \
   /control/autonomy_speed_enabled /mpcc/status /mpcc/prediction
 ```
 
-Inspect `docs/VALIDATION.md` for the actual validation performed, rather than
-inferring readiness from configuration or Docker build success.
+Use the focused package tests and the real-car checklist to assess the current
+software and hardware validation scope.

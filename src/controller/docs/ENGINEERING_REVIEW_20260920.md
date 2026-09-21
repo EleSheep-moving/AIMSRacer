@@ -6,10 +6,10 @@ The review below records the earlier acceleration-enabled snapshot. Subsequently
 IMU fusion was restricted to yaw rate and VESC vx was added with nonzero configurable
 variance; synthetic turning and input-selection regressions cover that change.
 Finding 1 is addressed for the selected yaw-only configuration. Findings 2–7 remain
-open as described in the [real-car checklist](REAL_CAR_CHECKLIST.md). The FAST-LIO
-TF change and its patch/application script are now local-only and excluded from
-Git; a fresh checkout needs that modification supplied separately. Full FAST-LIO build/runtime is still
-unverified. Historical test counts and diagnostics below remain historical evidence.
+open as described in the [real-car checklist](REAL_CAR_CHECKLIST.md). FAST-LIO stays
+unmodified; host launch files isolate its TF output on `/fastlio2/tf`. Full FAST-LIO
+build/runtime remains unverified. Historical test counts and diagnostics below remain
+historical evidence.
 
 ## Assessment
 
@@ -97,7 +97,7 @@ Recommendation: add progress-local association and physically surveyed corridor 
 
 - `half_length`/`half_width` remain unset; `geometry_verified` is false. Normal MPCC activation correctly remains blocked until physical geometry is entered.
 - Sensor height/orientation and LIO extrinsics remain partly inherited, not physically verified.
-- The latest FAST-LIO `publish_tf` fix is an uncommitted submodule patch. The remapping is removed in host launch files. Full FAST-LIO build/runtime has not been validated and the earlier Docker integration image does not contain a real FAST-LIO execution.
+- FAST-LIO remains an unmodified submodule. Host launch files remap its TF output to `/fastlio2/tf`; full FAST-LIO build/runtime has not been validated.
 - The previous 86 passing tests remain useful for software plumbing and low-speed synthetic checks. They do not override the newly demonstrated 5 m/s estimator problems.
 
 Recommended order: resolve findings 1–2; repair manual shadow evaluation; verify geometry/frame alignment; collect low-speed identification/timing data; then increase speed using quantified estimator and controller errors.
