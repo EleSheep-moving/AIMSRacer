@@ -1,4 +1,4 @@
-"""Rigid-body IMU-origin odometry conversion to a rear-axle base_link."""
+"""Rigid-body unified Livox-origin odometry conversion to rear-axle base_link."""
 import copy
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -7,13 +7,6 @@ from scipy.spatial.transform import Rotation
 def skew(v):
     x, y, z = v
     return np.array([[0., -z, y], [z, 0., -x], [-y, x, 0.]])
-
-
-def sensor_extrinsic(lidar_position, lidar_quaternion, r_il, t_il):
-    """Return T_base_imu from T_base_lidar and FAST-LIO's T_imu_lidar."""
-    r_bi = Rotation.from_quat(lidar_quaternion).as_matrix() @ np.asarray(r_il).reshape(3, 3).T
-    t_bi = np.asarray(lidar_position) - r_bi @ np.asarray(t_il)
-    return t_bi, Rotation.from_matrix(r_bi).as_quat()
 
 
 def _covariance(values, floors):
@@ -29,14 +22,14 @@ def _covariance(values, floors):
 def convert_odometry(msg, angular_velocity, translation, quaternion,
                      pose_variance=(.01, .01, .01, .01, .01, .01),
                      twist_variance=(.04, .04, .04, .01, .01, .01)):
-    """Angular velocity is in raw IMU axes; extrinsic is T_base_imu.
+    """Angular velocity is in unified Livox axes; extrinsic is T_base_livox.
 
     Pose covariance uses world-fixed small rotation perturbations. Twist is
     body-expressed. Gyro covariance floors account for unobserved gyro bias;
     these are conservative assumptions, not calibrated uncertainty estimates.
     """
-    if msg.header.frame_id != 'odom' or msg.child_frame_id != 'livox_imu':
-        raise ValueError('Expected odom / livox_imu odometry')
+    if msg.header.frame_id != 'odom' or msg.child_frame_id != 'livox_frame':
+        raise ValueError('Expected odom / livox_frame odometry')
     p, q = msg.pose.pose.position, msg.pose.pose.orientation
     v = msg.twist.twist.linear
     values = [p.x, p.y, p.z, q.x, q.y, q.z, q.w, v.x, v.y, v.z,

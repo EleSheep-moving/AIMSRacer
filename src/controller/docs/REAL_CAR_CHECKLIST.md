@@ -11,8 +11,8 @@ Current calibration is outside this implementation.
 | Source | EKF input | Frame / meaning |
 |---|---|---|
 | FAST-LIO via rear-axle adapter | Existing LIO pose and velocity selection | Pose in `odom`, twist at rear axle in `base_link` |
-| `/livox/imu_ekf` | Yaw rate only, index 11 | Rear-frame gyro; acceleration and orientation are not fused |
-| VESC `/odom` | Forward velocity only, index 6 | `base_link` vx in m/s; exclude integrated wheel pose and steering-derived yaw rate |
+| `/rear_axle/imu` | Yaw rate only, index 11 | Rear-frame gyro; acceleration and orientation are not fused |
+| VESC `/rear_axle/wheel_odom` | Forward velocity only, index 6 | `base_link` vx in m/s; exclude integrated wheel pose and steering-derived yaw rate |
 
 EKF publishes `/odometry/filtered` and owns `odom -> base_link` in V2/V3 driving.
 The rear-axle adapter owns that transform in mapping, where EKF is absent.
@@ -27,33 +27,18 @@ as requested. Fresh EKF output alone does not prove that LIO is still updating.
 
 ## Prepare the vehicle workspace
 
-The required FAST-LIO TF modification, its patch file and the root helper scripts
-are local-only and excluded from Git. A fresh checkout is therefore incomplete
-for the revised TF ownership. Supply the local patch/tooling or equivalent
-modified FAST-LIO source before deploying V2/V3.
+The FAST-LIO submodule remains unmodified. Main-repository launch files remap the
+upstream FAST-LIO `/tf` output to `/fastlio2/tf`; global driving TF remains owned
+by EKF. See the [frame migration guide](../../aims_racer_system/docs/rear-axle-frames.md#upstream-fast-lio-integration).
 
-In a workspace retaining those local files, with ROS 2 Humble dependencies:
+All external Livox measurements use `livox_frame` with a shared approximate mounting
+origin; internal FAST-LIO `r_il/t_il` remain unchanged. The rear-axle adapter uses only
+the common external mounting transform, not an additional internal IMU displacement.
 
-```bash
-git submodule update --init src/FASTLIO2_ROS2
-bash scripts/apply_fastlio_patch.sh
-colcon build --packages-up-to fastlio2 aims_racer_system vesc_ackermann ackermann_mux aims_mpcc
-source install/setup.bash
-```
-
-The local script applies the TF modification to upstream revision
-`f516daac08bc46e50e814a2e7d6c8352ed8141bb`. It is idempotent and intentionally
-leaves the submodule modified. The parent gitlink still points to unmodified
-upstream; it does not carry this edit. Reapply the local patch after resetting
-the submodule. Rebuild `fastlio2`: an old or unmodified binary ignores
-`publish_tf: false` and can publish conflicting TF.
-Custom LIO configs must explicitly disable TF, retain the required frames, and
-keep online extrinsic estimation disabled.
-
-The Docker tests do not compile or run FAST-LIO. Its full build and runtime TF
-ownership are still unverified. Install the controller's pinned Python
-dependencies in the vehicle's isolated environment as described in the
-[controller README](../README.md); the x86 Docker image is not an Orin image.
+Dependency/build and synthetic pipeline checks do not establish scan-matching accuracy
+or real-car TF behavior. Use the controller's documented system-Python setup and measure
+solve latency on Orin. See the current [frame guide](../../aims_racer_system/docs/rear-axle-frames.md)
+for topic names and validation scope.
 
 ## Before the first autonomous lap
 
@@ -68,7 +53,7 @@ dependencies in the vehicle's isolated environment as described in the
   negative steering means right. Inspect pose and twist at the rear axle and
   verify exactly one owner per TF edge during driving and mapping.
 - **Check wheel-speed scale and uncertainty.** The retained ERPM gain is 4650,
-  offset zero. Compare `/odom` vx with independent ground displacement/time and
+  offset zero. Compare `/rear_axle/wheel_odom` vx with independent ground displacement/time and
   LIO during modest straight runs. Variance 0.04 (m/s)^2 is an assumed sigma of
   0.2 m/s, not a measured calibration. Driven-wheel slip can bias it; a constant
   covariance is not a slip estimator. Check measured telemetry rate/dropouts.
@@ -80,7 +65,9 @@ dependencies in the vehicle's isolated environment as described in the
 - **Measure Orin timing and estimator delay.** Check actual LIO/IMU/VESC source
   stamps, arrival delays, clock consistency, solve p95/p99 and deadline misses.
   Targets are 200 Hz EKF output, 10 Hz solving, 50 Hz commands; these are not
-  measured hardware rates. Warm-up must finish before READY. Delayed-LIO
+  measured hardware rates. Run `prepare_solver` with the selected path and vehicle
+  configuration before startup; online workers require the cached native solver.
+  Warm-up must finish before READY. Delayed-LIO
   smoothing/history and prediction settings still need joint validation.
 - **Record the reference in the same localization session.** Re-record after
   frame migration. Do not restart localization between recording and driving
@@ -96,8 +83,8 @@ dependencies in the vehicle's isolated environment as described in the
 Useful recording command (choose an external/local ignored data directory):
 
 ```bash
-ros2 bag record -o /data/mpcc-run /livox/imu /livox/imu_ekf \
-  /fastlio2/lio_odom /fastlio2/base_odom /odom /odometry/filtered \
+ros2 bag record -o /data/mpcc-run /livox/imu /rear_axle/imu \
+  /fastlio2/lio_odom /rear_axle/lio_odom /rear_axle/wheel_odom /odometry/filtered \
   /sensors/core /sensors/servo_position_command /drive /ackermann_cmd \
   /control/autonomy_speed_enabled /mpcc/status /tf /tf_static
 ```

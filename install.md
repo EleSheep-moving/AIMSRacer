@@ -442,42 +442,25 @@ ros2 pkg prefix livox_ros_driver2
 ros2 pkg prefix serial
 ```
 
-## 8. Create the Python environment
+## 8. Use system Python
 
-Use a virtual environment for map preprocessing and calibration analysis.
-The explicit list below avoids ambiguity in older requirements files.
+ROS nodes and MPCC use Ubuntu's `/usr/bin/python3`; no virtual environment is
+required. Keep NumPy, SciPy and PyYAML managed by apt, and add CasADi for MPCC
+without replacing those packages:
 
 ```bash
 cd "$HOME/AIMSRacer"
-python3 -m venv .venv
-
-.venv/bin/python -m pip install \
-  --index-url https://mirrors.aliyun.com/pypi/simple/ \
-  --upgrade pip setuptools wheel
-
-.venv/bin/python -m pip install \
-  --index-url https://mirrors.aliyun.com/pypi/simple/ \
-  "numpy>=1.17.3,<1.25" \
-  "open3d==0.18.0" \
-  matplotlib \
-  "scipy<1.16" \
-  PyYAML \
-  pillow \
-  pandas \
-  scikit-learn
-
-.venv/bin/python -m pip check
+sudo apt install python3-pip python3-numpy python3-scipy python3-yaml ccache gcc
+/usr/bin/python3 -m pip install --user --no-deps casadi==3.7.2
+/usr/bin/python3 -c 'import numpy, scipy, yaml, casadi; print(casadi.__version__)'
 ```
 
-If `python3 -m venv` reports that `ensurepip` is unavailable, reinstall the
-Jammy venv package and retry:
-
-```bash
-sudo apt install --reinstall python3-venv
-```
-
-Do not activate `.venv` while building the ROS workspace. ROS 2 Humble is
-installed for the system Python and should be built in that environment.
+Run as the same user who installed CasADi, with Python's user-site enabled.
+See the [MPCC setup and validation limits](src/controller/README.md#prepare-the-real-car)
+for build commands and numerical-library thread settings. Offline preprocessing
+tools may need additional packages such as Open3D; their dependencies are separate
+from the validated ROS/MPCC setup and should be checked before use, rather than
+bulk-upgrading the vehicle's Python packages.
 
 ## 9. Build AIMSRacer
 
@@ -623,7 +606,7 @@ rosdep check \
   --ignore-src \
   --skip-keys "GTSAM livox_ros_driver2 serial scout_description"
 
-.venv/bin/python -m pip check
+/usr/bin/python3 -m pip check
 sudo apt-get check
 ```
 
@@ -798,9 +781,9 @@ rates does not repair a USB 2 link.
 
 ### `No module named rclpy`
 
-Build and launch ROS nodes outside `.venv`, after sourcing ROS Humble. Use
-`.venv` only for preprocessing and offline analysis unless a script explicitly
-documents otherwise.
+Build and launch ROS nodes with system Python after sourcing ROS Humble and the
+workspace. Check that the executable uses `/usr/bin/python3` and that no active
+virtual environment changes the interpreter used by `#!/usr/bin/env python3` scripts.
 
 ### Compiler killed or Jetson becomes unresponsive
 

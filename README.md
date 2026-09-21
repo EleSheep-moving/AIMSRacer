@@ -88,7 +88,7 @@ ros2 launch aims_racer_system nav.launch.py
 
 **⚙️ V2 Advantages:** Single control node • Built-in arbitration • Current control support • Easier debugging • Proven odometry accuracy
 
-**📷 V3 ZED policy:** ZED 2i runs at 30 Hz with `NEURAL_LIGHT`, RGB, depth, and IMU telemetry. ZED positional tracking, map/odom TF, object detection, body tracking, and point-cloud publication are disabled by default so FAST-LIO2/EKF remain the only vehicle-localization chain. After measuring the camera installation, provide its transform explicitly, for example:
+**📷 V3 ZED policy:** ZED 2i runs at 30 Hz with `NEURAL_LIGHT`, RGB, depth, and IMU telemetry. ZED positional tracking, map/rear_axle/wheel_odom TF, object detection, body tracking, and point-cloud publication are disabled by default so FAST-LIO2/EKF remain the only vehicle-localization chain. After measuring the camera installation, provide its transform explicitly, for example:
 
 ```bash
 ros2 launch aims_racer_system base_orin_livox_bringup_v3.launch.py \
@@ -158,7 +158,7 @@ ros2 run aims_racer_system longitudinal_calib.py --ros-args \
     -p output_path:=speed_hold_current_results.txt
 ```
 
-Stage B (per speed interval → accel vs current, speed from `/odom`):
+Stage B (per speed interval → accel vs current, speed from `/rear_axle/wheel_odom`):
 
 ```bash
 ros2 run aims_racer_system longitudinal_calib.py --ros-args \
@@ -168,7 +168,7 @@ ros2 run aims_racer_system longitudinal_calib.py --ros-args \
     -p current_step:=3.0 -p current_max:=80.0 \
     -p use_rc_steering:=false \
     -p vesc_topic:=/sensors/core \
-    -p odom_topic:=/odom \
+    -p odom_topic:=/rear_axle/wheel_odom \
     -p output_path:=speed_interval_accel_results.txt
 ```
 

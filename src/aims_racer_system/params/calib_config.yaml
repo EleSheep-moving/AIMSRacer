@@ -17,7 +17,7 @@ track_points_per_semicircle: 100  # Number of points per semicircular turn
 
 # Control Loop
 command_frequency: 50  # Publication frequency (Hz)
-odom_topic: "/odom"  # Odometry input topic (EKF-filtered)
+odom_topic: "/rear_axle/wheel_odom"  # Rear-axle wheel odometry
 cmd_topic: "/calib/ackermann_cmd"  # Command output topic
 
 # Calibration Stages

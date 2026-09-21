@@ -61,11 +61,11 @@ source install/setup.zsh
 - `Fy = vehicle_mass * ay_yaw`
 - `radius_est = v_odom / yaw_rate_imu`
 
-默认车辆质量为 `vehicle_mass:=4.5` kg。第一版只做固定半径圆，不做整条赛道曲率扫描；`/odom.angular.z` 只作为诊断项，因为当前 VESC odom 的角速度可能来自车辆模型。
+默认车辆质量为 `vehicle_mass:=4.5` kg。第一版只做固定半径圆，不做整条赛道曲率扫描；`/rear_axle/wheel_odom.angular.z` 只作为诊断项，因为当前 VESC odom 的角速度可能来自车辆模型。
 
 订阅：
-- `/odom`（`nav_msgs/Odometry`，默认速度来源）
-- `/livox/imu_ekf`（`sensor_msgs/Imu`，默认 yaw rate / 横向加速度来源）
+- `/rear_axle/wheel_odom`（`nav_msgs/Odometry`，默认速度来源）
+- `/rear_axle/imu`（`sensor_msgs/Imu`，默认 yaw rate / 横向加速度来源）
 - `/sensors/core`（`vesc_msgs/VescStateStamped`，遥测记录与安全检查）
 
 发布：
@@ -90,8 +90,8 @@ ros2 launch aims_racer_system lateral_grip_calib.launch.py \
 # topic / 输出
 ros2 launch aims_racer_system lateral_grip_calib.launch.py \
    armed:=true \
-   odom_topic:=/odom \
-   imu_topic:=/livox/imu_ekf \
+   odom_topic:=/rear_axle/wheel_odom \
+   imu_topic:=/rear_axle/imu \
    vesc_topic:=/sensors/core \
    output_dir:=lateral_grip_run1
 
@@ -127,8 +127,8 @@ rosbag 录制建议：
 
 ```bash
 ros2 bag record -o lateral_grip \
-   /odom \
-   /livox/imu_ekf \
+   /rear_axle/wheel_odom \
+   /rear_axle/imu \
    /sensors/core \
    /calib/ackermann_cmd \
    /calib/lateral_status_text \
@@ -137,11 +137,11 @@ ros2 bag record -o lateral_grip \
 
 ---
 
-## 1) 有定位方法：Pure Pursuit 自动跑圈标定（依赖 /odom）
+## 1) 有定位方法：Pure Pursuit 自动跑圈标定（依赖 /rear_axle/wheel_odom）
 
 ### 1.1 适用场景
 
-- 能稳定提供 `nav_msgs/Odometry`（例如 `/odom` 来自 EKF / fastlio / 轮速里程计融合等）。
+- 能稳定提供 `nav_msgs/Odometry`（例如 `/rear_axle/wheel_odom` 来自 EKF / fastlio / 轮速里程计融合等）。
 - 希望“可重复、可长期跑”的标定采集：直线段自动扫电流、弯道段自动定速返回目标速度区间。
 
 ### 1.2 核心脚本
@@ -151,7 +151,7 @@ ros2 bag record -o lateral_grip \
 脚本：`src/aims_racer_system/scripts/longitudinal_calib.py`
 
 订阅：
-- `/odom`（`nav_msgs/Odometry`）
+- `/rear_axle/wheel_odom`（`nav_msgs/Odometry`）
 - `/vesc/sensors`（`vesc_msgs/VescStateStamped`，用于 ERPM/遥测）
 
 发布：
@@ -236,7 +236,7 @@ rosbag 录制建议（用于后处理建模/诊断）：
 
 ```bash
 ros2 bag record -o pp_calib \
-   /odom \
+   /rear_axle/wheel_odom \
    /vesc/sensors \
    /calib/ackermann_cmd \
    /calib/current_trajectory \
@@ -257,7 +257,7 @@ ros2 bag record -o pp_calib \
 - 可视化：`/calib/current_trajectory`、`/calib/lookahead_point`、`/calib/status_text`，与 `longitudinal_calib.py` 和 `src/aims_racer_system/rviz/pp.rviz` 保持一致。
 - 退出：Ctrl-C / 节点退出时会连续发布 `speed=0` 的停止命令。
 
-如果你的系统实际使用的是 `/odom` 或需要输出到 `/ackermann_cmd`，建议用 remap/bridge 适配（不改代码）。
+如果你的系统实际使用的是 `/rear_axle/wheel_odom` 或需要输出到 `/ackermann_cmd`，建议用 remap/bridge 适配（不改代码）。
 
 快速运行：
 
@@ -283,9 +283,9 @@ ros2 param set /pp_param_tuner use_first_odom_as_origin true
 接口适配（常见 remap 示例，不改代码）：
 
 ```bash
-# 1) 如果你的定位里程计话题是 /odom（pp_param_tuner 默认订阅 /odometry/filtered）
+# 1) 如果你的定位里程计话题是 /rear_axle/wheel_odom（pp_param_tuner 默认订阅 /odometry/filtered）
 ros2 run aims_racer_system pp_param_tuner.py --ros-args \
-   -r /odometry/filtered:=/odom
+   -r /odometry/filtered:=/rear_axle/wheel_odom
 
 # 2) 如果你的车辆执行入口是 /ackermann_cmd（pp_param_tuner 默认发布 /drive）
 ros2 run aims_racer_system pp_param_tuner.py --ros-args \
@@ -419,7 +419,7 @@ ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p base_current_file:=speed_hold_current_results.txt \
    -p current_step:=3.0 -p current_start_step_index:=1 -p current_max:=80.0 \
    -p vesc_topic:=/sensors/core \
-   -p odom_topic:=/odom \
+   -p odom_topic:=/rear_axle/wheel_odom \
    -p output_path:=speed_interval_accel_results.txt
 ```
 
@@ -455,7 +455,7 @@ ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p decel_current_step:=3.0 -p decel_current_min:=-20.0 \
    -p max_speed_during_rc:=5.0 \
    -p vesc_topic:=/sensors/core \
-   -p odom_topic:=/odom \
+   -p odom_topic:=/rear_axle/wheel_odom \
    -p output_path:=decel_current_sweep_results.txt
 ```
 
@@ -533,7 +533,7 @@ rosbag 录制建议（强烈建议，便于补齐“轮速/加速度/延迟/介�
 
 ```bash
 ros2 bag record -o longitudinal_calib \
-   /odom \
+   /rear_axle/wheel_odom \
    /sensors/core \
    /calib/ackermann_cmd \
    /rc/channels
@@ -564,12 +564,12 @@ ros2 bag record -o longitudinal_calib \
 可选：
 - 阶段A/阶段B 的 csv_path（若存在），用于排查异常与可视化
 - rosbag 目录（若存在）：用于重建“轮速/加速度时间序列”、做延迟与一致性诊断
-  - 建议包含：/odom、/sensors/core、/calib/ackermann_cmd、/rc/channels
+  - 建议包含：/rear_axle/wheel_odom、/sensors/core、/calib/ackermann_cmd、/rc/channels
 
 采集约定/重要前提：
 - 弯道期间不采样/不做 trial；回正后会等待 post_turn_settle_sec 再开始采样/试验。
 - 阶段B：每次 trial 前会先用 speed mode 拉回并稳定到 v0，再切 current mode 计时加速到 v1。
-- 速度反馈来自 /odom.twist.twist.linear.x，电流反馈来自 VESC 遥测（相电流/iq 等字段）。
+- 速度反馈来自 /rear_axle/wheel_odom.twist.twist.linear.x，电流反馈来自 VESC 遥测（相电流/iq 等字段）。
 - 重要：加速度不仅与电流有关，也与当前速度有关（反电动势/占空比上限/电池电压下垂等因素会导致“同样电流在不同速度下的有效扭矩/加速度不同”）。因此建模时应把速度因素显式纳入（分速度段或二维模型）。
 - 阶段C：每次 trial 先 speed mode 稳定到 target_speed，再切 current mode 负电流减速；当速度低于低速阈值（默认 1m/s）即结束并切回 speed mode。
 - 若 use_rc_steering=true：遥控出死区会暂停/重启 trial（bag/日志可用于识别被介入打断的区段）。
@@ -599,7 +599,7 @@ ros2 bag record -o longitudinal_calib \
    - 除了按 (v0->v1) 分段，也可以直接拟合二维关系：a = f(v, I)（例如 a = k1*I + k2*v + k3 或分段面片/查表）。
     - 推荐把“扭矩电流”与“饱和指标”分开处理：
        - I_torque：优先用 `/sensors/core` 的 state.avg_iq（或 state.current_motor）
-       - v：用 /odom.twist.twist.linear.x
+       - v：用 /rear_axle/wheel_odom.twist.twist.linear.x
        - 饱和/电压限制诊断：state.duty_cycle、state.voltage_input
     - 一个可落地的拟合形式（示例，不限定）：
        - 分速度段：在每个速度桶内拟合 a = k*I_torque + b
@@ -618,14 +618,14 @@ ros2 bag record -o longitudinal_calib \
    - 指出 0A 时的自然滑行减速度（滚阻/风阻/坡度的体现）
 
 6) （如有 rosbag）用时间序列补齐轮速/加速度诊断（建议做，但不是硬性要求）
-   - 从 /odom.twist.twist.linear.x 计算 a(t)：说明差分方式、滤波/平滑参数、端点处理
+   - 从 /rear_axle/wheel_odom.twist.twist.linear.x 计算 a(t)：说明差分方式、滤波/平滑参数、端点处理
     - 从 /sensors/core 提取并对齐以下字段（vesc_msgs/VescStateStamped）：
        - 相/扭矩相关电流：优先用 state.avg_iq；备选 state.current_motor（单位 A）
        - 电池侧电流：state.current_input（单位 A）
        - 电池电压：state.voltage_input（单位 V）
        - 占空比：state.duty_cycle（通常在 [-1, 1]）
        - 电机侧速度：state.speed（注意：该字段常是 ERPM/电机侧量，单位可能不是 m/s；建议主要用于相对变化/延迟诊断，不直接当车速）
-    - 与 /odom 做交叉验证（比例/延迟/符号），并识别“反电动势/电压限制”导致的饱和区：
+    - 与 /rear_axle/wheel_odom 做交叉验证（比例/延迟/符号），并识别“反电动势/电压限制”导致的饱和区：
        - 当 |duty_cycle| 接近 1 或 voltage_input 明显下垂时，同样的 iq/电流指令可能对应更小的可用加速度
        - 这部分应在模型里显式体现（速度分段/二维模型），或在拟合时标注并剔除饱和样本
     - 可计算电功率用于诊断（非强制）：P_elec = voltage_input * current_input（W）；比较 P_elec 与 v*a 的量级变化，排查异常/符号/延迟
@@ -663,7 +663,7 @@ ros2 bag record -o longitudinal_calib \
 
 ```bash
 ros2 bag record -o longitudinal_calib \
-   /odom \
+   /rear_axle/wheel_odom \
    /sensors/core \
    /calib/ackermann_cmd \
    /rc/channels
@@ -679,11 +679,11 @@ ros2 bag record -o longitudinal_calib \
 
 ```bash
 ros2 bag record -o manual_control1 \
-  /odom \
+  /rear_axle/wheel_odom \
   /odometry/filtered \
   /imu \
   /livox/imu \
-  /livox/imu_ekf \
+  /rear_axle/imu \
   /sensors/servo_position_command \
   /ackermann_cmd \
   /sensors/core \
@@ -712,8 +712,8 @@ ros2 bag record -o manual_control1 \
 请你完成：
 1) 数据检查：列出 bag 中所有 topic、消息数、估计频率；检查时间戳是否单调、是否有长间隙。
 2) 对齐与派生量：
-   - 用 /sensors/core/state/speed 和 /odom.twist.twist.linear.x 互相交叉验证车速（说明可能的比例/延迟差）。
-   - 从 /odom 速度计算加速度 a（说明差分、低通滤波/平滑、延迟补偿策略）。
+   - 用 /sensors/core/state/speed 和 /rear_axle/wheel_odom.twist.twist.linear.x 互相交叉验证车速（说明可能的比例/延迟差）。
+   - 从 /rear_axle/wheel_odom 速度计算加速度 a（说明差分、低通滤波/平滑、延迟补偿策略）。
 3) 直线/弯道分段：
    - 首选用 /rc/channels 的转向通道按“与 joystick_control_v2 一致的死区规则”判定直线段；
    - 备选用 /calib/ackermann_cmd.drive.steering_angle 绝对值阈值判定。

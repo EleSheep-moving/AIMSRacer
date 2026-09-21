@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from launch import LaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch.substitutions import Command
 from launch.substitutions import LaunchConfiguration
@@ -58,7 +59,7 @@ def generate_launch_description():
     lio_config = os.path.join(
         get_package_share_directory('aims_racer_system'),
         'params',
-        'fastlio.yaml'
+        'fastlio_rear.yaml'
     )
     
     localizer_config = os.path.join(
@@ -99,7 +100,7 @@ def generate_launch_description():
     data_src      = 0    # 0-lidar, others-Invalid data src
     publish_freq  = 10.0 # freqency of publish, 5.0, 10.0, 20.0, 50.0, etc.
     output_type   = 0
-    frame_id      = 'laser'
+    frame_id      = 'livox_frame'
     lvx_file_path = '/home/livox/livox_test.lvx'
     cmdline_bd_code = 'livox0000000001'
 
@@ -129,12 +130,6 @@ def generate_launch_description():
             parameters=livox_ros2_params
             )
 
-    livox_imu_to_ekf_node = Node(
-        package='aims_racer_system',
-        executable='livox_imu_to_ekf.py',
-        name='livox_imu_to_ekf',
-        output='screen'
-    )
     
     joystick_control_node = Node(
         package='ackermann_mux',
@@ -161,7 +156,8 @@ def generate_launch_description():
         package='vesc_ackermann',
         executable='vesc_to_odom_node',
         name='vesc_to_odom_node',
-        parameters=[LaunchConfiguration('vesc_config')]
+        parameters=[LaunchConfiguration('vesc_config')],
+        remappings=[('odom', '/rear_axle/wheel_odom')]
     )
     vesc_driver_node = Node(
         package='vesc_driver',
@@ -174,7 +170,7 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         output='screen',
-        parameters=[os.path.join(get_package_share_directory("aims_racer_system"), 'params', 'ekf.yaml')],
+        parameters=[os.path.join(get_package_share_directory("aims_racer_system"), 'params', 'ekf_rear.yaml')],
     )
     
     lio = Node(
@@ -183,7 +179,8 @@ def generate_launch_description():
         executable="lio_node",
         name="lio_node",
         output="screen",
-        parameters=[{'config_path': LaunchConfiguration('lio_config')}]
+        parameters=[{'config_path': LaunchConfiguration('lio_config')}],
+        remappings=[('/tf', '/fastlio2/tf')]
     )
 
     localizer_node = Node(
@@ -195,23 +192,13 @@ def generate_launch_description():
         parameters=[{'config_path': LaunchConfiguration('localizer_config')}]
     )
 
-    static_tf_node_bl = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_baselink_to_laser',
-        arguments=['0.13', '0.0', '0.03', '0.0', '0.0', '0.0', 'base_link', 'laser']
-    )
-    static_tf_node_bi = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='static_baselink_to_imu',
-        arguments=['0.13', '0.0', '0.03', '0.0', '0.0', '0.0', 'base_link', 'imu_link']
-    )
-    base_footprint_to_base_link = Node(package = "tf2_ros", 
-                       executable = "static_transform_publisher",
-                       name="base_link_to_base_footprint",
-                       arguments = ["0", "0", "0", "0", "0", "0", "base_link", "base_footprint"])
-    ld.add_action(base_footprint_to_base_link)
+    # base_link is consistently the rear-axle center across all entrypoints.
+    rear_frames = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            get_package_share_directory('aims_racer_system'), 'launch', 'rear_axle_frames.launch.py')),
+        launch_arguments={'lio_config': LaunchConfiguration('lio_config'),
+                          'publish_odom_tf': 'false'}.items())
+    ld.add_action(rear_frames)
     # finalize
  
     ld.add_action(ackermann_to_vesc_node)
@@ -221,13 +208,10 @@ def generate_launch_description():
     ld.add_action(crsf_receiver_node)
     ld.add_action(joystick_control_node)
     ld.add_action(ackermann_mux_node)
-    ld.add_action(livox_imu_to_ekf_node)
     #ld.add_action(lidar_driver)
     ld.add_action(robot_localization_node)
     
     
 
-    ld.add_action(static_tf_node_bl)
-    ld.add_action(static_tf_node_bi)
 
     return ld

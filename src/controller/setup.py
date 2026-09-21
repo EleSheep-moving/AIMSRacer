@@ -17,6 +17,7 @@ setup(
     entry_points={'console_scripts': [
         'record_path = aims_mpcc.recorder:main',
         'prepare_path = aims_mpcc.prepare:main',
+        'prepare_solver = aims_mpcc.prepare_solver:main',
         'mpcc_node = aims_mpcc.node:main',
         'closed_loop_test = aims_mpcc.integration:main',
     ]},

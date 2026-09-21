@@ -87,7 +87,7 @@ def generate_launch_description():
     data_src      = 0    # 0-lidar, others-Invalid data src
     publish_freq  = 10.0 # freqency of publish, 5.0, 10.0, 20.0, 50.0, etc.
     output_type   = 0
-    frame_id      = 'laser'
+    frame_id      = 'livox_frame'
     lvx_file_path = '/home/livox/livox_test.lvx'
     cmdline_bd_code = 'livox0000000001'
 
@@ -167,7 +167,8 @@ def generate_launch_description():
         package='vesc_ackermann',
         executable='vesc_to_odom_node',
         name='vesc_to_odom_node',
-        parameters=[LaunchConfiguration('vesc_config')]
+        parameters=[LaunchConfiguration('vesc_config')],
+        remappings=[('odom', '/rear_axle/wheel_odom')]
     )
     
     vesc_driver_node = Node(
@@ -197,7 +198,10 @@ def generate_launch_description():
         executable="lio_node",
         name="lio_node",
         output="screen",
-        parameters=[{'config_path': LaunchConfiguration('lio_config')}]
+        parameters=[{'config_path': LaunchConfiguration('lio_config')}],
+        # Upstream FAST-LIO always broadcasts TF. Keep it off the global tree;
+        # EKF owns global odom -> base_link in V2/V3.
+        remappings=[('/tf', '/fastlio2/tf')]
     )
 
     # Localizer (重定位节点)

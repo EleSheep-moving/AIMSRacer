@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert raw FAST-LIO IMU odometry; never relabel sensor pose as vehicle pose."""
+"""Convert unified Livox-origin odometry to the rear-axle reference point."""
 from collections import deque
 import math
 import rclpy
@@ -19,20 +19,23 @@ def stamp_seconds(stamp):
 class LioToRearAxle(Node):
     def __init__(self):
         super().__init__('lio_to_rear_axle')
-        self.translation = self.declare_parameter('imu_translation', [.0, .0, .0]).value
-        self.quaternion = self.declare_parameter('imu_quaternion', [.0, .0, .0, 1.]).value
+        self.translation = self.declare_parameter('livox_translation', [.0, .0, .0]).value
+        self.quaternion = self.declare_parameter('livox_quaternion', [.0, .0, .0, 1.]).value
         self.max_age = self.declare_parameter('max_gyro_age', .05).value
         self.pose_variance = self.declare_parameter('pose_variance', [.01]*6).value
         self.twist_variance = self.declare_parameter('twist_variance', [.04]*3+[.01]*3).value
         self.broadcast = self.declare_parameter('publish_tf', False).value
         self.history = deque(maxlen=2000)
         self.last_odom = None
-        self.publisher = self.create_publisher(Odometry, '/fastlio2/base_odom', 10)
+        self.publisher = self.create_publisher(Odometry, '/rear_axle/lio_odom', 10)
         self.tf = TransformBroadcaster(self) if self.broadcast else None
         self.create_subscription(Imu, '/livox/imu', self.imu, qos_profile_sensor_data)
         self.create_subscription(Odometry, '/fastlio2/lio_odom', self.odometry, qos_profile_sensor_data)
 
     def imu(self, msg):
+        if msg.header.frame_id != 'livox_frame':
+            self.get_logger().warning('Expected raw IMU in livox_frame', throttle_duration_sec=2.)
+            return
         stamp = stamp_seconds(msg.header.stamp)
         w = msg.angular_velocity
         if not all(math.isfinite(x) for x in [stamp, w.x, w.y, w.z]):

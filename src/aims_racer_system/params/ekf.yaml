@@ -1,4 +1,5 @@
-### ekf config file ###
+# Compatibility filename: same coordinate contract as ekf_rear.yaml.
+# Rear-axle EKF: all three inputs refer to base_link at the rear axle.
 ekf_filter_node:
     ros__parameters:
 # The frequency, in Hz, at which the filter will output a position estimate. Note that the filter will not begin
@@ -22,7 +23,7 @@ ekf_filter_node:
 # unspecified.
         transform_time_offset: 0.0
 
-# Use this parameter to provide specify how long the tf listener should wait for a transform to become available. 
+# Use this parameter to provide specify how long the tf listener should wait for a transform to become available.
 # Defaults to 0.0 if unspecified.
         transform_timeout: 0.0
 
@@ -76,7 +77,7 @@ ekf_filter_node:
 # sensor_msgs/Imu). To add an input, simply append the next number in the sequence to its "base" name, e.g., odom0,
 # odom1, twist0, twist1, imu0, imu1, imu2, etc. The value should be the topic name. These parameters obviously have no
 # default values, and must be specified.
-        odom0: /fastlio2/lio_odom
+        odom0: /rear_axle/lio_odom
 
 # Each sensor reading updates some or all of the filter's state. These options give you greater control over which
 # values from each measurement are fed to the filter. For example, if you have an odometry message as input, but only
@@ -126,19 +127,20 @@ ekf_filter_node:
         # odom0_pose_rejection_threshold: 5.0
         # odom0_twist_rejection_threshold: 1.0
 
+        # VESC motor-speed odometry: body-frame longitudinal speed only.
+        # Exclude integrated wheel pose, assumed vy=0 and servo-derived yaw rate.
+        odom1: /rear_axle/wheel_odom
+        odom1_config: [false, false, false,
+                       false, false, false,
+                       true,  false, false,
+                       false, false, false,
+                       false, false, false]
+        odom1_differential: false
+        odom1_relative: false
+        odom1_queue_size: 10
+        odom1_nodelay: true
+
 # Further input parameter examples
-        # odom1: example/odom2
-        # odom1_config: [false, false, true,
-        #                false, false, false,
-        #                false, false, false,
-        #                false, false, true,
-        #                false, false, false]
-        # odom1_differential: false
-        # odom1_relative: true
-        # odom1_queue_size: 2
-        # odom1_pose_rejection_threshold: 2.0
-        # odom1_twist_rejection_threshold: 0.2
-        # odom1_nodelay: false
         # pose0: example/pose
         # pose0_config: [true,  true,  false,
         #                false, false, false,
@@ -160,16 +162,18 @@ ekf_filter_node:
         # twist0_queue_size: 3
         # twist0_rejection_threshold: 2.0
         # twist0_nodelay: false
-        # x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. 
-        imu0: /livox/imu_ekf
+        # x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az.
+        imu0: /rear_axle/imu
+        # Rear-axle specific force and gyro, expressed in base_link.
+        # Fuse yaw rate only; compensated acceleration remains available for diagnostics.
         imu0_config: [false, false, false,
-                      false,  false,  false,
                       false, false, false,
-                      true,  true,  true,
-                      true,  true,  true]
+                      false, false, false,
+                      false, false, true,
+                      false, false, false]
         imu0_nodelay: false
         # imu0_differential: false
-        imu0_relative: true
+        imu0_relative: false
         imu0_queue_size: 5
         # imu0_pose_rejection_threshold: 0.8                 # Note the difference in parameter names
         # imu0_twist_rejection_threshold: 0.8                #
@@ -177,7 +181,8 @@ ekf_filter_node:
 
 # [ADVANCED] Some IMUs automatically remove acceleration due to gravity, and others don't. If yours doesn't, please set
 # this to true, and *make sure* your data conforms to REP-103, specifically, that the data is in ENU frame.
-        imu0_remove_gravitational_acceleration: false
+        # Inactive while all IMU acceleration update flags are false.
+        imu0_remove_gravitational_acceleration: true
 
 # [ADVANCED]  The EKF and UKF models follow a standard predict/correct cycle. During prediction, if there is no
 # acceleration reference, the velocity at time t+1 is simply predicted to be the same as the velocity at time t. During

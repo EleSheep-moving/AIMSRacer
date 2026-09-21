@@ -1,4 +1,4 @@
-"""Shared V2 sensor transforms and IMU-origin -> rear-axle odometry adapter."""
+"""Shared V2 Livox mounting transform and rear-axle data adapters."""
 import os
 import numpy as np
 import yaml
@@ -8,7 +8,6 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from aims_racer_system.rear_axle_odometry import sensor_extrinsic
 
 
 def build_nodes(context):
@@ -17,19 +16,18 @@ def build_nodes(context):
         geometry = yaml.safe_load(stream)
     with open(LaunchConfiguration('lio_config').perform(context)) as stream:
         lio = yaml.safe_load(stream)
-    if lio['body_frame'] != 'livox_imu' or lio['world_frame'] != 'odom':
-        raise ValueError('Rear-axle pipeline requires raw LIO frames odom / livox_imu')
-    if lio.get('publish_tf') is not False:
-        raise ValueError('Rear-axle pipeline requires explicit publish_tf: false in LIO config')
-    for key in ('lidar_translation', 'lidar_rpy'):
+    if lio['body_frame'] != 'livox_frame' or lio['world_frame'] != 'odom':
+        raise ValueError('Rear-axle pipeline requires raw LIO frames odom / livox_frame')
+    for key in ('livox_translation', 'livox_rpy'):
         values = geometry.get(key)
         if not isinstance(values, list) or len(values) != 3 or not np.isfinite(values).all():
             raise ValueError(f'Confirm {key} in {geometry_path}: three finite values required')
     if lio.get('esti_il', False):
         raise ValueError('Static rear-frame conversion requires esti_il: false')
-    t_bl = geometry['lidar_translation']
-    q_bl = Rotation.from_euler('xyz', geometry['lidar_rpy']).as_quat().tolist()
-    t_bi, q_bi = sensor_extrinsic(t_bl, q_bl, lio['r_il'], lio['t_il'])
+    # One approximate external Livox origin for cloud, raw IMU and LIO output.
+    # FAST-LIO's r_il/t_il remain internal and do not alter this mounting offset.
+    translation = geometry['livox_translation']
+    quaternion = Rotation.from_euler('xyz', geometry['livox_rpy']).as_quat().tolist()
 
     def static(name, child, t, q):
         args = ['--x', str(t[0]), '--y', str(t[1]), '--z', str(t[2]),
@@ -39,16 +37,13 @@ def build_nodes(context):
 
     mapping = LaunchConfiguration('publish_odom_tf').perform(context).lower() == 'true'
     return [
-        static('rear_to_laser', 'laser', t_bl, q_bl),
-        static('rear_to_livox_imu', 'livox_imu', t_bi, q_bi),
-        # Physical IMU alias; corrected /livox/imu_ekf now uses base_link.
-        static('rear_to_imu_link', 'imu_link', t_bi, q_bi),
+        static('rear_to_livox', 'livox_frame', translation, quaternion),
         static('rear_to_footprint', 'base_footprint', [0., 0., 0.], [0., 0., 0., 1.]),
         Node(package='aims_racer_system', executable='lio_to_rear_axle.py',
-             parameters=[{'imu_translation': t_bi.tolist(), 'imu_quaternion': q_bi.tolist(),
+             parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion,
                           'publish_tf': mapping}], output='screen'),
         Node(package='aims_racer_system', executable='imu_to_rear_axle.py',
-             parameters=[{'imu_translation': t_bi.tolist(), 'imu_quaternion': q_bi.tolist()}], output='screen'),
+             parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion}], output='screen'),
     ]
 
 

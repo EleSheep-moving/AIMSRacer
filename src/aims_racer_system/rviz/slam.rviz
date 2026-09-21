@@ -114,9 +114,7 @@ Visualization Manager:
           Value: true
         base_link:
           Value: true
-        imu_link:
-          Value: true
-        laser:
+        livox_frame:
           Value: true
         map:
           Value: true
@@ -133,9 +131,7 @@ Visualization Manager:
             base_link:
               base_footprint:
                 {}
-              imu_link:
-                {}
-              laser:
+              livox_frame:
                 {}
       Update Interval: 0
       Value: true

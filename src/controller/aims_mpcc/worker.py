@@ -2,17 +2,20 @@
 import multiprocessing as mp
 import time
 import traceback
-import os
-import tempfile
 from pathlib import Path
 
 
 def _run(connection, path_directory, config_dict):
     path_directory=str(Path(path_directory).resolve())
-    # CasADi's native compiler writes C files to cwd; isolate them from the repo.
-    with tempfile.TemporaryDirectory(prefix='aims-mpcc-native-') as work:
-        os.chdir(work)
-        _serve(connection,path_directory,config_dict)
+    from .native import build_context
+    try:
+        with build_context():
+            _serve(connection,path_directory,config_dict)
+    except BaseException:
+        try:
+            connection.send(dict(kind='error', error=traceback.format_exc()))
+        finally:
+            connection.close()
 
 
 def _serve(connection, path_directory, config_dict):
@@ -20,13 +23,19 @@ def _serve(connection, path_directory, config_dict):
         from .config import VehicleConfig
         from .path import ReferencePath
         from .solver import MPCCSolver
+        from .native import solver_options
         path = ReferencePath.load(path_directory)
         config = VehicleConfig(**config_dict)
-        solver = MPCCSolver(path, config, jit_enabled=True)
+        solver = MPCCSolver(path, config, jit_enabled=True, native_options=solver_options())
         p = path.at(0.)
         # Compile/load native solver before exposing READY to the operator.
         state = dict(x=p['x'], y=p['y'], yaw=p['yaw'], speed=0., steering=0.)
-        warm = solver.solve(state, dict(acceleration=0., steering=0., steering_rate=0.), [0.]*(solver.n+1))
+        try:
+            warm = solver.solve(state, dict(acceleration=0., steering=0., steering_rate=0.), [0.]*(solver.n+1))
+        except RuntimeError as exc:
+            raise RuntimeError('MPCC native cache unavailable. Run ros2 run aims_mpcc '
+                               'prepare_solver <path_directory> --vehicle-config <vehicle.yaml> '
+                               'before starting the controller. Details: ' + str(exc)) from exc
         if not warm['success']:
             raise RuntimeError('Initial stationary solve failed: '+str(warm.get('status')))
         solver.reset()

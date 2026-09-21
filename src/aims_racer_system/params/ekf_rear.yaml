@@ -1,4 +1,4 @@
-# Rear-axle EKF: input pose/twist already converted from the physical IMU origin.
+# Rear-axle EKF: all three inputs refer to base_link at the rear axle.
 ekf_filter_node:
     ros__parameters:
 # The frequency, in Hz, at which the filter will output a position estimate. Note that the filter will not begin
@@ -76,7 +76,7 @@ ekf_filter_node:
 # sensor_msgs/Imu). To add an input, simply append the next number in the sequence to its "base" name, e.g., odom0,
 # odom1, twist0, twist1, imu0, imu1, imu2, etc. The value should be the topic name. These parameters obviously have no
 # default values, and must be specified.
-        odom0: /fastlio2/base_odom
+        odom0: /rear_axle/lio_odom
 
 # Each sensor reading updates some or all of the filter's state. These options give you greater control over which
 # values from each measurement are fed to the filter. For example, if you have an odometry message as input, but only
@@ -128,7 +128,7 @@ ekf_filter_node:
 
         # VESC motor-speed odometry: body-frame longitudinal speed only.
         # Exclude integrated wheel pose, assumed vy=0 and servo-derived yaw rate.
-        odom1: /odom
+        odom1: /rear_axle/wheel_odom
         odom1_config: [false, false, false,
                        false, false, false,
                        true,  false, false,
@@ -162,7 +162,7 @@ ekf_filter_node:
         # twist0_rejection_threshold: 2.0
         # twist0_nodelay: false
         # x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az.
-        imu0: /livox/imu_ekf
+        imu0: /rear_axle/imu
         # Rear-axle specific force and gyro, expressed in base_link.
         # Fuse yaw rate only; compensated acceleration remains available for diagnostics.
         imu0_config: [false, false, false,

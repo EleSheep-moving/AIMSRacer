@@ -61,11 +61,11 @@ Purpose: actively drive fixed-radius circles, increase speed step by step, and e
 - `Fy = vehicle_mass * ay_yaw`
 - `radius_est = v_odom / yaw_rate_imu`
 
-Default vehicle mass is `vehicle_mass:=4.5` kg. The first version only tests fixed-radius circles; it does not scan a full race line. `/odom.angular.z` is diagnostic only because the current VESC odom yaw rate may be model-derived.
+Default vehicle mass is `vehicle_mass:=4.5` kg. The first version only tests fixed-radius circles; it does not scan a full race line. `/rear_axle/wheel_odom.angular.z` is diagnostic only because the current VESC odom yaw rate may be model-derived.
 
 Subscribes:
-- `/odom` (`nav_msgs/Odometry`, default speed source)
-- `/livox/imu_ekf` (`sensor_msgs/Imu`, default yaw-rate / lateral-accel source)
+- `/rear_axle/wheel_odom` (`nav_msgs/Odometry`, default speed source)
+- `/rear_axle/imu` (`sensor_msgs/Imu`, default yaw-rate / lateral-accel source)
 - `/sensors/core` (`vesc_msgs/VescStateStamped`, telemetry and safety check)
 
 Publishes:
@@ -90,8 +90,8 @@ Common parameters:
 # topics / outputs
 ros2 launch aims_racer_system lateral_grip_calib.launch.py \
    armed:=true \
-   odom_topic:=/odom \
-   imu_topic:=/livox/imu_ekf \
+   odom_topic:=/rear_axle/wheel_odom \
+   imu_topic:=/rear_axle/imu \
    vesc_topic:=/sensors/core \
    output_dir:=lateral_grip_run1
 
@@ -127,8 +127,8 @@ Suggested rosbag recording:
 
 ```bash
 ros2 bag record -o lateral_grip \
-   /odom \
-   /livox/imu_ekf \
+   /rear_axle/wheel_odom \
+   /rear_axle/imu \
    /sensors/core \
    /calib/ackermann_cmd \
    /calib/lateral_status_text \
@@ -137,11 +137,11 @@ ros2 bag record -o lateral_grip \
 
 ---
 
-## 1) Localization-based: Pure Pursuit Auto Loop Calibration (Requires `/odom`)
+## 1) Localization-based: Pure Pursuit Auto Loop Calibration (Requires `/rear_axle/wheel_odom`)
 
 ### 1.1 When to Use
 
-- You have stable `nav_msgs/Odometry` (e.g., `/odom` from EKF / fastlio / wheel odometry fusion).
+- You have stable `nav_msgs/Odometry` (e.g., `/rear_axle/wheel_odom` from EKF / fastlio / wheel odometry fusion).
 - You want repeatable long-duration collection.
 - You have a relatively large open area/track (long straights + safe turn radius). Without space, the loop-based method becomes hard to run safely and cleanly.
 
@@ -152,7 +152,7 @@ ros2 bag record -o lateral_grip \
 Script: `src/aims_racer_system/scripts/longitudinal_calib.py`
 
 Subscribes:
-- `/odom` (`nav_msgs/Odometry`)
+- `/rear_axle/wheel_odom` (`nav_msgs/Odometry`)
 - `/vesc/sensors` (`vesc_msgs/VescStateStamped`, telemetry)
 
 Publishes:
@@ -237,7 +237,7 @@ Suggested rosbag topics:
 
 ```bash
 ros2 bag record -o pp_calib \
-   /odom \
+   /rear_axle/wheel_odom \
    /vesc/sensors \
    /calib/ackermann_cmd \
    /calib/current_trajectory \
@@ -256,7 +256,7 @@ Note: default interface differs from the calibration node:
 - Visualization: `/calib/current_trajectory`, `/calib/lookahead_point`, and `/calib/status_text`, matching `longitudinal_calib.py` and `src/aims_racer_system/rviz/pp.rviz`.
 - Shutdown: on Ctrl-C / node exit, it publishes repeated stop commands with `speed=0`.
 
-If your system uses `/odom` or needs output to `/ackermann_cmd`, use remap/bridge without changing code.
+If your system uses `/rear_axle/wheel_odom` or needs output to `/ackermann_cmd`, use remap/bridge without changing code.
 
 Quick run:
 
@@ -277,9 +277,9 @@ ros2 param set /pp_param_tuner use_first_odom_as_origin true
 Remap examples:
 
 ```bash
-# 1) Use /odom instead of /odometry/filtered
+# 1) Use /rear_axle/wheel_odom instead of /odometry/filtered
 ros2 run aims_racer_system pp_param_tuner.py --ros-args \
-   -r /odometry/filtered:=/odom
+   -r /odometry/filtered:=/rear_axle/wheel_odom
 
 # 2) Publish to /ackermann_cmd instead of /drive
 ros2 run aims_racer_system pp_param_tuner.py --ros-args \
@@ -407,7 +407,7 @@ ros2 run aims_racer_system longitudinal_calib.py --ros-args \
    -p base_current_file:=speed_hold_current_results.txt \
    -p current_step:=3.0 -p current_start_step_index:=1 -p current_max:=80.0 \
    -p vesc_topic:=/sensors/core \
-   -p odom_topic:=/odom \
+   -p odom_topic:=/rear_axle/wheel_odom \
    -p output_path:=speed_interval_accel_results.txt
 ```
 
@@ -508,7 +508,7 @@ Optional:
 Important collection assumptions:
 - No sampling / no trials during turning (steering outside deadzone). After returning straight (inside deadzone), the scripts wait post_turn_settle_sec before resuming sampling/trials.
 - Stage B: before each trial, the script stabilizes at v0 in speed mode, then switches to current mode and times acceleration to v1.
-- Speed feedback is from /odom.twist.twist.linear.x; current feedback is from VESC telemetry (phase current / iq, etc.).
+- Speed feedback is from /rear_axle/wheel_odom.twist.twist.linear.x; current feedback is from VESC telemetry (phase current / iq, etc.).
 
 Tasks:
 1) Read & sanity-check
@@ -563,7 +563,7 @@ Your current command:
 
 ```bash
 ros2 bag record -o manual_control1 \
-  /odom \
+  /rear_axle/wheel_odom \
   /drive \
   /imu \
   /livox/imu \
@@ -610,8 +610,8 @@ Data:
 Please do:
 1) Data inspection: list topics, message counts, approximate rates; check timestamps monotonicity and long gaps.
 2) Alignment & derived quantities:
-   - Cross-check vehicle speed from /sensors/core/state/speed vs /odom.twist.twist.linear.x (explain scaling/latency differences).
-   - Compute acceleration from /odom speed (describe differencing, smoothing/low-pass, and any delay compensation).
+   - Cross-check vehicle speed from /sensors/core/state/speed vs /rear_axle/wheel_odom.twist.twist.linear.x (explain scaling/latency differences).
+   - Compute acceleration from /rear_axle/wheel_odom speed (describe differencing, smoothing/low-pass, and any delay compensation).
 3) Straight/turning segmentation:
    - Prefer using /rc/channels steering channel with the same deadzone rule as joystick_control_v2.
    - Backup: threshold on /calib/ackermann_cmd.drive.steering_angle.

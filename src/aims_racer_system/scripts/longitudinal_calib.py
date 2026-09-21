@@ -403,7 +403,7 @@ class LongitudinalCalibNode(Node):
                 f"Invalid workflow={self.workflow!r}; expected one of {sorted(valid_workflows)}"
             )
 
-        default_odom = "/odometry/filtered" if self.workflow in PP_WORKFLOWS else "/odom"
+        default_odom = "/odometry/filtered" if self.workflow in PP_WORKFLOWS else "/rear_axle/wheel_odom"
         default_vesc = "/sensors/core" if self.workflow in PP_WORKFLOWS else "/sensors/core"
         self.odom_topic = self.declare_parameter("odom_topic", default_odom).value
         self.vesc_topic = self.declare_parameter("vesc_topic", default_vesc).value

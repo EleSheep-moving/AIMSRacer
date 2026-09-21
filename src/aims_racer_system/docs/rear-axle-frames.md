@@ -1,67 +1,137 @@
-# Rear-axle reference (V2 driving/mapping and inherited V3)
+# Unified Livox frame and rear-axle pipeline (V2/V3)
 
-`base_link` is now at the rear-axle midpoint, with x forward, y left, z up. Its height is unchanged from the previous base_link. `base_footprint` retains the old zero transform; ground height has not been measured, so this is not a newly verified ground projection.
+`base_link` is the rear-axle midpoint at the existing base_link height, with x
+forward, y left and z up. It is not the rear edge of the chassis. MPCC uses
+`rear_offset: 0` because its odometry already refers to that point.
 
-## Configuration
+## External frame and mounting convention
 
-`params/rear_axle_geometry.yaml` is the mounting source. LiDAR x=0.30 m is the owner's approximate confirmed forward distance. y=0, z=0.03 m and zero mounting rotation are inherited assumptions. For the existing identity `r_il` and `t_il=[-0.011,-0.02329,0.04412]`, the raw IMU location in base_link is `[0.311,0.02329,-0.01412]` m. The negative z is a consequence of existing extrinsics, not a new measurement: verify sensor height and extrinsics on the car.
+All external Livox data use `livox_frame`: the driver's lidar and raw IMU,
+FAST-LIO `lio_odom` and `body_cloud`. We deliberately approximate the centimetre-scale
+lidar/IMU separation as zero for external transforms and rear-axle compensation.
+`laser`, `livox_imu` and `imu_link` are not published as Livox aliases in the shared Livox pipeline.
 
-The shared launch derives `T_base_imu = T_base_lidar * inverse(T_imu_lidar)` using the SAME `lio_config` passed to FAST-LIO. Online extrinsic estimation (`esti_il: true`) is rejected because static transforms would otherwise diverge.
+`params/rear_axle_geometry.yaml` provides the ONE external mounting transform:
+`livox_translation: [0.30, 0, 0.03]` metres and `livox_rpy: [0, 0, 0]` radians,
+expressed relative to the rear axle. These replace `lidar_translation/lidar_rpy`.
+The forward distance is approximate; height and rotation are inherited values.
 
-V2/V3 now launch `imu_to_rear_axle.py`; the legacy `livox_imu_to_ekf.py` remains unchanged for older launches. The new output `/livox/imu_ekf` uses `base_link`, with no extra 180-degree data rotation. `imu_link` is now a physical raw-IMU frame alias, not the output frame of this topic.
+FAST-LIO retains `r_il = I` and `t_il = [-0.011, -0.02329, 0.04412]` internally.
+Its state remains IMU-origin and its body cloud is transformed into IMU axes;
+using the common external name accepts that positional approximation explicitly.
+The rear-axle launch does NOT compose or subtract these internal extrinsics again.
+This convention assumes aligned lidar/IMU axes as in the current configuration;
+a future nontrivial internal rotation requires revisiting the unified-frame assumption.
+Online extrinsic estimation remains disabled.
 
-## Rear-axle IMU acceleration and gravity
+## Topics and compensation
 
-The converter rotates raw gyro and acceleration into base axes, converts acceleration from g to m/s², then computes:
+| Topic | Meaning | Message frames |
+| --- | --- | --- |
+| `/livox/lidar` | Raw lidar | `livox_frame` |
+| `/livox/imu` | Raw IMU, acceleration in g | `livox_frame` |
+| `/fastlio2/lio_odom` | Raw LIO pose/velocity | `odom / livox_frame` |
+| `/fastlio2/body_cloud` | LIO body cloud for PGO/localization | `livox_frame` |
+| `/rear_axle/lio_odom` | Rear-axle pose, twist and covariance | `odom / base_link` |
+| `/rear_axle/imu` | Rear-axle compensated IMU, acceleration in m/s² | `base_link` |
+| `/rear_axle/wheel_odom` | VESC wheel odometry | `odom / base_link` |
+| `/odometry/filtered` | Fused rear-axle state for MPCC/Nav2 | `odom / base_link` |
 
-`f_rear = f_imu - alpha × r - omega × (omega × r)`
+The LIO adapter calculates `T_odom_base = T_odom_livox * inverse(T_base_livox)`.
+It rotates linear velocity into base axes and subtracts `omega × r`, where `r`
+points from rear axle to the common Livox origin. It preserves LIO timestamps,
+rotates/propagates covariance and supplies explicit floors for upstream zeros.
+Gyro must be no later than the LIO timestamp and no more than 50 ms old;
+otherwise LIO output is dropped. Both adapters reject raw IMU with a different frame.
 
-Here `r` points from rear axle to IMU and all vectors use base axes. The tangential and centripetal terms are both removed. Gravity is deliberately retained as part of specific force. `ekf_rear.yaml` now fuses only IMU yaw rate (index 11). Compensated acceleration and orientation remain available on the topic for diagnostics, but neither is fused. `imu0_remove_gravitational_acceleration: true` remains configured and is inactive while all acceleration update flags are false. The helper itself does not subtract gravity.
+The IMU adapter rotates gyro/specific force into base axes, scales g to m/s²,
+and compensates `f_rear = f_livox - alpha × r - omega × (omega × r)`.
+Gravity stays in specific force. Angular acceleration uses a causal 25 ms window,
+at least three samples, and resets on a gap over 30 ms or a non-increasing stamp.
+Recent LIO attitude (at most 250 ms old) is propagated with gyro to the IMU stamp.
+Until derivative/attitude are available, it publishes gyro only and marks orientation
+and acceleration unavailable via covariance[0] = -1. Covariance includes explicit
+noise/model floors; these are assumptions, not measured calibration.
 
-Angular acceleration is estimated with a causal 25 ms least-squares gyro window, requiring at least three samples. This reduces differentiation noise but can lag rapid changes. A gyro gap over 30 ms or a non-increasing timestamp resets the window. The output uses the input source timestamp, never the wall-clock publication time.
+VESC already supplies rear-axle forward speed from ERPM; no sensor lever-arm
+translation is applied to it. V2/V3 and mapping remap its `odom` output to
+`/rear_axle/wheel_odom`. Gain 4650 and longitudinal variance 0.04 (m/s)² are retained.
 
-For gravity direction, use the latest nonfuture raw LIO attitude, transformed into base orientation and gyro-propagated to the IMU source timestamp. Maximum attitude age is 250 ms. This preserves roll/pitch information even with a planar EKF. Startup, unavailable gyro history, or unavailable/stale attitude produces gyro-only IMU messages (`linear_acceleration_covariance[0] = -1`, orientation unavailable). This is validity handling for acceleration compensation, not a new MPCC LIO-stop watchdog.
+## EKF and TF ownership
 
-Sensor covariance is rotated/scaled, and gyro/derivative uncertainty is propagated through the lever-arm terms with a conservative correlation bound. Gravity-direction uncertainty is also added. Zero input covariance receives explicit assumed floors; bias, mounting error, filter-window lag, and temporal noise correlation still need real-data characterization. LIO and the raw IMU remain correlated sources, so this is not a statistically independent second measurement system.
+EKF fuses rear-axle LIO pose/linear velocity, wheel `vx` only, and IMU yaw rate
+only. IMU acceleration/orientation and wheel-integrated pose/steering-derived yaw
+rate remain excluded. `two_d_mode: true` produces a planar output at a target
+200 Hz. Gravity removal is configured but inactive while IMU acceleration is excluded.
+The LIO and raw IMU streams remain correlated; this is not independent sensing.
 
-## Data and TF ownership
-
-- `/livox/imu`: raw MID360 IMU; input to FAST-LIO and the rear-axle adapter.
-- `/fastlio2/lio_odom`: raw IMU-origin odometry, `odom / livox_imu`.
-- `/fastlio2/base_odom`: pose, twist and covariance converted to `odom / base_link`.
-- `/livox/imu_ekf`: rear-axle specific force and gyro in `base_link`, plus LIO/gyro-derived attitude for gravity removal; EKF fuses yaw rate only.
-- `/odom`: VESC motor-speed odometry in `base_link`; EKF `odom1` fuses only `twist.linear.x` (index 6). Wheel-integrated pose, assumed zero lateral velocity and servo-derived yaw rate are excluded.
-- `/odometry/filtered`: EKF rear-axle odometry used by MPCC.
-
-VESC converts motor ERPM using the existing gain 4650 and zero offset. `vesc_to_odom_node.longitudinal_velocity_variance` in `params/vesc.yaml` sets `twist.covariance[0]`; default 0.04 (m/s)² corresponds to an assumed standard deviation of 0.2 m/s. It is configurable and must be finite and positive. This is an initial uncertainty assumption, not a measured speed calibration or a wheel-slip model. VESC keeps `publish_tf: false`, and the existing LIO fusion mask is retained.
-
-The adapter uses the latest raw gyro at or before each LIO timestamp, at most 50 ms old. Missing/stale samples cause dropped output, never an uncorrected velocity. It subtracts the rotational lever-arm velocity. Raw gyro bias is not estimated by this adapter; configured covariance floors reflect assumed uncertainty, not measured calibration. FAST-LIO's currently zero covariances receive nonzero floors.
-
-The local FAST-LIO submodule now reads its YAML `publish_tf` flag and guards TF publication. V2 uses `publish_tf: false`; the temporary TF-topic remapping has been removed. Rebuild `fastlio2` together with `aims_racer_system` before deploying these launch changes; an older FAST-LIO binary ignores the flag. Omitted flags default to true, preserving upstream behavior. The patch and root application script are local-only and excluded from Git. A fresh checkout needs the local patch/tooling or equivalent modified FAST-LIO source supplied separately before building; the unmodified upstream binary ignores `publish_tf: false`. In the development workspace retaining the local files, use `bash scripts/apply_fastlio_patch.sh`. The upstream gitlink stays pinned and the patched submodule working tree is intentionally modified. During driving, EKF alone owns `odom -> base_link`. During mapping (without EKF), the adapter owns that transform. Mapping PGO uses `local_frame: odom` and retains the raw IMU cloud/pose pairing.
-
-## MPCC and footprint migration
-
-`controller/config/vehicle.yaml` now has `rear_offset: 0`, steering limit 0.45 rad, rate limit 2 rad/s. Body dimensions remain unmeasured and `geometry_verified: false`.
-
-MPCC still uses a symmetric conservative rectangle centered on base_link. Set `half_length` to the larger of rear-axle-to-front-edge and rear-axle-to-rear-edge distances; similarly enclose both sides with `half_width`. This can overestimate rear clearance until asymmetric footprint support is added.
-
-Existing Nav2 footprint vertices were shifted forward by 0.17 m (`x=[-0.33,0.67]`), preserving the old represented body relative to the new origin. These are inherited envelope dimensions, not newly measured car dimensions. V1 launch/configs retain their old sensor frame definitions and should not be combined with the migrated Nav2 footprint or rear-frame MPCC config. V3 inherits V2; any externally supplied ZED mounting x must be re-expressed from the rear axle (old x + 0.17 m, if only the origin changed).
-
-Re-record/re-prepare reference laps after fixing localization frames. Do not merely relabel old recorded sensor poses. Confirm straight-driving yaw, left-turn positive yaw rate, TF ownership and actual mounting on the Orin before enabling MPCC.
-
-## Local isolated validation
-
-The test directories and both controller/localization Docker directories are excluded from Git. The
-commands below require a development workspace retaining those local files and
-the existing `aimsracer-mpcc:humble` image; a fresh checkout alone is insufficient.
-From the AIMSRacer root:
-
-```bash
-docker build -f src/aims_racer_system/docker/Dockerfile.frames -t aimsracer-mpcc:rear-frames .
-docker run --rm --network none aimsracer-mpcc:rear-frames
+```text
+map                         optional: PGO while mapping, localizer with an existing map
+ └─ odom
+     └─ base_link           driving: EKF; mapping without EKF: LIO rear-axle adapter
+         ├─ livox_frame     one static mounting transform
+         ├─ base_footprint  existing zero transform, not a measured ground projection
+         └─ zed2i_camera_link → camera internals (V3, when measured mounting is enabled)
 ```
 
-Tests include lever-arm pose/twist, inverted sensor orientation, covariance, frame rejection, stale/future gyro rejection, and a real ROS EKF pipeline driven by synthetic LIO/IMU messages. The pipeline checks turning (including 5 m/s on a 5 m radius), changing yaw rate, straight-line acceleration and tilted stationary behavior, and verifies a single dynamic TF publisher. Separate tests run the real VESC converter, check configurable velocity variance, and inject bogus wheel pose/lateral velocity/yaw rate plus IMU acceleration to verify that EKF ignores the excluded fields. This does not execute FAST-LIO scan matching or validate hardware geometry.
+VESC must not broadcast vehicle TF in this pipeline. Upstream FAST-LIO's TF is
+remapped to the private `/fastlio2/tf` topic by each host launch file, so it does
+not enter the global tree. The frame adapter publishes `odom -> base_link` only
+when `publish_odom_tf:=true` (mapping). V2/V3 set it false and let EKF publish
+that edge. PGO retains the matching RAW LIO
+body-cloud/pose pair; do not replace just its raw odometry input with rear-axle data.
+V2 defines a localizer but does not add it to its launch description, so V2/V3
+alone do not produce `map -> odom`. MPCC's same-session recorded path uses `odom`.
+ZED vehicle mounting and IMU TF remain disabled by default; camera tracking is off.
+
+## Upstream FAST-LIO integration
+
+Do not modify the FAST-LIO submodule. Upstream FAST-LIO currently broadcasts TF
+regardless of the compatibility `publish_tf` key in the YAML. Every main-repository
+launch file therefore remaps its `/tf` output to `/fastlio2/tf`; this preserves raw
+LIO diagnostics while keeping global TF ownership in the main pipeline. Build the
+unmodified submodule and the main packages normally after updating either workspace.
+
+## Migration and validation
+
+Old V2 topics `/fastlio2/base_odom`, `/livox/imu_ekf` and wheel `/odom` become the
+three `/rear_axle/` topics above. Calibration defaults and current recording examples
+use those names. Fused `/odometry/filtered` and MPCC's frame contract are unchanged.
+Custom geometry files must use the new `livox_translation/livox_rpy` keys.
+Custom adapter parameters use `livox_translation/livox_quaternion`.
+Re-record references when changing the sensor-origin convention or localization session.
+
+Legacy bringup/mapping/localizer entrypoints now include the same rear-axle adapters,
+mounting TF and topic contract. Their original choices of hardware/control/localizer
+nodes remain unchanged (some base entrypoints still expect external LIO).
+The compatibility filenames fastlio.yaml, ekf.yaml and pgo.yaml also use this contract.
+The old standalone livox_imu_to_ekf.py helper is not launched by any entrypoint; use
+the shared rear_axle_frames launch for compensated data. V3 inherits V2.
+Existing footprint dimensions remain assumptions and must be measured separately.
+No new LIO-loss watchdog or EKF fusion-mask change is introduced.
+
+Tests in `src/aims_racer_system/tests` exercise the current convention. The pipeline
+integration tests start ONLY frame adapters, EKF and the VESC converter, feed synthetic
+measurements, and require an isolated localhost ROS domain; they do not start hardware
+or control publishers. Run after building/sourcing the workspace:
+
+```bash
+ROS_DOMAIN_ID=219 ROS_LOCALHOST_ONLY=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
+  python3 -m pytest -q src/aims_racer_system/tests
+```
+
+Current Orin validation (2026-09-20): `fastlio2` and `aims_racer_system` built
+successfully. **7 tests passed in 18.63 s**, including both synthetic ROS modes,
+rotated mounting, turn velocity compensation, tangential/centripetal compensation,
+and verification of one `odom -> base_link` TF publisher. These tests feed LIO
+output directly; they do not exercise FAST-LIO scan matching or vehicle motion.
+
+A powered-vehicle stationary check also passed the frame/TF/position/velocity
+contract; see [the hardware report](v2-frame-hardware-check-20260921.md) for measured
+rates, remaining gyro bias and LIO latency, and the localhost DDS configuration.
+
+The following historical results describe earlier frame conventions and are retained
+as history, not evidence for the current changes.
 
 ## Historical validation — initial frame migration (2026-09-20)
 

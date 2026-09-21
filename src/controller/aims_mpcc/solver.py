@@ -11,7 +11,7 @@ from .path import ReferencePath
 from .vendor import global_kinematic_model, contouring_lag, normalized_cost
 
 class MPCCSolver:
-    def __init__(self, path: ReferencePath, config: VehicleConfig, horizon=15, dt=.1, jit_enabled=False):
+    def __init__(self, path: ReferencePath, config: VehicleConfig, horizon=15, dt=.1, jit_enabled=False, native_options=None):
         config.validate(require_verified=True)
         path.validate_config(config)
         if isinstance(horizon, bool) or int(horizon)!=horizon or horizon<1: raise ValueError('positive integer horizon required')
@@ -33,6 +33,7 @@ class MPCCSolver:
         self.corner_offsets=[(config.rear_offset+sx*config.half_length,sy*config.half_width)
                              for sx,sy in ((1,1),(1,-1),(-1,1),(-1,-1))]
         self.jit_enabled=bool(jit_enabled)
+        self.native_options=dict(native_options or {})
         self.reset()
         self._build()
 
@@ -131,10 +132,12 @@ class MPCCSolver:
                           + weights["heading"] * ref["heading_error_squared"] / .05 ** 2
                           + weights["speed"] * ((x[3, -1] - self.speed_refs[-1]) / .60) ** 2)
         op.minimize(objective)
-        # Native callbacks preserve the OCP. -O0 compiles quickly and provides
-        # adequate measured deadline margin. Production worker owns a temporary cwd.
-        op.solver("ipopt", {"print_time": False, "jit": self.jit_enabled, "compiler": "shell",
-                   "jit_options": {"flags": ["-O0"]}}, {"print_level": 0, "sb": "yes", "linear_solver": "mumps",
+        # Standalone diagnostics retain their default; the worker supplies cached
+        # -O2 callbacks in a private working directory.
+        options = {"print_time": False, "jit": self.jit_enabled, "compiler": "shell",
+                   "jit_options": {"flags": ["-O0"]}}
+        options.update(self.native_options)
+        op.solver("ipopt", options, {"print_level": 0, "sb": "yes", "linear_solver": "mumps",
                    "max_iter": 100, "tol": 1e-5, "acceptable_tol": 1e-4, "acceptable_iter": 3,
                    "warm_start_init_point": "yes"})
         self.op, self.x, self.u = op, x, u

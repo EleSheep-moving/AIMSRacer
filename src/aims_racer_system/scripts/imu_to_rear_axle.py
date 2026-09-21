@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish rear-axle specific force; robot_localization removes gravity once."""
+"""Publish rear-axle IMU data; specific force retains gravity for downstream use."""
 from collections import deque
 import copy
 import numpy as np
@@ -28,8 +28,8 @@ def covariance(values, fallback):
 class ImuToRearAxle(Node):
     def __init__(self):
         super().__init__('imu_to_rear_axle')
-        self.lever=np.array(self.declare_parameter('imu_translation',[0.,0.,0.]).value)
-        q=self.declare_parameter('imu_quaternion',[0.,0.,0.,1.]).value
+        self.lever=np.array(self.declare_parameter('livox_translation',[0.,0.,0.]).value)
+        q=self.declare_parameter('livox_quaternion',[0.,0.,0.,1.]).value
         if self.lever.shape!=(3,) or not np.isfinite(self.lever).all() or not np.isfinite(q).all() or abs(np.linalg.norm(q)-1)>1e-3:
             raise ValueError('Invalid IMU mounting transform')
         self.r_bi=Rotation.from_quat(q)
@@ -41,12 +41,12 @@ class ImuToRearAxle(Node):
             raise ValueError('Invalid scale or attitude age')
         self.history=AngularHistory(window,gap)
         self.attitudes=deque(maxlen=100)
-        self.publisher=self.create_publisher(Imu,'/livox/imu_ekf',50)
+        self.publisher=self.create_publisher(Imu,'/rear_axle/imu',50)
         self.create_subscription(Imu,'/livox/imu',self.imu,qos_profile_sensor_data)
         self.create_subscription(Odometry,'/fastlio2/lio_odom',self.odometry,qos_profile_sensor_data)
 
     def odometry(self,msg):
-        if msg.header.frame_id!='odom' or msg.child_frame_id!='livox_imu': return
+        if msg.header.frame_id!='odom' or msg.child_frame_id!='livox_frame': return
         q=msg.pose.pose.orientation
         quat=np.array([q.x,q.y,q.z,q.w])
         if not np.isfinite(quat).all() or abs(np.linalg.norm(quat)-1)>1e-2: return
@@ -59,6 +59,9 @@ class ImuToRearAxle(Node):
         self.attitudes.append((stamp,q_wb,c))
 
     def imu(self,msg):
+        if msg.header.frame_id != 'livox_frame':
+            self.get_logger().warning('Expected raw IMU in livox_frame', throttle_duration_sec=2.)
+            return
         stamp=seconds(msg.header.stamp)
         raw_w=msg.angular_velocity; raw_f=msg.linear_acceleration
         raw_values=[raw_w.x,raw_w.y,raw_w.z,raw_f.x,raw_f.y,raw_f.z]
