@@ -7,6 +7,9 @@ RC was locked, wheel speed was zero, autonomy was disabled, and all observed
 Ackermann speed/acceleration/jerk commands were zero. No MPCC, Nav2 or calibration
 nodes were started, and the observer published no messages.
 
+This is a historical stationary measurement. Use the current [bringup guide](../operations/bringup.md)
+for startup; the tested source configuration differs from the current TF isolation.
+
 ## Results
 
 - All required topics were present with the intended frame identifiers.
@@ -73,12 +76,5 @@ Local evidence (gitignored): `log/v2-tf-hardware-20260920-01/` contains
 `cyclonedds.xml`, and the observer script. Earlier startup/observation logs are
 retained separately. The directory name reflects the beginning of this session.
 
-For a future test in bash, from this workspace:
-
-```bash
-source log/v2-tf-hardware-20260920-01/environment.bash
-ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
-```
-
-This command starts the full vehicle bringup, including RC/VESC. The current test
-has ended and no bringup processes are intentionally left running.
+The local evidence files are not available in a fresh checkout. See the current
+[recording guide](../operations/recording.md) for a new measurement session.

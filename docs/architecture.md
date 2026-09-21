@@ -1,4 +1,4 @@
-# Unified Livox frame and rear-axle pipeline (V2/V3)
+# Vehicle architecture (V2/V3)
 
 `base_link` is the rear-axle midpoint at the existing base_link height, with x
 forward, y left and z up. It is not the rear edge of the chassis. MPCC uses
@@ -11,7 +11,7 @@ FAST-LIO `lio_odom` and `body_cloud`. We deliberately approximate the centimetre
 lidar/IMU separation as zero for external transforms and rear-axle compensation.
 `laser`, `livox_imu` and `imu_link` are not published as Livox aliases in the shared Livox pipeline.
 
-`params/rear_axle_geometry.yaml` provides the ONE external mounting transform:
+[`rear_axle_geometry.yaml`](../src/aims_racer_system/params/rear_axle_geometry.yaml) provides the ONE external mounting transform:
 `livox_translation: [0.30, 0, 0.03]` metres and `livox_rpy: [0, 0, 0]` radians,
 expressed relative to the rear axle. These replace `lidar_translation/lidar_rpy`.
 The forward distance is approximate; height and rotation are inherited values.
@@ -87,45 +87,55 @@ ZED vehicle mounting and IMU TF remain disabled by default; camera tracking is o
 ## Upstream FAST-LIO integration
 
 Do not modify the FAST-LIO submodule. Upstream FAST-LIO currently broadcasts TF
-regardless of the compatibility `publish_tf` key in the YAML. Every main-repository
-launch file therefore remaps its `/tf` output to `/fastlio2/tf`; this preserves raw
+without reading a `publish_tf` configuration switch. The main-repository FAST-LIO
+launch files therefore remap its `/tf` output to `/fastlio2/tf`; this preserves raw
 LIO diagnostics while keeping global TF ownership in the main pipeline. Build the
 unmodified submodule and the main packages normally after updating either workspace.
 
-## Migration and validation
+TF queries for `odom -> livox_frame` return the EKF pose composed with the static
+mounting transform. Consumers needing raw LIO pose must use `/fastlio2/lio_odom`.
+Odometry frame identifiers do not themselves publish TF. Remapping changes the TF
+topic only; the raw odometry and point clouds retain their frames and timestamps.
+Starting upstream FAST-LIO outside these launch files requires the same remapping.
 
-Old V2 topics `/fastlio2/base_odom`, `/livox/imu_ekf` and wheel `/odom` become the
-three `/rear_axle/` topics above. Calibration defaults and current recording examples
-use those names. Fused `/odometry/filtered` and MPCC's frame contract are unchanged.
-Custom geometry files must use the new `livox_translation/livox_rpy` keys.
-Custom adapter parameters use `livox_translation/livox_quaternion`.
-Re-record references when changing the sensor-origin convention or localization session.
+## Control chain
 
-Legacy bringup/mapping/localizer entrypoints now include the same rear-axle adapters,
-mounting TF and topic contract. Their original choices of hardware/control/localizer
-nodes remain unchanged (some base entrypoints still expect external LIO).
-The compatibility filenames fastlio.yaml, ekf.yaml and pgo.yaml also use this contract.
-The old standalone livox_imu_to_ekf.py helper is not launched by any entrypoint; use
-the shared rear_axle_frames launch for compensated data. V3 inherits V2.
-Existing footprint dimensions remain assumptions and must be measured separately.
-No new LIO-loss watchdog or EKF fusion-mask change is introduced.
-
-Tests in `src/aims_racer_system/tests` exercise the current convention. The pipeline
-integration tests start ONLY frame adapters, EKF and the VESC converter, feed synthetic
-measurements, and require an isolated localhost ROS domain; they do not start hardware
-or control publishers. Run after building/sourcing the workspace:
-
-```bash
-ROS_DOMAIN_ID=219 ROS_LOCALHOST_ONLY=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
-  python3 -m pytest -q src/aims_racer_system/tests
+```text
+/rc/channels -----------------------------+
+/drive (MPCC or Nav2) --------------------+--> joystick_control_v2_ch3_ch1
+/calib/ackermann_cmd ---------------------+       |
+                                                 v
+                                          /ackermann_cmd
+                                                 |
+                                          ackermann_to_vesc
+                                                 |
+                                                VESC
 ```
 
-Current Orin validation (2026-09-20): `fastlio2` and `aims_racer_system` built
-successfully. **7 tests passed in 18.63 s**, including both synthetic ROS modes,
-rotated mounting, turn velocity compensation, tangential/centripetal compensation,
-and verification of one `odom -> base_link` TF publisher. These tests feed LIO
-output directly; they do not exercise FAST-LIO scan matching or vehicle motion.
+V2 selects `joystick_control_v2_ch3_ch1.py`; V3 includes V2. The selected command
+is an `AckermannDriveStamped` on `/ackermann_cmd`. MPCC requests speed (m/s) and
+steering (rad). Calibration also encodes its mode using `drive.jerk`; the
+[calibration guide](../src/aims_racer_system/docs/calibration.en.md) defines that
+separate convention. RC channel mappings belong to the
+[controller profile documentation](../src/ackermann_mux/README.md#rc-controller-variants).
+Only one autonomous producer should own `/drive` during a run.
 
-A powered-vehicle stationary check also passed the frame/TF/position/velocity
-contract; see [the hardware report](v2-frame-hardware-check-20260921.md) for measured
-rates, remaining gyro bias and LIO latency, and the localhost DDS configuration.
+MPCC currently loads a recorded closed-lap reference at startup. Its outgoing
+`nav_msgs/Path` topics visualize the reference and predictions; they are not
+local-trajectory input interfaces. See the [MPCC implementation](../src/controller/docs/implementation.md).
+
+## Configuration and verification
+
+Custom geometry files use `livox_translation/livox_rpy`; adapter parameters use
+`livox_translation/livox_quaternion`. Re-record references after changing the
+sensor origin or restarting localization without an established alignment.
+The older `/fastlio2/base_odom`, `/livox/imu_ekf` and wheel `/odom` interfaces have
+been replaced by the three `/rear_axle/` topics in the table above.
+
+Synthetic frame tests and their scope are documented in the
+[system package](../src/aims_racer_system/README.md). The
+[2026-09-21 hardware report](reports/2026-09-21-frame-check.md) records a stationary
+check with the earlier local FAST-LIO modification; it does not validate the
+subsequent unmodified-submodule launch configuration or moving-vehicle behavior.
+Delayed-LIO replay remains an open item in the
+[vehicle checklist](operations/vehicle-checklist.md).

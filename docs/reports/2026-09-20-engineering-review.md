@@ -1,15 +1,11 @@
 # MPCC integration engineering review — 2026-09-20
 
-## Follow-up status
-
-The review below records the earlier acceleration-enabled snapshot. Subsequently,
-IMU fusion was restricted to yaw rate and VESC vx was added with nonzero configurable
-variance; synthetic turning and input-selection regressions cover that change.
-Finding 1 is addressed for the selected yaw-only configuration. Findings 2–7 remain
-open as described in the [real-car checklist](REAL_CAR_CHECKLIST.md). FAST-LIO stays
-unmodified; host launch files isolate its TF output on `/fastlio2/tf`. Full FAST-LIO
-build/runtime remains unverified. Historical test counts and diagnostics below remain
-historical evidence.
+This is a historical diagnostic snapshot, not a current deployment guide.
+Subsequent changes restricted IMU fusion to yaw rate, added wheel vx, unified the
+external Livox frame, and replaced the temporary FAST-LIO modification with TF
+remapping. Current contracts are in [architecture](../architecture.md); remaining
+work is maintained in the [vehicle checklist](../operations/vehicle-checklist.md).
+Line numbers and test counts below describe the reviewed snapshot.
 
 ## Assessment
 
@@ -97,7 +93,7 @@ Recommendation: add progress-local association and physically surveyed corridor 
 
 - `half_length`/`half_width` remain unset; `geometry_verified` is false. Normal MPCC activation correctly remains blocked until physical geometry is entered.
 - Sensor height/orientation and LIO extrinsics remain partly inherited, not physically verified.
-- FAST-LIO remains an unmodified submodule. Host launch files remap its TF output to `/fastlio2/tf`; full FAST-LIO build/runtime has not been validated.
+- At the review checkpoint, FAST-LIO TF suppression depended on a local source modification; full FAST-LIO build/runtime had not been validated.
 - The previous 86 passing tests remain useful for software plumbing and low-speed synthetic checks. They do not override the newly demonstrated 5 m/s estimator problems.
 
 Recommended order: resolve findings 1–2; repair manual shadow evaluation; verify geometry/frame alignment; collect low-speed identification/timing data; then increase speed using quantified estimator and controller errors.

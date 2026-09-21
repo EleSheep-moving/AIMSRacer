@@ -1,44 +1,18 @@
 # Real-car deployment: remaining work
 
-This branch is a low-speed MPCC prototype. Docker validates software behavior;
-it does not establish vehicle readiness or racing performance. The shipped
+This branch is a low-speed MPCC prototype. Package tests and stationary checks
+do not establish moving-vehicle readiness or racing performance. The shipped
 `vehicle.yaml` deliberately leaves footprint dimensions unset and
 `geometry_verified: false`, so normal activation is blocked until measured.
 Current calibration is outside this implementation.
 
-## Current estimator and command contract
+## Prerequisites
 
-| Source | EKF input | Frame / meaning |
-|---|---|---|
-| FAST-LIO via rear-axle adapter | Existing LIO pose and velocity selection | Pose in `odom`, twist at rear axle in `base_link` |
-| `/rear_axle/imu` | Yaw rate only, index 11 | Rear-frame gyro; acceleration and orientation are not fused |
-| VESC `/rear_axle/wheel_odom` | Forward velocity only, index 6 | `base_link` vx in m/s; exclude integrated wheel pose and steering-derived yaw rate |
-
-EKF publishes `/odometry/filtered` and owns `odom -> base_link` in V2/V3 driving.
-The rear-axle adapter owns that transform in mapping, where EKF is absent.
-VESC does not publish TF. The compensated IMU acceleration remains available for
-diagnostics; the gravity-removal EKF option is inactive while acceleration
-fusion is disabled. Raw `/livox/imu` remains FAST-LIO's input.
-
-MPCC sends speed and steering through `/drive -> joystick_control_v2 ->
-/ackermann_cmd -> ackermann_to_vesc -> VESC`. Existing RC selection and command
-watchdogs remain in that chain. No additional LIO-loss watchdog is implemented,
-as requested. Fresh EKF output alone does not prove that LIO is still updating.
-
-## Prepare the vehicle workspace
-
-The FAST-LIO submodule remains unmodified. Main-repository launch files remap the
-upstream FAST-LIO `/tf` output to `/fastlio2/tf`; global driving TF remains owned
-by EKF. See the [frame migration guide](../../aims_racer_system/docs/rear-axle-frames.md#upstream-fast-lio-integration).
-
-All external Livox measurements use `livox_frame` with a shared approximate mounting
-origin; internal FAST-LIO `r_il/t_il` remain unchanged. The rear-axle adapter uses only
-the common external mounting transform, not an additional internal IMU displacement.
-
-Dependency/build and synthetic pipeline checks do not establish scan-matching accuracy
-or real-car TF behavior. Use the controller's documented system-Python setup and measure
-solve latency on Orin. See the current [frame guide](../../aims_racer_system/docs/rear-axle-frames.md)
-for topic names and validation scope.
+Complete [installation](../installation.md), [bringup](bringup.md) and the
+[MPCC preparation steps](../../src/controller/docs/usage.md). The
+[architecture](../architecture.md) defines the current sensor topics, frame
+origins, TF ownership and control chain. Fresh EKF output alone does not prove
+that LIO is still updating.
 
 ## Before the first autonomous lap
 
@@ -80,14 +54,7 @@ for topic names and validation scope.
   profile, `simulation:=false`, 0.5 m/s cruise and 1 m/s cap for initial work.
   Record sensor inputs, fused odometry, forwarded commands and MPCC status.
 
-Useful recording command (choose an external/local ignored data directory):
-
-```bash
-ros2 bag record -o /data/mpcc-run /livox/imu /rear_axle/imu \
-  /fastlio2/lio_odom /rear_axle/lio_odom /rear_axle/wheel_odom /odometry/filtered \
-  /sensors/core /sensors/servo_position_command /drive /ackermann_cmd \
-  /control/autonomy_speed_enabled /mpcc/status /tf /tf_static
-```
+Use the [recording guide](recording.md) for sensor and controller evidence.
 
 ## Known work before faster driving
 
@@ -100,7 +67,7 @@ ros2 bag record -o /data/mpcc-run /livox/imu /rear_axle/imu \
 | Reusable map/session alignment | Recorded `odom` paths have no automatic association/alignment after localization restart. |
 | Progress association and track boundaries | Global nearest projection and constant tangent-strip corridors need improvement for nearby track sections or complex boundaries. |
 
-See the [engineering review](ENGINEERING_REVIEW_20260920.md) for evidence and
+See the [engineering review](../reports/2026-09-20-engineering-review.md) for evidence and
 scope. These are explicitly open deployment/research items, not claims resolved
 by passing the integration suite. This branch is not ready for 5 m/s vehicle
 operation solely because a synthetic 5 m/s estimator test passes.

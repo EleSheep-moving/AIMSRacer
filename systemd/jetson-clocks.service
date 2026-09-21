@@ -1,0 +1,14 @@
+[Unit]
+Description=Enable Jetson maximum clocks at boot
+Documentation=https://docs.nvidia.com/jetson/archives/r36.4/DeveloperGuide/SD/JetsonAgxOrinSeriesAndJetsonOrinNanoSeries.html#jetson-clocks
+ConditionPathExists=/usr/bin/jetson_clocks
+After=local-fs.target
+Before=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/jetson_clocks
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
