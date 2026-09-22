@@ -1,4 +1,4 @@
-"""CasADi/IPOPT port of f1tenth_mpcc.solver (see THIRD_PARTY_NOTICES.md).
+"""CasADi/IPOPT port of f1tenth_mpcc.solver (see NOTICE.md).
 
 Rear axle state order: x,y,yaw,speed,progress,actual steering.
 Controls: longitudinal acceleration, steering command, virtual progress speed.

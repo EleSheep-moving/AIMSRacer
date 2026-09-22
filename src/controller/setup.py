@@ -6,7 +6,7 @@ setup(
     package_data={'aims_mpcc.vendor': ['*LICENSE']},
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/aims_mpcc']),
-        ('share/aims_mpcc', ['package.xml', 'LICENSE', 'THIRD_PARTY_NOTICES.md']),
+        ('share/aims_mpcc', ['package.xml', 'LICENSE', 'NOTICE.md']),
         ('share/aims_mpcc/config', glob('config/*.yaml')),
         ('share/aims_mpcc/launch', glob('launch/*.py')),
     ],

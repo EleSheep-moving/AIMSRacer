@@ -37,5 +37,5 @@ source install/setup.bash
 ```
 
 The tracked tests exercise native cache behavior; they do not establish vehicle
-tracking performance. See [third-party notices](THIRD_PARTY_NOTICES.md) and
+tracking performance. See [third-party notices](NOTICE.md) and
 [LICENSE](LICENSE) for attribution and licensing.
