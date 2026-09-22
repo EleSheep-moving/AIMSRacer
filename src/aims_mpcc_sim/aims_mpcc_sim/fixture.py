@@ -31,7 +31,7 @@ def main(args=None):
     parser.add_argument('output')
     parser.add_argument('--vehicle-config', required=True)
     parser.add_argument('--radius', type=float, default=2.0)
-    parser.add_argument('--speed', type=float, default=0.5)
+    parser.add_argument('--speed', type=float, default=1.2)
     parser.add_argument('--samples', type=int, default=500)
     parser.add_argument('--left-width', type=float, default=0.9)
     parser.add_argument('--right-width', type=float, default=0.9)

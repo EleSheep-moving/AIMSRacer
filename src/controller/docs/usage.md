@@ -6,7 +6,7 @@ F1TENTH CasADi/IPOPT controller into a standalone package without Isaac imports.
 
 The reference describes geometry, not the driver's speed or a timed trajectory.
 MPCC optimizes local progress and produces physical speed (m/s) and steering
-(rad). It starts at 0.5 m/s target speed and stops after one lap. Current/duty
+(rad). It starts at 1.2 m/s target speed and stops after one lap. Current/duty
 control, racing-line optimization, obstacle avoidance and tire modeling are not
 part of this implementation.
 
