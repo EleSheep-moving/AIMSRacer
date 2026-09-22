@@ -400,7 +400,7 @@ class JoystickControl(Node):
         self.autonomy_status_publisher.publish(selection)
         
         if self.channel is None:
-            self.get_logger().warn("Waiting for RC input...")
+            self.get_logger().warn("Waiting for RC input...", throttle_duration_sec=1.0)
             return
 
         if self.locked:
@@ -472,7 +472,7 @@ class JoystickControl(Node):
 
             if self.control_mode == "nav":
                 if self.nav_ackermann_msg is None:
-                    self.get_logger().warn("No nav message received yet")
+                    self.get_logger().warn("No nav message received yet", throttle_duration_sec=1.0)
                     self.publish_ackermann_none()
                     return
                 elif nav_timeout:
@@ -494,7 +494,7 @@ class JoystickControl(Node):
 
             if self.control_mode == "nav":
                 if self.nav_ackermann_msg is None:
-                    self.get_logger().warn("No nav message received yet")
+                    self.get_logger().warn("No nav message received yet", throttle_duration_sec=1.0)
                     self.publish_ackermann_none()
                     return
                 elif nav_timeout:
@@ -522,7 +522,7 @@ class JoystickControl(Node):
                 self.publish_ackermann_duty(steering_value, duty_value)
             elif self.control_mode == "nav":
                 if self.nav_ackermann_msg is None:
-                    self.get_logger().warn("No nav message received yet")
+                    self.get_logger().warn("No nav message received yet", throttle_duration_sec=1.0)
                     self.publish_ackermann_none()
                     return
                 elif nav_timeout:

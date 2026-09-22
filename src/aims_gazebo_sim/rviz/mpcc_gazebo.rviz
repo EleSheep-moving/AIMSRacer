@@ -27,6 +27,10 @@ Visualization Manager:
         Color: 50; 180; 255
         Value: Arrow
       Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
         Value: /odometry/filtered
       Value: true
     - Alpha: 1
