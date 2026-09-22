@@ -48,3 +48,6 @@ rosbag2_*/
 /src/aims_mpcc_sim/results/
 /src/aims_gazebo_sim/docker/
 /src/aims_gazebo_sim/results/
+
+# Simulation acceptance and visual-run artifacts
+/results/

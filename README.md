@@ -9,7 +9,7 @@ ZED 2i and RadioMaster Pocket ELRS remote.
 
 | Task | Guide |
 | --- | --- |
-| Install a new machine | [Installation](docs/installation.md) |
+| Run numerical or Gazebo MPCC simulation | [Simulation host guide](docs/simulation/README.md) |
 | Understand frames, sensor fusion and command routing | [Architecture](docs/architecture.md) |
 | Start V2 or V3 | [Vehicle bringup](docs/operations/bringup.md) |
 | Record a bag | [Recording](docs/operations/recording.md) |

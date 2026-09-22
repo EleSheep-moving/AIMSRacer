@@ -1,0 +1,9 @@
+.git
+build/
+install/
+log/
+**/__pycache__/
+**/.pytest_cache/
+src/controller/results/
+src/aims_mpcc_sim/results/
+src/aims_gazebo_sim/results/
