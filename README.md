@@ -9,7 +9,9 @@ ZED 2i and RadioMaster Pocket ELRS remote.
 
 | Task | Guide |
 | --- | --- |
-| Install a new machine | [Installation](docs/installation.md) |
+| Install the Orin vehicle computer | [Orin installation](docs/installation.md) |
+| Install or run an Orin / NUC vehicle computer | [Vehicle-computer deployment](docs/deployment/README.md) |
+| Run numerical or Gazebo MPCC simulation on a workstation | [`mpcc-sim` simulation guide](https://github.com/EleSheep-moving/AIMSRacer/blob/mpcc-sim/docs/simulation/README.md) |
 | Understand frames, sensor fusion and command routing | [Architecture](docs/architecture.md) |
 | Start V2 or V3 | [Vehicle bringup](docs/operations/bringup.md) |
 | Record a bag | [Recording](docs/operations/recording.md) |

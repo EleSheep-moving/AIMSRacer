@@ -1,0 +1,33 @@
+# Jetson Orin deployment
+
+The Orin NX is the vehicle computer. It directly owns the Livox, ELRS receiver,
+VESC and optional ZED 2i. V2/V3 vehicle bringup is supported only by the native
+JetPack installation below.
+
+## Native vehicle stack
+
+Use the complete [Orin native installation guide](../installation.md). It pins
+Ubuntu 22.04, JetPack/L4T, ROS 2 Humble, the CUDA-enabled ZED SDK, Livox underlay
+and AIMSRacer build. Do not substitute the x86-64 ZED SDK or desktop CUDA on the
+Jetson.
+
+After that guide completes, install the Orin device rules and start the vehicle
+stack:
+
+```bash
+cd ~/AIMSRacer
+sudo install -m 0644 rules/rulesForOrin/*.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+source /opt/ros/humble/setup.bash
+source "$HOME/livox_ws/install/setup.bash"
+source install/setup.bash
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
+ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
+```
+
+Use V3 only after stopping V2. Follow the [bringup guide](../operations/bringup.md)
+and the [MPCC execution guide](../../src/controller/docs/usage.md) before enabling
+motion.

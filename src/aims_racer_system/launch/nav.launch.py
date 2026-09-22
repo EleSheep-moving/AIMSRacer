@@ -33,6 +33,7 @@ def generate_launch_description():
     namespace = LaunchConfiguration("namespace")
     autostart = LaunchConfiguration("autostart")
     params_file = LaunchConfiguration("params_file")
+    map_file = LaunchConfiguration("map")
     log_level = LaunchConfiguration("log_level")
 
     lifecycle_nodes = [
@@ -104,6 +105,12 @@ def generate_launch_description():
         description="Full path to the ROS2 parameters file to use for all launched nodes",
     )
 
+    declare_map_cmd = DeclareLaunchArgument(
+        "map",
+        default_value="/home/nuc/maps/20250417_174751/map.yaml",
+        description="Absolute path to the Nav2 occupancy-grid map YAML",
+    )
+
     declare_autostart_cmd = DeclareLaunchArgument(
         "autostart",
         default_value="true",
@@ -157,7 +164,7 @@ def generate_launch_description():
             name='map_server',
             output='screen',
             parameters=[configured_params,
-                        {'yaml_filename':'/home/nuc/maps/20250417_174751/map.yaml'}],
+                        {'yaml_filename': map_file}],
             remappings=remappings),
             Node(
                 package="nav2_lifecycle_manager",
@@ -187,6 +194,7 @@ def generate_launch_description():
     # Declare the launch options
     ld.add_action(declare_namespace_cmd)
     ld.add_action(declare_params_file_cmd)
+    ld.add_action(declare_map_cmd)
     ld.add_action(declare_autostart_cmd)
     ld.add_action(declare_log_level_cmd)
 

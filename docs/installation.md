@@ -1,6 +1,8 @@
-# AIMSRacer Installation Guide
+# AIMSRacer Orin Native Installation Guide
 
-This guide installs AIMSRacer and its build dependencies on ROS 2 Humble.
+This guide installs the native Orin vehicle stack and its build dependencies on
+ROS 2 Humble. For NUC deployment and simulation-host setup, start with
+[vehicle-computer deployment](deployment/README.md).
 The base workspace procedure was verified on 2026-08-08. The ZED ROS 2 source set
 was pinned and its CUDA requirements were checked on the target below on
 2026-08-11; installing the native ZED SDK is still a required host step:
@@ -16,7 +18,7 @@ was pinned and its CUDA requirements were checked on the target below on
 | ZED ROS 2 sources | wrapper/examples 5.4.1, messages 5.3.0, description 0.1.5 |
 | Compiler | GCC 11 |
 | CMake | 4.4.2 |
-| AIMSRacer branch | `agent/vehicle-dynamics-calibration-wip` |
+| AIMSRacer branch | `feat/aims-mpcc` |
 
 The commands below use Tsinghua TUNA for Ubuntu, ROS 2, and rosdep, and
 Aliyun for Python packages where practical. Git repositories are cloned from
@@ -92,7 +94,7 @@ the branch explicitly:
 ```bash
 cd "$HOME"
 git clone \
-  --branch agent/vehicle-dynamics-calibration-wip \
+  --branch feat/aims-mpcc \
   --recurse-submodules \
   git@github.com:EleSheep-moving/AIMSRacer.git
 
@@ -534,8 +536,8 @@ Inspect the supplied rules before installing them:
 
 ```bash
 cd "$HOME/AIMSRacer"
-ls -l rules
-sed -n '1,200p' rules/*.rules
+ls -l rules/rulesForOrin
+sed -n '1,200p' rules/rulesForOrin/*.rules
 ```
 
 The ELRS rule targets the Jetson Orin 40-pin header UART (`ttyTHS1`) and
@@ -545,7 +547,7 @@ creates `/dev/ttyVESC`.
 Install and activate the rules:
 
 ```bash
-sudo install -m 0644 rules/*.rules /etc/udev/rules.d/
+sudo install -m 0644 rules/rulesForOrin/*.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 sudo usermod -aG dialout "$USER"
