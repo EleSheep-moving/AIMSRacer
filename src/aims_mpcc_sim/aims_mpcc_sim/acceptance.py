@@ -54,6 +54,15 @@ def run_command(command, environment):
     subprocess.run(command, check=True, env=environment)
 
 
+def launch_initial_pose_arguments(reference):
+    start = reference.at(0.0)
+    return [
+        f'initial_x:={start["x"]}',
+        f'initial_y:={start["y"]}',
+        f'initial_yaw:={start["yaw"]}',
+    ]
+
+
 def write_artifacts(directory, observer, reference, outcome, started):
     if observer.samples:
         initial = reference.at(0.0)
@@ -92,6 +101,9 @@ def main(args=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output')
     parser.add_argument('--timeout', type=float, default=70.0)
+    parser.add_argument('--track', choices=('circle', 'figure_eight'), default='circle')
+    parser.add_argument('--radius', type=float)
+    parser.add_argument('--waist-ratio', type=float, default=0.5)
     parsed = parser.parse_args(args)
     output = Path(parsed.output).resolve()
     if output.exists():
@@ -100,8 +112,13 @@ def main(args=None):
     environment = dict(os.environ)
     environment['AIMS_MPCC_CACHE_DIR'] = str(output / 'ccache')
     config = Path(get_package_share_directory('aims_mpcc_sim')) / 'config' / 'numerical.yaml'
-    run_command(['ros2', 'run', 'aims_mpcc_sim', 'prepare_circle', str(output / 'fixture'),
-                 '--vehicle-config', str(config)], environment)
+    fixture_command = ['ros2', 'run', 'aims_mpcc_sim', 'prepare_circle', str(output / 'fixture'),
+                       '--vehicle-config', str(config), '--shape', parsed.track]
+    if parsed.radius is not None:
+        fixture_command.extend(['--radius', str(parsed.radius)])
+    if parsed.track == 'figure_eight':
+        fixture_command.extend(['--waist-ratio', str(parsed.waist_ratio)])
+    run_command(fixture_command, environment)
     reference_dir = output / 'fixture' / 'reference'
     run_command(['ros2', 'run', 'aims_mpcc', 'prepare_solver', str(reference_dir),
                  '--vehicle-config', str(config)], environment)
@@ -109,12 +126,15 @@ def main(args=None):
     log = (output / 'launch.log').open('w')
     command = ['ros2', 'launch', 'aims_mpcc_sim', 'closed_loop.launch.py',
                f'path_directory:={reference_dir}', f'vehicle_config:={config}',
-               f'log_directory:={output / "controller"}']
+               f'log_directory:={output / "controller"}',
+               *launch_initial_pose_arguments(reference)]
     launch = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT,
                               start_new_session=True, env=environment)
     rclpy.init(args=args)
     observer = AcceptanceObserver(reference)
     outcome = {'status': 'FAIL', 'simulation': 'independent real-time lagged kinematic bicycle',
+               'track': parsed.track, 'radius_m': parsed.radius,
+               'waist_ratio': parsed.waist_ratio if parsed.track == 'figure_eight' else None,
                'hardware_validated': False}
     started = time.monotonic()
     enabled = False

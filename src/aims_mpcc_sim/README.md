@@ -21,8 +21,13 @@ mkdir -p src/aims_mpcc_sim/results
 docker run --rm --network none -e ROS_DOMAIN_ID=83 \
   -v "$PWD/src/aims_mpcc_sim/results:/results" aimsracer-mpcc:ros-sim-local \
   bash -lc 'source /opt/ros/humble/setup.bash && source /ws/install/setup.bash && \
-  ros2 run aims_mpcc_sim run_acceptance /results/acceptance-$(date -u +%Y%m%dT%H%M%SZ)'
+  ros2 run aims_mpcc_sim run_acceptance /results/acceptance-$(date -u +%Y%m%dT%H%M%SZ) \
+    --track figure_eight --radius 6.0 --waist-ratio 0.3'
 ```
+
+`figure_eight` is a non-self-intersecting double-lobe centreline. A literal
+self-crossing eight is intentionally rejected because its crossing has no
+unique online progress value.
 
 Each output directory contains `summary.json`, `trajectory.csv`, `tracking.png`,
 the prepared reference, controller telemetry and the launch log. The runner
