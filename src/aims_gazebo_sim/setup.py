@@ -11,6 +11,7 @@ setup(
         ('share/aims_gazebo_sim', ['package.xml']),
         ('share/aims_gazebo_sim/config', glob('config/*.yaml')),
         ('share/aims_gazebo_sim/launch', glob('launch/*.py')),
+        ('share/aims_gazebo_sim/rviz', glob('rviz/*.rviz')),
         ('share/aims_gazebo_sim/worlds', glob('worlds/*.sdf')),
     ],
     install_requires=['setuptools'],
@@ -18,5 +19,7 @@ setup(
     entry_points={'console_scripts': [
         'vesc_gazebo_bridge = aims_gazebo_sim.node:main',
         'run_acceptance = aims_gazebo_sim.acceptance:main',
+        'run_visual = aims_gazebo_sim.visual:main',
+        'mpcc_enabler = aims_gazebo_sim.enabler:main',
     ]},
 )

@@ -2,6 +2,7 @@
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node, SetParameter
@@ -15,11 +16,19 @@ def generate_launch_description():
     gazebo_config = PathJoinSubstitution([share, 'config', 'gazebo.yaml'])
     vesc = PathJoinSubstitution([share, 'config', 'vesc_sim.yaml'])
     bridge_config = PathJoinSubstitution([share, 'config', 'ros_gz_bridge.yaml'])
-    gazebo = IncludeLaunchDescription(
+    gazebo_server = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
             FindPackageShare('ros_gz_sim'), 'launch', 'gz_sim.launch.py',
         ])),
         launch_arguments={'gz_args': PythonExpression(["'-r -s ", world, "'"])}.items(),
+        condition=UnlessCondition(LaunchConfiguration('gazebo_gui')),
+    )
+    gazebo_gui = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([
+            FindPackageShare('ros_gz_sim'), 'launch', 'gz_sim.launch.py',
+        ])),
+        launch_arguments={'gz_args': PythonExpression(["'-r ", world, "'"])}.items(),
+        condition=IfCondition(LaunchConfiguration('gazebo_gui')),
     )
     spawn = Node(
         package='ros_gz_sim', executable='create', output='screen',
@@ -47,11 +56,21 @@ def generate_launch_description():
         DeclareLaunchArgument('initial_x', default_value='8.0'),
         DeclareLaunchArgument('initial_y', default_value='0.0'),
         DeclareLaunchArgument('initial_yaw', default_value='1.57079632679'),
+        DeclareLaunchArgument('gazebo_gui', default_value='false'),
+        DeclareLaunchArgument('rviz', default_value='false'),
+        DeclareLaunchArgument('autostart', default_value='false'),
         SetParameter(name='use_sim_time', value=True),
-        gazebo,
+        gazebo_server,
+        gazebo_gui,
         Node(package='ros_gz_bridge', executable='parameter_bridge', output='screen', parameters=[{
             'config_file': bridge_config,
         }]),
         TimerAction(period=2.0, actions=[spawn]),
         TimerAction(period=4.0, actions=physical_chain),
+        TimerAction(period=5.0, actions=[Node(
+            package='aims_gazebo_sim', executable='mpcc_enabler', output='screen',
+            condition=IfCondition(LaunchConfiguration('autostart')),
+        )]),
+        Node(package='rviz2', executable='rviz2', output='screen', condition=IfCondition(LaunchConfiguration('rviz')),
+             arguments=['-d', PathJoinSubstitution([share, 'rviz', 'mpcc_gazebo.rviz'])]),
     ])

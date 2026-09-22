@@ -18,6 +18,7 @@
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>
   <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>rviz2</exec_depend>
   <exec_depend>aims_mpcc</exec_depend>
   <exec_depend>aims_mpcc_sim</exec_depend>
   <exec_depend>ackermann_mux</exec_depend>
