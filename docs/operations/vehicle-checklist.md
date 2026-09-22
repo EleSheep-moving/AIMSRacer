@@ -51,7 +51,7 @@ that LIO is still updating.
 - **Check authority and fault response at low speed.** Keep Nav2 and other
   `/drive` publishers stopped. Verify RC takeover, RC loss, stale commands,
   explicit enable/disable and physical stop behavior. Use the measured vehicle
-  profile, `simulation:=false`, 0.5 m/s cruise and 1 m/s cap for initial work.
+  profile, `simulation:=false`, 1.2 m/s cruise and 1.5 m/s cap for initial work.
   Record sensor inputs, fused odometry, forwarded commands and MPCC status.
 
 Use the [recording guide](recording.md) for sensor and controller evidence.

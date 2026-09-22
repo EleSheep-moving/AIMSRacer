@@ -3,7 +3,7 @@
 `aims_mpcc` provides ROS 2 Humble speed-mode control along a recorded closed lap,
 using CasADi/IPOPT. Its source directory is `src/controller`.
 
-The current controller loads a reference from `path_directory`, targets 0.5 m/s
+The current controller loads a reference from `path_directory`, targets 1.2 m/s
 and stops after one lap. Live local-trajectory topic input is not implemented.
 
 ## Documentation

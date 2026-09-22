@@ -7,8 +7,9 @@ rear_offset: 0.0
 half_length: null
 half_width: null
 geometry_verified: false
-cruise_speed: 0.5
-max_speed: 1.0
+# Lowest sustainable nominal driving speed; stop and safety states still command zero.
+cruise_speed: 1.2
+max_speed: 1.5
 steer_limit: 0.45
 # Conservative wheel-angle rate limit (rad/s); reported measured rate: 5 rad/s.
 steer_rate: 2.0
