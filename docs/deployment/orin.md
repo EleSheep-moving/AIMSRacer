@@ -31,3 +31,19 @@ ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
 Use V3 only after stopping V2. Follow the [bringup guide](../operations/bringup.md)
 and the [MPCC execution guide](../../src/controller/docs/usage.md) before enabling
 motion.
+
+## Shared Nav2 map launch
+
+The Orin installation includes the Nav2 dependencies. If the Orin is assigned
+to navigation, launch the same map server and Nav2 graph used by the NUC with an
+explicit map path:
+
+```bash
+source /opt/ros/humble/setup.bash
+source ~/AIMSRacer/install/setup.bash
+ROS_DOMAIN_ID=42 ros2 launch aims_racer_system nav.launch.py \
+  map:=/absolute/path/to/map.yaml
+```
+
+Do not run this Nav2 launch while MPCC is active: both can produce autonomous
+drive commands.

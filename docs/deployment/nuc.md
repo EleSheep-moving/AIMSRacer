@@ -1,8 +1,9 @@
 # NUC deployment
 
-The NUC role is Nav2 and the optional CP2102 FDI IMU. It is not the current
-vehicle sensor/actuator computer. Its navigation output can reach `/drive`, so
-do not run its Nav2 launch while MPCC is active.
+The NUC can run Nav2 and the optional CP2102 FDI IMU. It is not the current
+vehicle sensor/actuator computer. `nav.launch.py` is also supported on the Orin;
+its navigation output can reach `/drive`, so do not run either Nav2 instance
+while MPCC is active.
 
 ## Native Nav2 workspace
 
@@ -11,7 +12,8 @@ CRSF submodules, install Nav2 and the package build dependencies, then build the
 small navigation workspace:
 
 ```bash
-git clone --recurse-submodules git@github.com:EleSheep-moving/AIMSRacer.git
+git clone --branch feat/aims-mpcc --recurse-submodules \
+  git@github.com:EleSheep-moving/AIMSRacer.git
 cd AIMSRacer
 source /opt/ros/humble/setup.bash
 
