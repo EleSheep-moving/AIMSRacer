@@ -1,0 +1,18 @@
+# Numerical-only rear-axle geometry. It is not a vehicle measurement.
+profile: synthetic
+wheelbase: 0.36
+rear_offset: 0.0
+half_length: 0.5
+half_width: 0.3
+geometry_verified: true
+cruise_speed: 0.5
+max_speed: 1.0
+steer_limit: 0.4
+steer_rate: 0.5
+steer_acceleration: 2.0
+accel_limit: 0.5
+brake_limit: 0.5
+jerk_limit: 1.0
+steering_tau: 0.115
+understeer_coefficient: 0.0
+lateral_accel_limit: 1.0

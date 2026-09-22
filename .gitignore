@@ -44,3 +44,5 @@ rosbag2_*/
 /docs/superpowers/plans/
 /scripts/
 /src/aims_racer_system/docker/
+/src/aims_mpcc_sim/docker/
+/src/aims_mpcc_sim/results/
