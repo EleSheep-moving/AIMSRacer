@@ -46,3 +46,5 @@ rosbag2_*/
 /src/aims_racer_system/docker/
 /src/aims_mpcc_sim/docker/
 /src/aims_mpcc_sim/results/
+/src/aims_gazebo_sim/docker/
+/src/aims_gazebo_sim/results/

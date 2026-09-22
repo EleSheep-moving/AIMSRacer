@@ -1,0 +1,10 @@
+/**:
+  ros__parameters:
+    speed_to_erpm_gain: 4650.0
+    speed_to_erpm_offset: 0.0
+    steering_angle_to_servo_gain: -0.5137
+    steering_angle_to_servo_offset: 0.506
+    servo_min: 0.264
+    servo_max: 0.750
+    ackermann_watchdog_enabled: true
+    ackermann_timeout_sec: 0.10
