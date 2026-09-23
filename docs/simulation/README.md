@@ -22,6 +22,15 @@ Use `git switch mpcc-sim && git submodule update --init --recursive` when
 updating an existing clone. The commands below assume the repository root is the
 current directory.
 
+## ROS domain
+
+The acceptance commands use `ROS_DOMAIN_ID=83` to isolate their closed ROS
+graph from the host default domain. `83` is an arbitrary simulation value, not
+an MPCC setting. Each command starts its complete graph and its child processes
+inherit that value. Use the same value in a host terminal only when inspecting
+the GUI run, for example `ROS_DOMAIN_ID=83 ros2 topic list`; choose another
+unused value consistently if a concurrent simulation already uses `83`.
+
 ## 2. Native Ubuntu setup and execution
 
 Install [ROS 2 Humble Desktop](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
@@ -90,7 +99,7 @@ figure-eight reference, starts Gazebo and RViz2, then enables MPCC automatically
 ```bash
 mkdir -p results
 export AIMS_MPCC_CACHE_DIR="$PWD/results/ccache"
-ros2 run aims_gazebo_sim run_visual --output-root "$PWD/results" \
+ROS_DOMAIN_ID=83 ros2 run aims_gazebo_sim run_visual --output-root "$PWD/results" \
   --track figure_eight --radius 6.0 --waist-ratio 0.3
 ```
 
