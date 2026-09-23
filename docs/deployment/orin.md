@@ -44,9 +44,11 @@ explicit map path:
 ```bash
 source /opt/ros/humble/setup.bash
 source ~/AIMSRacer/install/setup.bash
-ROS_DOMAIN_ID=42 ros2 launch aims_racer_system nav.launch.py \
+ros2 launch aims_racer_system nav.launch.py \
   map:=/absolute/path/to/map.yaml
 ```
+
+Use the same ROS domain as the rest of the vehicle graph; see the [deployment overview](README.md#ros-domain).
 
 Do not run this Nav2 launch while MPCC is active: both can produce autonomous
 drive commands.

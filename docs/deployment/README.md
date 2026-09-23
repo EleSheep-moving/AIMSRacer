@@ -13,6 +13,14 @@ Install device rules from [`rules/`](../../rules/README.md) only on the computer
 physically connected to the matching serial hardware. A rule creates a stable
 `/dev` name; it does not install or start its ROS driver.
 
+## ROS domain
+
+Every ROS process that belongs to one vehicle graph must use the same
+`ROS_DOMAIN_ID`. When it is unset, ROS 2 uses domain `0`. Either leave it unset
+in every terminal and container that starts the base stack, Nav2, MPCC,
+visualization or diagnostics, or select one non-default team value and export it
+in all of them. No particular value is required by this repository.
+
 ## Nav2 map launch
 
 `aims_racer_system/nav.launch.py` is shared by the Orin and NUC native
@@ -20,12 +28,13 @@ workspaces. Run it on the computer assigned to navigation and supply the map
 explicitly:
 
 ```bash
-ROS_DOMAIN_ID=42 ros2 launch aims_racer_system nav.launch.py \
+ros2 launch aims_racer_system nav.launch.py \
   map:=/absolute/path/to/map.yaml
 ```
 
-The active Nav2 instance can publish autonomous commands. Do not run it beside
-MPCC or another autonomous command producer.
+The launch inherits the domain selected for that terminal. The active Nav2
+instance can publish autonomous commands. Do not run it beside MPCC or another
+autonomous command producer.
 
 ## Simulation host
 
