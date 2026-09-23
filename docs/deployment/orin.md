@@ -27,6 +27,14 @@ export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
 ```
 
+The Orin uses its `ttyTHS1` hardware UART for ELRS and USB CDC for VESC, so the
+NUC CP2102 `brltty` case does not apply. If either endpoint is busy, identify
+the owning process before changing a service:
+
+```bash
+sudo fuser -v /dev/ttyELRS /dev/ttyVESC 2>/dev/null || true
+```
+
 Keep the vehicle bringup shell free of global `OPENBLAS_NUM_THREADS` and
 `OMP_NUM_THREADS` exports. The MPCC guide scopes those limits to the MPCC
 process so other vehicle nodes retain their own threading policy.

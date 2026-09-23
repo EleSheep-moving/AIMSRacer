@@ -39,8 +39,9 @@ sudo udevadm trigger
 ```
 
 The rule creates `/dev/ttyIMU`; this repository does not include an FDI IMU
-serial-driver node. Install and configure that driver separately before using the
-device.
+serial-driver node. Before configuring that driver, check whether `brltty` or
+`ModemManager` has claimed the CP2102 endpoint and apply the conditional remedy
+in [serial service ownership](../../rules/README.md#serial-service-ownership).
 
 Launch Nav2 with an explicit map path rather than relying on the historical
 `/home/nuc/maps/...` location:

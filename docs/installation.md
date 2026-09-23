@@ -553,9 +553,16 @@ sudo udevadm trigger
 sudo usermod -aG dialout "$USER"
 ```
 
-Log out and back in after changing group membership. Remove `brltty` only if
-logs show that it is claiming the actual VESC/RC serial adapter; do not
-remove it unconditionally.
+Log out and back in after changing group membership. The Orin's ELRS hardware
+UART and VESC USB CDC endpoint are not the NUC CP2102 bridge. If either endpoint
+is busy, identify the owning process before changing a service:
+
+```bash
+sudo fuser -v /dev/ttyELRS /dev/ttyVESC 2>/dev/null || true
+```
+
+The separate CP2102 `brltty` and `ModemManager` procedure applies to the NUC and
+is documented in [serial service ownership](../rules/README.md#serial-service-ownership).
 
 ### 11.2 Livox network
 
