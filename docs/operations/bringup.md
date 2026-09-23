@@ -13,8 +13,9 @@ source /opt/ros/humble/setup.bash
 source "$HOME/livox_ws/install/setup.bash"
 source install/setup.bash
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
 ```
+
+Keep this bringup shell free of global `OPENBLAS_NUM_THREADS` and `OMP_NUM_THREADS` exports; scope them to the MPCC command instead.
 
 Use the corresponding `setup.zsh` files in zsh. The Livox underlay path may differ
 on another machine. Use system Python as described in the installation guide.

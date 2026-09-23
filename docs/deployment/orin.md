@@ -24,9 +24,12 @@ source /opt/ros/humble/setup.bash
 source "$HOME/livox_ws/install/setup.bash"
 source install/setup.bash
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
 ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
 ```
+
+Keep the vehicle bringup shell free of global `OPENBLAS_NUM_THREADS` and
+`OMP_NUM_THREADS` exports. The MPCC guide scopes those limits to the MPCC
+process so other vehicle nodes retain their own threading policy.
 
 Use V3 only after stopping V2. Follow the [bringup guide](../operations/bringup.md)
 and the [MPCC execution guide](../../src/controller/docs/usage.md) before enabling
