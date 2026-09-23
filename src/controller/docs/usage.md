@@ -15,7 +15,7 @@ part of this implementation.
 Read the [remaining real-car work and deployment checklist](../../../docs/operations/vehicle-checklist.md)
 before enabling motion. It lists required measurements and remaining controller and estimator work.
 
-Complete the [system installation](../../../docs/installation.md#8-use-system-python)
+Complete the [system installation](../../../docs/simulation/README.md#2-native-ubuntu-setup-and-execution)
 and [vehicle bringup](../../../docs/operations/bringup.md) first. Run commands below
 from the workspace root with the ROS, Livox and workspace overlays sourced.
 

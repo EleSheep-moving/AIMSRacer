@@ -12,7 +12,7 @@ and stops after one lap. Live local-trajectory topic input is not implemented.
 - [Implementation and code reading guide](docs/implementation.md)
 - [System architecture](../../docs/architecture.md)
 - [Vehicle checklist](../../docs/operations/vehicle-checklist.md)
-- [Dependencies and installation](../../docs/installation.md#8-use-system-python)
+- [Dependencies and installation](../../docs/simulation/README.md#2-native-ubuntu-setup-and-execution)
 
 ## Interfaces
 
