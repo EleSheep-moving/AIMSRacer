@@ -19,9 +19,9 @@ Complete the [system installation](../../../docs/simulation/README.md#2-native-u
 and [vehicle bringup](../../../docs/operations/bringup.md) first. Run commands below
 from the workspace root with the ROS, Livox and workspace overlays sourced.
 
-```bash
-export OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
-```
+Apply the single-thread limits only to MPCC commands, as shown below. Do not
+export them in the shell that starts LiDAR localization or other vehicle nodes:
+`OMP_NUM_THREADS=1` also limits every later OpenMP process in that shell.
 
 Current V2/V3 odometry already refers to the rear axle; use `rear_offset: 0`.
 See the [system architecture](../../../docs/architecture.md) for the frame contract.
@@ -46,9 +46,9 @@ are `odom` and `base_link`; localization restarting requires a new recording or 
 separately established alignment. This version does not perform relocalization.
 
 ```bash
-ros2 run aims_mpcc record_path --ros-args -p output:=/data/lap.csv
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc record_path --ros-args -p output:=/data/lap.csv
 # Drive one forward lap, with a little overlap; then Ctrl-C the recorder.
-ros2 run aims_mpcc prepare_path /data/lap.csv /data/reference \
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc prepare_path /data/lap.csv /data/reference \
   --vehicle-config /data/vehicle.yaml --left-width 0.9 --right-width 0.9
 ```
 
@@ -76,7 +76,7 @@ The recorder publishes `/mpcc/recorded_path`. The controller publishes
 After preparing the path and choosing the vehicle configuration, run:
 
 ```bash
-ros2 run aims_mpcc prepare_solver /data/reference --vehicle-config /data/vehicle.yaml
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc prepare_solver /data/reference --vehicle-config /data/vehicle.yaml
 ```
 
 This command has no ROS node or actuator access. It builds and warms the same
@@ -119,7 +119,7 @@ environment. The MPCC helper also discovers `~/.local/bin/ccache` if it is not o
 First inspect shadow predictions. Shadow mode never creates a `/drive` publisher:
 
 ```bash
-ros2 launch aims_mpcc mpcc.launch.py path_directory:=/data/reference \
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 launch aims_mpcc mpcc.launch.py path_directory:=/data/reference \
   vehicle_config:=/data/vehicle.yaml output_mode:=shadow log_directory:=/data/shadow
 ```
 
@@ -139,7 +139,7 @@ manual-driving shadow validation tool. Stop that node before launching
 drive mode. Keep the same localization session and start pose:
 
 ```bash
-ros2 launch aims_mpcc mpcc.launch.py path_directory:=/data/reference \
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 launch aims_mpcc mpcc.launch.py path_directory:=/data/reference \
   vehicle_config:=/data/vehicle.yaml output_mode:=drive log_directory:=/data/run
 ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: true}'
 # Request a normal decelerating stop:
