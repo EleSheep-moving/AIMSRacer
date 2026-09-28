@@ -11,6 +11,8 @@ class VehicleConfig:
     wheelbase: float = .36
     rear_offset: float | None = None
     half_length: float | None = None
+    front_extent: float | None = None
+    rear_extent: float | None = None
     half_width: float | None = None
     geometry_verified: bool = False
     cruise_speed: float = .5
@@ -32,7 +34,7 @@ class VehicleConfig:
             raise ValueError('profile must be measured or synthetic')
         if self.profile == 'synthetic' and not allow_synthetic:
             raise ValueError('synthetic geometry is permitted only in simulation')
-        optional = {'rear_offset', 'half_length', 'half_width'}
+        optional = {'rear_offset', 'half_length', 'front_extent', 'rear_extent', 'half_width'}
         for field in fields(self):
             if field.name in {'geometry_verified', 'profile'}: continue
             value = getattr(self, field.name)
@@ -44,7 +46,20 @@ class VehicleConfig:
             elif value <= 0: raise ValueError(f'{field.name} must be positive')
         if not 0 < self.steer_limit < math.pi/2: raise ValueError('steer_limit must be below pi/2')
         if self.cruise_speed > self.max_speed: raise ValueError('cruise_speed exceeds max_speed')
+        asymmetric = self.front_extent is not None or self.rear_extent is not None
+        if asymmetric and (self.front_extent is None or self.rear_extent is None or
+                           self.half_length is not None):
+            raise ValueError('use both front/rear extents or a symmetric half_length')
         if self.geometry_verified or require_verified:
-            if not self.geometry_verified or any(getattr(self,k) is None for k in optional):
+            if (not self.geometry_verified or self.rear_offset is None or
+                    self.half_width is None or
+                    (self.half_length is None and not asymmetric)):
                 raise ValueError('verified rear_offset and body geometry required')
         return self
+
+    def longitudinal_offsets(self):
+        """Front and rear body edges measured from the rear-axle state origin."""
+        self.validate(require_verified=True)
+        if self.front_extent is not None:
+            return self.front_extent, -self.rear_extent
+        return self.rear_offset + self.half_length, self.rear_offset - self.half_length

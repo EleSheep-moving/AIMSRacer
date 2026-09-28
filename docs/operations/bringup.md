@@ -50,15 +50,21 @@ ros2 launch aims_racer_system base_orin_livox_bringup_v3.launch.py
 
 V3 includes V2; do not run both independently. ZED uses `NEURAL_LIGHT` at 30 Hz.
 Camera positional tracking and its vehicle dynamic TF are disabled by default.
-Enable its static vehicle mounting only after measuring the transform, using
-`zed_publish_base_tf` and the `zed_tf_*` launch arguments.
+V3 publishes an approximate static `base_link -> zed2i_camera_link` transform:
+the camera mounting point is assumed 3 cm ahead of `livox_frame`, with the same
+height and orientation. With the current Livox mounting estimate this is
+`[0.33, 0, 0.03]` metres. Refine all six coordinates after measuring the mount;
+override `zed_tf_*` or set `zed_publish_base_tf:=false` to omit this transform.
 
 ## Verify and proceed
 
 Check the topics and single-parent TF tree against [architecture](../architecture.md).
-V2/V3 do not by themselves establish `map -> odom`. Their MPCC workflow uses the
-same live `odom` session for recording and driving. Upstream FAST-LIO must be
+V2/V3 do not by themselves establish `map -> odom`. The default `odom` MPCC
+workflow uses the same live localization session for recording and driving. Upstream FAST-LIO must be
 launched with the documented TF isolation; keep submodules unmodified.
+For a saved PGO map and a map-frame MPCC reference, start the
+[known-map localization add-on](known-map-mpcc.md) beside one V2/V3 launch,
+then explicitly relocalize against the selected `map.pcd`.
 
 - For data collection, follow [recording](recording.md).
 - For autonomous control, complete the [vehicle checklist](vehicle-checklist.md)

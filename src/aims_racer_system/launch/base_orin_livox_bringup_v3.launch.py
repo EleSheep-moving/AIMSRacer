@@ -51,7 +51,7 @@ def generate_launch_description():
             'camera_name': zed_camera_name,
             'serial_number': zed_serial_number,
             'ros_params_override_path': zed_params_file,
-            # FAST-LIO2/EKF own the vehicle localization and map/odom TF.
+            # EKF owns odom->base_link; the optional known-map add-on owns map->odom.
             'publish_tf': 'false',
             'publish_map_tf': 'false',
             'publish_imu_tf': 'false',
@@ -61,8 +61,9 @@ def generate_launch_description():
         }.items(),
     )
 
-    # The camera mounting transform must be measured.  It is intentionally
-    # disabled by default rather than publishing an assumed transform.
+    # Approximate mounting: Livox is 0.30 m forward and 0.03 m up from
+    # base_link; the ZED mounting point is about 0.03 m farther forward.
+    # Override the launch arguments after measuring the complete extrinsic.
     zed_base_tf = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -102,12 +103,12 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'zed_publish_base_tf',
-            default_value='false',
-            description='Publish measured base_link -> zed2i_camera_link static TF.',
+            default_value='true',
+            description='Publish approximate base_link -> zed2i_camera_link static TF.',
         ),
-        DeclareLaunchArgument('zed_tf_x', default_value='0.0'),
+        DeclareLaunchArgument('zed_tf_x', default_value='0.33'),
         DeclareLaunchArgument('zed_tf_y', default_value='0.0'),
-        DeclareLaunchArgument('zed_tf_z', default_value='0.0'),
+        DeclareLaunchArgument('zed_tf_z', default_value='0.03'),
         DeclareLaunchArgument('zed_tf_roll', default_value='0.0'),
         DeclareLaunchArgument('zed_tf_pitch', default_value='0.0'),
         DeclareLaunchArgument('zed_tf_yaw', default_value='0.0'),

@@ -2,11 +2,13 @@
 Description=Enable Jetson maximum clocks at boot
 Documentation=https://docs.nvidia.com/jetson/archives/r36.4/DeveloperGuide/SD/JetsonAgxOrinSeriesAndJetsonOrinNanoSeries.html#jetson-clocks
 ConditionPathExists=/usr/bin/jetson_clocks
-After=local-fs.target
+Requires=nvpmodel.service
+After=local-fs.target nvpmodel.service
 Before=multi-user.target
 
 [Service]
 Type=oneshot
+ExecStartPre=/bin/bash -c 'for n in {1..30}; do test -e /sys/class/devfreq/17000000.gpu/min_freq && exit 0; sleep 1; done; echo "GPU devfreq did not become ready within 30 seconds" >&2; exit 1'
 ExecStart=/usr/bin/jetson_clocks
 RemainAfterExit=yes
 

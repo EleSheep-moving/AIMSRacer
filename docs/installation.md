@@ -108,14 +108,17 @@ The ZED 2/2i integration is split into four pinned upstream submodules:
 
 | Path | Version | Purpose |
 | --- | --- | --- |
-| `src/zed-ros2-wrapper` | 5.4.1 | `zed_components`, launch files, and CUDA/ZED SDK integration |
-| `src/zed-ros2-interfaces` | 5.3.0 | `zed_msgs` messages and services |
-| `src/zed-ros2-description` | 0.1.5 | ZED 2/2i URDF, xacro, and meshes |
-| `src/zed-ros2-examples` | 5.4.1 | RViz, IPC, CUDA, and optional NITROS examples |
+| `src/zed/zed-ros2-wrapper` | 5.4.1 | `zed_components`, launch files, and CUDA/ZED SDK integration |
+| `src/zed/zed-ros2-interfaces` | 5.3.0 | `zed_msgs` messages and services |
+| `src/zed/zed-ros2-description` | 0.1.5 | ZED 2/2i URDF, xacro, and meshes |
+| `src/zed/zed-ros2-examples` | 5.4.1 | RViz, IPC, CUDA, and optional NITROS examples |
 
 The Git superproject records the exact commit of every submodule. Do not clone
 another copy of these repositories inside `src`, and do not replace the pinned
 commits with each repository's moving default branch.
+Existing checkouts moved from the former flat `src/zed-ros2-*` layout should
+rebuild ZED packages once with `--cmake-clean-cache`: CMake stores absolute
+source paths in its build directories.
 
 If the repository already exists, update it without overwriting local work:
 
@@ -602,7 +605,9 @@ together. Adequate cooling is required for sustained neural depth processing.
 ### 11.5 Enable Jetson clocks at boot
 
 The repository provides a root-owned oneshot service that runs NVIDIA's
-`jetson_clocks` utility once during boot and keeps the service marked active:
+`jetson_clocks` utility once during boot and keeps the service marked active.
+It waits for `nvpmodel.service` and the GPU frequency interface, which may
+initialize after `multi-user.target` services begin starting:
 
 ```bash
 cd "$HOME/AIMSRacer"

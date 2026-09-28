@@ -14,6 +14,7 @@ is a closed lap loaded from disk, not a streamed local trajectory.
 | [worker.py](../aims_mpcc/worker.py) | Separate solver process, readiness, requests and deadlines |
 | [solver.py](../aims_mpcc/solver.py) | Optimization problem, initial guesses and solve results |
 | [path.py](../aims_mpcc/path.py) | Reference loading, projection and curve evaluation |
+| [frames.py](../aims_mpcc/frames.py) | Planar map-to-odom alignment for map references |
 | [config.py](../aims_mpcc/config.py) | Vehicle parameters and validation |
 
 Start with the node's subscriptions and request construction, follow a request
@@ -33,9 +34,17 @@ U = [longitudinal acceleration, steering command, virtual progress speed]
 
 Default horizon is 15 intervals of 0.1 s. `_dynamics()` uses RK4 substeps at
 20 ms with a kinematic model, steering lag and an understeer correction.
+`x`, `y` and `yaw` always describe the vehicle in `odom`, including for a
+persistently stored `map` reference. A fresh map-to-odom alignment is a solver
+parameter; `geometry()` applies it to predicted states solely when evaluating
+the map spline, contouring/lag errors and footprint corridor.
 `_build()` creates `X` and `U`, constrains transitions and initial state, and adds
 speed, acceleration, steering, jerk, steering-rate/acceleration, acceleration
 utilization and footprint corridor constraints.
+The real vehicle footprint is asymmetric about the rear-axle state: the solver
+checks the four corners at +0.52 m and -0.10 m longitudinally and ±0.16 m
+laterally. The current 1.0 m course model gives 0.5 m to either side of the
+centered reference; this is a local corridor constraint, not an obstacle map.
 
 The objective combines contouring/lag error, heading, reference speed, progress
 speed, steering and control smoothness. Trace `geometry()` and the vendor cost
@@ -71,5 +80,12 @@ construction; it is not solely IPOPT internal execution time. ROS delivery,
 worker IPC and actuator communication require separate end-to-end measurements.
 Earlier isolated Orin comparisons measured steady solve P50/P95 of about
 43.9/76.3 ms with `-O2`, versus 67/142 ms with `-O0`. These are historical
-workload-specific observations, not a full moving-vehicle latency budget. The [vehicle checklist](../../../docs/operations/vehicle-checklist.md)
+workload-specific observations, not a full moving-vehicle latency budget.
+For the 2026-09-28 map candidate, an isolated native smoke check with temporary
+example body dimensions and a deliberately wide corridor compiled the new
+map-alignment solver in 355 s. The first cache-hit solve took about 2.95 s
+before worker readiness; ten following solves with a 5 mm alternating alignment
+change all succeeded, with 98 ms P95 including parameter setup and warm start.
+These repeated stationary-state solves do not measure moving-car tracking or
+the full ROS/actuator latency. The [vehicle checklist](../../../docs/operations/vehicle-checklist.md)
 tracks alignment and model work still required before faster operation.

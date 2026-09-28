@@ -11,7 +11,8 @@ def main():
     parser.add_argument('--left-width',type=float,required=True)
     parser.add_argument('--right-width',type=float,required=True)
     parser.add_argument('--start-time',type=float);parser.add_argument('--end-time',type=float)
+    parser.add_argument('--map-file',help='required for a map-frame CSV; stored as SHA-256 in the reference')
     args=parser.parse_args()
     path=prepare_recording(args.recording,args.output,load_config(args.vehicle_config),
-                           args.left_width,args.right_width,args.start_time,args.end_time)
+                           args.left_width,args.right_width,args.start_time,args.end_time,args.map_file)
     print(f'Prepared {path.length:.3f} m closed rear-axle path in {path.frame_id}: {args.output}')

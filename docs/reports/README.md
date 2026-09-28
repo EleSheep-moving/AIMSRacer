@@ -9,6 +9,9 @@ in the [checklist](../operations/vehicle-checklist.md).
 | --- | --- |
 | [2026-09-20 engineering review](2026-09-20-engineering-review.md) | Synthetic estimator diagnostics and controller limitations |
 | [2026-09-21 frame check](2026-09-21-frame-check.md) | Stationary powered-vehicle frame/latency observations with the earlier local FAST-LIO modification |
+| [2026-09-28 vehicle response](2026-09-28-vehicle-response.md) | Bag-derived speed onset, steering command path, IMU yaw response and MPCC single-lag fit |
+| [2026-09-28 speed-mode calibration](2026-09-28-speed-mode-calibration.md) | New speed-only bag: speed scale, command-to-motion timing, steering lag and LIO age |
+| [2026-09-28 map reference](2026-09-28-map-reference.md) | Closed-lap extraction and matching to saved PGO map poses |
 
 Future reports should identify source/configuration versions, hardware, workload,
 measurement definitions, sample count and evidence location. Generated local

@@ -30,7 +30,8 @@
 
     depth:
       depth_mode: 'NEURAL_LIGHT'
-      depth_stabilization: -1
+      # SDK default stabilization forces positional tracking back on.
+      depth_stabilization: 0
       max_depth: 15.0
       publish_depth_map: true
       publish_depth_info: false

@@ -2,7 +2,9 @@
   # general parameters shared by all vesc-related nodes
   ros__parameters:
     # erpm (electrical rpm) = speed_to_erpm_gain * speed (meters / second) + speed_to_erpm_offset
-    speed_to_erpm_gain: 4650.0
+    # 2026-09-27 bag: straight, steady LIO/wheel speed ratio median 1.342.
+    # 4650 / 1.342 = 3464.98 ERPM per m/s; confirm with ground distance.
+    speed_to_erpm_gain: 3465.0
     speed_to_erpm_offset: 0.0
 
     # Calibrated from wheelbase=0.36m and minimum turning radius=0.70m:

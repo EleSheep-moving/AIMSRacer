@@ -8,14 +8,14 @@
 	path = src/FASTLIO2_ROS2
 	url = https://github.com/liangheming/FASTLIO2_ROS2.git
 [submodule "src/zed-ros2-wrapper"]
-	path = src/zed-ros2-wrapper
+	path = src/zed/zed-ros2-wrapper
 	url = https://github.com/stereolabs/zed-ros2-wrapper.git
 [submodule "src/zed-ros2-interfaces"]
-	path = src/zed-ros2-interfaces
+	path = src/zed/zed-ros2-interfaces
 	url = https://github.com/stereolabs/zed-ros2-interfaces.git
 [submodule "src/zed-ros2-description"]
-	path = src/zed-ros2-description
+	path = src/zed/zed-ros2-description
 	url = https://github.com/stereolabs/zed-ros2-description.git
 [submodule "src/zed-ros2-examples"]
-	path = src/zed-ros2-examples
+	path = src/zed/zed-ros2-examples
 	url = https://github.com/stereolabs/zed-ros2-examples.git

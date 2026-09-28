@@ -55,7 +55,9 @@ noise/model floors; these are assumptions, not measured calibration.
 
 VESC already supplies rear-axle forward speed from ERPM; no sensor lever-arm
 translation is applied to it. V2/V3 and mapping remap its `odom` output to
-`/rear_axle/wheel_odom`. Gain 4650 and longitudinal variance 0.04 (m/s)² are retained.
+`/rear_axle/wheel_odom`. The ERPM gain is 3465, provisionally calibrated from
+the 2026-09-27 bag's straight-line LIO/wheel speed ratio of 1.342; longitudinal
+variance 0.04 (m/s)² remains an assumption.
 
 ## EKF and TF ownership
 
@@ -71,7 +73,7 @@ map                         optional: PGO while mapping, localizer with an exist
      └─ base_link           driving: EKF; mapping without EKF: LIO rear-axle adapter
          ├─ livox_frame     one static mounting transform
          ├─ base_footprint  existing zero transform, not a measured ground projection
-         └─ zed2i_camera_link → camera internals (V3, when measured mounting is enabled)
+         └─ zed2i_camera_link → camera internals (V3, approximate static mounting)
 ```
 
 VESC must not broadcast vehicle TF in this pipeline. Upstream FAST-LIO's TF is
@@ -81,8 +83,17 @@ when `publish_odom_tf:=true` (mapping). V2/V3 set it false and let EKF publish
 that edge. PGO retains the matching RAW LIO
 body-cloud/pose pair; do not replace just its raw odometry input with rear-axle data.
 V2 defines a localizer but does not add it to its launch description, so V2/V3
-alone do not produce `map -> odom`. MPCC's same-session recorded path uses `odom`.
-ZED vehicle mounting and IMU TF remain disabled by default; camera tracking is off.
+alone do not produce `map -> odom`. The separate
+[known-map add-on](operations/known-map-mpcc.md) runs the upstream localizer
+without duplicating LIO/hardware, isolates its raw TF and forwards `map -> odom`
+only after initial localization validity and TF freshness checks. MPCC accepts
+either a same-session `odom` reference or a `map` reference tied to the exact
+saved map hash; EKF odometry remains `odom/base_link` in both cases.
+V3 publishes an approximate static ZED mounting transform at
+`base_link -> zed2i_camera_link = [0.33, 0, 0.03]` metres, assuming the ZED
+mounting point is 3 cm ahead of `livox_frame` at the same height and orientation.
+The complete extrinsic remains to be measured. ZED dynamic vehicle and IMU TF
+remain disabled, and camera tracking is off.
 
 ## Upstream FAST-LIO integration
 
@@ -123,6 +134,32 @@ Only one autonomous producer should own `/drive` during a run.
 MPCC currently loads a recorded closed-lap reference at startup. Its outgoing
 `nav_msgs/Path` topics visualize the reference and predictions; they are not
 local-trajectory input interfaces. See the [MPCC implementation](../src/controller/docs/implementation.md).
+
+## Persistent reference and local control frames
+
+[ROS REP-105](https://github.com/ros-infrastructure/rep/blob/master/rep-0105.rst)
+defines `map` as a long-term reference whose estimated robot pose may jump, and
+`odom` as a continuous short-term frame that may drift. Nav2 Humble's
+[example configuration](https://github.com/ros-navigation/navigation2/blob/humble/nav2_bringup/params/nav2_params.yaml)
+uses `map` for the global costmap and `odom` for the local costmap. Its
+[MPPI path handler](https://github.com/ros-navigation/navigation2/blob/humble/nav2_mppi_controller/src/path_handler.cpp)
+transforms the relevant global-plan segment into the local costmap frame;
+[regulated pure pursuit](https://github.com/ros-navigation/navigation2/blob/humble/nav2_regulated_pure_pursuit_controller/src/regulated_pure_pursuit_controller.cpp)
+instead transforms the near path into the robot base frame. These are concrete
+implementations, not a rule that every controller must use the same frame.
+
+For this MPCC, the saved course stays in `map` so it survives an `odom` restart.
+The EKF state, vehicle dynamics, solver warm start and `/mpcc/prediction` stay
+in continuous `odom`. At each solve a fresh planar `map <- odom` snapshot is
+passed as a runtime parameter; only path association, tracking error and
+footprint-corridor evaluation use the map alignment. `/mpcc/reference` remains
+in `map`. TF updates do not recompile the embedded map spline. A map correction
+over 0.15 m at the current vehicle pose or 0.5 rad faults the active run.
+The node currently uses the latest available map-to-odom TF, with a 300 ms
+freshness limit, alongside EKF odometry no older than 100 ms. Their timestamps
+can differ; this alignment and correction behavior still require moving-car
+validation. Neither Nav2's precedent nor offline equivalence tests establish
+the accuracy of the upstream localizer.
 
 ## Configuration and verification
 
