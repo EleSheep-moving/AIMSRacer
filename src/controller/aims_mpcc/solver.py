@@ -1,4 +1,4 @@
-"""CasADi/IPOPT port of f1tenth_mpcc.solver (see THIRD_PARTY_NOTICES.md).
+"""CasADi/IPOPT port of f1tenth_mpcc.solver (see NOTICE.md).
 
 Rear axle state order: x,y,yaw,speed,progress,actual steering.
 Controls: longitudinal acceleration, steering command, virtual progress speed.
@@ -30,8 +30,8 @@ class MPCCSolver:
         self.weights=dict(normalized_cost.RATIOS)
         self.weights.pop('steer_rate');self.weights.pop('vtheta_rate')
         self.weights.update(speed=self.weights['speed']*1000,heading=4.)
-        self.corner_offsets=[(config.rear_offset+sx*config.half_length,sy*config.half_width)
-                             for sx,sy in ((1,1),(1,-1),(-1,1),(-1,-1))]
+        self.corner_offsets=[(along,sy*config.half_width)
+                             for along in config.longitudinal_offsets() for sy in (1,-1)]
         self.jit_enabled=bool(jit_enabled)
         self.native_options=dict(native_options or {})
         self.reset()
@@ -72,6 +72,7 @@ class MPCCSolver:
         self.applied = op.parameter(3)  # acceleration, steering endpoint, previous steering ramp rate
         self.steering_bias = op.parameter()
         self.speed_refs = op.parameter(self.n + 1)
+        self.map_alignment = op.parameter(3) if self.path.frame_id == 'map' else None
         op.subject_to(x[:, 0] == self.initial)
         op.subject_to(op.bounded(0., x[3, :], self.config.max_speed))
         op.subject_to(op.bounded(-self.config.brake_limit, u[0, :], self.config.accel_limit))
@@ -82,13 +83,23 @@ class MPCCSolver:
         self.margins = []
 
         def geometry(state):
-            ec, el, ref = self.modules["errors"].symbolic_errors(state, self.reference)
+            # Dynamics and warm starts remain continuous in odom. The persistent
+            # map spline is compared through one alignment snapshot per solve.
+            if self.map_alignment is not None:
+                tx, ty, angle = self.map_alignment[0], self.map_alignment[1], self.map_alignment[2]
+                c, s = ca.cos(angle), ca.sin(angle)
+                reference_state = ca.vertcat(tx + c * state[0] - s * state[1],
+                                             ty + s * state[0] + c * state[1],
+                                             state[2] + angle, state[3:])
+            else:
+                reference_state = state
+            ec, el, ref = self.modules["errors"].symbolic_errors(reference_state, self.reference)
             tangent = ref["dxy"] / ca.sqrt(ca.dot(ref["dxy"], ref["dxy"]))
             normal = ca.vertcat(-tangent[1], tangent[0])
-            heading = ca.vertcat(ca.cos(state[2]), ca.sin(state[2]))
-            left = ca.vertcat(-ca.sin(state[2]), ca.cos(state[2]))
+            heading = ca.vertcat(ca.cos(reference_state[2]), ca.sin(reference_state[2]))
+            left = ca.vertcat(-ca.sin(reference_state[2]), ca.cos(reference_state[2]))
             for along, across in self.corner_offsets:
-                corner = state[:2] + along * heading + across * left
+                corner = reference_state[:2] + along * heading + across * left
                 lateral = ca.dot(corner - ref["xy"], normal)
                 op.subject_to(op.bounded(-self.path.right_width, lateral, self.path.left_width))
                 self.margins.extend((self.path.left_width - lateral, self.path.right_width + lateral))
@@ -174,7 +185,7 @@ class MPCCSolver:
             states.append(end);controls.append(control);steering=next_steering
         return np.asarray(states),np.asarray(controls)
 
-    def solve(self, state, previous, speed_refs=None, elapsed=.1):
+    def solve(self, state, previous, speed_refs=None, elapsed=.1, map_alignment=None):
         started=time.perf_counter()
         measured=np.array([state[k] for k in ['x','y','yaw','speed','steering']],float)
         applied=np.array([previous[k] for k in ['acceleration','steering','steering_rate']],float)
@@ -186,7 +197,19 @@ class MPCCSolver:
         refs=np.full(self.n+1,self.config.cruise_speed) if speed_refs is None else np.asarray(speed_refs,float)
         if refs.shape!=(self.n+1,) or not np.isfinite(refs).all() or np.any(refs<0) or np.any(refs>self.config.max_speed):
             raise ValueError('speed_refs must be n+1 finite values within speed limits')
-        theta,_=self.path.project(measured[:2]);yaw=measured[2]
+        if self.map_alignment is not None:
+            alignment = np.asarray(map_alignment, float)
+            if alignment.shape != (3,) or not np.isfinite(alignment).all():
+                raise ValueError('map reference requires a finite map-to-odom alignment')
+            c, s = np.cos(alignment[2]), np.sin(alignment[2])
+            reference_xy = alignment[:2] + np.array((c * measured[0] - s * measured[1],
+                                                       s * measured[0] + c * measured[1]))
+            self.op.set_value(self.map_alignment, alignment)
+        else:
+            if map_alignment is not None:
+                raise ValueError('odom reference must not receive a map alignment')
+            reference_xy = measured[:2]
+        theta,_=self.path.project(reference_xy);yaw=measured[2]
         if self.previous_theta is not None:
             theta=self.previous_theta+(theta-self.previous_theta+self.path.length/2)%self.path.length-self.path.length/2
             yaw=self.previous_yaw+(yaw-self.previous_yaw+np.pi)%(2*np.pi)-np.pi

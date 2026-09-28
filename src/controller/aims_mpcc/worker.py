@@ -31,7 +31,9 @@ def _serve(connection, path_directory, config_dict):
         # Compile/load native solver before exposing READY to the operator.
         state = dict(x=p['x'], y=p['y'], yaw=p['yaw'], speed=0., steering=0.)
         try:
-            warm = solver.solve(state, dict(acceleration=0., steering=0., steering_rate=0.), [0.]*(solver.n+1))
+            warm = solver.solve(state, dict(acceleration=0., steering=0., steering_rate=0.),
+                                [0.]*(solver.n+1), map_alignment=(0., 0., 0.)
+                                if path.frame_id == 'map' else None)
         except RuntimeError as exc:
             raise RuntimeError('MPCC native cache unavailable. Run ros2 run aims_mpcc '
                                'prepare_solver <path_directory> --vehicle-config <vehicle.yaml> '
@@ -47,7 +49,8 @@ def _serve(connection, path_directory, config_dict):
                 return
             if generation != request['generation']:
                 solver.reset(); generation = request['generation']
-            result = solver.solve(request['state'], request['previous'], request['speed_refs'], request['elapsed'])
+            result = solver.solve(request['state'], request['previous'], request['speed_refs'],
+                                  request['elapsed'], request.get('map_alignment'))
             result.update(kind='result', generation=generation, stamp=request['stamp'],
                           previous_steering=request['previous']['steering'])
             connection.send(result)

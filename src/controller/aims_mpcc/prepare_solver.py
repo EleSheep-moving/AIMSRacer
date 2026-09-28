@@ -22,7 +22,8 @@ def main(args=None):
         point = path.at(0.)
         result = solver.solve(
             dict(x=point['x'], y=point['y'], yaw=point['yaw'], speed=0., steering=0.),
-            dict(acceleration=0., steering=0., steering_rate=0.), [0.] * (solver.n + 1))
+            dict(acceleration=0., steering=0., steering_rate=0.), [0.] * (solver.n + 1),
+            map_alignment=(0., 0., 0.) if path.frame_id == 'map' else None)
         if not result['success']:
             raise RuntimeError('Solver preparation failed: ' + result['status'])
         del solver

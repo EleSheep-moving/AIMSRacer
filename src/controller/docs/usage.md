@@ -6,7 +6,7 @@ F1TENTH CasADi/IPOPT controller into a standalone package without Isaac imports.
 
 The reference describes geometry, not the driver's speed or a timed trajectory.
 MPCC optimizes local progress and produces physical speed (m/s) and steering
-(rad). It starts at 1.2 m/s target speed and stops after one lap. Current/duty
+(rad). The supplied vehicle profile targets 1.0 m/s and stops after one lap. Current/duty
 control, racing-line optimization, obstacle avoidance and tire modeling are not
 part of this implementation.
 
@@ -15,7 +15,7 @@ part of this implementation.
 Read the [remaining real-car work and deployment checklist](../../../docs/operations/vehicle-checklist.md)
 before enabling motion. It lists required measurements and remaining controller and estimator work.
 
-Complete the [system installation](../../../docs/simulation/README.md#2-native-ubuntu-setup-and-execution)
+Complete the [vehicle system installation](https://github.com/EleSheep-moving/AIMSRacer/blob/feat/aims-mpcc/docs/installation.md#8-use-system-python)
 and [vehicle bringup](../../../docs/operations/bringup.md) first. Run commands below
 from the workspace root with the ROS, Livox and workspace overlays sourced.
 
@@ -28,32 +28,44 @@ See the [system architecture](../../../docs/architecture.md) for the frame contr
 The reference is loaded from `path_directory` at startup. A live local-trajectory
 input topic is planned but is not implemented in this version.
 
-Copy `src/controller/config/vehicle.yaml` to a run-specific file. Enter the measured longitudinal
-distance **from the rear axle to the odometry base_link origin** as `rear_offset`.
-The footprint is a rectangle centered on that same base_link origin; specify
-conservative `half_length` and `half_width` enclosing the car. Keep `profile:
-measured`; set `geometry_verified: true` only after checking these values.
+The supplied `src/controller/config/vehicle.yaml` puts `base_link` at the rear
+axle (`rear_offset: 0`) and models the 620 mm × 320 mm body as
+`front_extent: 0.52`, `rear_extent: 0.10`, and `half_width: 0.16` metres. The front and rear
+extents are measured from the rear axle, so this footprint is asymmetric.
+Check the actual car before driving; use a run-specific copy if its geometry
+differs. The older `half_length` field remains for symmetric example profiles.
+Keep `profile: measured` for the real vehicle.
 The supplied synthetic profile is explicitly rejected for real drive mode.
 
-The steering-lag assumption (0.115 s), acceleration limits and yaw coefficient are
-configuration assumptions, not identified vehicle dynamics. Confirm steering
-sign and speed units on the actual car before enabling autonomous motion.
+The real-car steering time constant (0.08 s) was confirmed by the
+[2026-09-28 speed-mode bag](https://github.com/EleSheep-moving/AIMSRacer/blob/feat/aims-mpcc/docs/reports/2026-09-28-speed-mode-calibration.md)
+at roughly 0.85–1.15 m/s using 200 Hz raw-IMU yaw rate and measured forward
+speed. It absorbs command-to-yaw delay because this model has no separate
+dead-time state; it is not a measured servo constant.
+Acceleration limits and the yaw coefficient remain operating assumptions.
+Confirm steering sign and speed units on the actual car before enabling
+autonomous motion. The [low-speed bag protocol](../../../docs/operations/recording.md#mpcc-reference-recording)
+captures the extra maneuvers needed alongside the reference lap.
 
 ## Record and prepare one lap
 
-Keep localization running throughout recording and execution. The default frames
-are `odom` and `base_link`; localization restarting requires a new recording or a
-separately established alignment. This version does not perform relocalization.
+For an `odom` reference, keep localization running throughout recording and
+execution: restarting changes that session's origin. The separate mapping
+launch can record CSV from `/rear_axle/lio_odom`, but that CSV is still in its
+mapping session's `odom`. For a map-frame path reusable after restart, follow
+the [known-map workflow](https://github.com/EleSheep-moving/AIMSRacer/blob/feat/aims-mpcc/docs/operations/known-map-mpcc.md): match the
+recorded loop to saved PGO poses, prepare with `--map-file`, and use the
+validated localizer add-on. The controller does not itself relocalize.
 
 ```bash
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc record_path --ros-args -p output:=/data/lap.csv
 # Drive one forward lap, with a little overlap; then Ctrl-C the recorder.
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc prepare_path /data/lap.csv /data/reference \
-  --vehicle-config /data/vehicle.yaml --left-width 0.9 --right-width 0.9
+  --vehicle-config src/controller/config/vehicle.yaml --left-width 0.5 --right-width 0.5
 ```
 
-**The widths above are examples, not measured track boundaries.** Supply checked
-minimum free distances to the left/right of the processed rear-axle path. The
+**The 0.5 m widths are the specified centered 1.0 m course model, not measured
+track boundaries.** Supply checked minimum free distances to the left/right of the processed rear-axle path. The
 solver constrains all four footprint corners inside that corridor. A recorded
 driving line does not measure free space. Inspect smoothing and the corner
 clearance in the actual area, especially bends.
@@ -70,6 +82,10 @@ and the preserved raw CSV.
 
 The recorder publishes `/mpcc/recorded_path`. The controller publishes
 `/mpcc/reference` and `/mpcc/prediction` as `nav_msgs/Path`; overlay them in RViz.
+For a saved-map run the reference is in `map`, while predictions and MPCC
+dynamics remain in continuous `odom`. The solver receives a fresh planar
+`map <- odom` alignment each cycle for path error and corridor evaluation;
+see the [frame rationale](https://github.com/EleSheep-moving/AIMSRacer/blob/feat/aims-mpcc/docs/architecture.md#persistent-reference-and-local-control-frames).
 
 ## Prepare the compiled solver
 
@@ -136,7 +152,9 @@ Shadow mode evaluates predictions against incoming vehicle state; it does not
 move the car or establish closed-loop tracking. It currently requires autonomous
 RC selection and uses hypothetical steering while active, so it is not yet a
 manual-driving shadow validation tool. Stop that node before launching
-drive mode. Keep the same localization session and start pose:
+drive mode. For an `odom` reference, keep the same localization session; for a
+`map` reference, relocalize against the exact saved map again. In either case,
+start near the reference start pose:
 
 ```bash
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 launch aims_mpcc mpcc.launch.py path_directory:=/data/reference \

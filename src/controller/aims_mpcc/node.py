@@ -13,7 +13,11 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry, Path as PathMsg
 from std_msgs.msg import Bool
+from std_msgs.msg import String
 from std_srvs.srv import SetBool
+from tf2_ros import Buffer, TransformListener, TransformException
+from rclpy.time import Time
+from .frames import apply_alignment, planar_alignment
 from .io import load_config, yaw_from_quaternion
 from .path import ReferencePath
 from .runtime import Supervisor, State, angle_difference, clip
@@ -37,10 +41,14 @@ class MPCCNode(Node):
             self.mode=='shadow' or self.get_parameter('simulation').value))
         self.path=ReferencePath.load(self.get_parameter('path_directory').value)
         self.path.validate_config(self.config,require_recording=self.mode=='drive')
-        recorded=self.path.metadata.get('vehicle_geometry')
-        if recorded and any(abs(recorded[k]-getattr(self.config,k))>1e-8
-                            for k in ('rear_offset','half_length','half_width','wheelbase')):
-            raise ValueError('Prepared path uses a different vehicle geometry')
+        self.map_valid=False;self.map_valid_received=-math.inf;self.map_sha256=None
+        self.map_buffer=None;self.map_alignment=None
+        if self.path.frame_id=='map':
+            self.map_buffer=Buffer(node=self)
+            self.map_listener=TransformListener(self.map_buffer,self)
+            self.create_subscription(Bool,'/localization/map_valid',self.map_status,10)
+            latched_id=QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL)
+            self.create_subscription(String,'/localization/map_sha256',self.map_identity,latched_id)
         self.supervisor=Supervisor(self.config,self.path.length)
         self.worker=AsyncSolver(self.get_parameter('path_directory').value,self.config)
         self.last_solve=-math.inf
@@ -67,8 +75,8 @@ class MPCCNode(Node):
         self.timer=self.create_timer(.02,self.tick,clock=Clock(clock_type=ClockType.STEADY_TIME))
         self.publish_path(self.path_pub,[self.path.at(s) for s in self.path.s[:-1]])
 
-    def publish_path(self,publisher,points):
-        msg=PathMsg();msg.header.frame_id=self.path.frame_id;msg.header.stamp=self.get_clock().now().to_msg()
+    def publish_path(self,publisher,points,frame_id=None):
+        msg=PathMsg();msg.header.frame_id=frame_id or self.path.frame_id;msg.header.stamp=self.get_clock().now().to_msg()
         for point in points:
             pose=PoseStamped();pose.header=msg.header
             pose.pose.position.x=float(point['x']);pose.pose.position.y=float(point['y'])
@@ -78,6 +86,23 @@ class MPCCNode(Node):
 
     def mode_status(self,msg):
         self.supervisor.set_mode(msg.data,time.monotonic())
+
+    def map_status(self,msg):
+        self.map_valid=bool(msg.data)
+        self.map_valid_received=time.monotonic()
+        if not self.map_valid:
+            self.map_alignment=None
+        if self.path.frame_id=='map' and self.supervisor.active and not self.map_valid:
+            self.supervisor.fault('Map localization invalid')
+
+    def map_identity(self,msg):
+        self.map_sha256=msg.data
+        if self.path.frame_id=='map' and self.supervisor.active and self.map_sha256!=self.path.metadata['map_sha256']:
+            self.supervisor.fault('Map identity changed or does not match reference')
+
+    def map_ready(self,now):
+        return (self.map_valid and now-self.map_valid_received<=.3 and
+                self.map_sha256==self.path.metadata['map_sha256'])
 
     def forwarded(self,msg):
         if msg.drive.jerk==0. and math.isfinite(msg.drive.steering_angle):
@@ -96,21 +121,49 @@ class MPCCNode(Node):
         try:
             stamp=msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
             ros_now=self.get_clock().now().nanoseconds*1e-9
-            if msg.header.frame_id!=self.path.frame_id or msg.child_frame_id!='base_link':
+            if msg.header.frame_id!='odom' or msg.child_frame_id!='base_link':
                 raise ValueError('Expected odom/base_link state frames')
             if not 0 <= ros_now-stamp <= .1:
                 raise ValueError('Odometry timestamp stale or in future')
             yaw=yaw_from_quaternion(msg.pose.pose.orientation)
-            x=msg.pose.pose.position.x-self.config.rear_offset*math.cos(yaw)
-            y=msg.pose.pose.position.y-self.config.rear_offset*math.sin(yaw)
+            x,y=msg.pose.pose.position.x,msg.pose.pose.position.y
+            x-=self.config.rear_offset*math.cos(yaw)
+            y-=self.config.rear_offset*math.sin(yaw)
+            if self.path.frame_id=='map':
+                if not self.map_ready(now):
+                    if self.supervisor.active: raise ValueError('Map localization unavailable or wrong map')
+                    return
+                try:
+                    transform=self.map_buffer.lookup_transform('map','odom',Time())
+                except TransformException as exc:
+                    if self.supervisor.active: raise ValueError('Map transform unavailable') from exc
+                    return
+                transform_stamp=(transform.header.stamp.sec+
+                                 transform.header.stamp.nanosec*1e-9)
+                if not 0 <= ros_now-transform_stamp <= .3:
+                    if self.supervisor.active: raise ValueError('Map transform stale or in future')
+                    return
+                alignment=planar_alignment(transform)
+                reference_x,reference_y,reference_yaw=apply_alignment(x,y,yaw,alignment)
+                if self.supervisor.active and self.map_alignment is not None:
+                    old_x,old_y,old_yaw=apply_alignment(x,y,yaw,self.map_alignment)
+                    if (math.hypot(reference_x-old_x,reference_y-old_y)>.15 or
+                            abs(angle_difference(reference_yaw,old_yaw))>.5):
+                        raise ValueError('Map localization correction too large')
+                self.map_alignment=alignment
+            else:
+                reference_x,reference_y,reference_yaw=x,y,yaw
             source_time=now-(ros_now-stamp)
             self.steering_estimate,self.source_previous=self.history.at(source_time)
             speed=msg.twist.twist.linear.x
-            progress,error=self.path.project([x,y])
+            progress,error=self.path.project([reference_x,reference_y])
             ref=self.path.at(progress)
             state=State(x,y,yaw,speed,self.steering_estimate,stamp)
-            self.supervisor.observe(state,now-(ros_now-stamp),progress,error,angle_difference(yaw,ref['yaw']))
-            if self.supervisor.active and not self.footprint_inside(state,ref):
+            reference_state=State(reference_x,reference_y,reference_yaw,speed,
+                                  self.steering_estimate,stamp)
+            self.supervisor.observe(state,now-(ros_now-stamp),progress,error,
+                                    angle_difference(reference_yaw,ref['yaw']))
+            if self.supervisor.active and not self.footprint_inside(reference_state,ref):
                 self.supervisor.fault('Measured footprint outside configured corridor')
         except (ValueError,TypeError,OverflowError) as exc:
             self.supervisor.fault(str(exc))
@@ -118,9 +171,8 @@ class MPCCNode(Node):
     def footprint_inside(self,state,ref):
         c,s=math.cos(state.yaw),math.sin(state.yaw)
         nx,ny=-math.sin(ref['yaw']),math.cos(ref['yaw'])
-        for sx in (-1,1):
+        for along in self.config.longitudinal_offsets():
             for sy in (-1,1):
-                along=self.config.rear_offset+sx*self.config.half_length
                 across=sy*self.config.half_width
                 lateral=nx*(state.x+along*c-across*s-ref['x'])+ny*(state.y+along*s+across*c-ref['y'])
                 if not -self.path.right_width <= lateral <= self.path.left_width: return False
@@ -130,6 +182,8 @@ class MPCCNode(Node):
         try:
             if request.data:
                 if not self.worker.ready: raise ValueError('Solver not ready; restart node after worker failure')
+                if self.path.frame_id=='map' and not self.map_ready(time.monotonic()):
+                    raise ValueError('Verified localization in the matching map required')
                 if self.mode=='drive' and self.count_publishers('/drive')!=1:
                     raise ValueError('MPCC must be the sole /drive publisher; stop Nav2')
                 self.supervisor.start(time.monotonic())
@@ -143,6 +197,8 @@ class MPCCNode(Node):
 
     def tick(self):
         now=time.monotonic();s=self.supervisor
+        if self.path.frame_id=='map' and s.active and not self.map_ready(now):
+            s.fault('Map localization status expired or map identity changed')
         reply=self.worker.poll(now)
         if reply:
             if reply['kind']=='error':
@@ -151,7 +207,9 @@ class MPCCNode(Node):
             elif reply['kind']=='result':
                 self.solve_times.append(reply['solve_time_s'])
                 if s.accept(reply,now):
-                    self.publish_path(self.prediction_pub,[dict(x=r[0],y=r[1],yaw=r[2]) for r in reply['states']])
+                    self.publish_path(self.prediction_pub,
+                                      [dict(x=r[0],y=r[1],yaw=r[2]) for r in reply['states']],
+                                      frame_id='odom')
         if s.active and self.mode=='drive' and self.count_publishers('/drive')>1:
             s.fault('Another /drive publisher appeared')
         command=s.command(now)
@@ -169,7 +227,12 @@ class MPCCNode(Node):
             elapsed=.1 if not math.isfinite(self.last_solve) else now-self.last_solve
             request=dict(state=state,previous=dict(self.source_previous),speed_refs=s.refs(15,.1),generation=s.generation,
                          stamp=s.state_received,submitted_at=now,elapsed=elapsed)
-            if self.worker.submit(request): self.last_solve=now
+            if self.path.frame_id=='map':
+                if self.map_alignment is None:
+                    s.fault('Map alignment unavailable')
+                else:
+                    request['map_alignment']=self.map_alignment
+            if s.active and self.worker.submit(request): self.last_solve=now
         values=dict(status=s.status,reason=s.reason,worker_ready=self.worker.ready,progress=s.progress,
                     cross_track=s.cross_track,state_age=None if s.state is None else now-s.state_received,
                     plan_age=None if s.plan is None else now-s.plan['stamp'],

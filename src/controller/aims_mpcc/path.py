@@ -1,5 +1,6 @@
 """Rear-axle periodic references and conservative recorded-lap preparation."""
 import csv
+import hashlib
 import json
 import shutil
 from pathlib import Path
@@ -37,7 +38,7 @@ class ReferencePath:
         self.left_width=float(left_width);self.right_width=float(right_width)
         if not np.isfinite([self.left_width,self.right_width]).all() or min(self.left_width,self.right_width)<=0:
             raise ValueError('positive finite corridor widths required')
-        if frame_id!='odom': raise ValueError('reference frame must be odom')
+        if frame_id not in ('odom','map'): raise ValueError('reference frame must be odom or map')
         self.frame_id=frame_id; self.metadata=dict(metadata or {})
         closed=np.vstack([points,points[0]])
         segments=np.linalg.norm(np.diff(closed,axis=0),axis=1)
@@ -78,13 +79,20 @@ class ReferencePath:
         geometry=self.metadata.get('vehicle_geometry')
         if require_recording and (self.metadata.get('closed_lap') is not True or not isinstance(geometry,dict)):
             raise ValueError('drive requires closed recording with complete vehicle geometry')
+        if self.frame_id=='map' and (not isinstance(self.metadata.get('map_sha256'),str)
+                                     or len(self.metadata['map_sha256'])!=64):
+            raise ValueError('map reference requires the matching map SHA-256')
         if geometry is not None:
             if not isinstance(geometry,dict):
                 raise ValueError('vehicle_geometry must be a mapping')
-            for key in ['wheelbase','rear_offset','half_length','half_width']:
+            for key in ['wheelbase','rear_offset','half_width',
+                        'half_length','front_extent','rear_extent']:
                 value=geometry.get(key)
+                expected=getattr(config,key)
+                if value is None and expected is None:
+                    continue
                 if (isinstance(value,bool) or not isinstance(value,(int,float)) or not np.isfinite(value)
-                        or not np.isclose(value,getattr(config,key),rtol=0,atol=1e-9)):
+                        or expected is None or not np.isclose(value,expected,rtol=0,atol=1e-9)):
                     raise ValueError(f'prepared path geometry mismatch: {key}')
         return self
 
@@ -103,7 +111,8 @@ class ReferencePath:
         return cls(np.loadtxt(directory/'path.csv',delimiter=',',skiprows=1),meta['left_width'],meta['right_width'],meta['frame_id'],meta)
 
 
-def prepare_recording(csv_path, output_directory, config, left_width, right_width, start_time=None, end_time=None):
+def prepare_recording(csv_path, output_directory, config, left_width, right_width,
+                      start_time=None, end_time=None, map_file=None):
     output=Path(output_directory)
     if output.exists():
         raise ValueError('output directory already exists; choose a new recording bundle')
@@ -113,7 +122,17 @@ def prepare_recording(csv_path, output_directory, config, left_width, right_widt
     with src.open() as f: rows=list(csv.DictReader(f))
     required={'timestamp','x','y','yaw','speed','frame_id','child_frame_id'}
     if not rows or not required.issubset(rows[0]): raise ValueError('recording columns missing')
-    if any(r['frame_id']!='odom' or r['child_frame_id']!='base_link' for r in rows): raise ValueError('expected consistent odom/base_link frames')
+    frames={(r['frame_id'],r['child_frame_id']) for r in rows}
+    if len(frames)!=1 or next(iter(frames)) not in (('odom','base_link'),('map','base_link')):
+        raise ValueError('expected consistent odom/base_link or map/base_link frames')
+    frame_id=next(iter(frames))[0]
+    if frame_id=='map':
+        if not map_file: raise ValueError('map recording requires --map-file')
+        map_path=Path(map_file)
+        if not map_path.is_file(): raise ValueError('map file not found')
+        map_sha256=hashlib.sha256(map_path.read_bytes()).hexdigest()
+    elif map_file:
+        raise ValueError('--map-file is only valid for a map-frame recording')
     values=np.array([[float(r[k]) for k in ['timestamp','x','y','yaw','speed']] for r in rows])
     if not np.isfinite(values).all() or np.any(np.diff(values[:,0])<=0): raise ValueError('finite increasing timestamps and states required')
     selected=np.ones(len(values),bool)
@@ -136,7 +155,7 @@ def prepare_recording(csv_path, output_directory, config, left_width, right_widt
     if np.linalg.norm(points[-1]-points[0])<.02: points=points[:-1];yaw=yaw[:-1]
     delta=np.roll(points,-1,axis=0)-points
     if np.any(np.sum(delta*np.c_[np.cos(yaw),np.sin(yaw)],axis=1)<=0): raise ValueError('heading inconsistent with forward path')
-    path=ReferencePath(points,left_width,right_width)
+    path=ReferencePath(points,left_width,right_width,frame_id=frame_id)
     dense_s=np.linspace(0,path.length,max(100,int(np.ceil(path.length/.02))),endpoint=False)
     dense=path.curve.numpy(dense_s)
     # Compare each interpolated point to its original chord, preserving local topology.
@@ -152,14 +171,17 @@ def prepare_recording(csv_path, output_directory, config, left_width, right_widt
     for p,h,s in zip(points,yaw,path.s[:-1]):
         ref=path.at(s);normal=np.array([-np.sin(ref['yaw']),np.cos(ref['yaw'])])
         forward=np.array([np.cos(h),np.sin(h)]);left=np.array([-np.sin(h),np.cos(h)])
-        for sx in [-1,1]:
+        for along in config.longitudinal_offsets():
             for sy in [-1,1]:
-                lateral=np.dot((config.rear_offset+sx*config.half_length)*forward+sy*config.half_width*left,normal)
+                lateral=np.dot(along*forward+sy*config.half_width*left,normal)
                 if not -right_width<lateral<left_width: raise ValueError('recorded body heading violates corridor')
     samples=np.linspace(0,path.length,int(np.ceil(path.length/.1)),endpoint=False)
-    result=ReferencePath(path.curve.numpy(samples),left_width,right_width,metadata=dict(closed_lap=True,
-        source_frame='base_link',vehicle_geometry={k:getattr(config,k) for k in ['wheelbase','rear_offset','half_length','half_width']},sample_spacing_m=.1,max_spline_displacement_m=deviation,
-        rear_offset_m=config.rear_offset,start_time=float(values[0,0]),end_time=float(values[-1,0])))
+    metadata=dict(closed_lap=True,
+        source_frame='base_link',vehicle_geometry={k:getattr(config,k) for k in ['wheelbase','rear_offset','half_length','front_extent','rear_extent','half_width']},sample_spacing_m=.1,max_spline_displacement_m=deviation,
+        rear_offset_m=config.rear_offset,start_time=float(values[0,0]),end_time=float(values[-1,0]))
+    if frame_id=='map':
+        metadata.update(map_sha256=map_sha256,map_file=str(map_path.resolve()))
+    result=ReferencePath(path.curve.numpy(samples),left_width,right_width,frame_id=frame_id,metadata=metadata)
     if max(abs(result.at(s)['curvature']) for s in np.linspace(0,result.length,len(result.points)*5,endpoint=False))>np.tan(config.steer_limit)/config.wheelbase:
         raise ValueError('resampled path curvature exceeds steering capability')
     # Exclusive creation also prevents overwrites if a bundle appeared during validation.
