@@ -1,0 +1,553 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 15e16b6..5636cb6 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -57,6 +57,7 @@ add_library(lidar_localization_component SHARED
+   src/component_parameters.cpp
+   src/component_subscribers.cpp
+   src/component_scan_preparation.cpp
++  src/component_trusted_anchor.cpp
+   src/component_alignment.cpp
+   src/component_local_reacquisition.cpp
+   src/component_prediction_state.cpp
+@@ -255,7 +256,16 @@ install(DIRECTORY
+ )
+ 
+ if(BUILD_TESTING)
++  add_executable(test_trusted_anchor_policy test/test_trusted_anchor_policy.cpp)
++  target_include_directories(test_trusted_anchor_policy PRIVATE include)
++  target_compile_options(test_trusted_anchor_policy PRIVATE -UNDEBUG)
++  add_test(NAME trusted_anchor_policy COMMAND test_trusted_anchor_policy)
+   find_package(Threads REQUIRED)
++  add_executable(test_trusted_anchor_generation test/test_trusted_anchor_generation.cpp)
++  target_include_directories(test_trusted_anchor_generation PRIVATE include)
++  target_link_libraries(test_trusted_anchor_generation Threads::Threads)
++  target_compile_options(test_trusted_anchor_generation PRIVATE -UNDEBUG)
++  add_test(NAME trusted_anchor_generation COMMAND test_trusted_anchor_generation)
+   link_libraries(Eigen3::Eigen)
+   add_executable(test_glim_prior_map_factor_policy
+     test/test_glim_prior_map_factor_policy.cpp)
+diff --git a/include/lidar_localization/callback_state_coordinator.hpp b/include/lidar_localization/callback_state_coordinator.hpp
+index 8144712..ec0e4c9 100644
+--- a/include/lidar_localization/callback_state_coordinator.hpp
++++ b/include/lidar_localization/callback_state_coordinator.hpp
+@@ -16,6 +16,9 @@ class CallbackStateCoordinator
+ {
+ public:
+   using StateLock = std::unique_lock<std::recursive_mutex>;
++  using GenerationCommitLock = std::unique_lock<std::recursive_mutex>;
++  GenerationCommitLock lockGenerationCommit() {return GenerationCommitLock(generation_commit_mutex_);}
++
+   using RegistrationExecutionLock = std::unique_lock<std::mutex>;
+ 
+   StateLock lockState()
+@@ -35,6 +38,7 @@ public:
+ 
+   void advanceInitialPoseGeneration()
+   {
++    auto commit_lock=lockGenerationCommit();
+     initial_pose_generation_.fetch_add(1, std::memory_order_release);
+   }
+ 
+@@ -45,6 +49,7 @@ public:
+ 
+ private:
+   std::recursive_mutex state_mutex_;
++  std::recursive_mutex generation_commit_mutex_;
+   std::mutex registration_execution_mutex_;
+   std::atomic<std::uint64_t> initial_pose_generation_{0};
+ };
+diff --git a/include/lidar_localization/lidar_localization_component.hpp b/include/lidar_localization/lidar_localization_component.hpp
+index 4661b99..b8d0501 100644
+--- a/include/lidar_localization/lidar_localization_component.hpp
++++ b/include/lidar_localization/lidar_localization_component.hpp
+@@ -5,6 +5,7 @@
+ // units; src/component_internal.hpp carries their shared include set.
+ 
+ #include <algorithm>
++#include "lidar_localization/trusted_anchor_policy.hpp"
+ #include <atomic>
+ #include <chrono>
+ #include <cstdint>
+@@ -257,6 +258,24 @@ public:
+   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr corrent_pose_with_cov_stamped_ptr_;
+   nav_msgs::msg::Path::SharedPtr path_ptr_;
+ 
++  bool enable_trusted_anchor_protocol_{false};
++  rclcpp::JumpHandler::SharedPtr trusted_clock_jump_handler_;
++  std::atomic<bool> trusted_clock_reset_pending_{false};
++  lidar_localization::TrustedAnchorParams trusted_anchor_params_;
++  lidar_localization::TrustedAnchorState trusted_anchor_state_;
++  std::string trusted_anchor_process_id_;
++  std::uint64_t trusted_anchor_sequence_{0}, trusted_event_sequence_{0};
++  bool trusted_initial_odom_ready_{false};
++  Eigen::Matrix4f trusted_initial_map_to_odom_{Eigen::Matrix4f::Identity()};
++  Eigen::Matrix4f trusted_candidate_map_to_odom_{Eigen::Matrix4f::Identity()};
++  rclcpp_lifecycle::LifecyclePublisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr anchor_status_pub_;
++  void resetTrustedAnchor(const builtin_interfaces::msg::Time &, const std::string &);
++  void acceptTrustedInitialPose(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr &);
++  void trustedCloudReceived(const sensor_msgs::msg::PointCloud2::ConstSharedPtr &,
++    lidar_localization::CallbackStateCoordinator::StateLock &);
++  void publishTrustedAnchorStatus(const builtin_interfaces::msg::Time &, bool,
++    const std::string &, const lidar_localization::AlignmentAttempt * = nullptr);
++
+   bool map_recieved_{false};
+   bool initialpose_recieved_{false};
+   double last_initial_pose_stamp_sec_{-1.0};
+diff --git a/include/lidar_localization/trusted_anchor_policy.hpp b/include/lidar_localization/trusted_anchor_policy.hpp
+new file mode 100644
+index 0000000..38db8e6
+--- /dev/null
++++ b/include/lidar_localization/trusted_anchor_policy.hpp
+@@ -0,0 +1,63 @@
++#ifndef LIDAR_LOCALIZATION_TRUSTED_ANCHOR_POLICY_HPP_
++#define LIDAR_LOCALIZATION_TRUSTED_ANCHOR_POLICY_HPP_
++#include <cmath>
++#include <cstdint>
++#include <string>
++namespace lidar_localization {
++struct TrustedAnchorParams {
++  double max_fitness{1.5}, max_translation_m{0.5}, max_rotation_deg{10.0}, max_age_sec{0.5};
++  int initial_confirmations{3};
++};
++struct TrustedAnchorState {
++  std::int64_t last_scan_ns{-1};
++  bool tracking{false};
++  int confirmations{0};
++};
++struct TrustedAnchorInput {
++  std::int64_t scan_ns{0};
++  double age_sec{0}, fitness{0}, correction_translation_m{0}, correction_rotation_deg{0};
++  double candidate_translation_delta_m{0}, candidate_rotation_delta_deg{0};
++  bool converged{false}, finite_pose{false};
++};
++struct TrustedAnchorDecision { bool commit{false}, invalidate{false}; std::string reason; };
++inline bool validTrustedAnchorParams(const TrustedAnchorParams & p) {
++  return std::isfinite(p.max_fitness) && p.max_fitness>=0 &&
++    std::isfinite(p.max_translation_m) && p.max_translation_m>0 &&
++    std::isfinite(p.max_rotation_deg) && p.max_rotation_deg>0 &&
++    std::isfinite(p.max_age_sec) && p.max_age_sec>0 && p.initial_confirmations>=3;
++}
++// Called only after source-time odom is available and reset-generation still matches.
++// Rejected measurements never change a committed anchor or prediction state.
++inline TrustedAnchorDecision decideTrustedAnchor(
++  const TrustedAnchorParams & p, TrustedAnchorState & s, const TrustedAnchorInput & in)
++{
++  if (!validTrustedAnchorParams(p)) {return {false,false,"invalid_parameters"};}
++  if (in.scan_ns<s.last_scan_ns) {s={}; return {false,true,"time_rewind"};}
++  if (in.scan_ns==s.last_scan_ns) {return {false,false,"duplicate_scan"};}
++  s.last_scan_ns=in.scan_ns;
++  auto reject=[&](const char * reason) {if (!s.tracking) {s.confirmations=0;} return TrustedAnchorDecision{false,false,reason};};
++  if (!std::isfinite(in.age_sec) || in.age_sec<0 || in.age_sec>p.max_age_sec) {return reject("stale_scan");}
++  if (!in.converged) {return reject("not_converged");}
++  if (!in.finite_pose || !std::isfinite(in.fitness) || in.fitness<0 ||
++      !std::isfinite(in.correction_translation_m) || in.correction_translation_m<0 ||
++      !std::isfinite(in.correction_rotation_deg) || in.correction_rotation_deg<0 ||
++      !std::isfinite(in.candidate_translation_delta_m) || !std::isfinite(in.candidate_rotation_delta_deg)) {
++    return reject("invalid_result");
++  }
++  if (in.fitness>p.max_fitness) {return reject("fitness");}
++  if (s.tracking) {
++    if (in.correction_translation_m>p.max_translation_m) {return reject("correction_translation");}
++    if (in.correction_rotation_deg>p.max_rotation_deg) {return reject("correction_rotation");}
++    return {true,false,"committed"};
++  }
++  const bool inconsistent=s.confirmations>0 &&
++    (in.candidate_translation_delta_m>p.max_translation_m || in.candidate_rotation_delta_deg>p.max_rotation_deg);
++  s.confirmations=inconsistent ? 1 : s.confirmations+1;
++  if (s.confirmations<p.initial_confirmations) {
++    return {false,false,inconsistent ? "initial_candidate_inconsistent" : "initializing"};
++  }
++  s.tracking=true;
++  return {true,false,"committed"};
++}
++} // namespace lidar_localization
++#endif
+diff --git a/src/component_lifecycle.cpp b/src/component_lifecycle.cpp
+index d4d1e64..5fbdd6f 100644
+--- a/src/component_lifecycle.cpp
++++ b/src/component_lifecycle.cpp
+@@ -17,6 +17,13 @@ PCLLocalization::PCLLocalization(const rclcpp::NodeOptions & options)
+   tflistener_(tfbuffer_),
+   broadcaster_(this)
+ {
++  declare_parameter("enable_trusted_anchor_protocol", false);
++  declare_parameter("trusted_anchor_max_fitness", 1.5);
++  declare_parameter("trusted_anchor_max_translation_m", 0.5);
++  declare_parameter("trusted_anchor_max_rotation_deg", 10.0);
++  declare_parameter("trusted_anchor_max_source_age_sec", 0.5);
++  declare_parameter("trusted_anchor_initial_confirmations", 3);
++  trusted_anchor_process_id_ = std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
+   declare_parameter("global_frame_id", "map");
+   declare_parameter("odom_frame_id", "odom");
+   declare_parameter("base_frame_id", "base_link");
+@@ -188,7 +195,33 @@ CallbackReturn PCLLocalization::on_configure(const rclcpp_lifecycle::State &)
+   initializeParameters();
+   initializePubSub();
+   initializeRegistration();
++  get_parameter("enable_trusted_anchor_protocol", enable_trusted_anchor_protocol_);
++  get_parameter("trusted_anchor_max_fitness", trusted_anchor_params_.max_fitness);
++  get_parameter("trusted_anchor_max_translation_m", trusted_anchor_params_.max_translation_m);
++  get_parameter("trusted_anchor_max_rotation_deg", trusted_anchor_params_.max_rotation_deg);
++  get_parameter("trusted_anchor_max_source_age_sec", trusted_anchor_params_.max_age_sec);
++  get_parameter("trusted_anchor_initial_confirmations", trusted_anchor_params_.initial_confirmations);
++  if (enable_trusted_anchor_protocol_ &&
++      (!lidar_localization::validTrustedAnchorParams(trusted_anchor_params_) ||
++       !enable_map_odom_tf_ || !use_odom_tf_prediction_ || use_imu_ || use_imu_preintegration_ ||
++       use_continuous_time_deskew_ || use_twist_ekf_ || use_gtsam_smoother_ || level_map_to_odom_)) {
++    RCLCPP_ERROR(get_logger(), "Trusted anchor protocol requires valid limits and raw registration with external odom TF, without secondary estimator or deskew");
++    return CallbackReturn::FAILURE;
++  }
+ 
++  if (enable_trusted_anchor_protocol_) {
++    rcl_jump_threshold_t threshold{};
++    threshold.on_clock_change=true;
++    threshold.min_backward.nanoseconds=-1;
++    trusted_clock_jump_handler_=get_clock()->create_jump_callback(nullptr,
++      [this](const rcl_time_jump_t & jump) {
++        if (jump.delta.nanoseconds<0 || jump.clock_change!=RCL_ROS_TIME_NO_CHANGE) {
++          auto generation_commit_lock=callback_state_coordinator_.lockGenerationCommit();
++          callback_state_coordinator_.advanceInitialPoseGeneration();
++          trusted_clock_reset_pending_.store(true,std::memory_order_release);
++        }
++      },threshold);
++  }
+   path_ptr_ = std::make_shared<nav_msgs::msg::Path>();
+   path_ptr_->header.frame_id = global_frame_id_;
+ 
+@@ -205,9 +238,11 @@ CallbackReturn PCLLocalization::on_activate(const rclcpp_lifecycle::State &)
+   odom_bridge_pose_pub_->on_activate();
+   path_pub_->on_activate();
+   status_pub_->on_activate();
++  anchor_status_pub_->on_activate();
+   reinitialization_request_pub_->on_activate();
+   initial_map_pub_->on_activate();
+   const builtin_interfaces::msg::Time activation_stamp = now();
++  if (enable_trusted_anchor_protocol_) {resetTrustedAnchor(activation_stamp, "waiting_for_initialpose");}
+   publishReinitializationRequest(activation_stamp, ReinitializationRequestDecision{});
+ 
+   if (set_initial_pose_) {
+@@ -340,6 +375,8 @@ CallbackReturn PCLLocalization::on_deactivate(const rclcpp_lifecycle::State &)
+   }
+ #endif
+ 
++  if (enable_trusted_anchor_protocol_) {resetTrustedAnchor(now(),"lifecycle_inactive");}
++  anchor_status_pub_->on_deactivate();
+   pose_pub_->on_deactivate();
+   odom_bridge_pose_pub_->on_deactivate();
+   path_pub_->on_deactivate();
+@@ -384,6 +421,7 @@ void PCLLocalization::releaseRuntimeResources(bool leak_target_clouds_for_shutdo
+   bond_.reset();
+ #endif
+ 
++  trusted_clock_jump_handler_.reset();
+   pose_publish_timer_.reset();
+ 
+   initial_pose_sub_.reset();
+@@ -409,6 +447,7 @@ void PCLLocalization::releaseRuntimeResources(bool leak_target_clouds_for_shutdo
+   initial_map_pub_.reset();
+   path_pub_.reset();
+   status_pub_.reset();
++  anchor_status_pub_.reset();
+   reinitialization_request_pub_.reset();
+   pose_pub_.reset();
+   odom_bridge_pose_pub_.reset();
+diff --git a/src/component_pose_publisher.cpp b/src/component_pose_publisher.cpp
+index ba3c8b3..a153df4 100644
+--- a/src/component_pose_publisher.cpp
++++ b/src/component_pose_publisher.cpp
+@@ -370,6 +370,18 @@ void PCLLocalization::fillPoseCovariance(double fitness_score)
+ void PCLLocalization::timerPublishPose()
+ {
+   auto state_lock = callback_state_coordinator_.lockState();
++  if (enable_trusted_anchor_protocol_) {
++    if (!anchor_status_pub_ || !anchor_status_pub_->is_activated()) {return;}
++    if (trusted_clock_reset_pending_.exchange(false,std::memory_order_acq_rel)) {
++      resetTrustedAnchor(now(),"clock_rewind");
++    }
++    if (!shutting_down_.load(std::memory_order_acquire) && has_last_good_map_to_odom_) {
++      auto frozen=last_good_map_to_odom_;
++      frozen.header.stamp=now();
++      broadcaster_.sendTransform(frozen);
++    }
++    return;
++  }
+   if (
+     shutting_down_.load(std::memory_order_acquire) ||
+     !pose_pub_ || !path_pub_ || !path_ptr_)
+diff --git a/src/component_subscribers.cpp b/src/component_subscribers.cpp
+index ad73e16..d934c5f 100644
+--- a/src/component_subscribers.cpp
++++ b/src/component_subscribers.cpp
+@@ -22,6 +22,9 @@ void PCLLocalization::initializePubSub()
+     "alignment_status",
+     rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
+ 
++  anchor_status_pub_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
++    "anchor_status", rclcpp::QoS(rclcpp::KeepLast(10)).transient_local().reliable());
++
+   reinitialization_request_pub_ = create_publisher<std_msgs::msg::Bool>(
+     "reinitialization_requested",
+     rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable());
+@@ -234,6 +237,7 @@ void PCLLocalization::initialPoseReceived(const geometry_msgs::msg::PoseWithCova
+       get_logger(),
+       "initial pose accepted before map is ready; scans will wait until map load completes");
+   }
++  if (enable_trusted_anchor_protocol_) {acceptTrustedInitialPose(msg); return;}
+   // An admitted reset supersedes the old track even if its TF is not available yet.
+   has_last_good_map_to_odom_ = false;
+   has_odom_tf_constraint_anchor_pose_ = false;
+@@ -361,6 +365,10 @@ void PCLLocalization::mapReceived(const sensor_msgs::msg::PointCloud2::SharedPtr
+ {
+   auto state_lock = callback_state_coordinator_.lockState();
+   if (shutting_down_.load(std::memory_order_acquire)) {return;}
++  if (enable_trusted_anchor_protocol_ && use_pcd_map_) {
++    RCLCPP_WARN(get_logger(), "Ignoring runtime map replacement: trusted PCD is immutable; restart with a new map");
++    return;
++  }
+   RCLCPP_INFO(get_logger(), "mapReceived");
+   pcl::PointCloud<pcl::PointXYZI>::Ptr map_cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
+ 
+@@ -728,6 +736,7 @@ void PCLLocalization::cloudReceived(const sensor_msgs::msg::PointCloud2::ConstSh
+ {
+   auto state_lock = callback_state_coordinator_.lockState();
+   if (shutting_down_.load(std::memory_order_acquire)) {return;}
++  if (enable_trusted_anchor_protocol_) {trustedCloudReceived(msg, state_lock); return;}
+   double scan_stamp_sec = 0.0;
+   if (!admitScanMessage(msg, &scan_stamp_sec)) {
+     return;
+diff --git a/src/component_trusted_anchor.cpp b/src/component_trusted_anchor.cpp
+new file mode 100644
+index 0000000..9a9aea6
+--- /dev/null
++++ b/src/component_trusted_anchor.cpp
+@@ -0,0 +1,161 @@
++#include "component_internal.hpp"
++#include <iomanip>
++#include <sstream>
++namespace {
++std::int64_t anchorStampNs(const builtin_interfaces::msg::Time & stamp) {
++  return static_cast<std::int64_t>(stamp.sec)*1000000000LL+stamp.nanosec;
++}
++std::string preciseNumber(double value) {
++  std::ostringstream stream; stream << std::setprecision(17) << value; return stream.str();
++}
++}
++void PCLLocalization::resetTrustedAnchor(
++  const builtin_interfaces::msg::Time & stamp, const std::string & reason)
++{
++  callback_state_coordinator_.advanceInitialPoseGeneration();
++  trusted_anchor_state_={}; trusted_anchor_sequence_=0; trusted_event_sequence_=0;
++  trusted_initial_odom_ready_=false;
++  has_last_good_map_to_odom_=false; has_odom_tf_constraint_anchor_pose_=false;
++  initialpose_recieved_=false;
++  odom_bridge_transform_history_.clear();
++  has_last_odom_bridge_source_advance_node_stamp_=false;
++  publishTrustedAnchorStatus(stamp,false,reason);
++}
++void PCLLocalization::acceptTrustedInitialPose(
++  const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & msg)
++{
++  auto initial=std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>(*msg);
++  auto & q=initial->pose.pose.orientation;
++  const double norm=std::sqrt(q.x*q.x+q.y*q.y+q.z*q.z+q.w*q.w);
++  if (!std::isfinite(norm) || norm<1e-8) {return;}
++  q.x/=norm; q.y/=norm; q.z/=norm; q.w/=norm;
++  auto generation_commit_lock=callback_state_coordinator_.lockGenerationCommit();
++  trusted_clock_reset_pending_.store(false,std::memory_order_release);
++  resetTrustedAnchor(msg->header.stamp,"initial_pose_reset");
++  initialpose_recieved_=true;
++  last_initial_pose_stamp_sec_=stamp_to_sec(msg->header.stamp);
++  corrent_pose_with_cov_stamped_ptr_=initial;
++  resetPredictionState(currentPoseMatrix(),last_initial_pose_stamp_sec_);
++  // A user seed is private. It cannot authorize navigation or publish map->odom.
++}
++void PCLLocalization::publishTrustedAnchorStatus(
++  const builtin_interfaces::msg::Time & stamp, bool committed,
++  const std::string & reason, const lidar_localization::AlignmentAttempt * attempt)
++{
++  if (!enable_trusted_anchor_protocol_ || !anchor_status_pub_ || !anchor_status_pub_->is_activated()) {return;}
++  diagnostic_msgs::msg::DiagnosticArray array; array.header.stamp=stamp;
++  array.header.frame_id=global_frame_id_;
++  diagnostic_msgs::msg::DiagnosticStatus status;
++  status.name="lidar_localization/anchor";
++  status.level=committed ? diagnostic_msgs::msg::DiagnosticStatus::OK : diagnostic_msgs::msg::DiagnosticStatus::WARN;
++  status.message=reason;
++  auto add=[&](const std::string & key,const std::string & value) {
++    diagnostic_msgs::msg::KeyValue entry; entry.key=key;entry.value=value;status.values.push_back(entry);
++  };
++  add("protocol_version","1");
++  add("epoch",trusted_anchor_process_id_+":"+std::to_string(callback_state_coordinator_.initialPoseGeneration()));
++  add("event_sequence",std::to_string(++trusted_event_sequence_));
++  add("anchor_sequence",std::to_string(trusted_anchor_sequence_));
++  add("anchor_committed",committed ? "true" : "false");
++  add("ready",trusted_anchor_state_.tracking && has_last_good_map_to_odom_ ? "true" : "false");
++  add("reason",reason);
++  add("last_anchor_stamp_ns",has_last_good_map_to_odom_ ? std::to_string(anchorStampNs(last_good_map_to_odom_.header.stamp)) : "0");
++  if (has_last_good_map_to_odom_) {
++    const auto & t=last_good_map_to_odom_.transform;
++    add("map_odom_x",preciseNumber(t.translation.x)); add("map_odom_y",preciseNumber(t.translation.y));
++    add("map_odom_z",preciseNumber(t.translation.z)); add("map_odom_qx",preciseNumber(t.rotation.x));
++    add("map_odom_qy",preciseNumber(t.rotation.y)); add("map_odom_qz",preciseNumber(t.rotation.z));
++    add("map_odom_qw",preciseNumber(t.rotation.w));
++  }
++  if (attempt) {
++    add("has_converged",attempt->has_converged ? "true" : "false");
++    add("fitness_score",preciseNumber(attempt->fitness_score));
++    add("correction_translation_m",preciseNumber(attempt->correction_translation_m));
++    add("correction_yaw_deg",preciseNumber(attempt->correction_yaw_deg));
++    add("correction_rotation_deg",preciseNumber(lidar_localization::rotationDeltaDeg(attempt->init_guess,attempt->final_transformation)));
++    add("alignment_time_sec",preciseNumber(attempt->alignment_time_sec));
++  }
++  array.status.push_back(status); anchor_status_pub_->publish(array);
++}
++void PCLLocalization::trustedCloudReceived(
++  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & msg,
++  lidar_localization::CallbackStateCoordinator::StateLock & state_lock)
++{
++  if (!anchor_status_pub_ || !anchor_status_pub_->is_activated()) {return;}
++  if (trusted_clock_reset_pending_.exchange(false,std::memory_order_acq_rel)) {
++    resetTrustedAnchor(now(),"clock_rewind"); return;
++  }
++  if (!msg || !map_recieved_ || !initialpose_recieved_) {return;}
++  const double scan_sec=stamp_to_sec(msg->header.stamp);
++  const std::int64_t scan_ns=anchorStampNs(msg->header.stamp);
++  if (scan_ns<trusted_anchor_state_.last_scan_ns) {
++    resetTrustedAnchor(msg->header.stamp,"time_rewind"); return;
++  }
++  if (scan_ns==trusted_anchor_state_.last_scan_ns) {return;}
++  auto reject=[&](const std::string & reason) {
++    if (!trusted_anchor_state_.tracking) {trusted_anchor_state_.confirmations=0;}
++    publishTrustedAnchorStatus(msg->header.stamp,false,reason);
++  };
++  const double age=now().seconds()-scan_sec;
++  if (!std::isfinite(age) || age<0 || age>trusted_anchor_params_.max_age_sec) {reject("stale_scan");return;}
++  if (scan_sec<last_initial_pose_stamp_sec_-.01) {reject("scan_before_initialpose");return;}
++  geometry_msgs::msg::TransformStamped odom;
++  try {
++    odom=tfbuffer_.lookupTransform(odom_frame_id_,base_frame_id_,msg->header.stamp,rclcpp::Duration::from_seconds(0.0));
++    if (!trusted_anchor_state_.tracking && !trusted_initial_odom_ready_) {
++      const auto initial_odom=tfbuffer_.lookupTransform(odom_frame_id_,base_frame_id_,
++        corrent_pose_with_cov_stamped_ptr_->header.stamp,rclcpp::Duration::from_seconds(0.0));
++      trusted_initial_map_to_odom_=currentPoseMatrix()*
++        tf2::transformToEigen(initial_odom.transform).matrix().cast<float>().inverse();
++      trusted_initial_odom_ready_=true;
++    }
++  } catch (const tf2::TransformException &) {reject("odom_tf_unavailable");return;}
++  const Eigen::Matrix4f odom_matrix=tf2::transformToEigen(odom.transform).matrix().cast<float>();
++  const Eigen::Matrix4f map_odom=trusted_anchor_state_.tracking ?
++    tf2::transformToEigen(last_good_map_to_odom_.transform).matrix().cast<float>() : trusted_initial_map_to_odom_;
++  const Eigen::Matrix4f seed=map_odom*odom_matrix;
++  const auto prepared=prepareScanForRegistration(msg,scan_sec);
++  if (!lidar_localization::isPreparedScanReady(prepared.status)) {reject("scan_preparation_failed");return;}
++  setRegistrationSourceCloud(prepared.cloud);
++  const auto generation=callback_state_coordinator_.initialPoseGeneration();
++  const auto attempt=runAlignmentAttempt(seed,seed,scan_sec,state_lock,generation);
++  if (shutting_down_.load(std::memory_order_acquire) ||
++      !callback_state_coordinator_.initialPoseGenerationMatches(generation)) {return;}
++  const Eigen::Matrix4f candidate=attempt.final_transformation*odom_matrix.inverse();
++  lidar_localization::TrustedAnchorInput input;
++  input.scan_ns=scan_ns; input.age_sec=now().seconds()-scan_sec;
++  input.converged=attempt.target_ready && attempt.has_converged;
++  input.finite_pose=attempt.final_transformation.allFinite() && candidate.allFinite();
++  input.fitness=attempt.fitness_score;
++  input.correction_translation_m=attempt.correction_translation_m;
++  input.correction_rotation_deg=lidar_localization::rotationDeltaDeg(seed,attempt.final_transformation);
++  if (!trusted_anchor_state_.tracking && trusted_anchor_state_.confirmations>0) {
++    input.candidate_translation_delta_m=(candidate.block<3,1>(0,3)-trusted_candidate_map_to_odom_.block<3,1>(0,3)).norm();
++    input.candidate_rotation_delta_deg=lidar_localization::rotationDeltaDeg(trusted_candidate_map_to_odom_,candidate);
++  }
++  // Never query ROS time while holding this lock: jump callbacks may be
++  // waiting here while the clock's internal mutex is held. Epoch advancement
++  // and the final commit serialize, including the authoritative event.
++  auto generation_commit_lock=callback_state_coordinator_.lockGenerationCommit();
++  if (!callback_state_coordinator_.initialPoseGenerationMatches(generation)) {return;}
++  const auto decision=lidar_localization::decideTrustedAnchor(trusted_anchor_params_,trusted_anchor_state_,input);
++  if (!trusted_anchor_state_.tracking && trusted_anchor_state_.confirmations>0) {trusted_candidate_map_to_odom_=candidate;}
++  if (decision.invalidate) {resetTrustedAnchor(msg->header.stamp,decision.reason);return;}
++  if (!decision.commit) {publishTrustedAnchorStatus(msg->header.stamp,false,decision.reason,&attempt);return;}
++  // All failure checks precede the commit. Shared state, prediction and public
++  // anchor change together under the state lock, after the same final decision.
++  setCurrentPoseFromMatrix(attempt.final_transformation,msg->header.stamp);
++  fillPoseCovariance(attempt.fitness_score);
++  updatePredictionState(attempt.final_transformation,scan_sec);
++  const auto map_base=lidar_localization::makeMapToBaseTransform(msg->header.stamp,
++    global_frame_id_,base_frame_id_,corrent_pose_with_cov_stamped_ptr_->pose.pose);
++  last_good_map_to_odom_=lidar_localization::composeMapToOdomTransform(msg->header.stamp,
++    global_frame_id_,odom_frame_id_,map_base,odom,false);
++  has_last_good_map_to_odom_=true;
++  odom_tf_constraint_anchor_pose_matrix_=attempt.final_transformation;
++  has_odom_tf_constraint_anchor_pose_=true;
++  ++trusted_anchor_sequence_;
++  broadcaster_.sendTransform(last_good_map_to_odom_);
++  publishPoseMessage(*corrent_pose_with_cov_stamped_ptr_);
++  publishTrustedAnchorStatus(msg->header.stamp,true,decision.reason,&attempt);
++}
+diff --git a/test/test_trusted_anchor_generation.cpp b/test/test_trusted_anchor_generation.cpp
+new file mode 100644
+index 0000000..4cebdc5
+--- /dev/null
++++ b/test/test_trusted_anchor_generation.cpp
+@@ -0,0 +1,16 @@
++#include "lidar_localization/callback_state_coordinator.hpp"
++#include <cassert>
++#include <future>
++#include <chrono>
++int main() {
++  lidar_localization::CallbackStateCoordinator coordinator;
++  auto commit=coordinator.lockGenerationCommit();
++  auto generation=coordinator.initialPoseGeneration();
++  std::promise<void> entered;
++  auto reset=std::async(std::launch::async,[&] {entered.set_value();coordinator.advanceInitialPoseGeneration();});
++  entered.get_future().wait();
++  assert(reset.wait_for(std::chrono::milliseconds(20))==std::future_status::timeout);
++  assert(coordinator.initialPoseGenerationMatches(generation));
++  commit.unlock();reset.get();
++  assert(!coordinator.initialPoseGenerationMatches(generation));
++}
+diff --git a/test/test_trusted_anchor_policy.cpp b/test/test_trusted_anchor_policy.cpp
+new file mode 100644
+index 0000000..bac40fc
+--- /dev/null
++++ b/test/test_trusted_anchor_policy.cpp
+@@ -0,0 +1,40 @@
++#include "lidar_localization/trusted_anchor_policy.hpp"
++#include <cassert>
++#include <cmath>
++using namespace lidar_localization;
++int main() {
++  TrustedAnchorParams p;
++  TrustedAnchorState state;
++  TrustedAnchorInput in;
++  in.scan_ns = 1000000000; in.age_sec=.05; in.converged=true;
++  in.finite_pose=true; in.fitness=.2; in.correction_rotation_deg=11.32;
++  assert(decideTrustedAnchor(p,state,in).reason=="initializing");
++  in.scan_ns+=100000000;
++  assert(!decideTrustedAnchor(p,state,in).commit);
++  in.scan_ns+=100000000;
++  assert(decideTrustedAnchor(p,state,in).commit);
++  assert(state.tracking);
++  in.scan_ns+=100000000;
++  assert(decideTrustedAnchor(p,state,in).reason=="correction_rotation");
++  assert(state.tracking); // rejection never destroys or replaces the trusted anchor
++  in.correction_rotation_deg=1.; in.correction_translation_m=.6; in.scan_ns+=100000000;
++  assert(decideTrustedAnchor(p,state,in).reason=="correction_translation");
++  in.correction_translation_m=.1; in.age_sec=.51; in.scan_ns+=100000000;
++  assert(decideTrustedAnchor(p,state,in).reason=="stale_scan");
++  in.age_sec=.05; in.fitness=std::nan(""); in.scan_ns+=100000000;
++  assert(decideTrustedAnchor(p,state,in).reason=="invalid_result");
++  in.fitness=.2; in.scan_ns+=100000000;
++  assert(decideTrustedAnchor(p,state,in).commit);
++  assert(decideTrustedAnchor(p,state,in).reason=="duplicate_scan");
++  in.scan_ns-=100000000;
++  assert(decideTrustedAnchor(p,state,in).invalidate);
++  assert(!state.tracking);
++  state={}; in.scan_ns=2000000000; in.candidate_translation_delta_m=0;
++  assert(!decideTrustedAnchor(p,state,in).commit);
++  in.scan_ns+=100000000; in.candidate_translation_delta_m=1.;
++  assert(decideTrustedAnchor(p,state,in).reason=="initial_candidate_inconsistent");
++  assert(state.confirmations==1);
++  in.scan_ns+=100000000; in.candidate_translation_delta_m=0.;
++  assert(!decideTrustedAnchor(p,state,in).commit);
++  in.scan_ns+=100000000; assert(decideTrustedAnchor(p,state,in).commit);
++}

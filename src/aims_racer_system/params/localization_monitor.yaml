@@ -1,0 +1,6 @@
+localization_monitor:
+  ros__parameters:
+    anchor_max_age_sec: 0.5
+    ekf_max_age_sec: 0.1
+    cloud_max_age_sec: 0.5
+    recovery_commits: 3

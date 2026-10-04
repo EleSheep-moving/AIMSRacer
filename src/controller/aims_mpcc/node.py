@@ -26,6 +26,7 @@ from .path import ReferencePath
 from .runtime import Supervisor, State, Command, angle_difference, clip
 from .worker import AsyncSolver
 from .history import AppliedHistory
+from .localization import LocalizationHealth
 
 
 class MPCCNode(Node):
@@ -67,6 +68,7 @@ class MPCCNode(Node):
         self.config.validate(require_verified=True,allow_synthetic=self.get_parameter('simulation').value)
         self.path=ReferencePath.load(self.get_parameter('path_directory').value)
         self.path.validate_config(self.config,require_recording=not self.get_parameter('simulation').value)
+        self.localization_health=LocalizationHealth()
         self.map_sha256=None
         self.map_buffer=None;self.map_alignment=None
         if self.path.frame_id=='map':
@@ -76,6 +78,7 @@ class MPCCNode(Node):
             self.map_listener=TransformListener(self.map_buffer,self,qos=QoSProfile(depth=10))
             latched_id=QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL)
             self.create_subscription(String,'/localization/map_sha256',self.map_identity,latched_id)
+            self.create_subscription(DiagnosticArray,'/localization/status',self.localization_status,10)
         self.supervisor=Supervisor(self.config,self.path.length,self.plan_ttl,self.handover_delay)
         self.worker=AsyncSolver(self.get_parameter('path_directory').value,self.config,self.horizon,
                                 deadline=self.solver_timeout)
@@ -128,6 +131,22 @@ class MPCCNode(Node):
         if self.path.frame_id=='map' and self.supervisor.active and self.map_sha256!=self.path.metadata['map_sha256']:
             self.supervisor.fault('Map identity changed or does not match reference')
 
+    def localization_status(self,msg):
+        now=time.monotonic()
+        statuses=[status for status in msg.status if status.name=='aims_racer_system/localization']
+        values={entry.key:entry.value for entry in statuses[0].values} if len(statuses)==1 else {}
+        changed=self.localization_health.observe(values,self.get_clock().now().nanoseconds,now)
+        if changed:
+            self.map_alignment=None
+            if self.supervisor.active:
+                self.supervisor.fault('Localization epoch changed; re-enable required')
+        if self.supervisor.active and not self.localization_health.usable(self.get_clock().now().nanoseconds,now):
+            self.supervisor.fault('Trusted localization unavailable or expired')
+
+    def require_localization(self,now):
+        if self.path.frame_id=='map' and not self.localization_health.usable(self.get_clock().now().nanoseconds,now):
+            raise ValueError('Fresh trusted localization required')
+
     def map_matches_reference(self):
         # Check the reference's coordinate identity, not localization health.
         return self.map_sha256==self.path.metadata['map_sha256']
@@ -172,6 +191,9 @@ class MPCCNode(Node):
             x-=self.config.rear_offset*math.cos(yaw)
             y-=self.config.rear_offset*math.sin(yaw)
             if self.path.frame_id=='map':
+                if not self.localization_health.usable(self.get_clock().now().nanoseconds,now):
+                    if self.supervisor.active: raise ValueError('Trusted localization unavailable or expired')
+                    return
                 if not self.map_matches_reference():
                     if self.supervisor.active: raise ValueError('Map identity does not match reference')
                     return
@@ -223,6 +245,7 @@ class MPCCNode(Node):
     def enable(self,request,response):
         try:
             if request.data:
+                self.require_localization(time.monotonic())
                 if not self.worker.ready: raise ValueError('Solver not ready; restart node after worker failure')
                 if self.path.frame_id=='map' and not self.map_matches_reference():
                     raise ValueError('Reference map identity required')
@@ -306,6 +329,11 @@ class MPCCNode(Node):
 
     def tick(self):
         now=time.monotonic();s=self.supervisor
+        if self.path.frame_id=='map' and s.active:
+            try:
+                self.require_localization(now)
+            except ValueError as exc:
+                s.fault(str(exc))
         if self.path.frame_id=='map' and s.active and not self.map_matches_reference():
             s.fault('Map identity does not match reference')
         reply=self.worker.poll(now)

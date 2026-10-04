@@ -10,6 +10,7 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(tf2_msgs REQUIRED)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 add_library(rear_axle_imu STATIC src/rear_axle_imu.cpp)
@@ -24,17 +25,29 @@ ament_target_dependencies(imu_to_rear_axle rclcpp sensor_msgs nav_msgs)
 target_compile_options(imu_to_rear_axle PRIVATE -Wall -Wextra -Wpedantic)
 install(TARGETS imu_to_rear_axle DESTINATION lib/${PROJECT_NAME})
 
+add_executable(tf_authority_audit replay/tf_authority_audit.cpp)
+target_compile_features(tf_authority_audit PRIVATE cxx_std_17)
+ament_target_dependencies(tf_authority_audit rclcpp tf2_msgs)
+target_compile_options(tf_authority_audit PRIVATE -Wall -Wextra -Wpedantic)
+install(TARGETS tf_authority_audit DESTINATION lib/${PROJECT_NAME})
+
 ament_python_install_package(${PROJECT_NAME})
 file(GLOB system_scripts CONFIGURE_DEPENDS scripts/*.py)
 install(PROGRAMS ${system_scripts} DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY launch params behaviour_trees rviz
+install(DIRECTORY launch params behaviour_trees rviz replay
   DESTINATION share/${PROJECT_NAME} PATTERN "__pycache__" EXCLUDE)
 
 if(BUILD_TESTING)
+  add_executable(rear_axle_force_test tests/test_rear_axle_force.cpp)
+  target_link_libraries(rear_axle_force_test PRIVATE rear_axle_imu)
+  target_compile_options(rear_axle_force_test PRIVATE -UNDEBUG -Wall -Wextra -Wpedantic)
+  add_test(NAME rear_axle_force COMMAND rear_axle_force_test)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(rear_axle_contract tests/test_rear_axle_contract.py
     ENV "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/test_logs")
   ament_add_pytest_test(nav_map_argument tests/test_nav_map_argument.py)
+  ament_add_pytest_test(localization_policy tests/test_localization_policy.py)
+  ament_add_pytest_test(monitor_health_delivery tests/test_monitor_health_delivery.py)
 endif()
 
 ament_package()

@@ -1,0 +1,87 @@
+diff --git a/include/pclomp/ndt_omp_impl.hpp b/include/pclomp/ndt_omp_impl.hpp
+index 9f92c81..fd3627a 100644
+--- a/include/pclomp/ndt_omp_impl.hpp
++++ b/include/pclomp/ndt_omp_impl.hpp
+@@ -744,8 +744,12 @@ pclomp::NormalDistributionsTransform<PointSource, PointTarget>::trialValueSelect
+                                                                                     double a_u, double f_u, double g_u,
+                                                                                     double a_t, double f_t, double g_t)
+ {
++  // A clamped trial may coincide with interval endpoints. Match PCL boundary handling.
++  if (a_t == a_l && a_t == a_u)
++    return a_t;
++
+   // Case 1 in Trial Value Selection [More, Thuente 1994]
+-  if (f_t > f_l)
++  if (a_t != a_l && f_t > f_l)
+   {
+     // Calculate the minimizer of the cubic that interpolates f_l, f_t, g_l and g_t
+     // Equation 2.4.52 [Sun, Yuan 2006]
+@@ -765,7 +769,7 @@ pclomp::NormalDistributionsTransform<PointSource, PointTarget>::trialValueSelect
+   }
+   // Case 2 in Trial Value Selection [More, Thuente 1994]
+   else
+-  if (g_t * g_l < 0)
++  if (a_t != a_l && g_t * g_l < 0)
+   {
+     // Calculate the minimizer of the cubic that interpolates f_l, f_t, g_l and g_t
+     // Equation 2.4.52 [Sun, Yuan 2006]
+@@ -785,7 +789,7 @@ pclomp::NormalDistributionsTransform<PointSource, PointTarget>::trialValueSelect
+   }
+   // Case 3 in Trial Value Selection [More, Thuente 1994]
+   else
+-  if (std::fabs (g_t) <= std::fabs (g_l))
++  if (a_t != a_l && std::fabs (g_t) <= std::fabs (g_l))
+   {
+     // Calculate the minimizer of the cubic that interpolates f_l, f_t, g_l and g_t
+     // Equation 2.4.52 [Sun, Yuan 2006]
+@@ -869,7 +873,7 @@ pclomp::NormalDistributionsTransform<PointSource, PointTarget>::computeStepLengt
+   double g_u = auxilaryFunction_dPsiMT (d_phi_0, d_phi_0, mu);
+ 
+   // Check used to allow More-Thuente step length calculation to be skipped by making step_min == step_max
+-  bool interval_converged = (step_max - step_min) > 0, open_interval = true;
++  bool interval_converged = (step_max - step_min) < 0, open_interval = true;
+ 
+   double a_t = step_init;
+   a_t = std::min (a_t, step_max);
+diff --git a/test/test_public_api.cpp b/test/test_public_api.cpp
+index be59ab3..bb99e2e 100644
+--- a/test/test_public_api.cpp
++++ b/test/test_public_api.cpp
+@@ -1,8 +1,10 @@
+ #include <gtest/gtest.h>
++#include <cmath>
+ 
+ #include <pcl/point_types.h>
+ #include <pclomp/gicp_omp.h>
+ #include <pclomp/ndt_omp.h>
++#include <pclomp/ndt_omp_impl.hpp>
+ 
+ TEST(PublicApi, ConstructsExportedPointXyzRegistrations)
+ {
+@@ -17,3 +19,26 @@ TEST(PublicApi, ConstructsExportedPointXyzRegistrations)
+   EXPECT_DOUBLE_EQ(ndt.getResolution(), 1.0);
+   EXPECT_EQ(gicp.getMaximumIterations(), 5);
+ }
++
++// Clamping a line-search trial can make it equal to an interval endpoint.
++// Interpolation must not divide by the resulting zero interval width.
++class NdtTrialSelection : public pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>
++{
++public:
++  using pclomp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>::trialValueSelectionMT;
++};
++
++TEST(NdtLineSearch, CoincidentEndpointsReturnTheCurrentTrial)
++{
++  NdtTrialSelection ndt;
++  const double trial = ndt.trialValueSelectionMT(.005, -1., -1., .005, -1., -1., .005, -.999, -1.);
++  EXPECT_TRUE(std::isfinite(trial));
++  EXPECT_DOUBLE_EQ(trial, .005);
++}
++
++TEST(NdtLineSearch, TrialAtLowerEndpointRemainsFinite)
++{
++  NdtTrialSelection ndt;
++  const double trial = ndt.trialValueSelectionMT(.005, -1., -1., 0., 0., -1., .005, -.999, -1.);
++  EXPECT_TRUE(std::isfinite(trial));
++}

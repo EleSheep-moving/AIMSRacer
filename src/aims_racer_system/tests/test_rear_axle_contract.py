@@ -10,7 +10,6 @@ from launch import LaunchContext
 from nav_msgs.msg import Odometry
 
 from aims_racer_system.rear_axle_odometry import convert_odometry
-from aims_racer_system.rear_axle_imu import compensate_force
 
 PACKAGE = Path(__file__).resolve().parents[1]
 
@@ -44,15 +43,6 @@ def test_turning_sensor_state_recovers_rear_axle(mount_rpy):
     msg.child_frame_id = 'livox_imu'
     with pytest.raises(ValueError, match='livox_frame'):
         convert_odometry(msg, omega, lever, mount.as_quat())
-
-
-def test_force_removes_both_lever_terms_and_keeps_gravity():
-    rear_force = np.array([.4, .7, 9.80665])
-    omega, alpha, lever = np.array([.1,.2,.8]), np.array([.3,-.2,.4]), np.array([.3,0.,.03])
-    measured = rear_force + np.cross(alpha, lever) + np.cross(omega, np.cross(omega, lever))
-    corrected, covariance = compensate_force(measured, omega, alpha, lever, *[np.eye(3)*.01]*3)
-    np.testing.assert_allclose(corrected, rear_force, atol=1e-12)
-    assert np.linalg.eigvalsh(covariance).min() > 0
 
 
 @pytest.mark.parametrize('mapping', [False, True])
