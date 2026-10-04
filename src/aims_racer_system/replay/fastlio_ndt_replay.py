@@ -170,7 +170,7 @@ def main():
             executor.spin_once(timeout_sec=.05)
         playback=spawn(['ros2','bag','play',str(args.bag),'--delay',str(args.discovery_delay),'--clock','200','--rate','1.0','--topics',
             '/livox/lidar','/livox/imu','/rear_axle/wheel_odom'],'bag')
-        deadline=time.monotonic()+(args.max_seconds if args.max_seconds else (end-start)*1e-9+25.)
+        deadline=time.monotonic()+(args.max_seconds if args.max_seconds is not None else (end-start)*1e-9+args.discovery_delay+25.)
         while time.monotonic()<deadline and playback.poll() is None:
             if stack.poll() is not None:
                 raise RuntimeError('replay launch exited; inspect stack.log')
@@ -201,7 +201,8 @@ def main():
                 authorities.setdefault(item['frame_id']+'/'+item['child_frame_id'],set()).add(item['publisher_gid'])
         accepted=[e for e in events if e['values'].get('anchor_committed')=='true']
         result=dict(installed_artifact_sha256=installed_hashes,bag=str(args.bag),map=str(args.map),map_sha256=hashlib.sha256(args.map.read_bytes()).hexdigest() if args.map else None,
-            expected_raw_counts=expected_raw_counts,full_bag_playback=playback.poll()==0,discovery_delay_sec=args.discovery_delay,
+            expected_raw_counts=expected_raw_counts,full_bag_playback=playback.poll()==0,
+            intentionally_partial=args.max_seconds is not None,discovery_delay_sec=args.discovery_delay,
             seed=seed,seed_sent_ns=seed_sent,counts=dict(counts),tf_authorities={edge:len(gids) for edge,gids in authorities.items()},
             accepted=len(accepted),rejection_reasons=dict(Counter(e['values'].get('reason') for e in events if e['values'].get('anchor_committed')!='true')),
             ndt_processing_ms=quantiles([float(e['values']['scan_processing_time_sec'])*1000 for e in timings]),
