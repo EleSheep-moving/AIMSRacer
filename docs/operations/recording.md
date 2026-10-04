@@ -5,6 +5,10 @@ Start the selected [vehicle bringup](bringup.md), verify the
 recording terminal. Use a new output directory on a disk with sufficient space.
 The commands below subscribe to data; they do not enable autonomous control.
 
+For recordings already present on the Orin, see the
+[LIO test bag catalog](lio-test-bags.md): it lists raw-input motion/static bags,
+their local paths and replay examples, and identifies recordings that cannot rerun LIO.
+
 ## Sensor and estimator bag
 
 Replace `/data/session-001` with your chosen new directory:

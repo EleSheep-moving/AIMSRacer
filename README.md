@@ -15,6 +15,7 @@ ZED 2i and RadioMaster Pocket ELRS remote.
 | Understand topic roles, frames, sensor fusion and command routing | [Architecture](docs/architecture.md) |
 | Start V2 or V3 | [Vehicle bringup](docs/operations/bringup.md) |
 | Record a bag | [Recording](docs/operations/recording.md) |
+| Choose an existing Orin bag for LIO testing | [LIO test bag catalog](docs/operations/lio-test-bags.md) |
 | Use a saved PGO map for MPCC | [Known-map workflow](docs/operations/known-map-mpcc.md) |
 | Prepare and run MPCC | [MPCC usage](src/controller/docs/usage.md) |
 | Learn the MPCC code | [Implementation](src/controller/docs/implementation.md) |
