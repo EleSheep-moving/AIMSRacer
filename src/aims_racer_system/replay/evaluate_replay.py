@@ -72,7 +72,8 @@ def evaluate(path):
     details['fastlio_max_pending_scans']=max((int(r['pending']) for r in trace),default=0)
     details['fastlio_dropped_trace_records']=sum(int(r['id']) for r in trace if r['event']=='trace_dropped')
     details['fastlio_trace_events']=dict(Counter(r['event'] for r in trace))
-    details['inlier_fraction']=quantiles([float(r['values']['inlier_fraction']) for r in health if 'inlier_fraction' in r['values']])
+    quality={r['values']['quality_stamp_ns']:float(r['values']['inlier_fraction']) for r in health if 'inlier_fraction' in r['values']}
+    details['inlier_fraction']=quantiles(list(quality.values()))
     result=dict(checks=checks,all_checks_pass=all(checks.values()),details=details)
     (path/'acceptance.json').write_text(json.dumps(result,indent=2)+'\n')
     return result

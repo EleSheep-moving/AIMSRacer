@@ -1,2 +1,4 @@
 # Preserve upstream source bytes and recorded provenance hashes.
 src/controller/aims_mpcc/vendor/*.py whitespace=-blank-at-eof
+# Unified diffs require a leading space even on blank context lines.
+src/aims_racer_system/replay/*.patch whitespace=-blank-at-eol

@@ -16,6 +16,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy
+from ament_index_python.packages import get_package_prefix, get_package_share_directory
 from diagnostic_msgs.msg import DiagnosticArray
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
@@ -68,6 +69,17 @@ def main():
         fcntl.flock(replay_lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     except BlockingIOError:
         parser.error('another replay owns this ROS domain; wait for its complete shutdown')
+    installed_hashes={}
+    source_root=Path(__file__).resolve().parents[1]
+    for relative in ('scripts/activate_ndt.py','scripts/relocalize_known_map.py','scripts/localization_monitor.py',
+                     'scripts/localization_policy.py','scripts/localization_map_io.py',
+                     'params/ndt_fastlio.yaml','params/localization_monitor.yaml'):
+        source=source_root/relative
+        installed=(Path(get_package_prefix('aims_racer_system'))/'lib/aims_racer_system'/Path(relative).name
+                   if relative.startswith('scripts/') else Path(get_package_share_directory('aims_racer_system'))/relative)
+        installed_hashes[relative]=hashlib.sha256(installed.read_bytes()).hexdigest()
+        if source.exists() and hashlib.sha256(source.read_bytes()).hexdigest()!=installed_hashes[relative]:
+            parser.error('installed artifact differs from source; rebuild overlay: '+relative)
     args.output.mkdir(parents=True,exist_ok=False)
     database=list(args.bag.glob('*.db3'))
     if len(database)!=1:
@@ -150,7 +162,7 @@ def main():
             if stack.poll() is not None:
                 raise RuntimeError('replay launch exited; inspect stack.log')
             executor.spin_once(timeout_sec=.05)
-        playback=spawn(['ros2','bag','play',str(args.bag),'--clock','200','--rate','1.0','--topics',
+        playback=spawn(['ros2','bag','play',str(args.bag),'--delay','2','--clock','200','--rate','1.0','--topics',
             '/livox/lidar','/livox/imu','/rear_axle/wheel_odom'],'bag')
         deadline=time.monotonic()+(args.max_seconds if args.max_seconds else (end-start)*1e-9+25.)
         while time.monotonic()<deadline and playback.poll() is None:
@@ -182,14 +194,14 @@ def main():
             if item.get('event')=='tf':
                 authorities.setdefault(item['frame_id']+'/'+item['child_frame_id'],set()).add(item['publisher_gid'])
         accepted=[e for e in events if e['values'].get('anchor_committed')=='true']
-        result=dict(bag=str(args.bag),map=str(args.map),map_sha256=hashlib.sha256(args.map.read_bytes()).hexdigest() if args.map else None,
+        result=dict(installed_artifact_sha256=installed_hashes,bag=str(args.bag),map=str(args.map),map_sha256=hashlib.sha256(args.map.read_bytes()).hexdigest() if args.map else None,
             seed=seed,seed_sent_ns=seed_sent,counts=dict(counts),tf_authorities={edge:len(gids) for edge,gids in authorities.items()},
             accepted=len(accepted),rejection_reasons=dict(Counter(e['values'].get('reason') for e in events if e['values'].get('anchor_committed')!='true')),
             attempt_alignment_ms=quantiles([float(e['values']['alignment_time_sec'])*1000 for e in events if 'alignment_time_sec' in e['values']]),
             alignment_ms=quantiles([float(e['values']['alignment_time_sec'])*1000 for e in accepted]),
             trusted_source_age_ms=quantiles([(e['ros_now_ns']-e['source_ns'])*1e-6 for e in accepted]),
             ekf_age_ms=quantiles(odom_ages),body_cloud_age_ms=quantiles(cloud_ages),
-            independent_quality_samples=sum('inlier_fraction' in e['values'] for e in health),
+            independent_quality_samples=len({e['values']['quality_stamp_ns'] for e in health if 'inlier_fraction' in e['values']}),
             health_states=dict(Counter(e['values']['state'] for e in health)),injection=injection,
             initializer_cli_exit=initializer_process.poll() if initializer_process else None,
             lifecycle_deactivated=bool(deactivate_future and deactivate_future.done() and deactivate_future.result().success),
