@@ -63,7 +63,7 @@ bootstrap supplied with this branch, then source the resulting ROS 2 overlay:
 ```bash
 source /opt/ros/humble/setup.bash
 python3 src/aims_racer_system/replay/setup_ndt_dependencies.py log/fastlio-ndt/deps
-colcon build --base-paths src log/fastlio-ndt/deps --symlink-install \
+MAKEFLAGS="-j2 -l2" colcon build --base-paths src log/fastlio-ndt/deps --executor sequential --symlink-install \
   --packages-up-to aims_racer_system aims_mpcc
 source install/setup.bash
 ```

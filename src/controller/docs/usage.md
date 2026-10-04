@@ -55,7 +55,7 @@ launch can record CSV from `/rear_axle/lio_odom`, but that CSV is still in its
 mapping session's `odom`. For a map-frame path reusable after restart, follow
 the [known-map workflow](../../../docs/operations/known-map-mpcc.md): match the
 recorded loop to saved PGO poses, prepare with `--map-file`, and use the
-validated localizer add-on. The controller does not itself relocalize.
+NDT add-on, completing its runtime checks before driving. The controller does not itself relocalize.
 
 ```bash
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc record_path --ros-args -p output:=/data/lap.csv
@@ -297,13 +297,15 @@ measured-speed operating-range rejection gates are removed.
   0.30 m position, 30 degrees yaw, 0.30 m/s speed and 20 degrees steering, with
   0.30 m/s and 20 degrees on actual-target changes. A rejected candidate does
   not extend the previous plan's lifetime.
-- Localization is an external input provider. MPCC does not subscribe to
-  `/localization/map_valid` or interpret point-cloud quality, ICP scores or
-  global-localization update frequency. It requires the reference map identity
-  and an available coordinate transform. TF age and correction changes are
-  telemetry only; initial localization verification belongs to the TF provider.
-  Map roll/pitch does not reject the transform: x/y/yaw are projected for the
-  planar model. Measured speed does not have an operating-range stop gate.
+- Map references require protocol version 1 health from `/localization/status`,
+  matching map identity and an available map/odom transform. Trusted anchor age
+  must remain within 0.5 s in source and monotonic time, and health heartbeat
+  within 0.3 s. Epoch changes or readiness loss fault the controller, cancel
+  current/pending plans and request zero speed. Three new NDT commits can restore
+  localization readiness; MPCC still requires manual enable after a fault.
+  Ordinary committed corrections preserve the running plan. NDT owns registration
+  gates; independent scan/map consistency is diagnostic. TF timer republication
+  cannot renew trusted anchor age. Map x/y/yaw are projected for the planar model.
   Finite-state checks, stationary-start checks and actuator target limits remain.
 - IPOPT is capped by `solver_max_iterations` (30).
   `Maximum_Iterations_Exceeded` results are discarded and counted in

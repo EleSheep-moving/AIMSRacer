@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Replay raw sensors through new FAST-LIO/EKF/NDT, without command publishers."""
 import argparse
+import fcntl
 from collections import Counter
 import hashlib
 import json
@@ -56,10 +57,17 @@ def main():
     parser.add_argument('--ndt-pause',type=float,default=0.)
     parser.add_argument('--pause-offset',type=float,default=20.)
     parser.add_argument('--lifecycle-deactivate',action='store_true')
+    parser.add_argument('--use-initializer-cli',action='store_true',help='exercise the installed map/base_link initialization CLI')
     parser.add_argument('--max-seconds',type=float)
     args=parser.parse_args()
     if bool(args.map)!=bool(args.seed):
         parser.error('--map and --seed are required together; neither means local-only replay')
+    domain=os.environ.get('ROS_DOMAIN_ID','0')
+    replay_lock=open('/tmp/aimsracer-replay-domain-'+domain+'.lock','w')
+    try:
+        fcntl.flock(replay_lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    except BlockingIOError:
+        parser.error('another replay owns this ROS domain; wait for its complete shutdown')
     args.output.mkdir(parents=True,exist_ok=False)
     database=list(args.bag.glob('*.db3'))
     if len(database)!=1:
@@ -71,7 +79,7 @@ def main():
     rclpy.init();node=Node('fastlio_ndt_replay_audit',parameter_overrides=[rclpy.parameter.Parameter('use_sim_time',value=True)])
     pub=node.create_publisher(PoseWithCovarianceStamped,'/initialpose',10)
     lifecycle=node.create_client(ChangeState,'/lidar_localization/change_state')
-    deactivate_future=None
+    deactivate_future=None;initializer_process=None
     seed_sent=None;source_start=None;events=[];health=[];odom_ages=[];cloud_ages=[];counts=Counter()
     eventfile=(args.output/'events.jsonl').open('w')
     def row(kind,message,values):
@@ -87,7 +95,7 @@ def main():
             if status.name=='aims_racer_system/localization':
                 health.append(row('health',message,{v.key:v.value for v in status.values}))
     def odometry(message):
-        nonlocal seed_sent,source_start
+        nonlocal seed_sent,source_start,initializer_process
         if source_start is None:source_start=ns(message.header.stamp)
         counts['ekf']+=1
         if counts['ekf']%20==0:
@@ -99,7 +107,16 @@ def main():
             p,q=initial.pose.pose.position,initial.pose.pose.orientation
             p.x,p.y,p.z=seed['position'];q.x,q.y,q.z,q.w=seed['orientation']
             initial.pose.covariance[0]=initial.pose.covariance[7]=.25;initial.pose.covariance[35]=.04
-            pub.publish(initial);seed_sent=ns(message.header.stamp)
+            if args.use_initializer_cli:
+                from scipy.spatial.transform import Rotation
+                angles=Rotation.from_quat(seed['orientation']).as_euler('xyz')
+                command=['ros2','run','aims_racer_system','relocalize_known_map.py',str(args.map),'--pose-frame','base_link']
+                for key,value in zip(('x','y','z','roll','pitch','yaw'),list(seed['position'])+list(angles)):
+                    command.extend(['--'+key,str(value)])
+                initializer_process=spawn(command+['--timeout','20','--ros-args','-p','use_sim_time:=true'],'initializer-cli')
+            else:
+                pub.publish(initial)
+            seed_sent=ns(message.header.stamp)
             row('initialization',initial,dict(seed=seed))
     def cloud(message):
         counts['body_cloud']+=1
@@ -122,15 +139,23 @@ def main():
     try:
         audit_path=args.output/'tf-authorities.jsonl'
         audit=spawn(['ros2','run','aims_racer_system','tf_authority_audit',str(audit_path),'--ros-args','-p','use_sim_time:=true'],'tf-audit')
-        stack=spawn(['ros2','launch','aims_racer_system','fastlio_ndt_replay.launch.py',
-            'known_map:='+str(bool(args.map)).lower(),'map_file:='+str(args.map or ''),
-            'timing_trace_path:='+str((args.output/'fastlio-trace.csv').resolve())],'stack')
+        stack_command=['ros2','launch','aims_racer_system','fastlio_ndt_replay.launch.py',
+            'known_map:='+str(bool(args.map)).lower(),
+            'timing_trace_path:='+str((args.output/'fastlio-trace.csv').resolve())]
+        if args.map:
+            stack_command.append('map_file:='+str(args.map))
+        stack=spawn(stack_command,'stack')
         until=time.monotonic()+8.
-        while time.monotonic()<until:executor.spin_once(timeout_sec=.05)
+        while time.monotonic()<until:
+            if stack.poll() is not None:
+                raise RuntimeError('replay launch exited; inspect stack.log')
+            executor.spin_once(timeout_sec=.05)
         playback=spawn(['ros2','bag','play',str(args.bag),'--clock','200','--rate','1.0','--topics',
             '/livox/lidar','/livox/imu','/rear_axle/wheel_odom'],'bag')
         deadline=time.monotonic()+(args.max_seconds if args.max_seconds else (end-start)*1e-9+25.)
         while time.monotonic()<deadline and playback.poll() is None:
+            if stack.poll() is not None:
+                raise RuntimeError('replay launch exited; inspect stack.log')
             executor.spin_once(timeout_sec=.01)
             elapsed=(node.get_clock().now().nanoseconds-start)*1e-9
             if args.lifecycle_deactivate and not injection and elapsed>=args.pause_offset:
@@ -166,6 +191,7 @@ def main():
             ekf_age_ms=quantiles(odom_ages),body_cloud_age_ms=quantiles(cloud_ages),
             independent_quality_samples=sum('inlier_fraction' in e['values'] for e in health),
             health_states=dict(Counter(e['values']['state'] for e in health)),injection=injection,
+            initializer_cli_exit=initializer_process.poll() if initializer_process else None,
             lifecycle_deactivated=bool(deactivate_future and deactivate_future.done() and deactivate_future.result().success),
             first_accepted_ns=accepted[0]['source_ns'] if accepted else None,last_accepted_ns=accepted[-1]['source_ns'] if accepted else None)
         (args.output/'summary.json').write_text(json.dumps(result,indent=2)+'\n')
@@ -174,6 +200,8 @@ def main():
             raise RuntimeError('local graph produced no complete local state')
         if any(len(gids)!=1 for gids in authorities.values()):
             raise RuntimeError('dynamic localization TF edge has multiple publishers')
+        if args.use_initializer_cli and (initializer_process is None or initializer_process.poll()!=0):
+            raise RuntimeError('initialization CLI did not complete successfully')
         if args.map and (not accepted or authorities.get('map/odom') is None):
             raise RuntimeError('no trusted global localization established')
     finally:
@@ -192,7 +220,7 @@ def main():
                 process.terminate();process.wait(timeout=3.)
         eventfile.close()
         for log in logs:log.close()
-        executor.shutdown();node.destroy_node();rclpy.shutdown()
+        executor.shutdown();node.destroy_node();rclpy.try_shutdown()
 
 
 if __name__=='__main__':main()
