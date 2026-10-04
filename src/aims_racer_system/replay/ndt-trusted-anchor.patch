@@ -163,6 +163,95 @@ index 0000000..38db8e6
 +}
 +} // namespace lidar_localization
 +#endif
+diff --git a/src/component_alignment.cpp b/src/component_alignment.cpp
+index b8e0ad4..80734e1 100644
+--- a/src/component_alignment.cpp
++++ b/src/component_alignment.cpp
+@@ -411,22 +411,40 @@ lidar_localization::AlignmentAttempt PCLLocalization::runAlignmentAttempt(
+ 
+   pcl::PointCloud<pcl::PointXYZI> output_cloud;
+   rclcpp::Clock system_clock;
++  // Acquire the backend lock before releasing state, so cleanup cannot destroy
++  // the backend in the handoff window. All backend reads, including expensive
++  // nearest-neighbor fitness/Hessian work, run outside the shared state lock.
++  auto registration_execution_lock =
++    callback_state_coordinator_.lockRegistrationExecution();
++  auto * const registration = registration_;
++  auto * const ndt_registration = ndt_omp_registration_.get();
++  const bool analyze_localizability = enable_registration_localizability_diagnostics_;
+   const rclcpp::Time time_align_start = system_clock.now();
+-  // Only the backend call runs outside the shared-state lock. All seed, crop,
+-  // recovery, and pose fields remain protected, while /initialpose can acquire
+-  // the lock and reset state during this expensive operation.
+   state_lock.unlock();
+   try {
+-    auto registration_execution_lock =
+-      callback_state_coordinator_.lockRegistrationExecution();
+-    registration_->align(output_cloud, attempt_init_guess);
++    registration->align(output_cloud, attempt.init_guess);
++    const rclcpp::Time time_align_end = system_clock.now();
++    attempt.alignment_time_sec = time_align_end.seconds() - time_align_start.seconds();
++    attempt.has_converged = registration->hasConverged();
++    attempt.fitness_score = registration->getFitnessScore();
++    if (analyze_localizability && ndt_registration) {
++      Eigen::Matrix<double, 6, 6> hessian;
++      std::size_t correspondence_count = 0;
++      ndt_registration->evaluateFinalScoreHessian(hessian, correspondence_count);
++      attempt.registration_localizability =
++        lidar_localization::analyzeRegistrationHessian(hessian, correspondence_count);
++    }
++    if (attempt.has_converged) {
++      attempt.final_transformation = registration->getFinalTransformation();
++    }
+   } catch (...) {
++    registration_execution_lock.unlock();
+     state_lock.lock();
+     throw;
+   }
++  // Cleanup takes state then backend; release backend BEFORE reacquiring state.
++  registration_execution_lock.unlock();
+   state_lock.lock();
+-  const rclcpp::Time time_align_end = system_clock.now();
+-  attempt.alignment_time_sec = time_align_end.seconds() - time_align_start.seconds();
+   if (
+     shutting_down_.load(std::memory_order_acquire) ||
+     !callback_state_coordinator_.initialPoseGenerationMatches(seed_generation))
+@@ -434,22 +452,11 @@ lidar_localization::AlignmentAttempt PCLLocalization::runAlignmentAttempt(
+     attempt.target_ready = false;
+     return attempt;
+   }
+-  attempt.has_converged = registration_->hasConverged();
+-  attempt.fitness_score = registration_->getFitnessScore();
+-
+-  if (enable_registration_localizability_diagnostics_ && ndt_omp_registration_) {
+-    Eigen::Matrix<double, 6, 6> hessian;
+-    std::size_t correspondence_count = 0;
+-    ndt_omp_registration_->evaluateFinalScoreHessian(
+-      hessian, correspondence_count);
+-    attempt.registration_localizability =
+-      lidar_localization::analyzeRegistrationHessian(hessian, correspondence_count);
+-  }
+ 
+   const auto seed_metrics = lidar_localization::computeAlignmentSeedMetrics(
+     have_last_accepted_pose_,
+     last_accepted_pose_matrix_,
+-    attempt_init_guess,
++    attempt.init_guess,
+     scan_stamp_sec,
+     last_accepted_pose_time_sec_);
+   attempt.seed_translation_since_accept_m = seed_metrics.translation_since_accept_m;
+@@ -457,10 +464,9 @@ lidar_localization::AlignmentAttempt PCLLocalization::runAlignmentAttempt(
+   attempt.accepted_gap_sec = seed_metrics.accepted_gap_sec;
+ 
+   if (attempt.has_converged) {
+-    attempt.final_transformation = registration_->getFinalTransformation();
+     const auto correction_metrics =
+       lidar_localization::computeAlignmentCorrectionMetrics(
+-      attempt_init_guess,
++      attempt.init_guess,
+       attempt.final_transformation);
+     attempt.correction_translation_m = correction_metrics.translation_m;
+     attempt.correction_yaw_deg = correction_metrics.yaw_deg;
 diff --git a/src/component_lifecycle.cpp b/src/component_lifecycle.cpp
 index d4d1e64..5fbdd6f 100644
 --- a/src/component_lifecycle.cpp
@@ -318,11 +407,12 @@ index ad73e16..d934c5f 100644
      return;
 diff --git a/src/component_trusted_anchor.cpp b/src/component_trusted_anchor.cpp
 new file mode 100644
-index 0000000..9a9aea6
+index 0000000..dfc97a5
 --- /dev/null
 +++ b/src/component_trusted_anchor.cpp
-@@ -0,0 +1,161 @@
+@@ -0,0 +1,179 @@
 +#include "component_internal.hpp"
++#include <chrono>
 +#include <iomanip>
 +#include <sstream>
 +namespace {
@@ -438,6 +528,7 @@ index 0000000..9a9aea6
 +  const Eigen::Matrix4f map_odom=trusted_anchor_state_.tracking ?
 +    tf2::transformToEigen(last_good_map_to_odom_.transform).matrix().cast<float>() : trusted_initial_map_to_odom_;
 +  const Eigen::Matrix4f seed=map_odom*odom_matrix;
++  const auto processing_started=std::chrono::steady_clock::now();
 +  const auto prepared=prepareScanForRegistration(msg,scan_sec);
 +  if (!lidar_localization::isPreparedScanReady(prepared.status)) {reject("scan_preparation_failed");return;}
 +  setRegistrationSourceCloud(prepared.cloud);
@@ -445,6 +536,22 @@ index 0000000..9a9aea6
 +  const auto attempt=runAlignmentAttempt(seed,seed,scan_sec,state_lock,generation);
 +  if (shutting_down_.load(std::memory_order_acquire) ||
 +      !callback_state_coordinator_.initialPoseGenerationMatches(generation)) {return;}
++  // This timing diagnostic never advances anchor/event sequence or readiness.
++  diagnostic_msgs::msg::DiagnosticArray timing_array;
++  timing_array.header=msg->header;
++  diagnostic_msgs::msg::DiagnosticStatus timing_status;
++  timing_status.name="lidar_localization/timing";
++  timing_status.message="scan preparation, map crop, alignment and fitness";
++  auto timing_value=[&](const std::string & key,const std::string & value) {
++    diagnostic_msgs::msg::KeyValue item;item.key=key;item.value=value;
++    timing_status.values.push_back(item);
++  };
++  timing_value("epoch",trusted_anchor_process_id_+":"+std::to_string(generation));
++  timing_value("scan_processing_time_sec",preciseNumber(std::chrono::duration<double>(
++    std::chrono::steady_clock::now()-processing_started).count()));
++  timing_value("alignment_time_sec",preciseNumber(attempt.alignment_time_sec));
++  timing_array.status.push_back(timing_status);
++  anchor_status_pub_->publish(timing_array);
 +  const Eigen::Matrix4f candidate=attempt.final_transformation*odom_matrix.inverse();
 +  lidar_localization::TrustedAnchorInput input;
 +  input.scan_ns=scan_ns; input.age_sec=now().seconds()-scan_sec;

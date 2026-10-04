@@ -39,6 +39,13 @@ flowchart LR
   EKF --> MPCC
 ```
 
+NDT registration uses two OpenMP threads; its ROS executor has three threads
+with separate callback groups. Registration releases the shared state lock during
+both solving and fitness/Hessian evaluation, while retaining backend exclusion.
+Crop preparation still holds the state lock; callback latency is measured separately.
+FAST-LIO keeps the MPCC
+branch's receiver/worker separation and bounded input buffer.
+
 NDT uses same-scan EKF TF as prediction, with no additional deskew or NDT IMU
 fusion. Initialization is explicitly **base_link in map**, privately confirms
 three consistent candidates, then commits the first anchor. Tracking admission
@@ -61,7 +68,7 @@ localhost only. Desktop FAST-LIO executable is the independently built matching
 `30bc305` binary. NDT was completely cleaned and rebuilt after source freeze.
 The final fresh binary configured and activated successfully.
 
-- aims_racer_system: 32 CTest/Python cases passed.
+- aims_racer_system: 33 CTest/Python cases passed.
 - Controller: 8 tests passed, including real ROS diagnostic message adapter,
   plan cancellation, zero-speed state and manual restart contract.
 - NDT_OMP: 6 cases passed, including two numerical line-search regressions.
@@ -86,8 +93,9 @@ Each valid run has `summary.json`, `events.jsonl`, `tf-authorities.jsonl`,
 | Run | Outcome |
 | --- | --- |
 | `A-desktop-verified` | Preliminary full chain: 464 commits, accepted NDT P95 29.83 ms; initial independent diagnostic unavailable, so not final acceptance. |
-| `A-desktop-fault` | Final fault audit passed. NDT paused 0.7 s: ready revoked after 0.412 s; exactly three new commits before recovery. One publisher per dynamic TF edge. Independent inlier median 99.71%. |
-| `A-desktop-lifecycle-isolated` | Installed initializer CLI succeeded. Lifecycle deactivate revoked trust; no commits or map/odom TF after deactivate. All audit checks passed. |
+| `A-desktop-installed-final` | Installed scripts/parameters match source hashes; continuous tracking and installed initializer CLI passed. 458 commits, accepted NDT P95 28.29 ms, max 37.84 ms. 92 independent diagnostic samples, median 99.78%. |
+| `A-desktop-fault` | Historical fault audit passed on the same health core, with older installed monitor/static TF QoS; not a final-monitor rerun. NDT paused 0.7 s: ready revoked after 0.412 s; exactly three new commits before recovery. One publisher per dynamic TF edge. Independent inlier median 99.71%. |
+| `A-desktop-lifecycle-isolated` | Historical lifecycle audit with older installed monitor/static TF QoS, same health core. Installed initializer CLI succeeded. Lifecycle deactivate revoked trust; no commits or map/odom TF after deactivate. All audit checks passed. |
 | `D-desktop-isolated` | Local-only graph passed: 297 body clouds, 5,950 EKF messages, one odom/base_link owner. No matching prior map is claimed for D. |
 | `B-desktop-verified` | Tracking acceptance failed: 302 commits, later rotation/translation/fitness rejection and loss. |
 
@@ -126,10 +134,21 @@ only seed fixtures are copied as data.
 NX build initially let colcon override `CMAKE_BUILD_PARALLEL_LEVEL=2` with
 `-j8`, exhausting available RAM/swap. That owned build was stopped and NDT
 cleaned. The corrected build uses explicit `MAKEFLAGS="-j2 -l2"` and sequential
-package execution. This compiler setting is separate from NDT's two runtime
-threads. Power mode is `MAXN_SUPER`, CPU governor `schedutil`; neither was changed.
+package execution. This compiler setting is separate from NDT's two registration
+threads and three ROS executor threads. Power mode is `MAXN_SUPER`, CPU governor `schedutil`; neither was changed.
 
-NX results will be recorded after the current build and isolated replay finish.
+The initial full NX build completed all five packages in 18 min 5 s; 32 system
+cases and seven controller cases passed before the final diagnostic/native-lock
+refinement. Final-source build and replay results are recorded below after execution.
+
+Independent consistency queries now use a 0.25 m search bound, preserving the
+same inlier fraction and inlier-only RMSE, including the exact 0.25 m boundary.
+An extreme synthetic far-scan workload (2,000 queries against 990,482 map points)
+took median 3,027 ms without the bound and 0.173 ms with it, both reporting zero
+inliers. This is a query benchmark, not a measured B replay speedup.
+
+Native timing distinguishes the alignment kernel from scan preparation, crop,
+alignment and fitness evaluation together. Timing messages do not renew trust.
 
 ## Run and rollback
 

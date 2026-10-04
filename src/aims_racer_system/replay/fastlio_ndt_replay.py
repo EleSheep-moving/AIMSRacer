@@ -92,7 +92,7 @@ def main():
     pub=node.create_publisher(PoseWithCovarianceStamped,'/initialpose',10)
     lifecycle=node.create_client(ChangeState,'/lidar_localization/change_state')
     deactivate_future=None;initializer_process=None
-    seed_sent=None;source_start=None;events=[];health=[];odom_ages=[];cloud_ages=[];counts=Counter()
+    seed_sent=None;source_start=None;events=[];health=[];timings=[];odom_ages=[];cloud_ages=[];counts=Counter()
     eventfile=(args.output/'events.jsonl').open('w')
     def row(kind,message,values):
         entry=dict(kind=kind,source_ns=ns(message.header.stamp),ros_now_ns=node.get_clock().now().nanoseconds,
@@ -102,6 +102,8 @@ def main():
         for status in message.status:
             if status.name=='lidar_localization/anchor':
                 events.append(row('anchor',message,{v.key:v.value for v in status.values}))
+            elif status.name=='lidar_localization/timing':
+                timings.append(row('native_timing',message,{v.key:v.value for v in status.values}))
     def health_update(message):
         for status in message.status:
             if status.name=='aims_racer_system/localization':
@@ -197,6 +199,7 @@ def main():
         result=dict(installed_artifact_sha256=installed_hashes,bag=str(args.bag),map=str(args.map),map_sha256=hashlib.sha256(args.map.read_bytes()).hexdigest() if args.map else None,
             seed=seed,seed_sent_ns=seed_sent,counts=dict(counts),tf_authorities={edge:len(gids) for edge,gids in authorities.items()},
             accepted=len(accepted),rejection_reasons=dict(Counter(e['values'].get('reason') for e in events if e['values'].get('anchor_committed')!='true')),
+            ndt_processing_ms=quantiles([float(e['values']['scan_processing_time_sec'])*1000 for e in timings]),
             attempt_alignment_ms=quantiles([float(e['values']['alignment_time_sec'])*1000 for e in events if 'alignment_time_sec' in e['values']]),
             alignment_ms=quantiles([float(e['values']['alignment_time_sec'])*1000 for e in accepted]),
             trusted_source_age_ms=quantiles([(e['ros_now_ns']-e['source_ns'])*1e-6 for e in accepted]),

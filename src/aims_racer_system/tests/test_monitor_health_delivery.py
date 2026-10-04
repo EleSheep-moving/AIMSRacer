@@ -135,3 +135,32 @@ def test_diagnostic_missing_input_reasons_are_specific(monkeypatch):
     node.map_packets.clear()
     node.launch_quality()
     assert node.quality_error == 'quality_correction_unavailable'
+
+
+def test_quality_bounded_query_preserves_exact_boundary_and_inlier_rmse(monkeypatch):
+    import math
+    import numpy as np
+    from scipy.spatial import cKDTree
+    module = monitor_module(monkeypatch)
+    monkeypatch.setattr(module.point_cloud2, 'read_points',
+                        lambda *args, **kwargs: [(.25,0.,0.), (.1,0.,0.), (2.,0.,0.)], raising=False)
+    class QueryAudit:
+        def __init__(self):
+            self.tree = cKDTree([[0.,0.,0.]])
+        def query(self, points, **kwargs):
+            result = self.tree.query(points, **kwargs)
+            self.distances = result[0]
+            return result
+    tree = QueryAudit()
+    cloud = SimpleNamespace(header=SimpleNamespace(stamp=SimpleNamespace(sec=10,nanosec=0)))
+    result = module.quality_check(cloud,np.eye(4),np.eye(4),np.eye(4),tree)
+    assert result['quality_points'] == 3
+    assert result['inlier_fraction'] == 2/3
+    assert result['inlier_rmse_m'] == math.sqrt((.25**2+.1**2)/2)
+    assert tree.distances[0] == .25
+    assert math.isinf(tree.distances[2])
+    # An all-outlier scan retains zero inlier fraction and undefined inlier RMSE.
+    monkeypatch.setattr(module.point_cloud2, 'read_points', lambda *args, **kwargs: [(2.,0.,0.)])
+    result = module.quality_check(cloud,np.eye(4),np.eye(4),np.eye(4),tree)
+    assert result['inlier_fraction'] == 0.
+    assert math.isnan(result['inlier_rmse_m'])

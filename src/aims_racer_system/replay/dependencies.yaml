@@ -2,11 +2,13 @@ lidar_localization_ros2:
   url: https://github.com/rsasaki0109/lidar_localization_ros2.git
   commit: 5f795a6cd886a20ade4175cb70bde630ac9ec785
   patch: ndt-trusted-anchor.patch
-  patch_sha256: e1d68f1ed0850997752760c39fb7f81962aabe00608117e738ea8126f69e7b5b
-  patch_purpose: Atomic source-time trusted anchor commit with phase-specific gates and authoritative events; no registration algorithm change.
+  patch_sha256: 45ae5301e0fbfc4d9bf4f53c2f4c13850fc0e0ff037a786ffc1d36cad13e4a15
+  patch_purpose: Atomic trusted anchor commits and backend fitness outside shared
+    state lock, with separate processing timing; no registration math change.
 ndt_omp_ros2:
   url: https://github.com/rsasaki0109/ndt_omp_ros2.git
   commit: 63bf15b965b71d3a53db1757abe8e31b6114372a
   patch: ndt-line-search.patch
   patch_sha256: 58461a7c5f7508158bc4c02d823f5da83da9acae5e00bd7b7b52da95608838a6
-  patch_purpose: Restore More-Thuente search and coincident endpoint handling, with numerical regression tests.
+  patch_purpose: Restore More-Thuente search and coincident endpoint handling, with
+    numerical regression tests.

@@ -51,7 +51,7 @@ def quality_check(cloud, source_pose, correction, mount, tree):
         raise ValueError('no finite scan points')
     transform = correction @ source_pose @ mount
     world = xyz @ transform[:3, :3].T + transform[:3, 3]
-    distances, _ = tree.query(world, workers=1)
+    distances, _ = tree.query(world, distance_upper_bound=np.nextafter(.25, np.inf), workers=1)
     inliers = distances <= .25
     return dict(quality_points=len(xyz), inlier_fraction=float(inliers.mean()),
                 inlier_rmse_m=float(np.sqrt(np.mean(distances[inliers] ** 2))) if inliers.any() else float('nan'),
