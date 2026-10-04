@@ -22,18 +22,26 @@ checkout() {
 checkout lidar_localization_ros2 https://github.com/rsasaki0109/lidar_localization_ros2.git 5f795a6cd886a20ade4175cb70bde630ac9ec785
 checkout ndt_omp_ros2 https://github.com/rsasaki0109/ndt_omp_ros2.git 63bf15b965b71d3a53db1757abe8e31b6114372a
 checkout livox_driver_source https://github.com/Livox-SDK/livox_ros_driver2.git 21445540f0d100dc86a7e6df312dd70bbdb4afdf
-patch_file="$repo_dir/src/aims_racer_system/replay/ndt-full-rotation-diagnostic.patch"
-if git -C "$replay_dir/deps/lidar_localization_ros2" apply --check "$patch_file" 2>/dev/null; then
-    git -C "$replay_dir/deps/lidar_localization_ros2" apply "$patch_file"
-elif ! git -C "$replay_dir/deps/lidar_localization_ros2" apply --reverse --check "$patch_file"; then
-    echo 'NDT checkout does not match the documented diagnostic patch.' >&2
-    exit 1
-fi
-git -C "$replay_dir/deps/lidar_localization_ros2" diff HEAD --binary > "$replay_dir/observed-ndt.patch"
-cmp "$patch_file" "$replay_dir/observed-ndt.patch" || { echo 'Unexpected NDT source changes.' >&2; exit 1; }
+apply_documented_patch() {
+    local dependency="$1" patch_file="$repo_dir/src/aims_racer_system/replay/$2"
+    local expected_sha="$3" observed_sha
+    local directory="$replay_dir/deps/$dependency"
+    observed_sha="$(sha256sum "$patch_file")"
+    [[ "${observed_sha%% *}" == "$expected_sha" ]] || { echo "Unexpected patch checksum: $dependency" >&2; exit 1; }
+    if git -C "$directory" apply --check "$patch_file" 2>/dev/null; then
+        git -C "$directory" apply "$patch_file"
+    elif ! git -C "$directory" apply --reverse --check "$patch_file"; then
+        echo "$dependency does not match its documented patch." >&2
+        exit 1
+    fi
+    git -C "$directory" diff HEAD --binary > "$replay_dir/observed-$dependency.patch"
+    cmp "$patch_file" "$replay_dir/observed-$dependency.patch" || { echo "Unexpected source changes: $dependency" >&2; exit 1; }
+}
+apply_documented_patch lidar_localization_ros2 ndt-full-rotation-diagnostic.patch 5b85f3a2cc558a4bcad99d63d512ec2393ab371c80b0e7fdd3175bcc9b939ea1
+apply_documented_patch ndt_omp_ros2 ndt-line-search.patch 58461a7c5f7508158bc4c02d823f5da83da9acae5e00bd7b7b52da95608838a6
 for dependency in lidar_localization_ros2 ndt_omp_ros2 livox_driver_source; do
     [[ -z "$(git -C "$replay_dir/deps/$dependency" ls-files --others --exclude-standard)" ]] || { echo "Unexpected untracked dependency files: $dependency" >&2; exit 1; }
-    if [[ "$dependency" != lidar_localization_ros2 ]]; then
+    if [[ "$dependency" == livox_driver_source ]]; then
         git -C "$replay_dir/deps/$dependency" diff HEAD --exit-code
     fi
 done

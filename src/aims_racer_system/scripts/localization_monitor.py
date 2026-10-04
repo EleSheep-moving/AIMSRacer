@@ -157,9 +157,17 @@ class LocalizationMonitor(Node):
         # Running work carries its source stamp and is discarded on completion.
         self.quality_generation = getattr(self, 'quality_generation', 0) + 1
 
+    def synchronize_epoch(self):
+        now = self.get_clock().now().nanoseconds * 1e-9
+        if self.last_clock is not None and now < self.last_clock:
+            self.reset_epoch()
+        self.last_clock = now
+        return now
+
     def odometry(self, msg):
         if msg.header.frame_id != 'odom' or msg.child_frame_id != 'base_link':
             return
+        self.synchronize_epoch()
         stamp = stamp_seconds(msg.header.stamp)
         if self.history and stamp < self.history[-1][0]:
             self.reset_epoch()
@@ -172,6 +180,8 @@ class LocalizationMonitor(Node):
         while self.history and stamp - self.history[0][0] > 2.:
             self.history.popleft()
         self.input('ekf', msg)
+        if self.pending:
+            self.check_anchor_arrivals()
 
     def scan(self, msg):
         if msg.header.frame_id == 'livox_frame':
@@ -181,6 +191,7 @@ class LocalizationMonitor(Node):
     def pose(self, msg):
         if msg.header.frame_id != 'map':
             return
+        self.synchronize_epoch()
         try:
             stamp = stamp_nanoseconds(msg.header.stamp)
             self.poses[stamp] = matrix(msg.pose.pose.position, msg.pose.pose.orientation)
@@ -190,18 +201,26 @@ class LocalizationMonitor(Node):
         for key in list(self.poses):
             if key < self.pose_latest_stamp - 5000000000:
                 self.poses.pop(key)
+        self.check_anchor_arrivals()
 
     def transforms(self, msg):
+        updated = False
         for transform in msg.transforms:
             if (transform.header.frame_id, transform.child_frame_id) != ('map', 'odom'):
                 continue
             try:
+                if not updated:
+                    self.synchronize_epoch()
                 self.map_packets.add(stamp_nanoseconds(transform.header.stamp),
                     matrix(transform.transform.translation, transform.transform.rotation))
+                updated = True
             except ValueError:
                 continue
+        if updated:
+            self.check_anchor_arrivals()
 
     def alignment(self, msg):
+        self.synchronize_epoch()
         stamp = stamp_nanoseconds(msg.header.stamp)
         for status in msg.status:
             if status.name != 'lidar_localization_ros2/alignment':
@@ -214,6 +233,16 @@ class LocalizationMonitor(Node):
             self.pending[stamp] = (status, values, time.monotonic())
             while len(self.pending) > 20:
                 self.pending.popitem(last=False)
+        self.check_anchor_arrivals()
+
+    def check_anchor_arrivals(self):
+        # Confirm and announce a completed scan check on arrival. Waiting for
+        # the 10 Hz health heartbeat adds up to 100 ms and can hide a scan when
+        # two accepted updates land between consecutive timer callbacks.
+        previous_scan = self.health.last_scan
+        self.evaluate_pending()
+        if self.health.last_scan != previous_scan:
+            self.publish_status(self.get_clock().now().nanoseconds * 1e-9)
 
     def map_odom(self, stamp_ns, exact=True):
         transform = self.map_packets.exact(stamp_ns) if exact else self.map_packets.held(stamp_ns)
@@ -280,10 +309,7 @@ class LocalizationMonitor(Node):
             self.quality_error = str(error)
 
     def tick(self):
-        now = self.get_clock().now().nanoseconds * 1e-9
-        if self.last_clock is not None and now < self.last_clock:
-            self.reset_epoch()
-        self.last_clock = now
+        now = self.synchronize_epoch()
         self.evaluate_pending()
         if self.future is not None and self.future.done():
             try:
@@ -296,6 +322,9 @@ class LocalizationMonitor(Node):
             except Exception as error:
                 self.quality_error = str(error)
             self.future = None
+        self.publish_status(now)
+
+    def publish_status(self, now):
         ages = {key + '_age_sec': now - self.inputs.get(key, float('-inf')) for key in ('imu', 'wheel', 'ekf', 'deskew')}
         present = all(-.05 <= age < .5 for age in ages.values())
         state = self.health.state(now, present)

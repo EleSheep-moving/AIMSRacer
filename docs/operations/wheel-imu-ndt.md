@@ -58,14 +58,17 @@ NDT 使用原生 `map→odom` 和外部 `odom→base_link` 预测。内部 IMU�
 监测核对扫描诊断、扫描位姿、源时刻 EKF 和同纳秒时间戳最新到达的 TF 包。
 这样绕开 Humble TF2 对“旧锚点/新锚点同时间戳、且已有较新 timer TF”的
 查询歧义。独立质量检查只诊断，使用源时间上的持有纠正，不广播 TF，不改变
-EKF/NDT，也不代表外部定位真值。
+EKF/NDT，也不代表外部定位真值。诊断、位姿和源时间 TF 到齐并核验通过后
+立即公告新锚点，10 Hz 定时状态消息仅作为 heartbeat；不等到下一 tick 才确认。
 
 ## 固定桌面回放环境
 
-依赖及唯一上游诊断补丁记录在
-[dependencies.yaml](../../src/aims_racer_system/replay/dependencies.yaml)。补丁只
-增加完整纠正旋转角的诊断字段，用于辨别锚点门限，不改变配准/接受逻辑。
-脚本检查固定 HEAD 和完整 `git diff HEAD`，仅允许该补丁。
+依赖及两项固定补丁记录在
+[dependencies.yaml](../../src/aims_racer_system/replay/dependencies.yaml)。其中定位包补丁
+增加完整纠正旋转角的诊断字段；NDT_OMP 补丁修正 More–Thuente 步长搜索
+入口条件，并补齐端点重合时的数值处理，附两项回归测试。注册参数和接受门限保持不变。
+脚本检查固定 HEAD 和完整 `git diff HEAD`，仅允许各依赖对应的固定补丁。
+原因与对照见 [NDT 耗时调查](../reports/2026-10-05-ndt-timing-audit.md)。
 
 ```bash
 cd /home/elesheep/AIMSRacer-ndt
