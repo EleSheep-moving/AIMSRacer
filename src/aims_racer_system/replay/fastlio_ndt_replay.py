@@ -60,7 +60,10 @@ def main():
     parser.add_argument('--lifecycle-deactivate',action='store_true')
     parser.add_argument('--use-initializer-cli',action='store_true',help='exercise the installed map/base_link initialization CLI')
     parser.add_argument('--max-seconds',type=float)
+    parser.add_argument('--discovery-delay',type=float,default=5.,help='DDS discovery time before sensor publication, seconds')
     args=parser.parse_args()
+    if not np.isfinite(args.discovery_delay) or args.discovery_delay<0:
+        parser.error('--discovery-delay must be finite and nonnegative')
     if bool(args.map)!=bool(args.seed):
         parser.error('--map and --seed are required together; neither means local-only replay')
     domain=os.environ.get('ROS_DOMAIN_ID','0')
@@ -86,6 +89,7 @@ def main():
         parser.error('one SQLite bag database required')
     with sqlite3.connect(f'file:{database[0]}?mode=ro',uri=True) as connection:
         start,end=connection.execute('SELECT min(timestamp),max(timestamp) FROM messages').fetchone()
+        expected_raw_counts=dict(connection.execute('SELECT t.name,count(*) FROM messages m JOIN topics t ON t.id=m.topic_id GROUP BY t.name'))
     seed=json.loads(args.seed.read_text()) if args.seed else None
     logs=[];processes=[];paused=None;pause_start=None;injection=[]
     rclpy.init();node=Node('fastlio_ndt_replay_audit',parameter_overrides=[rclpy.parameter.Parameter('use_sim_time',value=True)])
@@ -164,7 +168,7 @@ def main():
             if stack.poll() is not None:
                 raise RuntimeError('replay launch exited; inspect stack.log')
             executor.spin_once(timeout_sec=.05)
-        playback=spawn(['ros2','bag','play',str(args.bag),'--delay','2','--clock','200','--rate','1.0','--topics',
+        playback=spawn(['ros2','bag','play',str(args.bag),'--delay',str(args.discovery_delay),'--clock','200','--rate','1.0','--topics',
             '/livox/lidar','/livox/imu','/rear_axle/wheel_odom'],'bag')
         deadline=time.monotonic()+(args.max_seconds if args.max_seconds else (end-start)*1e-9+25.)
         while time.monotonic()<deadline and playback.poll() is None:
@@ -197,6 +201,7 @@ def main():
                 authorities.setdefault(item['frame_id']+'/'+item['child_frame_id'],set()).add(item['publisher_gid'])
         accepted=[e for e in events if e['values'].get('anchor_committed')=='true']
         result=dict(installed_artifact_sha256=installed_hashes,bag=str(args.bag),map=str(args.map),map_sha256=hashlib.sha256(args.map.read_bytes()).hexdigest() if args.map else None,
+            expected_raw_counts=expected_raw_counts,full_bag_playback=playback.poll()==0,discovery_delay_sec=args.discovery_delay,
             seed=seed,seed_sent_ns=seed_sent,counts=dict(counts),tf_authorities={edge:len(gids) for edge,gids in authorities.items()},
             accepted=len(accepted),rejection_reasons=dict(Counter(e['values'].get('reason') for e in events if e['values'].get('anchor_committed')!='true')),
             ndt_processing_ms=quantiles([float(e['values']['scan_processing_time_sec'])*1000 for e in timings]),

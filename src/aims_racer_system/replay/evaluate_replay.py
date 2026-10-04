@@ -98,6 +98,9 @@ def evaluate(path):
     details['fastlio_max_pending_scans']=max((int(r['pending']) for r in trace),default=0)
     details['fastlio_dropped_trace_records']=sum(int(r['id']) for r in trace if r['event']=='trace_dropped')
     details['fastlio_trace_events']=dict(Counter(r['event'] for r in trace))
+    if summary.get('full_bag_playback'):
+        checks['raw_sensor_delivery_complete']=all(details['fastlio_trace_events'].get(event,0)==summary['expected_raw_counts'].get(topic,0)
+            for topic,event in [('/livox/lidar','lidar_received'),('/livox/imu','imu_received')])
     quality={r['values']['quality_stamp_ns']:float(r['values']['inlier_fraction']) for r in health if 'inlier_fraction' in r['values']}
     details['inlier_fraction']=quantiles(list(quality.values()))
     result=dict(checks=checks,all_checks_pass=all(checks.values()),details=details)
