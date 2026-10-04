@@ -2,7 +2,8 @@
 
 这是独立的实验定位入口。它接收原始 Livox、IMU 和后轴轮速，在保存的 PCD
 地图上定位；验收结果见 [桌面回放报告](../reports/2026-10-05-wheel-imu-ndt.md)。
-当前阶段只验证桌面原速回放，车辆部署需要另做 Orin 实测。
+已完成桌面原速回放和 [Orin NX 静止实测](../reports/2026-10-05-orin-ndt-stationary.md)。
+NX 测试发现静止 IMU 零偏导致局部航向漂移，移动验证前需要处理。
 
 ```mermaid
 flowchart LR
@@ -125,7 +126,7 @@ NDT 进程暂停。暂停只作用于该次 launch 的 NDT 子进程，恢复后
 何时实际到达；暂停整个进程包含其回调和定时器，不能解释为仅算法核心暂停。
 `ndt_replay_report.py --suite ... --output ...` 生成 CSV/JSON/PNG 与旧输出对照。
 C 长包按用户要求取消测试，其已中止片段不作为验收。套件只含上述 15 项，
-没有后续 C 回放安排。后续实车启动与静止观察当前不安排、不执行。
+没有后续 C 回放安排。后续经用户授权进行了 NX 静止测试，记录见上述 Orin 报告；移动和控制器测试尚未执行。
 
 标准测试：
 
@@ -154,3 +155,25 @@ ros2 launch aims_racer_system wheel_imu_ndt_localization.launch.py \
 通过 RViz 的 2D Pose Estimate 提供。等待 `/localization/map_valid=true`，
 同时检查匹配质量与观测年龄。车辆硬件输入、轮速标定、外参、静止陀螺仪偏置
 及 Orin 最坏延迟需要实测；目前不自动启动控制器。
+
+## NX 静止实验环境
+
+已构建环境在 `/home/aims/ndt_nx_test_20261005_5ebf163/`。传感器与测得轮速
+输入就绪后，在 NX 启动定位：
+
+```bash
+source /opt/ros/humble/setup.bash
+source /home/aims/livox_ws/install/setup.bash
+source /home/aims/AIMSRacer/install/setup.bash
+source /home/aims/ndt_nx_test_20261005_5ebf163/ws/install/setup.bash
+ros2 launch aims_racer_system wheel_imu_ndt_localization.launch.py \
+  map_file:=/home/aims/ndt_nx_test_20261005_5ebf163/evidence/stationary-map/map.pcd
+```
+
+使用 `/initialpose` 提供 map 中的后轴 base_link 位姿。这份地图只有当前架起
+位置的静止视角；换场地或移动前需要建立覆盖对应区域的地图。监测节点的
+OpenBLAS 计算固定为单线程，防止高频小矩阵计算占用额外 CPU 核。
+
+本次隔离环境另保存了 `transfer/stationary_drivers.launch.py`，只启动真实
+Livox、VESC 遥测和轮速节点。该脚本属于本地测试辅助文件，fresh checkout
+不包含。测试结束后所有本次节点已停止，重新测试需要重新启动输入。

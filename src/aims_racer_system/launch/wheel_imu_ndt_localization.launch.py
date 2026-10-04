@@ -37,6 +37,7 @@ def build_nodes(context):
                              ('alignment_status','/localization/ndt_status'),('odom_bridge_pose','/localization/odom_bridge_pose')],output='screen'),
             Node(package='aims_racer_system',executable='activate_ndt.py',parameters=[common],output='screen'),
             Node(package='aims_racer_system',executable='localization_monitor.py',
+                 additional_env={'OPENBLAS_NUM_THREADS': '1'},
                  parameters=[common,{'map_file':str(map_file),'livox_translation':geometry['livox_translation'],
                                      'livox_quaternion':quaternion,'imu_topic':get('imu_topic'),
                                      'wheel_topic':get('wheel_topic')}],output='screen')])

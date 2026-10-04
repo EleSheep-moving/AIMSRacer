@@ -173,4 +173,5 @@ colcon test --base-paths /deps/ndt_omp_ros2 --packages-select ndt_omp_ros2 \
 colcon test-result --test-result-base build/ndt_omp_ros2 --verbose
 ```
 
-C 测试仍按用户要求取消，当前不安排实车启动、静止观察或控制器测试。
+C 测试仍按用户要求取消。本桌面调查未包含实车启动、静止观察或控制器测试。
+后续单独授权的硬件测试见 [Orin NX 静止报告](2026-10-05-orin-ndt-stationary.md)。
