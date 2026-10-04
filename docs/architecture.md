@@ -167,6 +167,17 @@ reuse the incident binary. OpenMP defaults to two matching threads. The YAML
 This configuration wiring issue remains open; lowering the cap has not been
 approved as a production change.
 
+The fork source separates ROS input callbacks from one joined LIO worker. The
+worker owns conversion, IMU packaging, estimation, map updates and publishing.
+Its pending LiDAR queue defaults to two scans; overflow retains the newest scan
+and preserves all intervening IMU. IMU source gaps or buffer overflow cause an
+explicit error exit. Both inputs remain reliable; LiDAR depth remains ten and
+IMU DDS depth follows the propagation-buffer capacity (default 4096). Output
+frames, scan-end stamps and body-cloud density remain unchanged. This source
+change has a separate desktop replay
+[acceptance report](reports/2026-10-05-fastlio-thread.md); production deployment
+requires rebuilding the selected submodule commit.
+
 ```text
 map                         optional: PGO while mapping, localizer with an existing map
  └─ odom
@@ -198,11 +209,12 @@ remain disabled, and camera tracking is off.
 
 ## Upstream FAST-LIO integration
 
-Do not modify the FAST-LIO submodule. Upstream FAST-LIO currently broadcasts TF
+Maintain FAST-LIO changes in the configured fork and pin its commit in this
+repository. FAST-LIO currently broadcasts TF
 without reading a `publish_tf` configuration switch. The main-repository FAST-LIO
 launch files therefore remap its `/tf` output to `/fastlio2/tf`; this preserves raw
 LIO diagnostics while keeping global TF ownership in the main pipeline. Build the
-unmodified submodule and the main packages normally after updating either workspace.
+pinned submodule and the main packages normally after updating either workspace.
 
 TF queries for `odom -> livox_frame` return the EKF pose composed with the static
 mounting transform. Consumers needing raw LIO pose must use `/fastlio2/lio_odom`.
