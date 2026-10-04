@@ -1,0 +1,8 @@
+# Renew upstream map -> odom after initial verification. Ages and scan/map
+# consistency use identical-stamp body_cloud + raw lio_odom and are diagnostic
+# only; they never suppress TF publication. No visualization-topic dependency.
+map_tf_gate:
+  ros__parameters:
+    quality_period: 0.5        # One bounded worker checks at most 2 Hz.
+    match_distance: 0.25       # Nearest saved-map point distance (m).
+    max_check_points: 2000

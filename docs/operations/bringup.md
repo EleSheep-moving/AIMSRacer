@@ -77,6 +77,7 @@ not an additional node to start alongside the V2 driving pipeline.
 
 ## Chassis reverse transition
 
-Engaging reverse on this chassis has produced approximately 2 g of vertical shock,
+Abruptly switching to reverse while the vehicle is moving forward has produced
+an initial vertical (Z-axis) shock of approximately 2 g on this chassis,
 which can disrupt FAST-LIO's IMU assumptions. Avoid relying on localization through
 that transition; check or reinitialize it before resuming autonomous operation.

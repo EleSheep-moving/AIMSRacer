@@ -12,7 +12,7 @@ ZED 2i and RadioMaster Pocket ELRS remote.
 | Install the Orin vehicle computer | [Orin installation](docs/installation.md) |
 | Install or run an Orin / NUC vehicle computer | [Vehicle-computer deployment](docs/deployment/README.md) |
 | Run numerical or Gazebo MPCC simulation on a workstation | [`mpcc-sim` simulation guide](https://github.com/EleSheep-moving/AIMSRacer/blob/mpcc-sim/docs/simulation/README.md) |
-| Understand frames, sensor fusion and command routing | [Architecture](docs/architecture.md) |
+| Understand topic roles, frames, sensor fusion and command routing | [Architecture](docs/architecture.md) |
 | Start V2 or V3 | [Vehicle bringup](docs/operations/bringup.md) |
 | Record a bag | [Recording](docs/operations/recording.md) |
 | Use a saved PGO map for MPCC | [Known-map workflow](docs/operations/known-map-mpcc.md) |
@@ -35,7 +35,6 @@ lap. Most moving samples used about 0.85–1.15 m/s wheel speed.
 
 | Test and conditions | Observed response |
 | --- | --- |
-| Speed scale: 412 approximately straight samples at 0.4–1.4 m/s | Source-time-aligned LIO/wheel forward-speed ratio median **1.005**; retain the 3465 gain. |
 | Straight speed-mode starts: 11 events from rest | The 200 Hz raw IMU detected sustained forward acceleration after **45–60 ms** (median 52 ms). A separate command-to-wheel fit gave about **40 ms delay + 0.16 s response constant**; MPCC does not model these separately. |
 | Steering: ten neutral-to-±0.475 rad steps at 0.88–1.03 m/s | Raw-IMU yaw rate first responded after median **52 ms**; command-to-50%/90% yaw response was **109/159 ms**. |
 
@@ -64,6 +63,30 @@ MPCC cruise target is now **1.0 m/s**, consistent with the bag's operating
 speed and this candidate's curvature under the configured 1 m/s² lateral
 acceleration limit.
 
+The operator reports that this car does not move with speed-mode setpoints
+below **0.2 m/s**. `minimum_drive_speed: 0.2` maps small positive running
+proposals to that effective motor setpoint, while disabled/faulted outputs
+remain zero and stopping outputs below the threshold become zero. Physical
+speed can still pass below 0.2 m/s while accelerating or braking. This is an
+operator-supplied dead-zone assumption, not a measured longitudinal model.
+MPCC diagnostics distinguish the continuous `model_speed_command`, published
+`speed_command`, and EKF-estimated `speed`; prediction replays the actual
+selector output. See the [controller description](src/controller/README.md).
+
+The current complete-lap experiment uses horizon 10 (1.0 s), **5 Hz optimization**
+and **50 Hz command output**. Results received more than **250 ms** after
+submission are discarded without killing the solver or triggering a timeout fault.
+IPOPT is capped at **30 iterations**; nonconverged results at that limit are also
+skipped. `enforce_corridor: false` omits configured track-boundary constraints
+and footprint stop checks while retaining the reference and error diagnostics.
+Plan age defaults to `horizon × 0.8 × dt`: **0.8 s** for horizon 10 and
+dt = 0.1 s, counted from the original EKF measurement. This is separate from
+the 250 ms request-to-reply budget. Omit an explicit `plan_ttl` launch override
+to keep the horizon-derived default. Parameter units and time origins are in the
+[current runtime parameter table](src/controller/docs/usage.md#runtime-timing-parameters).
+Applied-input prediction and takeover checks are described in
+the [timing contract](src/controller/docs/implementation.md#measurement-time-computation-and-takeover).
+
 ## Documentation ownership
 
 System contracts and whole-vehicle procedures live in `docs/`. Package-specific
@@ -81,9 +104,9 @@ This project would not be possible without the use of multiple great open-source
 - 📡 [ros2_crsf_receiver](https://github.com/AndreyTulyakov/ros2_crsf_receiver.git)
 - 🔀 [ackermann_mux](https://github.com/z1047941150/ackermann_mux.git)
 - ⚡ [Veddar VESC Interface](https://github.com/f1tenth/vesc)
-- 🗺️ [FAST-LIO2_ROS2](https://github.com/liangheming/FASTLIO2_ROS2.git)
+- 🗺️ [FAST-LIO2_ROS2 (maintained fork)](https://github.com/EleSheep-moving/FASTLIO2_ROS2.git)
 
-##### 🏛️ Hardware and basic software were developed at FAST Lab, Zhejiang University.
+##### 🏛️ Hardware and basic software were developed at PolyU AIMS Lab.
 ##### 🎓 Currently pursuing MPhil at PolyU AIMS Lab, with ongoing development in progress.
 
 ---

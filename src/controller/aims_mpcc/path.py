@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import casadi as ca
 from scipy.optimize import minimize_scalar
-from .vendor.track import PeriodicCubic
+from .vendor.track import PeriodicQuintic
 from .config import REVERSE_SPEED_TOLERANCE
 
 
@@ -45,7 +45,7 @@ class ReferencePath:
         if len(points)<4 or np.any(segments<1e-8): raise ValueError('zero-length path segment')
         _check_intersections(points)
         self.s=np.r_[0,np.cumsum(segments)]; self.length=float(self.s[-1])
-        self.curve=PeriodicCubic(self.s,closed,self.length,'aims_reference')
+        self.curve=PeriodicQuintic(self.s,closed,self.length,'aims_reference')
         probes=np.linspace(0,self.length,max(100,len(points)*5),endpoint=False)
         if np.min(np.linalg.norm(self.curve.numpy(probes,1),axis=1))<1e-6: raise ValueError('zero tangent')
         self.reference=self

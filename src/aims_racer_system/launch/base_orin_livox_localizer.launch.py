@@ -181,7 +181,8 @@ def generate_launch_description():
         name="lio_node",
         output="screen",
         parameters=[{'config_path': LaunchConfiguration('lio_config')}],
-        remappings=[('/tf', '/fastlio2/tf')]
+        remappings=[('/tf', '/fastlio2/tf'),
+                    ('world_cloud', '/fastlio2/visualization/world_cloud')]
     )
 
     localizer_node = Node(

@@ -6,7 +6,8 @@
 	url = https://github.com/z1047941150/vesc.git
 [submodule "FASTLIO2_ROS2"]
 	path = src/FASTLIO2_ROS2
-	url = https://github.com/liangheming/FASTLIO2_ROS2.git
+	url = https://github.com/EleSheep-moving/FASTLIO2_ROS2.git
+	branch = main
 [submodule "src/zed-ros2-wrapper"]
 	path = src/zed/zed-ros2-wrapper
 	url = https://github.com/stereolabs/zed-ros2-wrapper.git

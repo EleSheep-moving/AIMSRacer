@@ -6,12 +6,12 @@ Controls: longitudinal acceleration, steering command, virtual progress speed.
 import time
 import casadi as ca
 import numpy as np
-from .config import VehicleConfig, REVERSE_SPEED_TOLERANCE
+from .config import VehicleConfig
 from .path import ReferencePath
 from .vendor import global_kinematic_model, contouring_lag, normalized_cost
 
 class MPCCSolver:
-    def __init__(self, path: ReferencePath, config: VehicleConfig, horizon=15, dt=.1, jit_enabled=False, native_options=None):
+    def __init__(self, path: ReferencePath, config: VehicleConfig, horizon=10, dt=.1, jit_enabled=False, native_options=None):
         config.validate(require_verified=True)
         path.validate_config(config)
         if isinstance(horizon, bool) or int(horizon)!=horizon or horizon<1: raise ValueError('positive integer horizon required')
@@ -29,7 +29,7 @@ class MPCCSolver:
             raise ValueError('dt must be a multiple of 20 ms')
         self.weights=dict(normalized_cost.RATIOS)
         self.weights.pop('steer_rate');self.weights.pop('vtheta_rate')
-        self.weights.update(speed=self.weights['speed']*1000,heading=4.)
+        self.weights.update(speed=config.speed_weight,heading=config.heading_weight)
         self.corner_offsets=[(along,sy*config.half_width)
                              for along in config.longitudinal_offsets() for sy in (1,-1)]
         self.jit_enabled=bool(jit_enabled)
@@ -72,6 +72,9 @@ class MPCCSolver:
         self.applied = op.parameter(3)  # acceleration, steering endpoint, previous steering ramp rate
         self.steering_bias = op.parameter()
         self.speed_refs = op.parameter(self.n + 1)
+        self.cost_weights = op.parameter(7)
+        contour_w, heading_w, speed_w, steering_w, rate_w, rate_accel_w, terminal_w = (
+            self.cost_weights[i] for i in range(7))
         self.map_alignment = op.parameter(3) if self.path.frame_id == 'map' else None
         op.subject_to(x[:, 0] == self.initial)
         op.subject_to(op.bounded(0., x[3, :], self.config.max_speed))
@@ -81,6 +84,7 @@ class MPCCSolver:
         weights = self.weights
         objective = 0
         self.margins = []
+        self.corridor_rows = []
 
         def geometry(state):
             # Dynamics and warm starts remain continuous in odom. The persistent
@@ -101,7 +105,9 @@ class MPCCSolver:
             for along, across in self.corner_offsets:
                 corner = reference_state[:2] + along * heading + across * left
                 lateral = ca.dot(corner - ref["xy"], normal)
-                op.subject_to(op.bounded(-self.path.right_width, lateral, self.path.left_width))
+                if self.config.enforce_corridor:
+                    op.subject_to(op.bounded(-self.path.right_width, lateral, self.path.left_width))
+                    self.corridor_rows.append(op.ng - 1)
                 self.margins.extend((self.path.left_width - lateral, self.path.right_width + lateral))
             # Periodic, wrap-safe heading error: 2*(1-cos(error)) ~ error^2.
             ref["heading_error_squared"] = 2 * (1 - ca.dot(heading, tangent))
@@ -112,6 +118,7 @@ class MPCCSolver:
         sp, sb = ca.MX.sym("previous_steering"), ca.MX.sym("steering_bias")
         end, stages = self._dynamics(sx, su, steering_bias=sb, previous_steering=sp)
         transition = ca.Function("f1tenth_interval", [sx, su, sp, sb], [end, ca.horzcat(*stages)]).expand()
+        self.transition = transition
 
         for k in range(self.n):
             previous = self.applied if k == 0 else u[:2, k - 1]
@@ -131,17 +138,17 @@ class MPCCSolver:
             ec, el, ref = geometry(x[:, k])
             geometry(stages[(self.substeps + 1) // 2])
             delta_ff = ca.atan(self.wheelbase * (1 + self.understeer_coefficient * x[3, k] ** 2) * ref["curvature"]) - self.steering_bias
-            objective += (ec / .05) ** 2 + weights["lag"] * (el / .20) ** 2
-            objective += weights["heading"] * ref["heading_error_squared"] / .05 ** 2
-            objective += weights["speed"] * ((x[3, k] - self.speed_refs[k]) / .60) ** 2
+            objective += contour_w * (ec / .05) ** 2 + weights["lag"] * (el / .20) ** 2
+            objective += heading_w * ref["heading_error_squared"] / .05 ** 2
+            objective += speed_w * ((x[3, k] - self.speed_refs[k]) / .60) ** 2
             objective += weights["progress"] * ((u[2, k] - self.speed_refs[k]) / .60) ** 2
-            objective += weights["steer"] * ((u[1, k] - delta_ff) / .314159) ** 2
+            objective += steering_w * ((u[1, k] - delta_ff) / .314159) ** 2
             objective += weights["accel"] * (u[0, k] / 2.) ** 2
-            objective += .3 * (rate / self.steer_rate) ** 2 + .3 * ((rate - previous_rate) / (self.steer_acceleration * self.dt)) ** 2
+            objective += rate_w * (rate / self.steer_rate) ** 2 + rate_accel_w * ((rate - previous_rate) / (self.steer_acceleration * self.dt)) ** 2
         ec, el, ref = geometry(x[:, -1])
-        objective += 3 * ((ec / .05) ** 2 + weights["lag"] * (el / .20) ** 2
-                          + weights["heading"] * ref["heading_error_squared"] / .05 ** 2
-                          + weights["speed"] * ((x[3, -1] - self.speed_refs[-1]) / .60) ** 2)
+        objective += terminal_w * (contour_w * (ec / .05) ** 2 + weights["lag"] * (el / .20) ** 2
+                          + heading_w * ref["heading_error_squared"] / .05 ** 2
+                          + speed_w * ((x[3, -1] - self.speed_refs[-1]) / .60) ** 2)
         op.minimize(objective)
         # Standalone diagnostics retain their default; the worker supplies cached
         # -O2 callbacks in a private working directory.
@@ -149,9 +156,10 @@ class MPCCSolver:
                    "jit_options": {"flags": ["-O0"]}}
         options.update(self.native_options)
         op.solver("ipopt", options, {"print_level": 0, "sb": "yes", "linear_solver": "mumps",
-                   "max_iter": 100, "tol": 1e-5, "acceptable_tol": 1e-4, "acceptable_iter": 3,
+                   "max_iter": self.config.solver_max_iterations, "tol": 1e-5, "acceptable_tol": 1e-4, "acceptable_iter": 3,
                    "warm_start_init_point": "yes"})
         self.op, self.x, self.u = op, x, u
+        self.corridor_rows = np.asarray(self.corridor_rows, dtype=int)
 
     def _warm_start(self, initial, applied, refs, elapsed):
         states=[initial]
@@ -164,8 +172,8 @@ class MPCCSolver:
         controls=[]
         for k in range(self.n):
             state=states[-1]
-            ref=self.path.at(state[4])
             if shifted is None:
+                ref=self.path.at(state[4])
                 desired_acceleration=(refs[k+1]-state[3])/self.dt
                 desired_steering=np.arctan(self.wheelbase*(1+self.understeer_coefficient*state[3]**2)*ref['curvature'])
             else:
@@ -181,8 +189,8 @@ class MPCCSolver:
             tangent_norm=np.linalg.norm(self.path.curve.numpy(state[4],1))
             progress_speed=max(0.,state[3]+.5*acceleration*self.dt)/tangent_norm
             control=np.array([acceleration,next_steering,min(self.config.max_speed,progress_speed)])
-            end,_=self._dynamics(state,control,symbolic=False,previous_steering=steering)
-            states.append(end);controls.append(control);steering=next_steering
+            end,_=self.transition(state,control,steering,0.)
+            states.append(np.asarray(end).reshape(-1));controls.append(control);steering=next_steering
         return np.asarray(states),np.asarray(controls)
 
     def solve(self, state, previous, speed_refs=None, elapsed=.1, map_alignment=None):
@@ -191,8 +199,8 @@ class MPCCSolver:
         applied=np.array([previous[k] for k in ['acceleration','steering','steering_rate']],float)
         if not np.isfinite(measured).all() or not np.isfinite(applied).all() or not np.isfinite(elapsed) or elapsed<=0:
             raise ValueError('finite state, previous command and positive elapsed required')
-        if measured[3] < -REVERSE_SPEED_TOLERANCE: raise ValueError('reverse motion unsupported')
-        # Match the supervisor deadband; the forward-only OCP starts at zero.
+        # The forward-only OCP uses a nonnegative initial speed. Signed speed
+        # remains in supervisor telemetry; it is not a range-rejection gate.
         measured[3] = max(0., measured[3])
         refs=np.full(self.n+1,self.config.cruise_speed) if speed_refs is None else np.asarray(speed_refs,float)
         if refs.shape!=(self.n+1,) or not np.isfinite(refs).all() or np.any(refs<0) or np.any(refs>self.config.max_speed):
@@ -216,6 +224,9 @@ class MPCCSolver:
         initial=np.r_[measured[:2],yaw,measured[3],theta,measured[4]]
         self.op.set_value(self.initial,initial);self.op.set_value(self.applied,applied)
         self.op.set_value(self.steering_bias,0.);self.op.set_value(self.speed_refs,refs)
+        self.op.set_value(self.cost_weights, [self.config.contour_weight, self.config.heading_weight,
+            self.config.speed_weight, self.config.steering_weight, self.config.steering_rate_weight,
+            self.config.steering_acceleration_weight, self.config.terminal_weight])
         warm_states,warm_u=self._warm_start(initial,applied,refs,elapsed)
         self.op.set_initial(self.x,np.asarray(warm_states).T);self.op.set_initial(self.u,warm_u.T)
         try:
@@ -223,17 +234,23 @@ class MPCCSolver:
         except RuntimeError as exc:
             self.previous=None
             return dict(success=False,status=self.op.stats().get('return_status','exception'),
+                        iterations=int(self.op.stats().get('iter_count',0)),
                         solve_time_s=time.perf_counter()-started,error=str(exc))
         states=np.asarray(solution.value(self.x)).reshape(6,self.n+1).T
         controls=np.asarray(solution.value(self.u)).reshape(3,self.n).T
         stats=self.op.stats()
         g,lower,upper=(np.asarray(solution.value(item)).reshape(-1) for item in (self.op.g,self.op.lbg,self.op.ubg))
         violation=float(np.maximum(np.maximum(lower-g,g-upper),0).max())
+        rows=self.corridor_rows
+        minimum_margin=(float(np.minimum(upper[rows]-g[rows],g[rows]-lower[rows]).min())
+                        if len(rows) else None)
         success=bool(stats['success'] and violation<1e-4 and np.isfinite(states).all() and np.isfinite(controls).all())
         result=dict(success=success,status=stats['return_status'],states=states.tolist(),controls=controls.tolist(),
-                    solve_time_s=time.perf_counter()-started,iterations=int(stats['iter_count']),constraint_violation=violation,
-                    minimum_predicted_margin_m=float(np.min(solution.value(ca.vertcat(*self.margins)))))
+                    iterations=int(stats['iter_count']),constraint_violation=violation,
+                    minimum_predicted_margin_m=minimum_margin,
+                    corridor_enforced=self.config.enforce_corridor)
         if success:
             self.previous=dict(states=states,controls=controls);self.previous_theta=theta;self.previous_yaw=yaw
         else: self.previous=None
+        result['solve_time_s']=time.perf_counter()-started
         return result

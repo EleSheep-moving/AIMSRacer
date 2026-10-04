@@ -43,11 +43,12 @@ that LIO is still updating.
   not establish an immediate stop or a specific braking force.
 - **Measure Orin timing and estimator delay.** Check actual LIO/IMU/VESC source
   stamps, arrival delays, clock consistency, solve p95/p99 and deadline misses.
-  Targets are 200 Hz EKF output, 10 Hz solving, 50 Hz commands; these are not
+  Default targets are 200 Hz EKF output, 5 Hz solving and 50 Hz commands; these are not
   measured hardware rates. Run `prepare_solver` with the selected path and vehicle
   configuration before startup; online workers require the cached native solver.
-  Warm-up must finish before READY. Delayed-LIO
-  smoothing/history and prediction settings still need joint validation.
+  Warm-up must finish before READY. Delayed-LIO history replay is enabled after
+  an isolated bag replay; check the actual 200 Hz output rate, CPU load and
+  source-time pose error with the full vehicle stack running.
 - **Tie the reference to its localization frame.** An `odom` reference needs the
   same uninterrupted localization session. A `map` reference needs the matching
   saved PGO map, successful relocalization and a fresh `map -> odom` transform;
@@ -68,9 +69,10 @@ Use the [recording guide](recording.md) for sensor and controller evidence.
 
 | Missing part | Practical consequence / next work |
 |---|---|
-| Delayed LIO measurement replay | Prior synthetic 80 ms delay produced substantial position error; VESC vx does not demonstrate this issue is solved. Validate estimator history and CPU cost. |
-| Sensor-to-actuation prediction alignment | Solver starts from a measured state and skips ahead on its new plan, without fully propagating actual applied controls to actuation time. |
-| Manual-driving shadow evaluation | Shadow requires autonomous RC selection and uses hypothetical steering while active. It is a preview, not validated prediction tracking during manual laps. |
+| Full-stack delayed LIO validation | A 2 s EKF history substantially reduced yaw distortion in the incident-input replay; validate estimator rate, CPU cost and source-time pose error on the moving vehicle. It does not remove LIO delay. |
+| LIO build and cumulative delay | Rebuild the fork containing the corrected rotation Jacobian. The configured five-iteration cap remains unwired (effective default ten). Record raw scans, per-frame stages/iterations, queue depth and system load; the incident's roughly one-second backlog is not yet reproduced. See the [LIO/EKF findings](../reports/2026-10-04-lio-delay.md). |
+| Sensor-to-actuation prediction alignment | The bridge propagates the source-time state using actual forwarded command history and forecasts to scheduled takeover. The longitudinal response remains an acceleration-bounded approximation; validate physical response and handover errors on the moving vehicle. |
+| Manual-driving MPCC evaluation | Explicitly enabled MPCC calculates in manual mode and uses actual forwarded command history. Moving-lap prediction accuracy still needs validation. |
 | Identified actuator / dynamic model | Current kinematic model lacks tire-slip dynamics and an identified longitudinal speed-loop response. Validate held-out prediction error before raising limits. |
 | Known-map validation | Map-frame references, map-file identity checks and a relocalization add-on exist, but the full restart/moving-car workflow has not been validated. The upstream check latches after initial ICP success and does not report later ICP quality. |
 | Progress association and track boundaries | Global nearest projection and constant tangent-strip corridors need improvement for nearby track sections or complex boundaries. |

@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.5)
 
 project(ackermann_mux)
 
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
@@ -12,6 +16,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rcl_interfaces REQUIRED)
 find_package(rclpy REQUIRED)
 
 find_package(std_msgs REQUIRED)
@@ -37,8 +42,16 @@ add_executable(ackermann_mux
 )
 ament_target_dependencies(ackermann_mux ${DEPENDENCIES})
 
+add_library(joystick_selector STATIC src/joystick_selector.cpp)
+target_compile_features(joystick_selector PUBLIC cxx_std_17)
+target_include_directories(joystick_selector PUBLIC include)
+add_executable(joystick_control_v2 src/joystick_control_v2.cpp)
+target_link_libraries(joystick_control_v2 joystick_selector)
+ament_target_dependencies(joystick_control_v2
+  rclcpp rcl_interfaces std_msgs ackermann_msgs crsf_receiver_msg)
+
 install(
-  TARGETS ackermann_mux
+  TARGETS ackermann_mux joystick_control_v2
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
@@ -46,12 +59,10 @@ install(
 
 # Pending to test ROS2 migration
 install(
- PROGRAMS
+  PROGRAMS
   scripts/joystick_control.py
-  scripts/joystick_control_v2.py
-  scripts/joystick_control_v2_ch3_ch1.py
   scripts/cmd_vel_to_ackermann_drive.py
- DESTINATION lib/${PROJECT_NAME}
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 foreach(dir launch config)

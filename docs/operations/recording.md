@@ -26,8 +26,12 @@ For a controller experiment, append `/drive /mpcc/status /mpcc/reference
 Append `/fastlio2/tf` only when the isolated raw LIO TF is useful for diagnostics;
 raw LIO pose is already available in `/fastlio2/lio_odom`.
 For a known-map run, also record `/localization/map_valid`,
-`/localization/map_sha256` and `/localizer/raw_tf` so the accepted alignment and
-the localizer's source transform can be reviewed with `/tf`.
+`/localization/map_sha256`, `/localization/status`, `/localizer/raw_tf` and
+`/fastlio2/body_cloud` so the source correction, consistency diagnostics and
+identical-stamp raw scan/pose pair can be reviewed. The optional
+`/fastlio2/visualization/world_cloud` is not required for localization replay;
+record it only when explicitly investigating visualization output. See the
+[topic contracts](../architecture.md#topics-and-compensation).
 
 Stop with Ctrl-C and inspect the result:
 
@@ -55,6 +59,16 @@ clouds and IMU if you need to inspect those stages.
 P50 is the median; P95 is the age below which 95% of samples fall. Report the
 sample window, operating conditions and clock basis with those numbers. A fresh
 EKF output stamp does not prove old LIO measurements were correctly replayed.
+
+The 2026-10-04 incident bag omitted raw LiDAR. Its delayed LIO outputs can be
+replayed to study EKF behavior, but cannot drive a new LIO computation to
+reproduce the original accumulating backlog. See the
+[incident findings](../reports/2026-10-04-lio-delay.md). For a timing investigation,
+keep raw scans and IMU from startup, record the effective binary checksum and
+map/session state, and collect CPU load, frequency and temperature alongside
+the bag. Per-frame input waits, callback/core durations, matching iterations,
+queue depth and tree-rebuild events require additional LIO instrumentation;
+the shipped node does not currently expose that complete set of measurements.
 
 ## MPCC reference recording
 

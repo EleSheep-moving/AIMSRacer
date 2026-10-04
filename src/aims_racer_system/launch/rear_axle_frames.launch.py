@@ -42,7 +42,7 @@ def build_nodes(context):
         Node(package='aims_racer_system', executable='lio_to_rear_axle.py',
              parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion,
                           'publish_tf': mapping}], output='screen'),
-        Node(package='aims_racer_system', executable='imu_to_rear_axle.py',
+        Node(package='aims_racer_system', executable='imu_to_rear_axle',
              parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion}], output='screen'),
     ]
 

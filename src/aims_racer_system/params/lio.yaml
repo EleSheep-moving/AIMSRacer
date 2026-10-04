@@ -3,6 +3,9 @@ lidar_topic: /livox/lidar
 body_frame: base_link
 world_frame: odom
 print_time_cost: false
+publish_body_cloud: true
+publish_world_cloud: false  # Optional /fastlio2/visualization/world_cloud; no localization consumer.
+publish_path: false
 publish_tf: false  # 控制是否发布tf树，true为发布，false为不发布
 
 lidar_filter_num: 6

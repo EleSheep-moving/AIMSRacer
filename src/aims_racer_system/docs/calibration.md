@@ -21,7 +21,7 @@ PP 工作流默认使用 `/odometry/filtered`；非 PP 工作流默认使用 `/r
 
 ## 0.1) 构建与环境准备（必须）
 
-标定脚本通过 `ament_python` 安装为可执行文件，首次使用或脚本更新后请先编译：
+标定脚本仍以 Python 可执行文件安装；本包通过 `ament_cmake` 同时构建 C++ IMU 节点。首次使用或脚本更新后请先编译：
 
 ```bash
 cd ~/AIMSRacer

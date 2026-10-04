@@ -121,10 +121,14 @@ def generate_launch_description():
     # 当前车辆：CH3 油门、CH1 转向、CH8 标定、CH10 限幅。
     joystick_control_v2_node = Node(
         package='ackermann_mux',
-        executable='joystick_control_v2_ch3_ch1.py',
+        executable='joystick_control_v2',
         name='joystick_control_v2_ch3_ch1',
         output='screen',
         parameters=[
+            {'channel_profile': 'steering_ch1_throttle_ch3_aux_ch5_to_ch10'},
+            {'rc_timeout_sec': 0.2},
+            {'nav_timeout_sec': 0.2},
+            {'calib_timeout_sec': 0.2},
             {'limit_min_value': 172},
             {'limit_max_value': 1810},
             {'channel_min_range': 172},
@@ -140,16 +144,9 @@ def generate_launch_description():
             {'current_limit_min_current': 3.0},
             {'current_limit_max_current': 20.0},
             
-            # 占空比模式参数
-            {'duty_channel8_min_duty': 0.05},
-            {'duty_channel8_max_duty': 0.3},
-            
             # 转向参数
-            {'steering_channel_8_min_value': -0.4751},
-            {'steering_channel_8_max_value': 0.4751},
-            
-            # 控制模式选择 (SPEED, CURRENT, DUTY)
-            {'esc_mode': 'SPEED'}
+            {'steering_limit': 0.4751},
+            {'steering_reverse': True},
         ]
     )
     
@@ -185,7 +182,8 @@ def generate_launch_description():
         name="lio_node",
         output="screen",
         parameters=[{'config_path': LaunchConfiguration('lio_config')}],
-        remappings=[('/tf', '/fastlio2/tf')]
+        remappings=[('/tf', '/fastlio2/tf'),
+                    ('world_cloud', '/fastlio2/visualization/world_cloud')]
     )
     
     # PGO (Pose Graph Optimization) Node for Loop Closure

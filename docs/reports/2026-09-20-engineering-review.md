@@ -65,13 +65,18 @@ Recommendation: characterize speed-loop and steering response with modest maneuv
 
 The current 0.5 m/s cruise, 1 m/s maximum and 1 m/s² lateral limit deliberately prohibit racing. For example, 5 m/s on a 5 m radius requires 5 m/s² lateral acceleration, above that configured envelope.
 
-## 5. P2: manual-driving shadow mode still cannot perform the advertised workflow
+## 5. P2: manual evaluation and actuator authority were coupled
 
-Locations: `aims_mpcc/node.py:135`, `node.py:162`, `runtime.py:99`.
+The reviewed implementation required autonomous RC selection to activate
+prediction and cancelled calculation on manual takeover. It also used
+hypothetical proposed commands to estimate steering rather than actual
+RC-forwarded commands, preventing useful evaluation while a person drove.
 
-Shadow activation still requires autonomous RC selection, and manual takeover deactivates it. Active shadow also estimates steering from hypothetical preview commands rather than actual RC-forwarded commands. This is unsuitable for judging controller predictions while a person drives.
-
-Recommendation: separate preview activation from actuator authority and always estimate the actual vehicle state from applied commands; keep hypothetical rollout steering separate. This is an existing acknowledged limitation, not fixed by the frame migration.
+Resolved on 2026-10-03: MPCC has one proposed-command output on `/drive`;
+explicit activation works with fresh manual selector status, and only actual
+`/ackermann_cmd` feedback enters prediction history. RC selection determines
+execution authority independently. See the [current workflow](../../src/controller/docs/usage.md#manual-evaluation-and-one-lap-execution).
+Moving-car prediction accuracy remains to be validated.
 
 ## 6. P1 deployment precondition: recorded odom references have no session alignment
 
@@ -96,4 +101,4 @@ Recommendation: add progress-local association and physically surveyed corridor 
 - At the review checkpoint, FAST-LIO TF suppression depended on a local source modification; full FAST-LIO build/runtime had not been validated.
 - The previous 86 passing tests remain useful for software plumbing and low-speed synthetic checks. They do not override the newly demonstrated 5 m/s estimator problems.
 
-Recommended order: resolve findings 1–2; repair manual shadow evaluation; verify geometry/frame alignment; collect low-speed identification/timing data; then increase speed using quantified estimator and controller errors.
+Recommended order: resolve findings 1–2; verify manual MPCC evaluation; verify geometry/frame alignment; collect low-speed identification/timing data; then increase speed using quantified estimator and controller errors.

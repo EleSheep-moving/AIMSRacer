@@ -1,7 +1,6 @@
 """Clock-explicit command supervision; no ROS or optimizer dependencies."""
 from dataclasses import dataclass, asdict
 import math
-from .config import REVERSE_SPEED_TOLERANCE
 
 
 def clip(value, lower, upper):
@@ -37,18 +36,34 @@ class Command:
 class Supervisor:
     STATE_TIMEOUT = .10
     MODE_TIMEOUT = .10
-    PLAN_TTL = .25
+    PLAN_TTL = 10 * .8 * .1  # Default horizon * allowed age fraction * interval.
+    HANDOVER_TOLERANCE = .0005  # sub-ms timer jitter, not a control interval
+    HANDOVER_STATE_LIMITS = dict(position=.30, yaw=math.radians(30),
+                                 speed=.30, steering=math.radians(20))
+    HANDOVER_COMMAND_LIMITS = dict(command_speed=.30,
+                                   command_steering=math.radians(20))
 
-    def __init__(self, config, length):
+    def __init__(self, config, length, plan_ttl=PLAN_TTL, handover_delay=.10):
         self.config, self.length = config, float(length)
+        if not math.isfinite(plan_ttl) or plan_ttl<=0:
+            raise ValueError('Positive finite plan lifetime required')
+        self.PLAN_TTL=plan_ttl
+        if not math.isfinite(handover_delay) or not 0<handover_delay<plan_ttl:
+            raise ValueError('Handover delay must be positive and shorter than plan lifetime')
+        self.handover_delay=handover_delay
         self.status, self.reason = 'READY', 'Waiting for fresh inputs'
         self.state = None
         self.state_received = self.mode_received = -math.inf
         self.mode = False
         self.generation = 0
         self.plan = None
+        self.pending_plan = None
+        self.rejected_plans = 0
+        self.handover_error = None
         self.started = self.last_tick = None
         self.progress = self.wrapped_progress = 0.
+        self.start_progress = 0.
+        self.lap_goal = self.length
         self.cross_track = self.heading_error = 0.
         self.last_command = Command(0., 0.)
         self.last_acceleration = 0.
@@ -63,6 +78,7 @@ class Supervisor:
         if self.status != 'FAULT':
             self.generation += 1
         self.status, self.reason, self.plan = 'FAULT', str(reason), None
+        self.pending_plan = None
         self.last_command = Command(0., self.last_command.steering)
         self.last_acceleration = 0.
         self.last_steering_rate = 0.
@@ -78,9 +94,6 @@ class Supervisor:
                                 self.config.max_speed*max(dt, 0)+.15 or
                                 abs(angle_difference(state.yaw, self.state.yaw)) > .5):
                 self.fault('Localization discontinuity')
-        if state.speed < -REVERSE_SPEED_TOLERANCE or state.speed > self.config.max_speed+.2:
-            if self.active:
-                self.fault('Measured speed outside operating range')
         if self.active:
             delta = (progress-self.wrapped_progress+self.length/2) % self.length-self.length/2
             self.progress += delta
@@ -90,27 +103,29 @@ class Supervisor:
 
     def set_mode(self, enabled, received):
         self.mode, self.mode_received = bool(enabled), received
-        if self.active and not enabled:
-            self.fault('Manual takeover or autonomy not selected')
 
     def fresh(self, now):
         return (self.state is not None and 0 <= now-self.state_received <= self.STATE_TIMEOUT
-                and self.mode and 0 <= now-self.mode_received <= self.MODE_TIMEOUT)
+                and 0 <= now-self.mode_received <= self.MODE_TIMEOUT)
 
     def start(self, now):
         if not self.fresh(now):
-            raise ValueError('Fresh odometry and autonomous speed-mode selection required')
-        if self.state.speed < -REVERSE_SPEED_TOLERANCE:
-            raise ValueError('reverse motion unsupported')
+            raise ValueError('Fresh odometry and RC selector status required')
         if abs(self.state.speed) > .1:
             raise ValueError('Start requires a stationary vehicle')
-        if (min(self.wrapped_progress, self.length-self.wrapped_progress) > .2
-                or abs(self.cross_track) > .15 or abs(self.heading_error) > math.radians(15)):
-            raise ValueError('Start requires alignment within 0.2 m of the reference start')
+        # The ROS adapter checks the full body against the configured corridor
+        # before starting. A second fixed centerline-distance gate can reject
+        # valid starting poses on a wide corridor.
+        if abs(self.heading_error) > math.radians(30):
+            raise ValueError('Start requires heading error within 30 degrees of the nearest path point')
         self.generation += 1
         self.status, self.reason, self.plan = 'RUNNING', '', None
+        self.pending_plan = None
+        self.handover_error = None
         self.started = self.last_tick = now
-        self.progress = self.wrapped_progress if self.wrapped_progress < self.length/2 else self.wrapped_progress-self.length
+        self.start_progress = self.wrapped_progress
+        self.progress = self.start_progress
+        self.lap_goal = self.start_progress+self.length
         self.stationary_since = None
         self.last_command = Command(0., self.state.steering)
         self.last_acceleration = 0.
@@ -118,7 +133,13 @@ class Supervisor:
 
     def stop(self):
         if self.active:
-            self.status, self.reason = 'STOPPING', 'Operator stop requested'
+            if self.mode:
+                self.status, self.reason = 'STOPPING', 'Operator stop requested'
+            else:
+                self.status, self.reason, self.plan = 'READY', 'Controller disabled in manual mode', None
+                self.pending_plan = None
+                self.last_command = Command(0., self.last_command.steering)
+                self.last_acceleration = self.last_steering_rate = 0.
 
     def accept(self, result, now):
         if not self.active or result.get('generation') != self.generation:
@@ -131,28 +152,90 @@ class Supervisor:
                      and all(len(row)==3 for row in result['controls'])
                      and math.isfinite(result['constraint_violation'])
                      and result['constraint_violation'] < 1e-4
-                     and 0 <= now-result['stamp'] <= self.PLAN_TTL)
+                     and 0 <= now-result['source_stamp'] <= self.PLAN_TTL)
+            valid = (valid and result['source_stamp']<=result['submitted_at']+1e-9
+                         and result['submitted_at']<=result['stamp']+1e-9
+                         and math.isclose(result['stamp']-result['submitted_at'],self.handover_delay,
+                                          rel_tol=0.,abs_tol=1e-6))
         except (KeyError, TypeError, ValueError):
             valid = False
         if not valid:
             self.fault('Invalid, failed, or expired solver result'); return False
-        self.plan = result
+        # A result can arrive early; it must not change the input prefix
+        # used to predict its own initial state. Missing epochs are rejected.
+        self.pending_plan = result
+        return True
+
+    def activate(self,now,actual,actual_command=None):
+        """Activate at the scheduled epoch and record prediction error."""
+        result=self.pending_plan
+        if result is None or now<result['stamp']-self.HANDOVER_TOLERANCE:
+            return False
+        self.pending_plan=None
+        if not self.active or result.get('generation')!=self.generation:
+            return False
+        if not 0<=now-result['source_stamp']<=self.PLAN_TTL:
+            self.fault('Expired plan at handover');return False
+        expected=result['states'][0]
+        self.handover_error=dict(position=math.hypot(actual.x-expected[0],actual.y-expected[1]),
+                                yaw=abs(angle_difference(actual.yaw,expected[2])),
+                                speed=abs(actual.speed-expected[3]),
+                                steering=abs(actual.steering-expected[5]))
+        # These differences concern the MPCC prediction and its executed input
+        # prefix, independently of point-cloud or localization diagnostics.
+        limits=dict(self.HANDOVER_STATE_LIMITS)
+        if actual_command is not None and 'handover_command' in result:
+            boundary=result['handover_command']
+            self.handover_error.update(command_speed=abs(actual_command['speed']-boundary['speed']),
+                                       command_steering=abs(actual_command['steering']-boundary['steering']))
+            limits.update(self.HANDOVER_COMMAND_LIMITS)
+        if any(self.handover_error[key]>limit+1e-12 for key,limit in limits.items()):
+            self.rejected_plans+=1
+            return False
+        # Execution starts here, even if the control tick is a little late.
+        # Never skip new inputs that were not executed during that lateness.
+        self.plan=dict(result,scheduled_stamp=result['stamp'],stamp=now)
         return True
 
     def refs(self, n, dt):
         if self.status == 'STOPPING':
             return [0.]*(n+1)
-        remaining = max(0., self.length-self.progress)
+        remaining = max(0., self.lap_goal-self.progress)
         speed = max(0., self.state.speed)
         return [min(self.config.cruise_speed, speed_envelope(
             remaining-i*dt*speed, self.config.brake_limit,
             self.config.jerk_limit, self.PLAN_TTL)) for i in range(n+1)]
 
-    def command(self, now):
+    def minimum_speed_stop_distance(self):
+        speed = self.config.minimum_drive_speed
+        return speed*(self.config.brake_limit/self.config.jerk_limit+self.PLAN_TTL) + speed**2/(2*self.config.brake_limit)
+
+    def actuator_command(self, command):
+        """Invert the speed-mode dead zone, preserving explicit stop commands.
+
+        This is a motor setpoint, not a claim that physical speed jumps. The
+        continuous OCP/smoothing speed remains separate from this wire value.
+        """
+        minimum = self.config.minimum_drive_speed
+        if not self.active or command.speed <= 1e-6:
+            return Command(0., command.steering)
+        if command.speed >= minimum:
+            return command
+        if self.status == 'RUNNING' and self.lap_goal-self.progress > self.minimum_speed_stop_distance():
+            return Command(minimum, command.steering)
+        return Command(0., command.steering)
+
+    def command(self, now, *, enforce_plan_age=True):
+        """Evaluate a command; future bridge simulation may ignore plan expiry.
+
+        Real output always uses the default expiry check. A forecast can use
+        remaining prediction controls without turning future expiry into an
+        immediate fault or extending the real plan's lifetime.
+        """
         if not self.active:
             return Command(0., self.last_command.steering)
         if not self.fresh(now):
-            self.fault('Odometry or mode status expired'); return self.last_command
+            self.fault('Odometry or selector status expired'); return self.last_command
         if self.last_tick is not None and (now < self.last_tick or now-self.last_tick > .10):
             self.fault('Command scheduling discontinuity'); return self.last_command
         dt = clip(now-(self.last_tick if self.last_tick is not None else now), 0., .05)
@@ -161,17 +244,22 @@ class Supervisor:
             if now-self.started > self.PLAN_TTL:
                 self.fault('Initial plan deadline expired')
             return Command(0., self.last_command.steering)
-        age = now-self.plan['stamp']
-        if not 0 <= age <= self.PLAN_TTL:
+        age = now-self.plan.get('source_stamp',self.plan['stamp'])
+        if age < 0 or (enforce_plan_age and age > self.PLAN_TTL):
             self.fault('Plan expired'); return self.last_command
-        index = min(len(self.plan['controls'])-1, int(age/.1))
-        fraction = clip((age-index*.1)/.1, 0., 1.)
+        phase = now-self.plan['stamp']
+        if phase<0:
+            self.fault('Plan activated before handover');return self.last_command
+        if phase>=len(self.plan['controls'])*.1:
+            self.fault('Prediction horizon exhausted');return self.last_command
+        index = min(len(self.plan['controls'])-1, int(phase/.1))
+        fraction = clip((phase-index*.1)/.1, 0., 1.)
         states, controls = self.plan['states'], self.plan['controls']
         target_speed = states[index][3]*(1-fraction)+states[index+1][3]*fraction
         previous_steer = self.plan.get('previous_steering', self.last_command.steering) if index==0 else controls[index-1][1]
         target_steer = previous_steer+(controls[index][1]-previous_steer)*fraction
-        remaining = self.length-self.progress
-        if self.status=='STOPPING' or remaining <= .05:
+        remaining = self.lap_goal-self.progress
+        if self.status=='STOPPING' or remaining <= max(.05, self.minimum_speed_stop_distance()):
             target_speed = 0.
         # Enforce the finish envelope on executed targets as well as the OCP's
         # soft speed references. The command still passes through smooth limits.
@@ -222,7 +310,8 @@ class Supervisor:
         else:
             speed, steer = self.last_command.speed, self.last_command.steering
         self.last_command = Command(speed, clip(steer, -self.config.steer_limit, self.config.steer_limit))
-        finish = abs(remaining) <= .2 and self.progress >= self.length-.2
+        finish_tolerance = max(.2, self.minimum_speed_stop_distance()+.05)
+        finish = abs(remaining) <= finish_tolerance and self.progress >= self.lap_goal-finish_tolerance
         if (finish or self.status=='STOPPING') and abs(self.state.speed)<.05 and speed<1e-6:
             if self.stationary_since is None:
                 self.stationary_since = now
@@ -230,6 +319,7 @@ class Supervisor:
                 self.status = 'COMPLETE' if finish else 'READY'
                 self.reason = 'One lap complete' if finish else 'Stopped'
                 self.plan = None
+                self.pending_plan = None
                 self.last_command = Command(0., self.last_command.steering)
         else:
             self.stationary_since = None

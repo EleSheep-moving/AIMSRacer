@@ -12,6 +12,8 @@ in the [checklist](../operations/vehicle-checklist.md).
 | [2026-09-28 vehicle response](2026-09-28-vehicle-response.md) | Bag-derived speed onset, steering command path, IMU yaw response and MPCC single-lag fit |
 | [2026-09-28 speed-mode calibration](2026-09-28-speed-mode-calibration.md) | New speed-only bag: speed scale, command-to-motion timing, steering lag and LIO age |
 | [2026-09-28 map reference](2026-09-28-map-reference.md) | Closed-lap extraction and matching to saved PGO map poses |
+| [2026-10-04 premature plan expiry](2026-10-04-plan-expiry.md) | Historical 750 ms / 10 cm configuration; future forecast versus actual plan expiry |
+| [2026-10-04 LIO delay and EKF yaw](2026-10-04-lio-delay.md) | Incident latency, two-second EKF replay, rotation Jacobian and matching-cost evidence; cumulative backlog remains unexplained |
 
 Future reports should identify source/configuration versions, hardware, workload,
 measurement definitions, sample count and evidence location. Generated local

@@ -22,7 +22,7 @@ Both approaches publish the same topic: `/calib/ackermann_cmd` (downstream must 
 
 ## 0.1) Build & Environment Setup (Required)
 
-These scripts are installed as executables via `ament_python`. After the first use or after script updates, rebuild:
+These scripts remain Python executables; the package uses `ament_cmake` to also build the C++ IMU node. After the first use or after script updates, rebuild:
 
 ```bash
 cd ~/AIMSRacer

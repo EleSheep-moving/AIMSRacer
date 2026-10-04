@@ -121,10 +121,14 @@ def generate_launch_description():
     # 当前车辆：CH3 油门、CH1 转向、CH8 标定、CH10 限幅。
     joystick_control_v2_node = Node(
         package='ackermann_mux',
-        executable='joystick_control_v2_ch3_ch1.py',
+        executable='joystick_control_v2',
         name='joystick_control_v2_ch3_ch1',
         output='screen',
         parameters=[
+            {'channel_profile': 'steering_ch1_throttle_ch3_aux_ch5_to_ch10'},
+            {'rc_timeout_sec': 0.2},
+            {'nav_timeout_sec': 0.2},
+            {'calib_timeout_sec': 0.2},
             {'limit_min_value': 172},
             {'limit_max_value': 1810},
             {'channel_min_range': 172},
@@ -144,7 +148,7 @@ def generate_launch_description():
             {'steering_limit': 0.4751},
             {'steering_reverse': True},
             {'steering_channel_mid': 992},
-            {'channel_deadzone': 100},
+            {'channel_deadzone': 50},
             
             # 方向反转
             {'direction_reverse': False},
@@ -201,7 +205,8 @@ def generate_launch_description():
         parameters=[{'config_path': LaunchConfiguration('lio_config')}],
         # Upstream FAST-LIO always broadcasts TF. Keep it off the global tree;
         # EKF owns global odom -> base_link in V2/V3.
-        remappings=[('/tf', '/fastlio2/tf')]
+        remappings=[('/tf', '/fastlio2/tf'),
+                    ('world_cloud', '/fastlio2/visualization/world_cloud')]
     )
 
     # Localizer (重定位节点)

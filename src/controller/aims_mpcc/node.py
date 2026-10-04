@@ -1,5 +1,7 @@
 """ROS adapter; every nonzero command is supervised independently of solving."""
 from dataclasses import asdict
+from collections import deque
+import copy
 import json
 import math
 import time
@@ -10,6 +12,7 @@ from rclpy.clock import Clock, ClockType
 from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy
 from ackermann_msgs.msg import AckermannDriveStamped
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
+from rcl_interfaces.msg import ParameterDescriptor
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry, Path as PathMsg
 from std_msgs.msg import Bool
@@ -20,7 +23,7 @@ from rclpy.time import Time
 from .frames import apply_alignment, planar_alignment
 from .io import load_config, yaw_from_quaternion
 from .path import ReferencePath
-from .runtime import Supervisor, State, angle_difference, clip
+from .runtime import Supervisor, State, Command, angle_difference, clip
 from .worker import AsyncSolver
 from .history import AppliedHistory
 
@@ -30,40 +33,73 @@ class MPCCNode(Node):
         super().__init__('aims_mpcc')
         self.declare_parameter('path_directory','')
         self.declare_parameter('vehicle_config','')
-        self.declare_parameter('output_mode','shadow')
         self.declare_parameter('simulation',False)
         self.declare_parameter('odom_topic','/odometry/filtered')
         self.declare_parameter('log_directory','')
-        self.mode=self.get_parameter('output_mode').value
-        if self.mode not in ('shadow','drive'): raise ValueError('output_mode must be shadow or drive')
+        self.declare_parameter('horizon',10,ParameterDescriptor(
+            description='Number of 0.1 s prediction intervals; prepare matching native cache before launch',
+            read_only=True))
+        self.horizon=self.get_parameter('horizon').value
+        if isinstance(self.horizon,bool) or not isinstance(self.horizon,int) or self.horizon<1:
+            raise ValueError('positive integer horizon required')
+        self.declare_parameter('solve_frequency',5.,ParameterDescriptor(read_only=True))
+        self.declare_parameter('plan_ttl',self.horizon*.8*.1,ParameterDescriptor(
+            description='Seconds from ORIGINAL EKF measurement, not receipt/takeover; default horizon * 0.8 * 0.1 s',
+            read_only=True))
+        self.declare_parameter('solver_timeout',.25,ParameterDescriptor(
+            description='Seconds from request submission to parent reply; late results are skipped without killing the worker',
+            read_only=True))
+        frequency=self.get_parameter('solve_frequency').value
+        self.plan_ttl=self.get_parameter('plan_ttl').value
+        if not math.isfinite(frequency) or not 0<frequency<=50:
+            raise ValueError('solve_frequency must be positive and at most 50 Hz')
+        self.solve_period=1./frequency
+        self.solver_timeout=self.get_parameter('solver_timeout').value
+        self.handover_delay=self.solve_period
+        if not math.isfinite(self.solver_timeout) or self.solver_timeout<=0:
+            raise ValueError('solver_timeout result budget must be positive and finite')
+        if (not math.isfinite(self.plan_ttl)
+                or self.plan_ttl<=self.solve_period+max(self.solver_timeout,self.handover_delay)+.02):
+            raise ValueError('plan_ttl must cover solve period, result budget, handover and control tick')
+        if self.plan_ttl>self.handover_delay+self.horizon*.1:
+            raise ValueError('plan_ttl exceeds the available prediction horizon; increase horizon or reduce timing budgets')
         self.config=load_config(self.get_parameter('vehicle_config').value)
-        self.config.validate(require_verified=True,allow_synthetic=(
-            self.mode=='shadow' or self.get_parameter('simulation').value))
+        self.config.validate(require_verified=True,allow_synthetic=self.get_parameter('simulation').value)
         self.path=ReferencePath.load(self.get_parameter('path_directory').value)
-        self.path.validate_config(self.config,require_recording=self.mode=='drive')
-        self.map_valid=False;self.map_valid_received=-math.inf;self.map_sha256=None
+        self.path.validate_config(self.config,require_recording=not self.get_parameter('simulation').value)
+        self.map_sha256=None
         self.map_buffer=None;self.map_alignment=None
         if self.path.frame_id=='map':
             self.map_buffer=Buffer(node=self)
-            self.map_listener=TransformListener(self.map_buffer,self)
-            self.create_subscription(Bool,'/localization/map_valid',self.map_status,10)
+            # Bound queued TF under load; the default depth of 100 can make
+            # this consumer process old corrections while broadcasts are fresh.
+            self.map_listener=TransformListener(self.map_buffer,self,qos=QoSProfile(depth=10))
             latched_id=QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL)
             self.create_subscription(String,'/localization/map_sha256',self.map_identity,latched_id)
-        self.supervisor=Supervisor(self.config,self.path.length)
-        self.worker=AsyncSolver(self.get_parameter('path_directory').value,self.config)
+        self.supervisor=Supervisor(self.config,self.path.length,self.plan_ttl,self.handover_delay)
+        self.worker=AsyncSolver(self.get_parameter('path_directory').value,self.config,self.horizon,
+                                deadline=self.solver_timeout)
         self.last_solve=-math.inf
+        self.next_solve=-math.inf
         self.last_forwarded=0.; self.last_forwarded_time=-math.inf
+        self.last_proposed=Command(0.,0.)
+        self.recent_proposals=deque(maxlen=16)
         self.steering_estimate=0.;self.last_steering_update=time.monotonic()
         self.history=AppliedHistory(self.config.steering_tau)
         self.source_previous=dict(acceleration=0.,steering=0.,steering_rate=0.)
         self.solve_times=[];self.deadline_misses=0
+        self.iteration_limit_skips=0
+        self.last_solver_status=None;self.last_solver_iterations=None
+        self.request_timing=None
+        self.map_tf_age=None
+        self.map_correction_change=None
+        self.last_time_rejection=None
         self.log=None
         directory=self.get_parameter('log_directory').value
         if directory:
             Path(directory).mkdir(parents=True,exist_ok=True)
             self.log=(Path(directory)/f'controller-{time.time_ns()}.jsonl').open('x')
-        command_topic='/drive' if self.mode=='drive' else '/mpcc/drive_preview'
-        self.command_pub=self.create_publisher(AckermannDriveStamped,command_topic,10)
+        self.command_pub=self.create_publisher(AckermannDriveStamped,'/drive',10)
         self.status_pub=self.create_publisher(DiagnosticArray,'/mpcc/status',10)
         latched=QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.path_pub=self.create_publisher(PathMsg,'/mpcc/reference',latched)
@@ -87,34 +123,38 @@ class MPCCNode(Node):
     def mode_status(self,msg):
         self.supervisor.set_mode(msg.data,time.monotonic())
 
-    def map_status(self,msg):
-        self.map_valid=bool(msg.data)
-        self.map_valid_received=time.monotonic()
-        if not self.map_valid:
-            self.map_alignment=None
-        if self.path.frame_id=='map' and self.supervisor.active and not self.map_valid:
-            self.supervisor.fault('Map localization invalid')
-
     def map_identity(self,msg):
         self.map_sha256=msg.data
         if self.path.frame_id=='map' and self.supervisor.active and self.map_sha256!=self.path.metadata['map_sha256']:
             self.supervisor.fault('Map identity changed or does not match reference')
 
-    def map_ready(self,now):
-        return (self.map_valid and now-self.map_valid_received<=.3 and
-                self.map_sha256==self.path.metadata['map_sha256'])
+    def map_matches_reference(self):
+        # Check the reference's coordinate identity, not localization health.
+        return self.map_sha256==self.path.metadata['map_sha256']
 
     def forwarded(self,msg):
         if msg.drive.jerk==0. and math.isfinite(msg.drive.steering_angle):
             self.last_forwarded=clip(msg.drive.steering_angle,-self.config.steer_limit,self.config.steer_limit)
             self.last_forwarded_time=time.monotonic()
-            if self.mode!='shadow' or not self.supervisor.active:
-                s=self.supervisor
-                matching=(abs(msg.drive.steering_angle-s.last_command.steering)<1e-6 and
-                          abs(msg.drive.speed-s.last_command.speed)<1e-6)
-                self.history.record(self.last_forwarded_time,self.last_forwarded,msg.drive.speed,
-                                    s.last_acceleration if matching else 0.,
-                                    s.last_steering_rate if matching else 0.)
+            s=self.supervisor
+            # Publication on /drive is only a proposal. The selector's output
+            # is the sole source of applied-command history in either RC mode.
+            # The selector can forward the preceding publication after a new
+            # control tick. Match its REAL output to recent issued commands,
+            # rather than dropping the derivatives whenever it is one tick late.
+            matched=next((entry for entry in reversed(self.recent_proposals)
+                          if s.mode and 0<=self.last_forwarded_time-entry[0]<=.1 and
+                          abs(msg.drive.steering_angle-entry[1].steering)<1e-6 and
+                          abs(msg.drive.speed-entry[1].speed)<1e-6),None)
+            self.history.record(self.last_forwarded_time,self.last_forwarded,msg.drive.speed,
+                                matched[2] if matched else 0.,
+                                matched[3] if matched else 0.)
+            if s.active and not s.mode:
+                # Keep proposal smoothing anchored to actual manual commands,
+                # so switching authority cannot reuse a fictitious execution.
+                s.last_command=Command(msg.drive.speed,self.last_forwarded)
+                s.last_acceleration=0.
+                s.last_steering_rate=0.
 
     def odometry(self,msg):
         now=time.monotonic()
@@ -124,14 +164,16 @@ class MPCCNode(Node):
             if msg.header.frame_id!='odom' or msg.child_frame_id!='base_link':
                 raise ValueError('Expected odom/base_link state frames')
             if not 0 <= ros_now-stamp <= .1:
-                raise ValueError('Odometry timestamp stale or in future')
+                self.last_time_rejection=dict(signal='odometry',age_s=ros_now-stamp,
+                                              now=ros_now,stamp=stamp)
+                raise ValueError(f'Odometry timestamp stale or in future (age {ros_now-stamp:.6f} s)')
             yaw=yaw_from_quaternion(msg.pose.pose.orientation)
             x,y=msg.pose.pose.position.x,msg.pose.pose.position.y
             x-=self.config.rear_offset*math.cos(yaw)
             y-=self.config.rear_offset*math.sin(yaw)
             if self.path.frame_id=='map':
-                if not self.map_ready(now):
-                    if self.supervisor.active: raise ValueError('Map localization unavailable or wrong map')
+                if not self.map_matches_reference():
+                    if self.supervisor.active: raise ValueError('Map identity does not match reference')
                     return
                 try:
                     transform=self.map_buffer.lookup_transform('map','odom',Time())
@@ -140,16 +182,15 @@ class MPCCNode(Node):
                     return
                 transform_stamp=(transform.header.stamp.sec+
                                  transform.header.stamp.nanosec*1e-9)
-                if not 0 <= ros_now-transform_stamp <= .3:
-                    if self.supervisor.active: raise ValueError('Map transform stale or in future')
-                    return
+                lookup_now=self.get_clock().now().nanoseconds*1e-9
+                self.map_tf_age=lookup_now-transform_stamp
                 alignment=planar_alignment(transform)
                 reference_x,reference_y,reference_yaw=apply_alignment(x,y,yaw,alignment)
                 if self.supervisor.active and self.map_alignment is not None:
                     old_x,old_y,old_yaw=apply_alignment(x,y,yaw,self.map_alignment)
-                    if (math.hypot(reference_x-old_x,reference_y-old_y)>.15 or
-                            abs(angle_difference(reference_yaw,old_yaw))>.5):
-                        raise ValueError('Map localization correction too large')
+                    self.map_correction_change=dict(
+                        position=math.hypot(reference_x-old_x,reference_y-old_y),
+                        yaw=abs(angle_difference(reference_yaw,old_yaw)))
                 self.map_alignment=alignment
             else:
                 reference_x,reference_y,reference_yaw=x,y,yaw
@@ -163,7 +204,8 @@ class MPCCNode(Node):
                                   self.steering_estimate,stamp)
             self.supervisor.observe(state,now-(ros_now-stamp),progress,error,
                                     angle_difference(reference_yaw,ref['yaw']))
-            if self.supervisor.active and not self.footprint_inside(reference_state,ref):
+            if (self.config.enforce_corridor and self.supervisor.active
+                    and not self.footprint_inside(reference_state,ref)):
                 self.supervisor.fault('Measured footprint outside configured corridor')
         except (ValueError,TypeError,OverflowError) as exc:
             self.supervisor.fault(str(exc))
@@ -182,12 +224,24 @@ class MPCCNode(Node):
         try:
             if request.data:
                 if not self.worker.ready: raise ValueError('Solver not ready; restart node after worker failure')
-                if self.path.frame_id=='map' and not self.map_ready(time.monotonic()):
-                    raise ValueError('Verified localization in the matching map required')
-                if self.mode=='drive' and self.count_publishers('/drive')!=1:
+                if self.path.frame_id=='map' and not self.map_matches_reference():
+                    raise ValueError('Reference map identity required')
+                if self.count_publishers('/drive')!=1:
                     raise ValueError('MPCC must be the sole /drive publisher; stop Nav2')
+                self.applied_ready(time.monotonic())
+                state=self.supervisor.state
+                if state is None: raise ValueError('Fresh state required before enabling')
+                x,y,yaw=state.x,state.y,state.yaw
+                if self.path.frame_id=='map':
+                    if self.map_alignment is None: raise ValueError('Map alignment unavailable')
+                    x,y,yaw=apply_alignment(x,y,yaw,self.map_alignment)
+                reference_state=State(x,y,yaw,state.speed,state.steering,state.timestamp)
+                if (self.config.enforce_corridor and
+                        not self.footprint_inside(reference_state,self.path.at(self.supervisor.wrapped_progress))):
+                    raise ValueError('Starting footprint outside configured corridor')
                 self.supervisor.start(time.monotonic())
                 self.last_solve=-math.inf
+                self.next_solve=-math.inf
             else:
                 self.supervisor.stop()
             response.success=True;response.message=self.supervisor.status
@@ -195,48 +249,150 @@ class MPCCNode(Node):
             response.success=False;response.message=str(exc)
         return response
 
+    def applied_ready(self,now):
+        if not self.history.records or not 0<=now-self.history.records[-1][0]<=.1:
+            raise ValueError('Fresh applied speed-mode command history required')
+        self.history.command_at(self.supervisor.state_received)
+
+    def prepare_request(self,now):
+        """Bridge the measurement to a fixed future takeover, before solving."""
+        s=self.supervisor
+        self.applied_ready(now)
+        actual=self.history.command_at(now)
+        forecast=copy.copy(s)
+        forecast.pending_plan=None
+        forecast.last_command=Command(actual['speed'],actual['steering'])
+        forecast.last_acceleration=actual['acceleration']
+        forecast.last_steering_rate=actual['steering_rate']
+        forecast.last_tick=now
+        last_forecast=[now]
+        def future_command(stamp,state):
+            stamp=max(stamp,last_forecast[0])
+            if not s.mode:
+                # Future operator input is unknown; hold the last REAL target
+                # and validate the resulting prediction at takeover.
+                return dict(actual,acceleration=0.,steering_rate=0.)
+            forecast.state=state
+            forecast.state_received=forecast.mode_received=stamp
+            forecast.progress+=max(0.,state.speed)*(stamp-last_forecast[0])
+            last_forecast[0]=stamp
+            command=forecast.command(stamp,enforce_plan_age=False)
+            if forecast.status=='FAULT':
+                raise ValueError('Old plan cannot bridge scheduled handover: '+forecast.reason)
+            actuator=forecast.actuator_command(command)
+            return dict(speed=actuator.speed,steering=actuator.steering,
+                        acceleration=forecast.last_acceleration if actuator.speed==command.speed else 0.,
+                        steering_rate=forecast.last_steering_rate)
+        takeover=now+self.handover_delay
+        predicted,previous=self.history.predict(s.state,s.state_received,takeover,self.config,
+                                                known_until=now,future_command=future_command)
+        reference_x,reference_y=predicted.x,predicted.y
+        if self.path.frame_id=='map':
+            if self.map_alignment is None:
+                raise ValueError('Map alignment unavailable')
+            reference_x,reference_y,_=apply_alignment(predicted.x,predicted.y,predicted.yaw,
+                                                     self.map_alignment)
+        progress,_=self.path.project([reference_x,reference_y])
+        forecast.state=predicted
+        forecast.progress=s.progress+(progress-s.wrapped_progress+self.path.length/2)%self.path.length-self.path.length/2
+        state=asdict(predicted);state.pop('timestamp')
+        elapsed=self.solve_period if not math.isfinite(self.last_solve) else now-self.last_solve
+        request=dict(state=state,previous={key:previous[key] for key in ('acceleration','steering','steering_rate')},
+                     speed_refs=forecast.refs(self.horizon,.1),generation=s.generation,
+                     source_stamp=s.state_received,stamp=takeover,submitted_at=now,elapsed=elapsed,
+                     handover_command=dict(previous))
+        if self.path.frame_id=='map':request['map_alignment']=self.map_alignment
+        return request
+
     def tick(self):
         now=time.monotonic();s=self.supervisor
-        if self.path.frame_id=='map' and s.active and not self.map_ready(now):
-            s.fault('Map localization status expired or map identity changed')
+        if self.path.frame_id=='map' and s.active and not self.map_matches_reference():
+            s.fault('Map identity does not match reference')
         reply=self.worker.poll(now)
         if reply:
             if reply['kind']=='error':
-                if 'deadline' in reply['error'].lower(): self.deadline_misses+=1
                 s.fault(reply['error']);self.get_logger().error(reply['error'])
+            elif reply['kind']=='skipped':
+                self.deadline_misses+=1
             elif reply['kind']=='result':
                 self.solve_times.append(reply['solve_time_s'])
-                if s.accept(reply,now):
+                self.last_solver_status=reply.get('status')
+                self.last_solver_iterations=reply.get('iterations')
+                self.request_timing=dict(source_to_submit=reply['submitted_at']-reply['source_stamp'],
+                    request_to_reply=now-reply['submitted_at'],
+                    worker_queue=reply['worker_started_at']-reply['submitted_at'],
+                    result_delivery=now-reply['worker_finished_at'],
+                    reply_before_handover=reply['stamp']-now)
+                iteration_limited=(not reply.get('success') and
+                                   reply.get('status')=='Maximum_Iterations_Exceeded')
+                if iteration_limited:
+                    # Keep the last accepted plan and its original expiry.
+                    # The failed trajectory never becomes an executed plan.
+                    self.iteration_limit_skips+=1
+                if reply.get('discarded'):
+                    if not reply.get('skip_notified'): self.deadline_misses+=1
+                elif not iteration_limited and s.accept(reply,now):
                     self.publish_path(self.prediction_pub,
                                       [dict(x=r[0],y=r[1],yaw=r[2]) for r in reply['states']],
                                       frame_id='odom')
-        if s.active and self.mode=='drive' and self.count_publishers('/drive')>1:
+        if (s.active and s.pending_plan is not None
+                and now>=s.pending_plan['stamp']-s.HANDOVER_TOLERANCE):
+            try:
+                self.applied_ready(now)
+                if not s.fresh(now):raise ValueError('Fresh state required at plan handover')
+                actual,_=self.history.predict(s.state,s.state_received,now,self.config)
+                s.activate(now,actual,self.history.command_at(now))
+            except ValueError as exc:
+                s.fault(str(exc))
+        if s.active and self.count_publishers('/drive')>1:
             s.fault('Another /drive publisher appeared')
         command=s.command(now)
+        actuator=s.actuator_command(command)
+        self.last_proposed=actuator
+        self.recent_proposals.append((now,actuator,
+            s.last_acceleration if s.active and actuator.speed==command.speed else 0.,
+            s.last_steering_rate if s.active else 0.))
         msg=AckermannDriveStamped();msg.header.stamp=self.get_clock().now().to_msg();msg.header.frame_id='base_link'
-        msg.drive.speed=command.speed;msg.drive.steering_angle=command.steering
+        msg.drive.speed=actuator.speed;msg.drive.steering_angle=actuator.steering
         msg.drive.acceleration=0.;msg.drive.jerk=0.
         self.command_pub.publish(msg)
-        if self.mode=='shadow':
-            # Preview actuator estimate follows hypothetical commands only while preview is active.
-            if s.active:
-                self.last_forwarded=command.steering
-                self.history.record(now,command.steering,command.speed,s.last_acceleration,s.last_steering_rate)
-        if s.active and s.fresh(now) and now-self.last_solve>=.095 and self.worker.pending is None:
-            state=asdict(s.state);state.pop('timestamp')
-            elapsed=.1 if not math.isfinite(self.last_solve) else now-self.last_solve
-            request=dict(state=state,previous=dict(self.source_previous),speed_refs=s.refs(15,.1),generation=s.generation,
-                         stamp=s.state_received,submitted_at=now,elapsed=elapsed)
-            if self.path.frame_id=='map':
-                if self.map_alignment is None:
-                    s.fault('Map alignment unavailable')
-                else:
-                    request['map_alignment']=self.map_alignment
-            if s.active and self.worker.submit(request): self.last_solve=now
-        values=dict(status=s.status,reason=s.reason,worker_ready=self.worker.ready,progress=s.progress,
+        if (s.active and s.fresh(now) and now>=self.next_solve-1e-6
+                and self.worker.pending is None and s.pending_plan is None):
+            try:
+                request=self.prepare_request(now)
+                if self.worker.submit(request):
+                    self.last_solve=now
+                    self.next_solve=(self.next_solve+self.solve_period
+                                     if math.isfinite(self.next_solve) else now+self.solve_period)
+                    # Keep the update clock anchored despite timer jitter; skip
+                    # missed slots instead of accumulating delay or bursting.
+                    while self.next_solve<=now:self.next_solve+=self.solve_period
+            except ValueError as exc:
+                s.fault(str(exc))
+        values=dict(status=s.status,reason=s.reason,worker_ready=self.worker.ready,horizon=self.horizon,
+                    corridor_enforced=self.config.enforce_corridor,
+                    autonomy_selected=s.mode,progress=s.progress,
+                    start_progress=s.start_progress,lap_progress=s.progress-s.start_progress,
+                    lap_remaining=s.lap_goal-s.progress,
                     cross_track=s.cross_track,state_age=None if s.state is None else now-s.state_received,
-                    plan_age=None if s.plan is None else now-s.plan['stamp'],
-                    speed_command=command.speed,steering_command=command.steering,
+                    plan_age=None if s.plan is None else now-s.plan.get('source_stamp',s.plan['stamp']),
+                    plan_phase=None if s.plan is None else now-s.plan['stamp'],
+                    handover_lateness=None if s.plan is None else s.plan['stamp']-s.plan.get('scheduled_stamp',s.plan['stamp']),
+                    solve_frequency=1./self.solve_period,plan_ttl=self.plan_ttl,
+                    solver_timeout=self.solver_timeout,
+                    handover_delay=self.handover_delay,request_timing=self.request_timing,
+                    map_tf_age=self.map_tf_age,last_time_rejection=self.last_time_rejection,
+                    map_correction_change=self.map_correction_change,
+                    pending_handover_in=None if s.pending_plan is None else s.pending_plan['stamp']-now,
+                    handover_error=s.handover_error,rejected_plans=s.rejected_plans,
+                    handover_limits={**s.HANDOVER_STATE_LIMITS,**s.HANDOVER_COMMAND_LIMITS},
+                    solver_max_iterations=self.config.solver_max_iterations,
+                    solver_status=self.last_solver_status,solver_iterations=self.last_solver_iterations,
+                    iteration_limit_skips=self.iteration_limit_skips,
+                    late_result_skips=self.deadline_misses,solver_busy=self.worker.pending is not None,
+                    speed_command=actuator.speed,model_speed_command=command.speed,
+                    minimum_drive_speed=self.config.minimum_drive_speed,
+                    steering_command=actuator.steering,
                     speed=None if s.state is None else s.state.speed,
                     solve_time=None if not self.solve_times else self.solve_times[-1],deadline_misses=self.deadline_misses)
         diag=DiagnosticArray();diag.header.stamp=msg.header.stamp

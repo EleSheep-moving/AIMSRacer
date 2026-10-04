@@ -11,6 +11,15 @@ ekf_filter_node:
 # filter will generate new output. Defaults to 1 / frequency if not specified.
         sensor_timeout: 0.001
 
+# Rewind delayed LIO to its source stamp and replay newer IMU/wheel measurements.
+# The 2026-10-04 run reached about 1.2 s LIO delay, exceeding the former 0.5 s
+# history and distorting yaw. Keep 2 s of history; this does not remove LIO delay.
+        smooth_lagged_data: true
+        history_length: 2.0
+# After replay, predict the corrected state to this output cycle's time.
+# Otherwise outputs can alternate between sensor time and current time.
+        predict_to_current_time: true
+
 # ekf_localization_node and ukf_localization_node both use a 3D omnidirectional motion model. If this parameter is
 # set to true, no 3D information will be used in your state estimate. Use this if you are operating in a planar
 # environment and want to ignore the effect of small variations in the ground plane that might otherwise be detected

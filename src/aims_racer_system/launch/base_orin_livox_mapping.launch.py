@@ -170,7 +170,8 @@ def generate_launch_description():
     name="lio_node",
     output="screen",
     parameters=[{'config_path': lio_config_path}],
-    remappings=[('/tf', '/fastlio2/tf')]
+    remappings=[('/tf', '/fastlio2/tf'),
+                    ('world_cloud', '/fastlio2/visualization/world_cloud')]
     )
     pgo_node = Node(
         package="pgo",

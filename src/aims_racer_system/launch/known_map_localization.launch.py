@@ -10,16 +10,18 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    config = os.path.join(get_package_share_directory('aims_racer_system'),
-                          'params', 'fastlio_localizer.yaml')
+    params = os.path.join(get_package_share_directory('aims_racer_system'), 'params')
+    config = os.path.join(params, 'fastlio_localizer.yaml')
     return LaunchDescription([
         DeclareLaunchArgument('map_file', description='saved PGO map.pcd, absolute path'),
         DeclareLaunchArgument('localizer_config', default_value=config),
+        DeclareLaunchArgument('gate_config', default_value=os.path.join(params, 'map_tf_gate.yaml')),
         Node(package='localizer', executable='localizer_node', namespace='localizer',
              name='localizer_node', output='screen',
              parameters=[{'config_path': LaunchConfiguration('localizer_config')}],
              remappings=[('/tf', '/localizer/raw_tf')]),
         Node(package='aims_racer_system', executable='map_tf_gate.py',
              name='map_tf_gate', output='screen',
-             parameters=[{'map_file': LaunchConfiguration('map_file')}]),
+             parameters=[LaunchConfiguration('gate_config'),
+                         {'map_file': LaunchConfiguration('map_file')}]),
     ])
