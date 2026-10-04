@@ -14,16 +14,18 @@ def build_nodes(context):
     geometry_path = LaunchConfiguration('geometry_config').perform(context)
     with open(geometry_path) as stream:
         geometry = yaml.safe_load(stream)
-    with open(LaunchConfiguration('lio_config').perform(context)) as stream:
-        lio = yaml.safe_load(stream)
-    if lio['body_frame'] != 'livox_frame' or lio['world_frame'] != 'odom':
-        raise ValueError('Rear-axle pipeline requires raw LIO frames odom / livox_frame')
+    enable_lio = LaunchConfiguration('enable_lio', default='true').perform(context).lower() == 'true'
+    if enable_lio:
+        with open(LaunchConfiguration('lio_config').perform(context)) as stream:
+            lio = yaml.safe_load(stream)
+        if lio['body_frame'] != 'livox_frame' or lio['world_frame'] != 'odom':
+            raise ValueError('Rear-axle pipeline requires raw LIO frames odom / livox_frame')
+        if lio.get('esti_il', False):
+            raise ValueError('Static rear-frame conversion requires esti_il: false')
     for key in ('livox_translation', 'livox_rpy'):
         values = geometry.get(key)
         if not isinstance(values, list) or len(values) != 3 or not np.isfinite(values).all():
             raise ValueError(f'Confirm {key} in {geometry_path}: three finite values required')
-    if lio.get('esti_il', False):
-        raise ValueError('Static rear-frame conversion requires esti_il: false')
     # One approximate external Livox origin for cloud, raw IMU and LIO output.
     # FAST-LIO's r_il/t_il remain internal and do not alter this mounting offset.
     translation = geometry['livox_translation']
@@ -36,15 +38,23 @@ def build_nodes(context):
         return Node(package='tf2_ros', executable='static_transform_publisher', name=name, arguments=args)
 
     mapping = LaunchConfiguration('publish_odom_tf').perform(context).lower() == 'true'
-    return [
+    nodes = [
         static('rear_to_livox', 'livox_frame', translation, quaternion),
         static('rear_to_footprint', 'base_footprint', [0., 0., 0.], [0., 0., 0., 1.]),
+    ]
+    if enable_lio:
+        nodes.append(
         Node(package='aims_racer_system', executable='lio_to_rear_axle.py',
              parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion,
-                          'publish_tf': mapping}], output='screen'),
+                          'publish_tf': mapping}], output='screen'))
+    nodes.append(
         Node(package='aims_racer_system', executable='imu_to_rear_axle',
-             parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion}], output='screen'),
-    ]
+             parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion,
+                          'gyro_only': not enable_lio,
+                          'use_sim_time': LaunchConfiguration('use_sim_time', default='false').perform(context).lower() == 'true'}],
+             remappings=[('/livox/imu', LaunchConfiguration('imu_topic', default='/livox/imu'))],
+             output='screen'))
+    return nodes
 
 
 def generate_launch_description():
@@ -53,5 +63,8 @@ def generate_launch_description():
         DeclareLaunchArgument('geometry_config', default_value=os.path.join(params, 'rear_axle_geometry.yaml')),
         DeclareLaunchArgument('lio_config', default_value=os.path.join(params, 'fastlio_rear.yaml')),
         DeclareLaunchArgument('publish_odom_tf', default_value='false'),
+        DeclareLaunchArgument('enable_lio', default_value='true'),
+        DeclareLaunchArgument('use_sim_time', default_value='false'),
+        DeclareLaunchArgument('imu_topic', default_value='/livox/imu'),
         OpaqueFunction(function=build_nodes),
     ])

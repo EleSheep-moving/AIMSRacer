@@ -43,6 +43,7 @@ public:
   : Node("imu_to_rear_axle")
   {
     ImuConfig config;
+    config.gyro_only = declare_parameter("gyro_only", false);
     const auto lever = declare_parameter<std::vector<double>>("livox_translation", {0., 0., 0.});
     const auto quaternion = declare_parameter<std::vector<double>>("livox_quaternion", {0., 0., 0., 1.});
     if (lever.size() != 3 || quaternion.size() != 4) {
@@ -59,7 +60,7 @@ public:
     imu_subscription_ = create_subscription<sensor_msgs::msg::Imu>(
       "/livox/imu", rclcpp::SensorDataQoS(),
       [this](sensor_msgs::msg::Imu::ConstSharedPtr msg) {imu(*msg);});
-    odometry_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
+    if (!config.gyro_only) odometry_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
       "/fastlio2/lio_odom", rclcpp::SensorDataQoS(),
       [this](nav_msgs::msg::Odometry::ConstSharedPtr msg) {odometry(*msg);});
   }

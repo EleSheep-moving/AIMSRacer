@@ -206,7 +206,7 @@ bool RearAxleImu::add_attitude(
 
 std::optional<ImuOutput> RearAxleImu::process(const ImuInput & input)
 {
-  if (!input.omega.allFinite() || !input.specific_force.allFinite()) {
+  if (!input.omega.allFinite() || (!config_.gyro_only && !input.specific_force.allFinite())) {
     return std::nullopt;
   }
   ImuOutput out;
@@ -215,6 +215,9 @@ std::optional<ImuOutput> RearAxleImu::process(const ImuInput & input)
     out.omega = rotation_ * input.omega;
     const Matrix3 cw = validate_covariance(input.omega_covariance, 0.01);
     out.omega_covariance = rotation_ * cw * rotation_.transpose();
+    if (config_.gyro_only) {
+      return out;
+    }
     const double scale_squared = config_.accel_scale * config_.accel_scale;
     const Matrix3 cf = validate_covariance(input.force_covariance, 0.05 / scale_squared);
     force_covariance = rotation_ * cf * rotation_.transpose() * scale_squared;

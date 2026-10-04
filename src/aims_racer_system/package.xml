@@ -28,7 +28,10 @@
   <depend>sensor_msgs</depend>
   <exec_depend>sensor_msgs_py</exec_depend>
   <exec_depend>message_filters</exec_depend>
-  <exec_depend>diagnostic_msgs</exec_depend>
+  <depend>diagnostic_msgs</depend>
+  <depend>livox_ros_driver2</depend>
+  <exec_depend>lifecycle_msgs</exec_depend>
+  <exec_depend>lidar_localization_ros2</exec_depend>
   <depend>vesc_msgs</depend>
   <depend>visualization_msgs</depend>
 

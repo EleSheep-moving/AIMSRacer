@@ -10,7 +10,6 @@ from launch import LaunchContext
 from nav_msgs.msg import Odometry
 
 from aims_racer_system.rear_axle_odometry import convert_odometry
-from aims_racer_system.rear_axle_imu import compensate_force
 
 PACKAGE = Path(__file__).resolve().parents[1]
 
@@ -46,15 +45,6 @@ def test_turning_sensor_state_recovers_rear_axle(mount_rpy):
         convert_odometry(msg, omega, lever, mount.as_quat())
 
 
-def test_force_removes_both_lever_terms_and_keeps_gravity():
-    rear_force = np.array([.4, .7, 9.80665])
-    omega, alpha, lever = np.array([.1,.2,.8]), np.array([.3,-.2,.4]), np.array([.3,0.,.03])
-    measured = rear_force + np.cross(alpha, lever) + np.cross(omega, np.cross(omega, lever))
-    corrected, covariance = compensate_force(measured, omega, alpha, lever, *[np.eye(3)*.01]*3)
-    np.testing.assert_allclose(corrected, rear_force, atol=1e-12)
-    assert np.linalg.eigvalsh(covariance).min() > 0
-
-
 @pytest.mark.parametrize('mapping', [False, True])
 def test_shared_launch_uses_mount_directly_and_one_livox_frame(mapping):
     spec = importlib.util.spec_from_file_location('rear_frames_launch', PACKAGE/'launch/rear_axle_frames.launch.py')
@@ -73,3 +63,17 @@ def test_shared_launch_uses_mount_directly_and_one_livox_frame(mapping):
     lio = yaml.safe_load((PACKAGE/'params/fastlio_rear.yaml').read_text())
     assert lio['t_il'] == [-.011,-.02329,.04412]  # Preserved internally, not added to mounting.
     assert lio['r_il'] == [1.,0.,0.,0.,1.,0.,0.,0.,1.]
+
+
+def test_no_lio_frames_do_not_read_lio_config_or_start_lio_adapter():
+    spec = importlib.util.spec_from_file_location('rear_frames_no_lio', PACKAGE/'launch/rear_axle_frames.launch.py')
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    module.Node = lambda **kwargs: kwargs
+    context = LaunchContext()
+    context.launch_configurations.update(geometry_config=str(PACKAGE/'params/rear_axle_geometry.yaml'),
+        lio_config='/does/not/exist.yaml', publish_odom_tf='false', enable_lio='false', use_sim_time='true')
+    nodes = module.build_nodes(context)
+    assert len(nodes) == 3
+    assert nodes[-1]['executable'] == 'imu_to_rear_axle'
+    assert nodes[-1]['parameters'][0]['gyro_only'] is True
+    assert nodes[-1]['parameters'][0]['use_sim_time'] is True

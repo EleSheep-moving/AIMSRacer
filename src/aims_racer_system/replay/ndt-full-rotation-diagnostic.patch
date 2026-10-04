@@ -1,0 +1,47 @@
+diff --git a/include/lidar_localization/lidar_localization_component.hpp b/include/lidar_localization/lidar_localization_component.hpp
+index 4661b99..07fe65c 100644
+--- a/include/lidar_localization/lidar_localization_component.hpp
++++ b/include/lidar_localization/lidar_localization_component.hpp
+@@ -775,5 +775,6 @@ public:
+     bool imu_prediction_active = false,
+     const std::string & registration_seed_source = "not_selected",
+     const lidar_localization::RegistrationLocalizabilityMetrics &
+-    registration_localizability = lidar_localization::RegistrationLocalizabilityMetrics{});
++    registration_localizability = lidar_localization::RegistrationLocalizabilityMetrics{},
++    double correction_rotation_deg = std::numeric_limits<double>::quiet_NaN());
+ };
+diff --git a/src/component_diagnostics.cpp b/src/component_diagnostics.cpp
+index e854ac8..dac2138 100644
+--- a/src/component_diagnostics.cpp
++++ b/src/component_diagnostics.cpp
+@@ -23,7 +23,8 @@ void PCLLocalization::publishAlignmentStatusForAttempt(
+     attempt.accepted_gap_sec,
+     imu_prediction_active,
+     registration_seed_source,
+-    attempt.registration_localizability);
++    attempt.registration_localizability,
++    lidar_localization::rotationDeltaDeg(attempt.init_guess, attempt.final_transformation));
+ }
+ 
+ void PCLLocalization::publishAlignmentStatus(
+@@ -41,7 +42,8 @@ void PCLLocalization::publishAlignmentStatus(
+   double accepted_gap_sec,
+   bool imu_prediction_active,
+   const std::string & registration_seed_source,
+-  const lidar_localization::RegistrationLocalizabilityMetrics & registration_localizability)
++  const lidar_localization::RegistrationLocalizabilityMetrics & registration_localizability,
++  double correction_rotation_deg)
+ {
+   if (!status_pub_) {return;}
+ 
+@@ -71,6 +73,10 @@ void PCLLocalization::publishAlignmentStatus(
+       evaluation.status_input,
+       evaluation.status_preparation,
+       evaluation.reinitialization_request));
++  diagnostic_msgs::msg::KeyValue full_rotation;
++  full_rotation.key = "correction_rotation_deg";
++  full_rotation.value = std::to_string(correction_rotation_deg);
++  status.values.push_back(full_rotation);
+   publishAlignmentDiagnosticStatus(stamp, status);
+   publishReinitializationRequest(stamp, evaluation.reinitialization_request);
+ }

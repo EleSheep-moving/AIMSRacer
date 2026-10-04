@@ -1,0 +1,12 @@
+lidar_localization_ros2:
+  url: https://github.com/rsasaki0109/lidar_localization_ros2.git
+  commit: 5f795a6cd886a20ade4175cb70bde630ac9ec785
+  patch: ndt-full-rotation-diagnostic.patch
+  patch_purpose: Expose full registration correction angle for fail-closed anchor health; no registration or acceptance decision changes.
+ndt_omp_ros2:
+  url: https://github.com/rsasaki0109/ndt_omp_ros2.git
+  commit: 63bf15b965b71d3a53db1757abe8e31b6114372a
+livox_ros_driver2:
+  url: https://github.com/Livox-SDK/livox_ros_driver2.git
+  commit: 21445540f0d100dc86a7e6df312dd70bbdb4afdf
+  replay_build: Exact CustomMsg.msg and CustomPoint.msg with message-only rosidl package; no hardware driver.

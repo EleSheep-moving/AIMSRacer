@@ -53,6 +53,7 @@ private:
 
 struct ImuConfig
 {
+  bool gyro_only = false;
   Vector3 lever = Vector3::Zero();
   Quaternion mounting = Quaternion::Identity();
   double accel_scale = 9.80665;
