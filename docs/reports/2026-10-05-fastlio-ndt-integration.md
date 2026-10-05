@@ -11,6 +11,7 @@ the older standalone wheel/IMU + NDT branch is not merged.
 | AIMSRacer branch | `feat/fastlio-ndt-mpcc` |
 | Integration implementation | `7bf1b23`, final runtime refinement `7da530e` |
 | Replay initialization/lifecycle audit | `55241ea` and subsequent audit refinements |
+| Final delivery/confirmation audit | `bee9f25` |
 | FAST-LIO2 | `30bc305b4240369879c346398ac6e0a1ea5ed420` |
 | lidar_localization_ros2 | `5f795a6cd886a20ade4175cb70bde630ac9ec785` + recorded trusted-anchor patch |
 | ndt_omp_ros2 | `63bf15b965b71d3a53db1757abe8e31b6114372a` + recorded line-search patch |
@@ -192,7 +193,7 @@ labelled partial, and cannot claim full-bag delivery.
 | `D-NX-delivery-final` | Full raw delivery: 300 scans / 6,001 IMUs; 297 output clouds, 5,966 EKF outputs, one odom/base_link owner | FAST-LIO core P95 21.86 ms; receipt-to-output P95 22.33 ms |
 | `A-NX-fault-isolated` | All 12 checks passed; 0.7 s NDT pause, loss after 0.388 s, exactly three commits before recovery; complete raw delivery | Accepted alignment P95 51.90 ms; processing P95 58.42 ms; odom/base_link gap max 13.89 ms |
 | `A-NX-lifecycle-final` | All 13 checks passed in explicitly partial run; inactive revokes native trust, no later commits or map/odom TF, installed initializer passed | Localization revoked about 2.5 ms after service request; local odometry continued |
-| `B-NX-final` | Continuous tracking failed; other nine checks passed, including complete raw delivery; 278 commits | Accepted alignment P95 68.88 ms; all attempts P95 90.43 ms; full processing P95 217.61 ms |
+| `B-NX-final` | Continuous tracking failed; all other checks passed, including complete raw delivery; 278 commits | Accepted alignment P95 68.88 ms; all attempts P95 90.43 ms; full processing P95 217.61 ms |
 
 A's full raw receipt was 478 scans / 9,539 IMUs, with 475 output clouds.
 FAST-LIO core P95 was 27.30 ms, receipt-to-output P95 27.90 ms. No pending
