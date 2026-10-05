@@ -9,7 +9,7 @@ the older standalone wheel/IMU + NDT branch is not merged.
 | Component | Exact source |
 | --- | --- |
 | AIMSRacer branch | `feat/fastlio-ndt-mpcc` |
-| Integration implementation | `7bf1b23` |
+| Integration implementation | `7bf1b23`, final runtime refinement `7da530e` |
 | Replay initialization/lifecycle audit | `55241ea` and subsequent audit refinements |
 | FAST-LIO2 | `30bc305b4240369879c346398ac6e0a1ea5ed420` |
 | lidar_localization_ros2 | `5f795a6cd886a20ade4175cb70bde630ac9ec785` + recorded trusted-anchor patch |
@@ -65,8 +65,10 @@ scan/map inlier fraction is diagnostic and does not authorize navigation.
 
 Desktop container: `aimsracer-fastlio-ndt-integration`, Humble, domain 194,
 localhost only. Desktop FAST-LIO executable is the independently built matching
-`30bc305` binary. NDT was completely cleaned and rebuilt after source freeze.
-The final fresh binary configured and activated successfully.
+`30bc305` binary. NDT was completely cleaned and rebuilt after the class-layout changes. The final
+two implementation files were rebuilt after the scoring-lock/timing refinement;
+headers and class layout were unchanged. Activation and timing output confirm
+that the final native binary is used.
 
 - aims_racer_system: 33 CTest/Python cases passed.
 - Controller: 8 tests passed, including real ROS diagnostic message adapter,
@@ -99,6 +101,33 @@ Each valid run has `summary.json`, `events.jsonl`, `tf-authorities.jsonl`,
 | `D-desktop-isolated` | Local-only graph passed: 297 body clouds, 5,950 EKF messages, one odom/base_link owner. No matching prior map is claimed for D. |
 | `B-desktop-verified` | Tracking acceptance failed: 302 commits, later rotation/translation/fitness rejection and loss. |
 
+### Final source (`7da530e`)
+
+| Desktop run | Result | Accepted alignment P95 | Full processing P95 | TF map/odom receive gap max |
+| --- | --- | ---: | ---: | ---: |
+| `A-desktop-processing-final` | All nine checks passed; 451 commits, installed initializer success, no tracking loss | 28.89 ms | 33.41 ms | 20.79 ms |
+| `B-desktop-processing-final` | Continuous tracking failed; other seven checks passed; 304 commits | 32.47 ms | 229.75 ms | 85.27 ms |
+
+`A-desktop-processing-fault` passed all ten checks on the final binary: a 0.7 s
+NDT process pause revoked ready after 0.426 s, then exactly three consecutive
+native commits restored readiness. The expected TF pause was 720 ms;
+odom/base_link remained continuous (maximum receive gap 10.37 ms).
+
+A received all 478 LiDAR scans and 9,539 IMU packets; FAST-LIO produced 475
+clouds after startup. Core P95 was 11.07 ms, receipt-to-output P95 11.32 ms,
+with no pending scans at trace checkpoints and zero dropped trace records.
+There were 91 independent quality samples, median 99.77%.
+
+B received all 714 scans and 14,285 IMU packets; FAST-LIO produced 712 clouds.
+Core P95 was 15.16 ms, receipt-to-output P95 15.35 ms. All attempted NDT
+alignment P95 was 33.68 ms, while full processing P95 was 229.75 ms;
+registration fitness/preparation overhead is material when scan/map consistency
+is poor. There were 67 rotation, 16 translation and 187 fitness rejections;
+141 independent samples had median 24.41%. Accepted-only timings do not
+characterize the rejected part of this run. Source-time guards remain enabled.
+
+Historical timing below belongs to the earlier runs, not the final binary:
+
 A fault-run accepted NDT P95 was 30.58 ms, max 40.95 ms. All attempted
 registrations, including interrupted/rejected attempts, had P95 30.61 ms and
 max 206.45 ms. Reported alignment time is not total source age. FAST-LIO core
@@ -129,7 +158,8 @@ NX source is isolated at `/home/aims/AIMSRacer-fastlio-ndt`. Its original
 `/home/aims/AIMSRacer` remains on the MPCC branch with its local changes
 preserved. Dependency sources, build, install and logs are under the new
 worktree's `log/fastlio-ndt`. Source delivery is local git push, NX fetch/pull;
-only seed fixtures are copied as data.
+seed fixtures are copied as data. Dependency updates are generated from the
+recorded patches and verified by the bootstrap against the complete source delta.
 
 NX build initially let colcon override `CMAKE_BUILD_PARALLEL_LEVEL=2` with
 `-j8`, exhausting available RAM/swap. That owned build was stopped and NDT
@@ -137,9 +167,69 @@ cleaned. The corrected build uses explicit `MAKEFLAGS="-j2 -l2"` and sequential
 package execution. This compiler setting is separate from NDT's two registration
 threads and three ROS executor threads. Power mode is `MAXN_SUPER`, CPU governor `schedutil`; neither was changed.
 
-The initial full NX build completed all five packages in 18 min 5 s; 32 system
-cases and seven controller cases passed before the final diagnostic/native-lock
-refinement. Final-source build and replay results are recorded below after execution.
+The initial full NX build completed all five packages in 18 min 5 s. The final
+native two-file rebuild completed in 2 min 23 s. Final system cases: 33 passed;
+controller health/ROS adapter: seven passed. Native admission and generation
+exclusion executables passed on arm64. Four additional replay-audit regression
+cases cover failed-player acceptance, explicit partial runs, initial monitor
+confirmation and subsequent tracking loss. They pass on desktop and arm64.
+
+Replay initially referenced historical bag paths, which now resolve under
+`/home/aims/aimsracer-data/sessions/2026-10-03/`; those failed preflights are
+retained. A sequential reused-domain run also missed the first two D scans,
+then a subsequent A fault run lost 13 IMU samples before the pause injection.
+FAST-LIO exited on the resulting 74 ms gap; raw bag source gaps are at most
+18.74 ms and contain those missing samples. The monitor stayed unready.
+That run does not test NDT recovery. The precise transport-loss cause is not
+established. Fresh isolated domains and five seconds of DDS discovery are used
+for the later audits; full runs now require successful player completion and
+exact raw LiDAR/IMU receipt counts. Explicit shortened lifecycle runs are
+labelled partial, and cannot claim full-bag delivery.
+
+| NX run | Result | Key timing |
+| --- | --- | --- |
+| `A-NX-final` | Nine checks passed; 447 commits, installed initializer passed, no tracking loss | Accepted alignment P95 51.92 ms; processing P95 58.26 ms; map/odom gap max 23.51 ms |
+| `D-NX-delivery-final` | Full raw delivery: 300 scans / 6,001 IMUs; 297 output clouds, 5,966 EKF outputs, one odom/base_link owner | FAST-LIO core P95 21.86 ms; receipt-to-output P95 22.33 ms |
+| `A-NX-fault-isolated` | All 12 checks passed; 0.7 s NDT pause, loss after 0.388 s, exactly three commits before recovery; complete raw delivery | Accepted alignment P95 51.90 ms; processing P95 58.42 ms; odom/base_link gap max 13.89 ms |
+| `A-NX-lifecycle-final` | All 13 checks passed in explicitly partial run; inactive revokes native trust, no later commits or map/odom TF, installed initializer passed | Localization revoked about 2.5 ms after service request; local odometry continued |
+| `B-NX-final` | Continuous tracking failed; other nine checks passed, including complete raw delivery; 278 commits | Accepted alignment P95 68.88 ms; all attempts P95 90.43 ms; full processing P95 217.61 ms |
+
+A's full raw receipt was 478 scans / 9,539 IMUs, with 475 output clouds.
+FAST-LIO core P95 was 27.30 ms, receipt-to-output P95 27.90 ms. No pending
+scan was observed at the trace checkpoints and no trace record was dropped.
+Independent consistency had 91 samples, median 99.71%. One cold startup
+attempt took 705.57 ms overall (591.32 ms alignment), was rejected as stale,
+and did not commit an anchor. After confirmation, committed source age P95
+was 163.43 ms; accepted alignment max was 83.89 ms. The map/odom and
+odom/base_link edges each had one publisher. B received all 714 scans / 14,285 IMUs, and produced 712 clouds. FAST-LIO
+core P95 was 37.05 ms (max 78.45 ms), receipt-to-output P95 37.60 ms;
+no pending scan was observed and no trace record was dropped. Native rejection
+counts were 71 rotation, 95 translation, 132 fitness and six stale attempts.
+Independent inlier median was 29.49% across 139 samples. Map/odom receive gap
+max was 125.43 ms (P95 20.11 ms), while odom/base_link max was 17.24 ms.
+Scoring no longer holds the shared state lock, but crop/target preparation can
+still stall TF callbacks. This replay is a retained localization failure,
+not evidence of successful long-term tracking or an isolated FAST-LIO timeout.
+
+`A-NX-audited-final` repeats the normal A chain with full player/delivery
+metadata: 435 commits, alignment P95 53.84 ms (max 85.94 ms), full processing
+P95 61.87 ms (cold maximum 686.01 ms rejected). FAST-LIO core P95 was
+25.86 ms and receipt-to-output P95 26.42 ms. All 478 scans / 9,539 IMUs
+arrived; 475 body clouds were published. Both dynamic TF edges had one owner;
+map/odom max receive gap was 23.77 ms. Independent inlier median was 99.71%
+across 88 samples. All 12 final audit checks passed.
+
+Its first audit incorrectly counted one initialization heartbeat as a tracking
+loss: the native event reached the audit first, then the monitor's older
+anchor-sequence-0 heartbeat arrived 1.43 ms later, followed by ready confirmation
+0.79 ms after that. Continuous tracking now starts at the monitor's explicit
+same-epoch confirmation covering the first native commit. Confirmation itself
+is mandatory; all subsequent loss still fails. Regression fixtures prove both
+boundaries. The production watchdog and admission thresholds were unchanged.
+
+During the isolated NX suite, observed CPU clocks were 1,984 MHz and CPU
+sensor temperature ranged 57.94–62.13 C. Peak reported total RAM was 3,147 MiB.
+These are replay observations, without the live driver/control workload.
 
 Independent consistency queries now use a 0.25 m search bound, preserving the
 same inlier fraction and inlier-only RMSE, including the exact 0.25 m boundary.
