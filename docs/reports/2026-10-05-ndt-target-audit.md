@@ -104,3 +104,40 @@ comparison is `A-NX-audited-final` / `B-NX-final`, with cropping enabled.
 Local copies, including event/TF logs and summaries, are under
 `log/fastlio-ndt/NX-evidence/`; `NX-fixed-target-comparison.json` contains the
 computed metrics for all four runs.
+
+## One-second anchor hold follow-up
+
+At the user's request, revision `a951995` changes the monitor's configured and
+default anchor hold age, and the controller's matching anchor age, to 1.0 s.
+Native per-scan source-age admission remains 0.5 s; EKF/cloud freshness remain
+0.1/0.5 s, controller health-message timeout 0.3 s, recovery three commits and
+TF publication 50 Hz. Slower registration alone therefore does not relax sensor
+health or permit a stale new correction. This change does not establish a
+minimum registration throughput.
+
+Desktop and NX each passed 33 related policy/ROS adapter tests. New cases prove
+750 ms hold, expiry strictly beyond 1.0 s and expiry with a frozen source clock
+despite fresh heartbeat messages. The NX system/controller overlays were refreshed
+(7.21 s); the installed controller import reports the 1.0 s default, and replay
+preflight checks installed monitor and YAML hashes against source.
+
+`A-NX-anchor-1s-fault-isolated` (fresh localhost domain 203) passed all 12 checks
+with complete 478 LiDAR / 9,539 IMU delivery. A 1.2 s NDT process pause revoked
+readiness after 0.906 s from pause start: the last trusted source stamp was
+already approximately 0.094 s old. Exactly three fresh commits restored ready.
+The intentionally paused NDT TF gap was 1,206.76 ms; local odom/base_link remained
+continuous with maximum gap 13.51 ms. FAST-LIO core P95 was 27.38 ms;
+independent consistency median 99.78%.
+
+The first attempt `A-NX-anchor-1s-fault` is retained as failed input delivery,
+not passed acceptance: FAST-LIO received only 328 scans / 6,547 IMUs before
+exiting on an IMU source-time gap. Trace comparison found a 196.42 ms receiver
+gap containing 38 samples present in the source bag, whose maximum IMU source
+gap is 18.74 ms. The transport/scheduling cause is not established. Input checks
+and FAST-LIO gap limits were not relaxed. The full isolated rerun supersedes
+this incomplete test for the one-second hold acceptance.
+
+Both runs and the build/test logs are copied under `log/fastlio-ndt/NX-evidence`.
+B has not been rerun with the 1.0 s hold; its prior continuous-tracking failure
+remains an unresolved result. Extending hold cannot make a persistently rejected
+map match pass its translation/rotation/fitness admission gates.
