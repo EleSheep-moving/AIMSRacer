@@ -81,7 +81,15 @@ def evaluate(path):
                 json.loads(line)['receive_steady_ns']>int((first['received']+.2)*1e9)
                 for line in (path/'tf-authorities.jsonl').read_text().splitlines())
     elif commits:
-        first_receive=commits[0]['received']
+        first=commits[0]['values']
+        # The monitor and audit receive the native event independently. A
+        # pre-confirmation heartbeat may arrive after the audit sees commit 1.
+        established=next((r for r in health if r['values'].get('ready')=='true'
+            and r['values'].get('epoch')==first['epoch']
+            and int(r['values'].get('anchor_sequence',0))>=int(first['anchor_sequence'])
+            and int(r['values'].get('event_sequence',0))>=int(first['event_sequence'])),None)
+        checks['health_monitor_established_tracking']=established is not None
+        first_receive=established['received'] if established else float('inf')
         # Exclude bag completion and the subsequent receive-watchdog expiry.
         last_source=max(r['ros_now_ns'] for r in rows)-200000000
         during=[r for r in health if r['received']>=first_receive and r['source_ns']<last_source]
