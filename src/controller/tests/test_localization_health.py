@@ -10,7 +10,7 @@ def status(stamp=1000000000,sequence=1,epoch='one',ready='true'):
 
 
 def test_source_age_and_monotonic_watchdog_cannot_be_refreshed_by_heartbeat():
-    h=LocalizationHealth()
+    h=LocalizationHealth(max_age=.5)
     h.observe(status(),1000000000,10.)
     assert h.usable(1400000000,10.2)
     h.observe(status(),1400000000,10.4)
@@ -60,3 +60,17 @@ def test_reordered_health_cannot_restore_authorization_after_loss():
     recovered['health_sequence']='11'
     h.observe(recovered,1300000000,10.3)
     assert h.usable(1300000000,10.3)
+
+
+def test_default_anchor_hold_is_one_second_and_heartbeat_does_not_extend_it():
+    h=LocalizationHealth()
+    first=status()
+    h.observe(first,1000000000,10.)
+    heartbeat=dict(first,health_sequence='2')
+    h.observe(heartbeat,1750000000,10.75)
+    assert h.usable(1750000000,10.75)
+    assert h.usable(2000000000,11.)
+    assert not h.usable(2000000001,11.000000001)
+    # Even with a fresh heartbeat and a frozen ROS clock, anchor wall age expires.
+    h.observe(dict(first,health_sequence='3'),1750000000,11.000000001)
+    assert not h.usable(1750000000,11.000000001)

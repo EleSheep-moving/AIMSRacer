@@ -142,13 +142,19 @@ version 1. `epoch` changes on NDT restart or reinitialization.
 only for committed corrections. `anchor_committed=true` is the only event that
 refreshes trusted source time. Timer TF and diagnostic heartbeats cannot refresh
 it. A rejected scan retains a fresh trusted anchor in `hold`; `ready` and
-`map_valid` stay true during that short hold. After 0.5 s without a new trusted
+`map_valid` stay true during that short hold. After 1.0 s without a new trusted
 anchor, either in scan source time or monotonic receive time, health is `lost`
 and the controller must stop. Recovery requires three consecutive new committed
 anchors. Duplicate or out of order events cannot advance this count. A new
 epoch clears the old trust immediately. Clock rewind fails closed until NDT
 establishes a new epoch. EKF must be fresh within 0.1 s and body cloud within
 0.5 s, with monotonic watchdogs for both streams.
+
+The controller also permits a trusted anchor age of 1.0 s; its health-message
+heartbeat timeout remains 0.3 s. This hold window is separate from the native
+per-scan admission limit: a new NDT result must still have source age at most
+0.5 s when committed. Holding the correction does not increase registration
+throughput or renew its trusted source stamp. TF timer publication remains 50 Hz.
 
 The monitor publishes `aims_racer_system/localization` at 10 Hz with protocol,
 epoch, anchor sequence, state, ready, source age and source stamp.

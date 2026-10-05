@@ -161,3 +161,29 @@ def test_initializer_rejects_missing_health_sequence_or_expired_anchor_receive_a
     assert not initialization_complete(status, 'old', 10.1, 1.1, 1.)
     status.update(health_sequence='1', receive_age='0.6')
     assert not initialization_complete(status, 'old', 10.1, 1.1, 1.)
+
+
+def test_deployed_anchor_hold_accepts_750ms_and_expires_after_one_second():
+    import yaml
+    config = yaml.safe_load((Path(__file__).resolve().parents[1] /
+        'params/localization_monitor.yaml').read_text())['localization_monitor']['ros__parameters']
+    h = AnchorHealth(max_age=config['anchor_max_age_sec'])
+    accept(h, 1)
+    reject = event(2, committed=False)
+    reject['anchor_sequence'] = '1'
+    assert h.observe(reject, 10_750_000_000, 10_750_000_000, 1.75)
+    held = h.evaluate(10.75, 1.75, True, source_now_ns=10_750_000_000)
+    assert held['state'] == 'hold' and held['ready']
+    assert h.evaluate(11., 2., True, source_now_ns=11_000_000_000)['ready']
+    assert not h.evaluate(11.000000001, 2.000000001, True,
+        source_now_ns=11_000_000_001)['ready']
+
+
+def test_deployed_anchor_receive_watchdog_expires_with_frozen_source_clock():
+    import yaml
+    config = yaml.safe_load((Path(__file__).resolve().parents[1] /
+        'params/localization_monitor.yaml').read_text())['localization_monitor']['ros__parameters']
+    h = AnchorHealth(max_age=config['anchor_max_age_sec'])
+    accept(h, 1)
+    assert h.evaluate(10., 1.75, True)['ready']
+    assert not h.evaluate(10., 2.000000001, True)['ready']

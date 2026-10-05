@@ -1,6 +1,7 @@
 localization_monitor:
   ros__parameters:
-    anchor_max_age_sec: 0.5
+    # Hold the last trusted correction while local EKF/cloud inputs stay fresh.
+    anchor_max_age_sec: 1.0
     ekf_max_age_sec: 0.1
     cloud_max_age_sec: 0.5
     recovery_commits: 3

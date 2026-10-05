@@ -64,7 +64,7 @@ class LocalizationMonitor(Node):
         data = Path(self.declare_parameter('map_file', '').value).expanduser().read_bytes()
         self.sha = hashlib.sha256(data).hexdigest()
         self.tree = cKDTree(map_points(data))
-        self.max_age = float(self.declare_parameter('anchor_max_age_sec', .5).value)
+        self.max_age = float(self.declare_parameter('anchor_max_age_sec', 1.0).value)
         self.ekf_max_age = float(self.declare_parameter('ekf_max_age_sec', .1).value)
         self.cloud_max_age = float(self.declare_parameter('cloud_max_age_sec', .5).value)
         self.health = AnchorHealth(self.max_age, int(self.declare_parameter('recovery_commits', 3).value))

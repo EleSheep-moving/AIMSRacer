@@ -3,7 +3,7 @@ import math
 
 
 class LocalizationHealth:
-    def __init__(self, max_age=.5, heartbeat_timeout=.3):
+    def __init__(self, max_age=1.0, heartbeat_timeout=.3):
         self.max_age=max_age
         self.heartbeat_timeout=heartbeat_timeout
         self.epoch=None
