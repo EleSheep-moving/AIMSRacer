@@ -2,6 +2,11 @@
 
 ## Scope and source
 
+The replay results below used the original online-crop configuration. See
+[target configuration audit and fixed-target follow-up](2026-10-05-ndt-target-audit.md)
+for the subsequent correction; do not attribute the historical timings to the
+new fixed-target configuration.
+
 This branch is based on MPCC `ed2b14e`, preserving its updated FAST-LIO2,
 rear axle adapters, wheel/IMU fusion and 200 Hz EKF. It ports NDT selectively;
 the older standalone wheel/IMU + NDT branch is not merged.
