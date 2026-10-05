@@ -33,9 +33,16 @@
     scan_min_range: 0.5
     scan_max_range: 30.0
     scan_period: 0.1
-    enable_local_map_crop: true
-    local_map_radius: 30.0
-    local_map_update_distance: 5.0
+    # Fixed prior-map target: construct NDT cells and warm the PCL search tree
+    # during lifecycle configure, before live scans. Online cropping bypasses
+    # that warm-up and rebuilds both targets repeatedly on a dense map.
+    # See upstream 5f795a6 docs/mid360_legged_jetson.md, "Jetson Defaults".
+    enable_local_map_crop: false
+    # Visualization only; registration and the map SHA still use the raw PCD.
+    viz_downsample: true
+    viz_voxel_leaf_size: 0.5
+    # Avoid an extra per-scan Hessian pass; independent consistency remains on.
+    enable_registration_localizability_diagnostics: false
     reject_above_score_threshold: false
     enable_map_odom_anchor_fitness_gate: false
     enable_seed_correction_guard: false

@@ -238,8 +238,10 @@ An extreme synthetic far-scan workload (2,000 queries against 990,482 map points
 took median 3,027 ms without the bound and 0.173 ms with it, both reporting zero
 inliers. This is a query benchmark, not a measured B replay speedup.
 
-Native timing distinguishes the alignment kernel from scan preparation, crop,
-alignment and fitness evaluation together. Timing messages do not renew trust.
+Native `alignment_time_sec` measures the entire PCL `align()` call, including
+any lazy target search-tree build; it is not an isolated NDT iteration/kernel
+measurement. Full processing additionally includes scan preparation, target
+setup and fitness evaluation. Timing messages do not renew trust.
 
 ## Run and rollback
 

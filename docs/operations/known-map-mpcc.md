@@ -84,6 +84,20 @@ ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
 Start the NDT add-on with an immutable saved PCD map. `map_file` is mandatory.
 The helper configures and activates the NDT lifecycle node automatically.
 
+The default `ndt_fastlio.yaml` uses the full immutable PCD as a fixed NDT
+target. Online local-map cropping is disabled, following the pinned upstream
+Jetson preset. Lifecycle configure constructs the target and runs upstream's
+search-tree warm-up before activation; wait for `Registration target warm-up`
+and `NDT configured and active` in the startup log. Initialization still needs
+three fresh consistent scan matches. Map loading/warm-up is startup work and
+must not be interpreted as a recurring scan-time cost.
+
+The 0.5 m `viz_voxel_leaf_size` affects `/localizer/map_cloud` only. The
+registration target and independent consistency monitor use the original PCD;
+its SHA-256 does not change. Scan downsampling remains 0.2 m, NDT resolution
+1.0 m, scan maximum range 30 m and registration thread count two. A much larger
+map requires a separate memory/startup assessment before enabling a crop policy.
+
 ```bash
 ros2 launch aims_racer_system known_map_localization.launch.py \
   map_file:=/absolute/path/to/map.pcd use_sim_time:=false
