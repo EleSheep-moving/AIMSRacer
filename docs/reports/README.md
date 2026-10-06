@@ -15,6 +15,7 @@ in the [checklist](../operations/vehicle-checklist.md).
 | [2026-10-04 premature plan expiry](2026-10-04-plan-expiry.md) | Historical 750 ms / 10 cm configuration; future forecast versus actual plan expiry |
 | [2026-10-04 LIO delay and EKF yaw](2026-10-04-lio-delay.md) | Incident latency, two-second EKF replay, rotation Jacobian and matching-cost evidence; cumulative backlog remains unexplained |
 | [2026-10-05 LIO worker and catch-up](2026-10-05-fastlio-thread.md) | Joined worker, preserved IMU history, deskew boundaries and isolated desktop replay acceptance |
+| [2026-10-06 NX workspace synchronization](2026-10-06-nx-workspace-sync.md) | Preserved NX regression sources, current C++ test interfaces, branch-specific synthetic startup and desktop/NX/GitHub synchronization |
 
 Future reports should identify source/configuration versions, hardware, workload,
 measurement definitions, sample count and evidence location. Generated local

@@ -108,7 +108,7 @@ def run(args):
     config_file=Path(args.vehicle_config).resolve();config=load_config(config_file)
     path=fixture(out,config,-1 if args.clockwise else 1)
     rclpy.init(args=['--ros-args','-p',f'path_directory:={out / "reference"}',
-                     '-p',f'vehicle_config:={config_file}','-p','output_mode:=drive',
+                     '-p',f'vehicle_config:={config_file}',
                      '-p','simulation:=true','-p',f'log_directory:={out}'])
     children=[];logs=[];controller=plant=None
     result=dict(status='FAIL',scenario=args.scenario,physics='independent lagged kinematic bicycle',
@@ -116,7 +116,8 @@ def run(args):
     started=None;injected=None;fault_observed=None;errors=[];margins=[];last_metrics=0.
     try:
         for name,cmd in [
-            ('rc',['ros2','run','ackermann_mux','joystick_control_v2_ch3_ch1.py']),
+            ('rc',['ros2','run','ackermann_mux','joystick_control_v2','--ros-args',
+                   '-p','channel_profile:=steering_ch1_throttle_ch3_aux_ch5_to_ch10']),
             ('converter',['ros2','run','vesc_ackermann','ackermann_to_vesc_node','--ros-args','--params-file','/ws/test_config/vesc.yaml']),
         ]:
             log=(out/f'{name}.log').open('w');logs.append(log)
@@ -173,6 +174,10 @@ def run(args):
                     break
             if args.scenario=='disable' and injected and s.status=='READY' and plant.speed<.05:
                 break
+            if args.scenario in ('manual','rc_loss') and injected and now-injected>.5:
+                assert s.active, 'Selector revocation stopped MPCC computation'
+                assert abs(plant.speed_target)<1e-9, 'Selector forwarded MPCC after authority revocation'
+                break
             if s.status=='COMPLETE':break
         else:raise RuntimeError('Acceptance run timed out')
         samples=np.asarray(plant.samples);commands=np.asarray(plant.commands)
@@ -199,6 +204,9 @@ def run(args):
             assert fault_observed is None,'Normal stopping entered FAULT'
             assert result['status_at_end']=='READY'
             assert abs(plant.speed_target)<1e-9 and abs(plant.speed)<.05
+        elif args.scenario in ('manual','rc_loss'):
+            assert fault_observed is None, 'Selector revocation faulted the controller'
+            assert result['status_at_end']=='RUNNING'
         elif args.scenario!='disable':
             assert fault_observed is not None,'Injected fault was not detected'
             result['fault_detection_s']=fault_observed-injected

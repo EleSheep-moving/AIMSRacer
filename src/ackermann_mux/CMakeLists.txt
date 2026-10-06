@@ -76,6 +76,14 @@ install(
 )
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(joystick_selector_test tests/test_joystick_selector.cpp)
+  target_link_libraries(joystick_selector_test joystick_selector)
+  target_compile_features(joystick_selector_test PUBLIC cxx_std_17)
+  target_compile_definitions(joystick_selector_test PRIVATE
+    JOYSTICK_REFERENCE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/joystick_python_reference.csv")
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(joystick_pipeline tests/test_joystick_pipeline.py TIMEOUT 60)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
