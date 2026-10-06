@@ -1,6 +1,6 @@
 # Closed-lap recovery and PGO map reference — 2026-09-28
 
-Inputs are the local `/home/aims/mapping-lap-run1.csv` and
+Inputs are the local `/home/aims/aimsracer-data/sessions/2026-09-28/mapping-run1/mapping-lap-run1.csv` and
 `/home/aims/maps/20260928_010503/{map.pcd,poses.txt,patches/}`. The map has
 990,482 points and 375 saved PGO key poses. This mapping session began after
 the calibration bag stopped; the bag has no contemporaneous `map -> odom`
@@ -58,7 +58,7 @@ not a measurement of available grip or free corridor.
 Reproduce the candidates from the workspace root:
 
 ```bash
-python3 src/controller/tools/recover_closed_lap.py /home/aims/mapping-lap-run1.csv \
+python3 src/controller/tools/recover_closed_lap.py /home/aims/aimsracer-data/sessions/2026-09-28/mapping-run1/mapping-lap-run1.csv \
   src/controller/recordings/20260928-mapping-lap/closed_odom.csv \
   --first-row 303 --last-row 593 --sigma 0.75
 python3 src/controller/tools/recover_pgo_map_lap.py \

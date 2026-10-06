@@ -1,6 +1,6 @@
 # Speed-mode low-speed calibration — 2026-09-28
 
-Source: local bag `/home/aims/mpcc-calib-20260928-005010/`, 324.37 s and
+Source: local bag `/home/aims/aimsracer-data/sessions/2026-09-28/calibration-005010/bag/`, 324.37 s and
 631,357 messages. All 64,040 `/ackermann_cmd` samples had `drive.jerk == 0`
 (speed mode). The bag has commanded speed/steering, VESC telemetry, wheel/LIO/EKF
 odometry and 200 Hz raw IMU; it lacks raw `/livox/lidar` and was recorded before
@@ -9,7 +9,7 @@ The core ratios, lags and timing can be recomputed from the workspace root with:
 
 ```bash
 python3 src/controller/tools/analyze_speed_mode_bag.py \
-  /home/aims/mpcc-calib-20260928-005010/mpcc-calib-20260928-005010_0.db3
+  /home/aims/aimsracer-data/sessions/2026-09-28/calibration-005010/bag/mpcc-calib-20260928-005010_0.db3
 ```
 
 ## Operating region and speed scale

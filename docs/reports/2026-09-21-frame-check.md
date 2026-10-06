@@ -71,7 +71,7 @@ longer part of the repository policy. Current main-repository launch files inste
 remap upstream FAST-LIO `/tf` to `/fastlio2/tf`; repeat the hardware check after
 updating the unmodified-submodule configuration.
 
-Local evidence (gitignored): `log/v2-tf-hardware-20260920-01/` contains
+Local evidence (gitignored): `/home/aims/aimsracer-data/sessions/2026-09-20/v2-tf-hardware-01/` contains
 `verified-launch.log`, `verified-audit.log`, `summary.json`, `samples.json`,
 `cyclonedds.xml`, and the observer script. Earlier startup/observation logs are
 retained separately. The directory name reflects the beginning of this session.

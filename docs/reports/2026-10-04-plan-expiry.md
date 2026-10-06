@@ -19,9 +19,9 @@ in this investigation.
 
 ## Recording and event
 
-Source bag: `/home/aims/mpcc-logs/field-held-tf-20261004/trial-bag/`,
+Source bag: `/home/aims/aimsracer-data/sessions/2026-10-04/field-held-tf/trial-bag/`,
 116.822 s, 234,006 messages. Matching controller log:
-`/home/aims/mpcc-logs/field-held-tf-20261004/controller-1791046193013006170.jsonl`.
+`/home/aims/aimsracer-data/sessions/2026-10-04/field-held-tf/controller-1791046193013006170.jsonl`.
 The bag was opened read-only and ROS messages deserialized offline; no topics
 were replayed into the vehicle.
 

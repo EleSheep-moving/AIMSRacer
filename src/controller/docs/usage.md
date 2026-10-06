@@ -58,11 +58,18 @@ recorded loop to saved PGO poses, prepare with `--map-file`, and use the
 validated localizer add-on. The controller does not itself relocalize.
 
 ```bash
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc record_path --ros-args -p output:=/data/lap.csv
+session_dir="$HOME/aimsracer-data/sessions/$(date +%F)/$(date +%H%M%S)-reference"
+mkdir -p "$session_dir/logs"
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc record_path --ros-args \
+  -p output:="$session_dir/path.csv"
 # Drive one forward lap, with a little overlap; then Ctrl-C the recorder.
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc prepare_path /data/lap.csv /data/reference \
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc prepare_path \
+  "$session_dir/path.csv" "$session_dir/reference" \
   --vehicle-config src/controller/config/vehicle.yaml --left-width 0.5 --right-width 0.5
 ```
+
+Keep the bag and controller logs in the same session; see the
+[local data layout](../../../docs/operations/recording.md#local-data-layout).
 
 **The 0.5 m widths are the specified centered 1.0 m course model, not measured
 track boundaries.** Supply checked minimum free distances to the left/right of the processed rear-axle path. The
@@ -92,7 +99,8 @@ see the [frame rationale](../../../docs/architecture.md#persistent-reference-and
 After preparing the path and choosing the vehicle configuration, run:
 
 ```bash
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc prepare_solver /data/reference --vehicle-config /data/vehicle.yaml
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc prepare_solver \
+  "$session_dir/reference" --vehicle-config src/controller/config/vehicle.yaml
 ```
 
 This command has no ROS node or actuator access. It builds and warms the same
@@ -171,11 +179,13 @@ whether to forward them to `/ackermann_cmd`; MPCC computation and actuator
 selection are independent. There is no separate preview mode or output topic.
 
 ```bash
+session_dir="$HOME/aimsracer-data/sessions/$(date +%F)/$(date +%H%M%S)-manual-evaluation"
+mkdir -p "$session_dir/logs"
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 launch aims_mpcc mpcc.launch.py \
   path_directory:=/home/aims/AIMSRacer/src/controller/recordings/current \
   vehicle_config:=/home/aims/AIMSRacer/src/controller/config/vehicle.yaml \
   horizon:=10 solve_frequency:=5.0 solver_timeout:=0.25 \
-  log_directory:=/home/aims/mpcc-logs/manual-evaluation
+  log_directory:="$session_dir/logs"
 ```
 
 For manual evaluation, select **manual + speed** on the RC with calibration

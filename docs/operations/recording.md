@@ -9,12 +9,46 @@ For recordings already present on the Orin, see the
 [LIO test bag catalog](lio-test-bags.md): it lists raw-input motion/static bags,
 their local paths and replay examples, and identifies recordings that cannot rerun LIO.
 
-## Sensor and estimator bag
+## Local data layout
 
-Replace `/data/session-001` with your chosen new directory:
+Keep runtime data outside the source tree under `~/aimsracer-data/`:
+
+```text
+sessions/YYYY-MM-DD/<time>-<experiment>/
+  bag/       # rosbag2 metadata and database files
+  logs/      # controller JSONL and launch/diagnostic logs
+  path.csv   # original reference recording
+  notes.md   # maneuvers, RC mode, configuration and commit IDs
+logs/colcon/ # build logs; the workspace log/ entry is a symlink here
+bags.csv    # inventory of existing recordings after the 2026-10-04 move
+```
+
+The local `~/aimsracer-data/README.md` indexes existing sessions. Historical
+sessions retain their original internal filenames; `migration-2026-10-04.json`
+maps old paths to new ones. Recorded logs retain their original path strings.
+Maps remain under `~/maps/`, prepared references remain under
+`src/controller/recordings/`, and ROS default logs remain under `~/.ros/log/`.
+The persistent MPCC compiler cache keeps its existing location.
+
+Create one session for each attempt:
 
 ```bash
-ros2 bag record -o /data/session-001 \
+session_dir="$HOME/aimsracer-data/sessions/$(date +%F)/$(date +%H%M%S)-mpcc"
+mkdir -p "$session_dir/logs"
+printf '%s\n' "$session_dir"
+```
+
+In other terminals, set `session_dir` to that **same printed path**. Record CSV
+to `"$session_dir/path.csv"` and launch MPCC with
+`log_directory:="$session_dir/logs"`. Do not create `bag/` yourself: rosbag2
+creates it and refuses an existing output directory. Use a new session for retries.
+
+## Sensor and estimator bag
+
+After creating the session above:
+
+```bash
+ros2 bag record -o "$session_dir/bag" \
   /livox/lidar /livox/imu \
   /fastlio2/lio_odom /rear_axle/lio_odom /rear_axle/imu \
   /rear_axle/wheel_odom /odometry/filtered \
@@ -40,7 +74,7 @@ record it only when explicitly investigating visualization output. See the
 Stop with Ctrl-C and inspect the result:
 
 ```bash
-ros2 bag info /data/session-001
+ros2 bag info "$session_dir/bag"
 ```
 
 Confirm the expected topics, message counts and duration, including `/tf_static`.
@@ -91,7 +125,7 @@ reference-CSV command must select rear-axle LIO odometry explicitly:
 
 ```bash
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc record_path --ros-args \
-  -p odom_topic:=/rear_axle/lio_odom -p output:=/home/aims/mapping-lap-run1.csv
+  -p odom_topic:=/rear_axle/lio_odom -p output:="$session_dir/path.csv"
 ```
 
 That CSV is still `odom/base_link`. PGO publishes a changing `map -> odom`
@@ -109,7 +143,7 @@ controller's operating region; do not mix in current/duty mode or runs above
 any motion:
 
 ```bash
-ros2 bag record -o /home/aims/mpcc-prep-run1 \
+ros2 bag record -o "$session_dir/bag" \
   /livox/lidar /livox/imu \
   /fastlio2/lio_odom /rear_axle/lio_odom /rear_axle/imu \
   /rear_axle/wheel_odom /odometry/filtered \

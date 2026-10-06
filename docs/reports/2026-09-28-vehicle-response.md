@@ -1,7 +1,7 @@
 # Vehicle speed and steering response — 2026-09-28 analysis
 
 Source: local bag `mpcc-calib-20260927-234227_0.db3` in
-`/home/aims/mpcc-calib-20260927-234227/` (233.87 s, recorded 2026-09-27).
+`/home/aims/aimsracer-data/sessions/2026-09-27/calibration-234227/bag/` (233.87 s, recorded 2026-09-27).
 The bag is not checked into the repository. Tests used V2 on the Orin NX with
 MID360. At recording time the VESC conversion was 4650 ERPM/(m/s); afterward
 the owner selected 3465 based on a straight-line LIO/wheel speed ratio of
