@@ -38,6 +38,13 @@ install(DIRECTORY launch params behaviour_trees rviz replay
   DESTINATION share/${PROJECT_NAME} PATTERN "__pycache__" EXCLUDE)
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(rear_axle_imu_test tests/test_rear_axle_imu.cpp)
+  target_link_libraries(rear_axle_imu_test rear_axle_imu)
+  target_compile_definitions(rear_axle_imu_test PRIVATE
+    IMU_REFERENCE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/imu_python_reference.csv")
+  add_executable(benchmark_rear_axle_imu tests/benchmark_rear_axle_imu.cpp)
+  target_link_libraries(benchmark_rear_axle_imu rear_axle_imu)
   add_executable(rear_axle_force_test tests/test_rear_axle_force.cpp)
   target_link_libraries(rear_axle_force_test PRIVATE rear_axle_imu)
   target_compile_options(rear_axle_force_test PRIVATE -UNDEBUG -Wall -Wextra -Wpedantic)

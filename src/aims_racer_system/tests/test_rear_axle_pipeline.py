@@ -1,5 +1,6 @@
 """Synthetic ROS integration; localhost isolated domain required, no hardware nodes."""
 import math
+import json
 import os
 from pathlib import Path
 import signal
@@ -9,14 +10,18 @@ import time
 import numpy as np
 import pytest
 import rclpy
+import yaml
 from rclpy.qos import QoSProfile, DurabilityPolicy, qos_profile_sensor_data
 from sensor_msgs.msg import Imu
+from diagnostic_msgs.msg import DiagnosticArray
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float64
 from tf2_msgs.msg import TFMessage
 from vesc_msgs.msg import VescStateStamped
 
 PACKAGE = Path(__file__).resolve().parents[1]
+ERPM_GAIN = yaml.safe_load((PACKAGE / 'params/vesc.yaml').read_text())['/**']['ros__parameters']['speed_to_erpm_gain']
+HAS_BIAS_CALIBRATION = (PACKAGE / 'params/gyro_bias.yaml').is_file()
 
 
 @pytest.mark.parametrize('mapping', [False, True], ids=['ekf-driving','adapter-mapping'])
@@ -41,44 +46,75 @@ def test_synthetic_turn_pipeline(mapping, tmp_path):
     wheel_pub=node.create_publisher(VescStateStamped,'/sensors/core',10)
     servo_pub=node.create_publisher(Float64,'/sensors/servo_position_command',10)
     expected={}
+    bias_status=[]
+    subscriptions.append(node.create_subscription(
+        DiagnosticArray, '/imu/gyro_bias/status', bias_status.append, 10))
+    gyro_bias = .02 if HAS_BIAS_CALIBRATION else 0.
+
+    def calibration_ready():
+        return any(json.loads(value.value) is True
+                   for msg in bias_status for status in msg.status
+                   for value in status.values if value.key == 'ready')
+
+    def publish_imu_and_lio(t, moving, stamp, publish_lio):
+        v, w, lever = (.5, .4, .3) if moving else (0., 0., .3)
+        yaw=w*t
+        imu=Imu(); imu.header.stamp=stamp; imu.header.frame_id='livox_frame'
+        imu.angular_velocity.z=w+gyro_bias
+        imu.linear_acceleration.x=-w*w*lever/9.80665
+        imu.linear_acceleration.y=w*v/9.80665
+        imu.linear_acceleration.z=1.
+        imu_pub.publish(imu)
+        if publish_lio:
+            rear=[v/w*math.sin(yaw),v/w*(1-math.cos(yaw)),0.] if moving else [0.,0.,0.]
+            odom=Odometry(); odom.header.stamp=stamp; odom.header.frame_id='odom'; odom.child_frame_id='livox_frame'
+            odom.pose.pose.position.x=rear[0]+lever*math.cos(yaw)
+            odom.pose.pose.position.y=rear[1]+lever*math.sin(yaw)
+            odom.pose.pose.position.z=.03
+            odom.pose.pose.orientation.z=math.sin(yaw/2); odom.pose.pose.orientation.w=math.cos(yaw/2)
+            odom.twist.twist.linear.x=v; odom.twist.twist.linear.y=w*lever
+            expected[(stamp.sec,stamp.nanosec)]=rear
+            lio_pub.publish(odom)
+            servo=Float64(); servo.data=.506-.5137*.5*math.atan(w*.36/v) if moving else .506
+            servo_pub.publish(servo)
+            wheel=VescStateStamped(); wheel.header.stamp=stamp; wheel.state.speed=v*ERPM_GAIN
+            wheel_pub.publish(wheel)
     try:
         for i,cmd in enumerate(commands):
             handle=(tmp_path/f'node-{i}.log').open('w'); logs.append(handle)
             processes.append(subprocess.Popen(cmd,stdout=handle,stderr=subprocess.STDOUT,start_new_session=True))
         ready_deadline=time.monotonic()+15
-        while imu_pub.get_subscription_count()<2 or wheel_pub.get_subscription_count()<1 or (not mapping and node.count_subscribers('/rear_axle/lio_odom')<2):
+        while imu_pub.get_subscription_count()<(1 if HAS_BIAS_CALIBRATION else 2) or wheel_pub.get_subscription_count()<1 or (not mapping and node.count_subscribers('/rear_axle/lio_odom')<2):
             assert all(p.poll() is None for p in processes), 'ROS child exited; inspect logs'
             assert time.monotonic()<ready_deadline, 'ROS discovery timed out'
             rclpy.spin_once(node,timeout_sec=.02)
-        started=time.monotonic(); last_lio=0.; next_tick=started
+        if HAS_BIAS_CALIBRATION:
+            # Exercise the production 10 s stationary gate before the turn.
+            # Adding a synthetic raw bias checks both shared rear-adapter paths.
+            calibration_deadline=time.monotonic()+25.
+            last_lio=0.;next_tick=time.monotonic()
+            while not calibration_ready():
+                now=time.monotonic()
+                assert all(p.poll() is None for p in processes), 'Calibration child exited'
+                assert now<calibration_deadline, 'Stationary gyro calibration did not complete'
+                if now<next_tick:
+                    rclpy.spin_once(node,timeout_sec=min(.001,next_tick-now));continue
+                next_tick=now+.005
+                publish_lio=now-last_lio>=.02
+                if publish_lio:last_lio=now
+                publish_imu_and_lio(0.,False,node.get_clock().now().to_msg(),publish_lio)
+                rclpy.spin_once(node,timeout_sec=0.)
+        started=time.monotonic();last_lio=0.;next_tick=started
         v,w,lever=.5,.4,.3
         while time.monotonic()-started<5.:
             now=time.monotonic()
             if now<next_tick:
-                rclpy.spin_once(node,timeout_sec=min(.001,next_tick-now)); continue
+                rclpy.spin_once(node,timeout_sec=min(.001,next_tick-now));continue
             next_tick=now+.005
-            t=now-started; yaw=w*t
-            stamp=node.get_clock().now().to_msg()
-            imu=Imu(); imu.header.stamp=stamp; imu.header.frame_id='livox_frame'
-            imu.angular_velocity.z=w
-            imu.linear_acceleration.x=-w*w*lever/9.80665
-            imu.linear_acceleration.y=w*v/9.80665
-            imu.linear_acceleration.z=1.
-            imu_pub.publish(imu)
-            if now-last_lio>=.02:
-                last_lio=now
-                rear=[v/w*math.sin(yaw),v/w*(1-math.cos(yaw)),0.]
-                odom=Odometry(); odom.header.stamp=stamp; odom.header.frame_id='odom'; odom.child_frame_id='livox_frame'
-                odom.pose.pose.position.x=rear[0]+lever*math.cos(yaw)
-                odom.pose.pose.position.y=rear[1]+lever*math.sin(yaw)
-                odom.pose.pose.position.z=.03
-                odom.pose.pose.orientation.z=math.sin(yaw/2); odom.pose.pose.orientation.w=math.cos(yaw/2)
-                odom.twist.twist.linear.x=v; odom.twist.twist.linear.y=w*lever
-                expected[(stamp.sec,stamp.nanosec)]=rear
-                lio_pub.publish(odom)
-                servo=Float64(); servo.data=.506-.5137*.5*math.atan(w*.36/v); servo_pub.publish(servo)
-                wheel=VescStateStamped(); wheel.header.stamp=stamp; wheel.state.speed=v*4650.; wheel_pub.publish(wheel)
-            for _ in range(3): rclpy.spin_once(node,timeout_sec=0.)
+            publish_lio=now-last_lio>=.02
+            if publish_lio:last_lio=now
+            publish_imu_and_lio(now-started,True,node.get_clock().now().to_msg(),publish_lio)
+            for _ in range(3):rclpy.spin_once(node,timeout_sec=0.)
         assert all(p.poll() is None for p in processes)
         assert len(observations['lio'])>20 and len(observations['wheel'])>20
         for msg in observations['lio'][-20:]:
@@ -89,6 +125,7 @@ def test_synthetic_turn_pipeline(mapping, tmp_path):
         valid_imu=[m for m in observations['imu'] if m.linear_acceleration_covariance[0]>=0]
         assert len(valid_imu)>20, 'Compensated IMU never became available'
         for msg in valid_imu[-20:]:
+            assert msg.angular_velocity.z == pytest.approx(w, abs=1e-8)
             assert msg.header.frame_id=='base_link'
             a=msg.linear_acceleration
             np.testing.assert_allclose([a.x,a.y,a.z],[0.,w*v,9.80665],atol=1e-6)

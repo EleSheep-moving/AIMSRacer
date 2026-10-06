@@ -2,6 +2,8 @@
 build/
 install/
 log/
+# The workspace log entry may be a symlink to external runtime data.
+/log
 .vscode/
 *.db3
 bag/

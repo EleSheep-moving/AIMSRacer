@@ -23,6 +23,7 @@ in the [checklist](../operations/vehicle-checklist.md).
 | [2026-10-06 MPCC weights and oscillation](2026-10-06-mpcc-weight-response.md) | Field checks and single-variable numerical experiments; weight candidates remain undeployed |
 | [2026-10-06 iteration budget](2026-10-06-iteration-budget.md) | Offline 30/60/100 iteration comparison and fixed-initial-state constraint diagnosis |
 | [2026-10-06 shared gyro bias correction](2026-10-06-gyro-bias-correction.md) | Shared rear-adapter correction, old-bag replay, actual NX stationary hardware capture and regression evidence |
+| [2026-10-06 NX workspace synchronization](2026-10-06-nx-workspace-sync.md) | Preserved NX regression sources, current C++ test interfaces, branch-specific synthetic startup and desktop/NX/GitHub synchronization |
 
 Future reports should identify source/configuration versions, hardware, workload,
 measurement definitions, sample count and evidence location. Generated local

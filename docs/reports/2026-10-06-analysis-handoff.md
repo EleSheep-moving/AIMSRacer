@@ -86,7 +86,8 @@ NX 同步到本地集成工作目录；本次只同步文档，没有把 NX 今�
 
 初次归档时 NX 的 `/home/aims/AIMSRacer`（`feat/aims-mpcc`）另有未提交的旧
 docs 修订和其他源码改动。本轮发布将旧 docs 修订单独提交至 MPCC 分支，
-保留其他源码改动。原 docs 差异已额外备份到本地
+其余有效源码/测试修订随后也已验证、提交并同步，见
+[工作目录同步记录](2026-10-06-nx-workspace-sync.md)。原 docs 差异已额外备份到本地
 `log/docs-archive-20261006/nx-aims-mpcc-docs.patch`；未自动应用，以保留
 两个工作目录之间的上下文。后续合并应包含本轮 MPCC 文档提交；这份
 补丁保留作发布前快照，不应再重复应用。
