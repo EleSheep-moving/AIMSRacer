@@ -45,6 +45,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(rear_axle_contract tests/test_rear_axle_contract.py
     ENV "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/test_logs")
+  ament_add_pytest_test(gyro_bias tests/test_gyro_bias.py)
   ament_add_pytest_test(nav_map_argument tests/test_nav_map_argument.py)
   ament_add_pytest_test(localization_policy tests/test_localization_policy.py)
   ament_add_pytest_test(monitor_health_delivery tests/test_monitor_health_delivery.py)

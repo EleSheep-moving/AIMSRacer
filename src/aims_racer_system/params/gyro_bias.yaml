@@ -1,0 +1,18 @@
+# Bias is estimated in raw livox_frame axes after external stationary checks.
+# Keep the car stationary after startup until /imu/gyro_bias/status reports ready.
+# Livox raw acceleration is in g; tilt is permitted and accel is not corrected.
+/**:
+  ros__parameters:
+    duration: 10.0
+    min_samples: 1000
+    max_observation_age: 0.25
+    max_imu_gap: 0.05
+    max_wheel_speed: 0.02
+    max_lio_speed: 0.025
+    max_position_change: 0.02
+    max_orientation_change: 0.01
+    max_gyro_norm: 0.1
+    max_gyro_std: 0.005
+    max_accel_std: 0.02
+    accel_norm_min: 0.75
+    accel_norm_max: 1.25

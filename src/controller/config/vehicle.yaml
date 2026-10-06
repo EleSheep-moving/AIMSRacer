@@ -52,4 +52,4 @@ terminal_weight: 3.0
 # plan_ttl defaults to horizon * 0.8 * dt (0.8 s at horizon 10, dt 0.1 s).
 # Replies later than the 250 ms acceptance budget
 # are also discarded; neither case kills the solver process.
-solver_max_iterations: 30
+solver_max_iterations: 50

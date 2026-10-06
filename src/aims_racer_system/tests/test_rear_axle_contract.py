@@ -52,14 +52,32 @@ def test_shared_launch_uses_mount_directly_and_one_livox_frame(mapping):
     module.Node = lambda **kwargs: kwargs
     context = LaunchContext()
     context.launch_configurations.update(geometry_config=str(PACKAGE/'params/rear_axle_geometry.yaml'),
-        lio_config=str(PACKAGE/'params/fastlio_rear.yaml'), publish_odom_tf=str(mapping).lower())
+        lio_config=str(PACKAGE/'params/fastlio_rear.yaml'), gyro_bias_config=str(PACKAGE/'params/gyro_bias.yaml'), publish_odom_tf=str(mapping).lower())
     nodes = module.build_nodes(context)
     static = [n for n in nodes if n['executable']=='static_transform_publisher']
     assert [n['arguments'][-1] for n in static] == ['livox_frame', 'base_footprint']
     assert [float(static[0]['arguments'][i]) for i in (1,3,5)] == [.3,0.,.03]
-    for node in nodes[2:]:
+    adapters = [n for n in nodes if n['executable'] in ['lio_to_rear_axle.py', 'imu_to_rear_axle']]
+    for node in adapters:
         assert node['parameters'][0]['livox_translation'] == [.3,0.,.03]
-    assert nodes[2]['parameters'][0]['publish_tf'] is mapping
+    assert adapters[0]['parameters'][0]['publish_tf'] is mapping
     lio = yaml.safe_load((PACKAGE/'params/fastlio_rear.yaml').read_text())
     assert lio['t_il'] == [-.011,-.02329,.04412]  # Preserved internally, not added to mounting.
     assert lio['r_il'] == [1.,0.,0.,0.,1.,0.,0.,0.,1.]
+
+
+def test_gyro_correction_is_shared_by_both_rear_adapters():
+    spec = importlib.util.spec_from_file_location('rear_bias_launch', PACKAGE/'launch/rear_axle_frames.launch.py')
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    module.Node = lambda **kwargs: kwargs
+    context = LaunchContext()
+    context.launch_configurations.update(geometry_config=str(PACKAGE/'params/rear_axle_geometry.yaml'),
+        lio_config=str(PACKAGE/'params/fastlio_rear.yaml'), gyro_bias_config=str(PACKAGE/'params/gyro_bias.yaml'),
+        publish_odom_tf='false')
+    nodes=module.build_nodes(context)
+    correctors=[n for n in nodes if n['executable']=='livox_gyro_bias.py']
+    assert len(correctors)==1
+    adapters=[n for n in nodes if n['executable'] in ['lio_to_rear_axle.py','imu_to_rear_axle']]
+    assert len(adapters)==2
+    for n in adapters:
+        assert ('/livox/imu','/livox/imu_bias_corrected') in n['remappings']

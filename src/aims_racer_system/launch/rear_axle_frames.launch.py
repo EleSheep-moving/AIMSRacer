@@ -35,15 +35,20 @@ def build_nodes(context):
                 '--frame-id', 'base_link', '--child-frame-id', child]
         return Node(package='tf2_ros', executable='static_transform_publisher', name=name, arguments=args)
 
+    bias_config = LaunchConfiguration('gyro_bias_config').perform(context)
     mapping = LaunchConfiguration('publish_odom_tf').perform(context).lower() == 'true'
     return [
         static('rear_to_livox', 'livox_frame', translation, quaternion),
         static('rear_to_footprint', 'base_footprint', [0., 0., 0.], [0., 0., 0., 1.]),
+        Node(package='aims_racer_system', executable='livox_gyro_bias.py',
+             parameters=[bias_config], output='screen'),
         Node(package='aims_racer_system', executable='lio_to_rear_axle.py',
              parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion,
-                          'publish_tf': mapping}], output='screen'),
+                          'publish_tf': mapping}],
+             remappings=[('/livox/imu', '/livox/imu_bias_corrected')], output='screen'),
         Node(package='aims_racer_system', executable='imu_to_rear_axle',
-             parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion}], output='screen'),
+             parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion}],
+             remappings=[('/livox/imu', '/livox/imu_bias_corrected')], output='screen'),
     ]
 
 
@@ -52,6 +57,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('geometry_config', default_value=os.path.join(params, 'rear_axle_geometry.yaml')),
         DeclareLaunchArgument('lio_config', default_value=os.path.join(params, 'fastlio_rear.yaml')),
+        DeclareLaunchArgument('gyro_bias_config', default_value=os.path.join(params, 'gyro_bias.yaml')),
         DeclareLaunchArgument('publish_odom_tf', default_value='false'),
         OpaqueFunction(function=build_nodes),
     ])
