@@ -48,6 +48,13 @@ class ReferencePath:
         self.curve=PeriodicQuintic(self.s,closed,self.length,'aims_reference')
         probes=np.linspace(0,self.length,max(100,len(points)*5),endpoint=False)
         if np.min(np.linalg.norm(self.curve.numpy(probes,1),axis=1))<1e-6: raise ValueError('zero tangent')
+        # Geometry is fixed for this reference instance. Reuse the exact coarse
+        # search used by project(), including its original spacing and order.
+        self._projection_grid=np.linspace(0,self.length,max(100,int(self.length/.05)),endpoint=False)
+        self._projection_points=self.curve.numpy(self._projection_grid)
+        self._projection_step=self.length/len(self._projection_grid)
+        self._projection_grid.flags.writeable=False
+        self._projection_points.flags.writeable=False
         self.reference=self
 
     def symbolic(self,s):
@@ -64,9 +71,8 @@ class ReferencePath:
     def project(self,xy):
         xy=np.asarray(xy,float)
         if xy.shape!=(2,) or not np.isfinite(xy).all(): raise ValueError('finite xy required')
-        grid=np.linspace(0,self.length,max(100,int(self.length/.05)),endpoint=False)
-        guess=grid[np.argmin(np.sum((self.curve.numpy(grid)-xy)**2,axis=1))]
-        step=self.length/len(grid)
+        guess=self._projection_grid[np.argmin(np.sum((self._projection_points-xy)**2,axis=1))]
+        step=self._projection_step
         result=minimize_scalar(lambda s:float(np.sum((self.curve.numpy(s)-xy)**2)),bounds=(guess-step,guess+step),method='bounded',options={'xatol':1e-12})
         s=float(result.x%self.length)
         ref=self.at(s);normal=np.array([-np.sin(ref['yaw']),np.cos(ref['yaw'])])
