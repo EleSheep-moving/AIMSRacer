@@ -1,0 +1,143 @@
+# Experimental native solver backends
+
+`ipopt` remains the default. Explicit `acados` and `qp` selections produce
+numerical candidates through the same `reset()` / `solve()` interface. Every
+result reports `execution_authorized: false`. A successful optimizer result is
+checked by `validation.validate_candidate`, then the parent validates the actual
+handover state and current command epoch before accepting a plan.
+
+| Property | IPOPT | acados | QP |
+|---|---|---|---|
+| Numerical core | CasADi/IPOPT/MUMPS | Generated C, SQP_RTI, HPIPM | OSQP native C extension |
+| Physical prediction | Six state nonlinear rear axle model | Same six state discrete model plus three previous input states | Four state linear lateral/speed prediction; six state nonlinear output rollout |
+| Reference | Periodic spline inside the nonlinear program | Frozen local spline geometry per interval, refreshed each request | Frozen speed/curvature per interval, refreshed each request |
+| Steering actuator | 20 ms endpoint ramp, first order lag | Same ramp/lag and RK4 discretization | Same ramp/lag in the linear predictor; complete nonlinear independent output rollout |
+| Longitudinal/lateral coupling | Nonlinear | Nonlinear | Coupling approximated using seeded speed; exact candidate checked afterward |
+| Hard limits | Speed, acceleration, steering endpoint, jerk, steering rate/acceleration | Same | Same, with conservative actual steering bounds in predictor |
+| Corridor | Nonlinear footprint at integration samples | Frozen tangent footprint at start/middle/end; current spline checked independently | Linear footprint approximation; complete independent rollout checks current spline |
+| Strict envelope | Nonlinear ellipse | Nonlinear ellipse at 20 ms nodes | Inscribed 16-sided conservative ellipse approximation plus exact independent checks |
+| Soft envelope | Optional bounded recovery slack | Same finite utilization cap and recovery deadline; independent recovery comparator | Explicit `unsupported` result; no slack approximation is silently substituted |
+| Warm start | Last successful candidate | Shifted last successful controls, re-integrated from new measured state | Explicit elapsed shift of last successful controls; all primal nodes projected through current alignment; duals reset |
+
+The acados cost retains the baseline normalized contour, lag, periodic heading,
+speed, progress, steering feedforward, acceleration, steering rate, steering
+acceleration and terminal weights. One SQP_RTI call is made per request. An RTI
+step can return native status zero while nonlinear constraints remain violated;
+`success` additionally requires the nonlinear candidate residual to be below
+`1e-4`. Such failures do not overwrite the last successful seed.
+
+The QP uses separate lateral and speed objectives. Progress is derived from
+bounded longitudinal speed and the local tangent norm; it has no independent lag
+objective or progress decision. Asymmetric longitudinal envelope axes use their
+minimum for a conservative convex approximation. The ellipse linearization uses
+seeded speed and steering, so passing OSQP alone cannot establish physical
+feasibility. Exact actuator bounds, actual nonlinear utilization, and actual
+footprint are checked before the backend reports success. The shared independent
+validator checks these conditions again.
+
+## Preparing acados
+
+Install acados and `acados_template` outside the runtime worker and set
+`ACADOS_SOURCE_DIR` to the source installation. The implementation recognizes
+an `install-x86/{include,lib}` installation or standard source `{include,lib}`
+paths. The loader must be able to resolve `libacados`, `libhpipm`, and `libblasfeo`;
+set `LD_LIBRARY_PATH` to the installation's `lib` directory when required.
+
+Call `create_solver('acados', path, config, prepare=True,
+artifact_directory=directory)` during offline preparation. Generated C and its
+shared library live under `directory/acados/<fingerprint>/`. The optional
+`AIMS_MPCC_SOLVER_DIR` supplies the root when no explicit directory is provided.
+The fingerprint contains backend source hashes, vehicle configuration, horizon,
+discretization, path geometry and map identity, platform/Python ABI, CasADi/NumPy
+versions, acados source revision, and native dependency library hashes. The
+manifest records SHA-256 hashes of both the generated library and `ocp.json`.
+Loading also checks the JSON's controlled library routes, model name, state/control
+dimensions, horizon, discretization and solver types against the requested artifact.
+The native constructor receives a private copy of the verified JSON bytes, so it
+does not reopen mutable cache metadata after verification.
+
+Online construction uses `generate=False, build=False`. Missing, changed, or
+corrupt artifacts fail with an instruction to prepare offline. Online construction
+never triggers compilation. Changing configuration or the reference requires
+preparation of the new fingerprint. No ROS node or hardware publisher is needed
+to prepare or test a backend.
+
+## Verified numerical contract
+
+`tests/test_backend_contract.py` exercises both real native cores on a synthetic
+3 m circle, independently checks their returned trajectories, checks a rotated
+map reference against an equivalent odom reference, and checks that disabling
+the corridor reaches both optimizer and independent validation. It also checks
+acados's missing artifact/configuration invalidation behavior, finite soft cap
+and deadline semantics, and QP's explicit unsupported soft recovery result.
+Two tamper regression variants reject changed acados JSON before native loading or compilation, including changed loader routes with an updated JSON digest. Two further QP tests verify that failed request age accumulates in the native primal shift and that a new map alignment reprojects every native node. Acados tests skip only if `acados_template` is unavailable; installing it without
+its required native libraries produces a failure.
+
+The measured dependency snapshot was acados v0.5.3 commit
+`7e1d1152`, CasADi 3.7.2 and OSQP 1.0.4 in
+`aimsracer-mpcc-optimization` on x86_64. This establishes numerical candidates in
+that environment; it does not establish Jetson NX performance, ROS worker timing,
+tracking quality, closed loop acceptance, or vehicle readiness.
+
+## Synchronous timing sample
+
+Twenty repeated requests used a synthetic 3 m circle, speed 0.5 m/s, N=10,
+dt=0.1 s and an enabled corridor. Both backends returned 20 candidates accepted
+by the independent validator. Preparation/compilation was excluded from online
+timing. Assembly, native calls, extraction and diagnostics were included.
+
+| Median elapsed time (ms) | acados | QP |
+|---|---:|---:|
+| Full numerical solver call | 12.32 | 21.01 |
+| Input, geometry and assembly | 4.97 | 8.60 |
+| Native optimization call | 0.19 | 0.17 |
+| Extraction and numerical diagnostics | 7.16 | 12.25 |
+| Additional shared independent validation | 9.17 | 9.09 |
+| Full solver p95 | 12.73 | 21.24 |
+
+Native optimization time alone omits most request work. These are synchronous
+x86_64 calls; IPC, parent validation and actual handover checks add work. The raw
+sample and scope are saved at
+`/evidence/experiments/mpcc-nx-optimization/backend-contract-timing.json` in the
+test container's evidence mount. They are not a comparison against IPOPT or proof
+of a 20 Hz closed loop.
+
+
+## Prepared independent native rollout measurement
+
+A separate offline prepared C kernel now accelerates the independent 2 ms
+midpoint rollout. It does not use the optimizer's 20 ms RK4 transition. Online
+loading never compiles this kernel, and the Python numerical reference remains
+available for equivalence tests. QP now explicitly initializes the native primal
+every request: retained successful controls shift by their cumulative actual
+request age, nonlinear seed states start from the new measured odom state, and
+all lateral/heading nodes project through the current alignment. Native duals
+reset to zero because changed geometry and initial bound rows do not have a
+reliable multiplier mapping. Failed requests retain the last successful seed and
+add to its age.
+
+The same twenty-request circle sample was rerun after preparing the independent
+kernel, applying the QP warm-start repair, and updating the shared validator to
+its current implementation. Both backends again returned 20/20
+independently accepted candidates. The initial Python measurements above remain
+in their original file. The following table reports the second complete call
+measurement, rather than inferring total performance from native core time.
+
+| Median elapsed time (ms) | acados with native rollout | QP with native rollout |
+|---|---:|---:|
+| Full numerical solver call | 6.44 | 13.86 |
+| Input, geometry and assembly | 3.28 | 7.72 |
+| Native optimization call | 0.18 | 0.17 |
+| Extraction and numerical diagnostics | 2.96 | 5.93 |
+| Additional shared independent validation | 1.94 | 1.96 |
+| Full solver p95 | 6.98 | 14.37 |
+
+Across these two x86_64 samples, median full solver calls measured 6.44–12.32 ms
+for acados and 13.86–21.01 ms for QP. Additional shared validation measured
+1.94–9.17 ms and 1.96–9.09 ms respectively. The second QP measurement includes
+its new explicit primal initialization and the current shared validator, so
+these samples do not isolate the rollout kernel's contribution alone. Raw samples,
+source and kernel SHA-256 hashes, and acados artifact fingerprint are saved separately in
+`/evidence/experiments/mpcc-nx-optimization/backend-contract-timing-native-rollout.json`.
+Both samples exclude ROS, IPC and actual handover work, and establish no NX or
+20 Hz closed loop result.
