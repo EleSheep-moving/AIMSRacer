@@ -54,17 +54,22 @@ class NumericalBackend:
         states=[initial];controls=[];acceleration,steering,rate=applied
         limits=jerk_limits(initial,applied,self.config,self.dt,self.n)
         for k in range(self.n):
-            x=states[-1];ref=self.path.at(x[4])
-            desired_accel=(refs[k+1]-x[3])/self.dt
-            desired_steer=math.atan(self.config.wheelbase*(1+self.config.understeer_coefficient*x[3]**2)*ref['curvature'])
-            if shifted is not None: desired_accel,desired_steer=shifted[k,:2]
+            x=states[-1];tangent=self.path.curve.numpy(x[4],1)
+            tangent_norm=np.linalg.norm(tangent)
+            if shifted is None:
+                second=self.path.curve.numpy(x[4],2)
+                curvature=float((tangent[0]*second[1]-tangent[1]*second[0])/tangent_norm**3)
+                desired_accel=(refs[k+1]-x[3])/self.dt
+                desired_steer=math.atan(self.config.wheelbase*(1+self.config.understeer_coefficient*x[3]**2)*curvature)
+            else:
+                desired_accel,desired_steer=shifted[k,:2]
             acceleration=float(np.clip(desired_accel,max(-self.config.brake_limit,acceleration-limits[k]*self.dt),
                                         min(self.config.accel_limit,acceleration+limits[k]*self.dt)))
             desired_rate=(np.clip(desired_steer,-self.config.steer_limit,self.config.steer_limit)-steering)/self.dt
             rate=float(np.clip(desired_rate,max(-self.config.steer_rate,rate-self.config.steer_acceleration*self.dt),
                                 min(self.config.steer_rate,rate+self.config.steer_acceleration*self.dt)))
             endpoint=float(np.clip(steering+rate*self.dt,-self.config.steer_limit,self.config.steer_limit))
-            progress=max(0.,x[3]+.5*acceleration*self.dt)/np.linalg.norm(self.path.curve.numpy(x[4],1))
+            progress=max(0.,x[3]+.5*acceleration*self.dt)/tangent_norm
             control=np.array([acceleration,endpoint,min(self.config.max_speed,progress)])
             states.append(independent_rollout(x,[acceleration,steering,rate],[control],self.config,self.dt)[-1])
             controls.append(control);rate=(endpoint-steering)/self.dt;steering=endpoint
@@ -76,6 +81,20 @@ class NumericalBackend:
         xy=rotation.T@(np.array([ref['x'],ref['y']])-alignment[:2])
         return np.r_[xy,ref['yaw']-alignment[2],ref['curvature'],theta,
                      np.linalg.norm(self.path.curve.numpy(theta,1))]
+
+    def geometries(self,theta,alignment):
+        """Batch the scalar geometry rows without wrapping their progress/yaw."""
+        theta=np.asarray(theta,dtype=float);alignment=np.asarray(alignment,dtype=float)
+        if theta.ndim!=1 or alignment.shape!=(3,) or not np.isfinite(theta).all() or not np.isfinite(alignment).all():
+            raise ValueError('finite progress vector and alignment(3) required')
+        reference=self.path.curve.numpy(theta)
+        tangent=self.path.curve.numpy(theta,1);second=self.path.curve.numpy(theta,2)
+        norms=np.linalg.norm(tangent,axis=1)
+        c,s=np.cos(alignment[2]),np.sin(alignment[2]);rotation=np.array([[c,-s],[s,c]])
+        xy=(reference-alignment[:2])@rotation
+        yaw=np.arctan2(tangent[:,1],tangent[:,0])-alignment[2]
+        curvature=(tangent[:,0]*second[:,1]-tangent[:,1]*second[:,0])/norms**3
+        return np.column_stack((xy,yaw,curvature,theta,norms))
 
     def finish(self,result,initial,applied,refs,alignment,started,prepared,optimized):
         result.update(corridor_enforced=self.config.enforce_corridor,
