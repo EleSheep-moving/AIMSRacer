@@ -415,7 +415,7 @@ def test_frozen_witness_still_rejects_original_full_brake_proposal(monkeypatch):
     s,now,actual,applied,kwargs=frozen_case()
     # Remove only the new proposal cap; retain every original numerical gate
     # and the actual frozen prefix/status. This reproduces NX before the fix.
-    monkeypatch.setattr(Supervisor,'recovery_braking_budget',lambda *args:
+    monkeypatch.setattr(Supervisor,'nominal_braking_budget',lambda *args:
                         dict(available=False,feasible=False))
     assert not s.activate(now,actual,applied,**kwargs)
     e=s.execution_validation
@@ -459,7 +459,7 @@ def rollout_recovery(s,count=50):
         segment=independent_rollout(physical,previous,[u],s.config,.02)
         rows.extend([(x.copy(),u[0]) for x in segment]);physical=segment[-1]
         a.append(u[0]);r.append(s.last_steering_rate)
-        diagnostics.append(copy.deepcopy(s.recovery_braking))
+        diagnostics.append(copy.deepcopy(s.braking_budget))
         previous=[u[0],u[1],s.last_steering_rate]
     return rows,np.array(a),np.array(r),diagnostics
 
@@ -479,9 +479,9 @@ def test_recovery_empty_capacity_interval_keeps_jerk_and_reports_no_certificate(
     s=recovering(1.5,.4,0.,0.,1.)
     s.command(10.)
     assert s.last_acceleration==pytest.approx(-.02,abs=1e-12)
-    assert not s.recovery_braking['feasible']
-    assert not s.recovery_braking['achieved_within_capacity']
-    assert s.recovery_braking['lateral_utilization_bound']>1.
+    assert not s.braking_budget['feasible']
+    assert not s.braking_budget['achieved_within_capacity']
+    assert s.braking_budget['lateral_utilization_bound']>1.
     assert s.status=='RECOVERING' and s.last_command.speed>0.
 
 
@@ -489,9 +489,9 @@ def test_recovery_empty_jerk_intersection_does_not_snap_positive_acceleration():
     s=recovering(1.2,.20,.5,0.,1.3)
     s.command(10.)
     assert s.last_acceleration==pytest.approx(.48,abs=1e-12)
-    assert not s.recovery_braking['feasible']
-    assert not s.recovery_braking['achieved_within_capacity']
-    assert s.recovery_braking['reason']=='jerk and nominal capacity intervals do not intersect'
+    assert not s.braking_budget['feasible']
+    assert not s.braking_budget['achieved_within_capacity']
+    assert s.braking_budget['reason']=='jerk and nominal capacity intervals do not intersect'
 
 
 @pytest.mark.parametrize('speed',[-.8,.8])
@@ -499,7 +499,7 @@ def test_capacity_bound_handles_signed_physical_speed_without_target_reset(speed
     s=recovering(speed,.25,-.4,0.,1.)
     physical_before=s.state;s.command(10.)
     assert s.state is physical_before and s.state.speed==speed
-    d=s.recovery_braking
+    d=s.braking_budget
     assert d['available'] and d['feasible'] and d['achieved_within_capacity']
     segment=independent_rollout([0.,0.,0.,speed,0.,.25],[-.4,.25,0.],[[s.last_acceleration,s.last_command.steering,0.]],s.config,.02)
     assert max(utilization(x,s.last_acceleration,s.config) for x in segment)<=1.0001
@@ -509,14 +509,14 @@ def test_capacity_bound_handles_signed_physical_speed_without_target_reset(speed
 def test_unavailable_response_bound_preserves_bounded_emergency_braking(tau):
     s=recovering(.8,.25,-.4);s.config.steering_tau=tau;s.command(10.)
     assert s.last_acceleration==pytest.approx(-.42,abs=1e-12)
-    assert not s.recovery_braking['available']
-    assert not s.recovery_braking['achieved_within_capacity']
+    assert not s.braking_budget['available']
+    assert not s.braking_budget['achieved_within_capacity']
 
 
 def test_operator_stop_policy_remains_distinct_from_nominal_recovery_capacity():
     s=recovering(.8,.25,-.48);s.status='STOPPING';s.command(10.)
     assert s.last_acceleration==pytest.approx(-.5,abs=1e-12)
-    assert s.recovery_braking is None
+    assert s.braking_budget is None
 
 
 def test_straight_recovery_is_bit_exact_old_longitudinal_smoother():
@@ -540,7 +540,7 @@ def test_straight_recovery_is_bit_exact_old_longitudinal_smoother():
 def test_budget_uses_physical_angle_and_new_coasting_target_across_tick_jitter(dt,physical,target,rate):
     s=recovering(.8,physical,-.4,rate,1.)
     s.last_command=Command(1.,target);s.last_tick=10.-dt
-    measured=s.state;s.command(10.);budget=s.recovery_braking
+    measured=s.state;s.command(10.);budget=s.braking_budget
     assert s.state is measured and s.state.speed==.8
     assert budget['physical_steering_abs_bound']==max(abs(physical),abs(s.last_command.steering))
     assert budget['feasible'] and budget['achieved_within_capacity']
@@ -556,7 +556,7 @@ def test_capacity_bound_uses_configured_signed_halfaxes_and_understeer(understee
     s.config.understeer_coefficient=understeer
     s.config.longitudinal_envelope_accel=.35;s.config.longitudinal_envelope_brake=.3
     s.config.lateral_accel_limit=.8;s.command(10.)
-    d=s.recovery_braking
+    d=s.braking_budget
     assert d['feasible'] and d['achieved_within_capacity']
     assert d['accel_capacity']/d['brake_capacity']==pytest.approx(.35/.3)
     segment=independent_rollout([0.,0.,0.,.75,0.,.3],[-.25,.3,0.],
@@ -568,7 +568,7 @@ def test_capacity_bound_uses_configured_signed_halfaxes_and_understeer(understee
 def test_positive_live_acceleration_requires_positive_halfaxis_budget(positive_axis,feasible):
     s=recovering(.5,.2,.3,0.,1.)
     s.config.longitudinal_envelope_accel=positive_axis
-    s.command(10.);d=s.recovery_braking
+    s.command(10.);d=s.braking_budget
     assert s.last_acceleration==pytest.approx(.28,abs=1e-12)
     assert d['brake_capacity']>.45
     assert d['feasible'] is feasible and d['achieved_within_capacity'] is feasible
@@ -584,7 +584,7 @@ def test_numpy_live_prefix_recovery_budget_is_native_json(outside,scalar):
     s.last_command=Command(scalar(s.last_command.speed),scalar(s.last_command.steering))
     s.last_acceleration=scalar(s.last_acceleration);s.last_steering_rate=scalar(s.last_steering_rate)
     s.command(10.)
-    budget=s.recovery_braking
+    budget=s.braking_budget
     json.dumps(budget,allow_nan=False)
     assert type(budget['feasible']) is bool
     for value in budget.values():
@@ -596,7 +596,7 @@ def test_numpy_unavailable_response_budget_remains_native_json():
     s=recovering();s.config.steering_tau=.0009
     s.state=replace(s.state,speed=np.float64(s.state.speed),steering=np.float64(s.state.steering))
     s.command(10.)
-    budget=s.recovery_braking
+    budget=s.braking_budget
     assert budget['available'] is False and budget['feasible'] is False
     json.dumps(budget,allow_nan=False)
     for value in budget.values():

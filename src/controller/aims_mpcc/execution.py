@@ -153,6 +153,10 @@ def execution_schedule(supervisor,plan,initial,applied,now,path=None,held_steeri
                                timestamp=supervisor.state.timestamp+i*STEP)
         forecast.state_received=forecast.mode_received=stamp;forecast.progress=progress
         command=forecast.command(stamp,enforce_plan_age=False)
+        if tentative_fast and forecast.braking_budget is not None:
+            # Capacity budgeting reads physical steering. Discard every
+            # speculative output and restart from the unchanged live prefix.
+            return execution_schedule(supervisor,plan,initial,applied,now,path,held_steering,force_slow=True)
         if forecast.status=='FAULT':
             raise ValueError('Nominal execution schedule fault: '+forecast.reason)
         actuator=forecast.actuator_command(command)

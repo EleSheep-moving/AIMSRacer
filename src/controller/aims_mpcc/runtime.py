@@ -71,7 +71,7 @@ class Supervisor:
         self.rejected_plans = 0
         self.handover_error = None
         self.execution_validation = None
-        self.recovery_braking = None
+        self.braking_budget = None
         self.started = self.last_tick = None
         self.progress = self.wrapped_progress = 0.
         self.start_progress = 0.
@@ -399,11 +399,12 @@ class Supervisor:
         target speed does not authorize acceleration beyond that proposal.
         Their macro steering slopes similarly propose rates to the existing
         angular smoother, without catching up accumulated angle lag.
-        Asynchronous recovery proposes braking within a conservative nominal
-        20 ms lateral budget. Infeasible budgets retain bounded emergency
-        braking; this proposal is not a motor or execution certificate.
+        Asynchronous recovery and running speed overrides propose acceleration
+        within a conservative nominal 20 ms lateral budget. Infeasible budgets
+        retain bounded emergency braking; this proposal is not a motor or
+        execution certificate.
         """
-        self.recovery_braking = None
+        self.braking_budget = None
         if not self.active:
             return Command(0., self.last_command.steering)
         if not self.fresh(now):
@@ -512,17 +513,18 @@ class Supervisor:
             rate = clip(desired_rate, lower, upper)
             steer = clip(self.last_command.steering+rate*dt,
                          -self.config.steer_limit, self.config.steer_limit)
-            if recovering and self.solve_period is not None:
-                budget=self.recovery_braking_budget(accel_lower,accel_upper,steer)
+            if self.solve_period is not None and (recovering or (self.status=='RUNNING' and speed_override)):
+                budget=self.nominal_braking_budget(accel_lower,accel_upper,steer)
+                budget['scope']='recovery' if recovering else 'running_speed_override'
                 budget['uncapped_proposal']=float(desired_accel)
                 if budget['feasible']:
-                    desired_accel=max(desired_accel,-budget['brake_capacity'])
-                self.recovery_braking=budget
+                    desired_accel=clip(desired_accel,-budget['brake_capacity'],budget['accel_capacity'])
+                self.braking_budget=budget
             accel = clip(desired_accel, accel_lower, accel_upper)
             speed = clip(self.last_command.speed+accel*dt, 0., self.config.max_speed)
             accel = (speed-self.last_command.speed)/dt
-            if self.recovery_braking is not None:
-                budget=self.recovery_braking
+            if self.braking_budget is not None:
+                budget=self.braking_budget
                 budget['achieved_acceleration']=float(accel)
                 budget['achieved_within_capacity']=bool(budget['feasible'] and
                     -budget['brake_capacity']-1e-12<=accel<=budget['accel_capacity']+1e-12)
@@ -549,7 +551,7 @@ class Supervisor:
             self.fault('Finish overshoot')
         return self.last_command
 
-    def recovery_braking_budget(self, lower, upper, commanded_steering):
+    def nominal_braking_budget(self, lower, upper, commanded_steering):
         """Bound lateral load over one nominal held 20 ms command interval.
 
         Ideal v(t)=v0+a*t has its maximum absolute value at endpoints of
