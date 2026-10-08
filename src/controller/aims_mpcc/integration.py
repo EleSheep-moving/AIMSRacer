@@ -23,7 +23,7 @@ from std_msgs.msg import Float64
 from std_srvs.srv import SetBool
 from crsf_receiver_msg.msg import CRSFChannels16
 from .io import load_config
-from .path import prepare_recording
+from .path import prepare_recording,ReferencePath
 from .node import MPCCNode
 
 
@@ -103,22 +103,98 @@ def fixture(directory,config,direction):
     return prepare_recording(recording,directory/'reference',config,.9,.9)
 
 
+def check_nominal_status(status,reason):
+    if status in ('READY','FAULT'):
+        raise RuntimeError('Nominal run stopped: '+reason)
+
+
+def speed_attainment(samples,reference_length,requested_cruise,initial_position):
+    """Use the radius-2 fixture's true progress, including all recovery samples."""
+    samples=np.asarray(samples,float)
+    if not math.isfinite(requested_cruise) or requested_cruise<=0:
+        raise ValueError('Positive finite requested cruise speed required')
+    initial_angle=math.atan2(initial_position[1],initial_position[0])
+    angles=np.unwrap(np.arctan2(samples[:,2],samples[:,1]))
+    progress=2*np.abs(angles-initial_angle)
+    central=samples[(progress>=.1*reference_length-1e-9)&
+                    (progress<=.7*reference_length+1e-9),3]
+    report=dict(requested_cruise_speed_mps=requested_cruise,
+                central_progress_fraction=[.1,.7],central_sample_count=len(central),
+                minimum_central_p50_ratio=.8,speed_tracking_pass=False)
+    for name,value in [('mean',np.mean(central) if len(central) else None),
+                       ('p50',np.percentile(central,50) if len(central) else None),
+                       ('p95',np.percentile(central,95) if len(central) else None)]:
+        report[f'central_speed_{name}_mps']=None if value is None else float(value)
+        report[f'central_speed_{name}_ratio']=None if value is None else float(value/requested_cruise)
+    report['speed_tracking_pass']=bool(len(central) and
+                                      report['central_speed_p50_ratio']>=.8)
+    return report
+
+
+def check_scenario_acceptance(result,scenario,max_speed,steer_limit,speed_target,last_command_speed):
+    """Apply the original physical limits and the current authority contract."""
+    assert result['maximum_command_speed_mps']<=max_speed+1e-8
+    assert result['maximum_command_steering_rad']<=steer_limit+1e-8
+    assert result['minimum_footprint_margin_m']>=0
+    status=result['status_at_end']
+    if scenario=='nominal':
+        assert status=='COMPLETE'
+        assert result['cross_track_rms_m']<=.10 and result['cross_track_max_m']<=.25
+        assert result['finish_error_m']<=.2 and result['final_speed_mps']<.05
+        length=result['reference_length_m']
+        assert length-.2 <= result['lap_progress_m'] <= length+.2
+    elif scenario=='disable':
+        assert 'fault_detection_s' not in result,'Normal stopping entered FAULT'
+        assert status=='READY'
+        assert abs(speed_target)<1e-9 and abs(result['final_speed_mps'])<.05
+    elif scenario in ('solver_stall','solver_crash'):
+        assert 'fault_detection_s' not in result,'Single worker failure entered FAULT'
+        assert result['worker_restarts']==1 and result['worker_ready']
+        if status=='RUNNING':
+            minimum=2 if result['recovery_observed'] else 1
+            assert result['post_restart_activations']>=minimum
+            assert result['final_speed_mps']>=.05
+        else:
+            assert status=='READY'
+            assert result['reason_at_end']=='Recovery stopped; re-enable required'
+            assert result['stopped_latch_duration_s']>=.5
+            assert abs(result['final_speed_mps'])<.05
+            assert abs(speed_target)<1e-9 and last_command_speed==0.
+    else:
+        assert status=='FAULT','Injected fault was not latched'
+        assert result['fault_detection_s']<.4
+        assert abs(speed_target)<1e-9 and last_command_speed==0.
+
+
 def run(args):
     out=Path(args.output).resolve();out.mkdir(parents=True,exist_ok=True)
     config_file=Path(args.vehicle_config).resolve();config=load_config(config_file)
-    path=fixture(out,config,-1 if args.clockwise else 1)
+    if args.reuse_prepared_reference:
+        path=ReferencePath.load(out/'reference')
+        path.validate_config(config,require_recording=True)
+    else:
+        path=fixture(out,config,-1 if args.clockwise else 1)
+    if args.prepare_only:
+        from .prepare_solver import main as prepare_solver
+        prepare_solver([str(out/'reference'),'--vehicle-config',str(config_file),
+                        '--backend',args.backend,'--horizon',str(args.horizon)])
+        return
     rclpy.init(args=['--ros-args','-p',f'path_directory:={out / "reference"}',
                      '-p',f'vehicle_config:={config_file}',
+                     '-p',f'horizon:={args.horizon}',
+                     '-p',f'backend:={args.backend}','-p',f'solve_frequency:={args.solve_frequency}',
                      '-p','simulation:=true','-p',f'log_directory:={out}'])
     children=[];logs=[];controller=plant=None
     result=dict(status='FAIL',scenario=args.scenario,physics='independent lagged kinematic bicycle',
                 hardware_validated=False)
     started=None;injected=None;fault_observed=None;errors=[];margins=[];last_metrics=0.
+    recovery_observed=False;post_restart_activations=0;last_activation=None
+    stopped_latch_since=None
     try:
         for name,cmd in [
             ('rc',['ros2','run','ackermann_mux','joystick_control_v2','--ros-args',
                    '-p','channel_profile:=steering_ch1_throttle_ch3_aux_ch5_to_ch10']),
-            ('converter',['ros2','run','vesc_ackermann','ackermann_to_vesc_node','--ros-args','--params-file','/ws/test_config/vesc.yaml']),
+            ('converter',['ros2','run','vesc_ackermann','ackermann_to_vesc_node','--ros-args','--params-file',args.vesc_config]),
         ]:
             log=(out/f'{name}.log').open('w');logs.append(log)
             children.append(subprocess.Popen(cmd,stdout=log,stderr=subprocess.STDOUT,start_new_session=True))
@@ -140,6 +216,7 @@ def run(args):
             if started is None:
                 if s.status=='FAULT':raise RuntimeError(s.reason)
                 continue
+            if args.scenario=='nominal':check_nominal_status(s.status,s.reason)
             if injected is None and now-started>3 and args.scenario!='nominal':
                 injected=now
                 if args.scenario=='odom_drop':plant.publish_odom=False
@@ -164,7 +241,8 @@ def run(args):
                         margins.append(.9-abs(math.hypot(corner_x,corner_y)-2.))
                 plant.samples.append((now-started,plant.x,plant.y,plant.speed,error,plant.speed_target,plant.steer_target))
             if s.status=='FAULT':
-                if args.scenario=='nominal':raise RuntimeError(s.reason)
+                if args.scenario in ('nominal','solver_stall','solver_crash'):
+                    raise RuntimeError(s.reason)
                 if injected is None:raise RuntimeError('Fault before injection: '+s.reason)
                 if fault_observed is None:fault_observed=now
                 # Allow converter messages to reach the plant, then verify latch.
@@ -174,14 +252,27 @@ def run(args):
                     break
             if args.scenario=='disable' and injected and s.status=='READY' and plant.speed<.05:
                 break
-            if args.scenario in ('manual','rc_loss') and injected and now-injected>.5:
-                assert s.active, 'Selector revocation stopped MPCC computation'
-                assert abs(plant.speed_target)<1e-9, 'Selector forwarded MPCC after authority revocation'
-                break
+            if args.scenario in ('solver_stall','solver_crash') and injected:
+                recovery_observed=recovery_observed or s.status=='RECOVERING'
+                if (controller.worker.restart_count and s.plan is not None and
+                        s.plan['source_stamp']>=injected and s.last_usable_update!=last_activation):
+                    post_restart_activations+=1
+                    last_activation=s.last_usable_update
+                if s.status=='READY' and s.reason=='Recovery stopped; re-enable required':
+                    if stopped_latch_since is None:stopped_latch_since=now
+                    if controller.worker.ready and now-stopped_latch_since>=.5:
+                        break
+                else:
+                    stopped_latch_since=None
+                minimum=2 if recovery_observed else 1
+                if (controller.worker.ready and s.status=='RUNNING' and plant.speed>=.05 and
+                        post_restart_activations>=minimum):
+                    break
             if s.status=='COMPLETE':break
         else:raise RuntimeError('Acceptance run timed out')
         samples=np.asarray(plant.samples);commands=np.asarray(plant.commands)
         result.update(elapsed_s=time.monotonic()-started,status_at_end=controller.supervisor.status,
+                      reason_at_end=controller.supervisor.reason,
                       cross_track_rms_m=float(np.sqrt(np.mean(np.square(errors)))),
                       cross_track_max_m=float(np.max(np.abs(errors))),minimum_footprint_margin_m=float(min(margins)),
                       finish_error_m=float(np.hypot(plant.x-path.at(0)['x'],plant.y-path.at(0)['y'])),
@@ -192,25 +283,20 @@ def run(args):
                       solve_p50_s=float(np.percentile(controller.solve_times,50)),
                       solve_p95_s=float(np.percentile(controller.solve_times,95)),
                       solve_max_s=float(max(controller.solve_times)))
-        assert result['maximum_command_speed_mps']<=config.max_speed+1e-8
-        assert result['maximum_command_steering_rad']<=config.steer_limit+1e-8
-        assert result['minimum_footprint_margin_m']>=0
-        if args.scenario=='nominal':
-            assert result['status_at_end']=='COMPLETE'
-            assert result['cross_track_rms_m']<=.10 and result['cross_track_max_m']<=.25
-            assert result['finish_error_m']<=.2 and result['final_speed_mps']<.05
-            assert path.length-.2 <= result['lap_progress_m'] <= path.length+.2
-        elif args.scenario=='disable':
-            assert fault_observed is None,'Normal stopping entered FAULT'
-            assert result['status_at_end']=='READY'
-            assert abs(plant.speed_target)<1e-9 and abs(plant.speed)<.05
-        elif args.scenario in ('manual','rc_loss'):
-            assert fault_observed is None, 'Selector revocation faulted the controller'
-            assert result['status_at_end']=='RUNNING'
-        elif args.scenario!='disable':
-            assert fault_observed is not None,'Injected fault was not detected'
+        if fault_observed is not None:
             result['fault_detection_s']=fault_observed-injected
-            assert result['fault_detection_s']<.4
+        if args.scenario in ('solver_stall','solver_crash'):
+            result.update(worker_restarts=controller.worker.restart_count,worker_ready=controller.worker.ready,
+                          recovery_observed=recovery_observed,post_restart_activations=post_restart_activations,
+                          stopped_latch_duration_s=0. if stopped_latch_since is None else now-stopped_latch_since)
+        check_scenario_acceptance(result,args.scenario,config.max_speed,config.steer_limit,
+                                  plant.speed_target,controller.supervisor.last_command.speed)
+        if args.scenario=='nominal':
+            initial=path.at(0.)
+            result.update(speed_attainment(samples,path.length,config.cruise_speed,
+                                           (initial['x'],initial['y'])),geometry_pass=True)
+            result['overall_qualification_pass']=result['speed_tracking_pass']
+            result['qualification_status']='PASS' if result['overall_qualification_pass'] else 'FAIL'
         np.savetxt(out/'trajectory.csv',samples,delimiter=',',header='time,x,y,speed,cross_track,speed_command,steering_command',comments='')
         import matplotlib
         matplotlib.use('Agg')
@@ -256,6 +342,12 @@ def main():
     parser.add_argument('--steer-tau',type=float,default=.15)
     parser.add_argument('--odom-delay',type=float,default=0.)
     parser.add_argument('--timeout',type=float,default=240.)
+    parser.add_argument('--backend',choices=['ipopt','acados','qp'],default='ipopt')
+    parser.add_argument('--horizon',type=int,choices=[10,15,20],default=10)
+    parser.add_argument('--solve-frequency',type=float,default=5.)
+    parser.add_argument('--vesc-config',default='/ws/test_config/vesc.yaml')
+    parser.add_argument('--prepare-only',action='store_true',help='Generate fixture and prepare solver offline, without ROS nodes')
+    parser.add_argument('--reuse-prepared-reference',action='store_true',help='Load the reference created by the prepare-only step')
     from rclpy.utilities import remove_ros_args
     run(parser.parse_args(remove_ros_args()[1:]))
 
