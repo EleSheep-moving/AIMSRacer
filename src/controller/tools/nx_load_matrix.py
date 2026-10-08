@@ -23,25 +23,61 @@ def enable_subreaper():
         raise OSError(ctypes.get_errno(),'Cannot own orphaned replay children')
 
 
+def _owned_children_from_status():
+    """NX kernels can omit task/children; follow PPid only from this driver."""
+    relations={};own_pid=os.getpid();own_seen=False
+    try:
+        for entry in Path('/proc').iterdir():
+            if not entry.name.isdecimal():continue
+            try:status=(entry/'status').read_text()
+            except (FileNotFoundError,ProcessLookupError):continue
+            parent=int(next(line.split()[1] for line in status.splitlines() if line.startswith('PPid:')))
+            pid=int(entry.name);own_seen=own_seen or pid==own_pid
+            relations.setdefault(parent,[]).append(pid)
+        if not own_seen:raise OSError('Driver status is unavailable')
+    except (OSError,ValueError,StopIteration) as exc:
+        raise RuntimeError('Cannot enumerate owned load processes from /proc') from exc
+    result=[];seen={own_pid};pending=[own_pid]
+    while pending:
+        for child in relations.get(pending.pop(),[]):
+            if child in seen:continue
+            seen.add(child);result.append(child);pending.append(child)
+    return result
+
+
 def owned_children():
-    result=[]
+    result=[];seen={os.getpid()}
     def visit(pid):
-        try:values=(Path('/proc')/str(pid)/'task'/str(pid)/'children').read_text().split()
-        except OSError:return
-        for value in values:
-            child=int(value);result.append(child);visit(child)
-    visit(os.getpid())
+        tasks=Path('/proc')/str(pid)/'task'
+        try:threads=list(tasks.iterdir())
+        except FileNotFoundError:
+            if pid==os.getpid():raise
+            return  # descendant exited during enumeration
+        for thread in threads:
+            try:values=(thread/'children').read_text().split()
+            except FileNotFoundError:
+                if thread.exists():raise  # CONFIG_PROC_CHILDREN is unavailable
+                continue  # thread exited during enumeration
+            for value in values:
+                child=int(value)
+                if child in seen:continue
+                seen.add(child);result.append(child);visit(child)
+    try:visit(os.getpid())
+    except (OSError,ValueError):return _owned_children_from_status()
     return result
 
 
 def cleanup(processes,grace=3.):
     """Terminate and reap this driver's children, including adopted orphans."""
     for sig,delay in ((signal.SIGINT,grace),(signal.SIGTERM,.5),(signal.SIGKILL,.5)):
-        for pid in owned_children():
-            try:os.kill(pid,sig)
-            except ProcessLookupError:pass
-        until=time.monotonic()+delay
-        while time.monotonic()<until:
+        until=time.monotonic()+delay;signalled=set()
+        while True:
+            # Descendants can appear or be adopted during any escalation phase.
+            for pid in owned_children():
+                if pid in signalled:continue
+                try:os.kill(pid,sig)
+                except ProcessLookupError:pass
+                signalled.add(pid)
             for process in processes:process.poll()
             # Popen children are reaped first so their return codes stay intact.
             protected={process.pid for process in processes if process.poll() is None}
@@ -50,6 +86,7 @@ def cleanup(processes,grace=3.):
                 try:os.waitpid(pid,os.WNOHANG)
                 except ChildProcessError:pass
             if not owned_children():return
+            if time.monotonic()>=until:break
             time.sleep(.02)
     if owned_children():raise RuntimeError('Owned load processes did not shut down')
 
@@ -89,6 +126,29 @@ def load_coverage(rows,events,ended_monotonic=None):
         max_native_gap_s=max_gap,native_gap_limit_s=1.,
         fully_overlapping_requests=len(overlapping),total_requests=len(rows),
         reason='' if valid else 'Incomplete replay or registration coverage')
+
+
+def replay_errors(entry):
+    """Graph/init audit completion is separate from native computation coverage."""
+    errors=[];code=entry.get('replay_exit')
+    # Python SIGINT is -2; a wrapper may report 128+SIGINT. Either is expected
+    # only for our requested shutdown, with a complete successful summary below.
+    if code!=0 and not (entry.get('intentional_replay_shutdown') and code in (-signal.SIGINT,128+signal.SIGINT)):
+        errors.append(f'Unexpected replay exit: {code}')
+    if entry.get('replay_drain_timeout'):errors.append('Replay did not finish within its bounded drain')
+    if entry.get('replay_shutdown_timeout'):errors.append('Replay shutdown timed out')
+    summary=entry.get('replay_summary')
+    if not isinstance(summary,dict):
+        errors.append('Missing final replay summary');return errors
+    counts=summary.get('counts',{});authorities=summary.get('tf_authorities',{})
+    if counts.get('ekf',0)<=0 or counts.get('body_cloud',0)<=0:
+        errors.append('Replay produced no complete local state')
+    if (authorities.get('odom/base_link')!=1 or authorities.get('map/odom')!=1 or
+            any(count!=1 for count in authorities.values())):
+        errors.append('Replay TF authority audit failed')
+    if summary.get('initializer_cli_exit')!=0:errors.append('Replay initialization CLI did not succeed')
+    if summary.get('accepted',0)<=0:errors.append('Replay established no trusted global anchor')
+    return errors
 
 
 def main():
@@ -185,28 +245,52 @@ while True:
                     time.sleep(.2)
                 entry['benchmark_exit']=benchmark.returncode
                 if replay is not None:
+                    drain_started=time.monotonic();entry['replay_drain_limit_s']=65.
                     if replay.poll() is None:
-                        os.killpg(replay.pid,signal.SIGINT)
-                        entry['intentional_replay_shutdown']=True
-                    try:replay.wait(timeout=15.)
-                    except subprocess.TimeoutExpired:
-                        entry['replay_shutdown_timeout']=True
+                        # The runner writes its summary on natural max-seconds
+                        # completion. SIGINT would skip that final audit. This
+                        # drain is excluded from the benchmark request window.
+                        try:replay.wait(timeout=65.)
+                        except subprocess.TimeoutExpired:
+                            entry['replay_drain_timeout']=True
+                            if replay.poll() is None:
+                                try:
+                                    os.killpg(replay.pid,signal.SIGINT)
+                                    entry['intentional_replay_shutdown']=True
+                                except ProcessLookupError:pass
+                            try:replay.wait(timeout=15.)
+                            except subprocess.TimeoutExpired:entry['replay_shutdown_timeout']=True
                     entry['replay_exit']=replay.poll()
+                    entry['replay_drain_s']=time.monotonic()-drain_started
+                    entry['replay_completed_normally']=bool(entry['replay_exit']==0 and not entry.get('replay_drain_timeout'))
                 entry['status']='recorded'
             except Exception as exc:
                 entry.update(status='error',error=repr(exc))
             finally:
-                cleanup(processes)
+                try:cleanup(processes)
+                except Exception as exc:
+                    entry.update(status='cleanup_failed',cleanup_error=repr(exc))
                 for log in logs:log.close()
-                if (directory/'benchmark.json').exists():
-                    case=json.loads((directory/'benchmark.json').read_text())['cases'][0]
-                    entry['benchmark_summary']=case['summary']
+                try:
+                    if (directory/'benchmark.json').exists():
+                        case=json.loads((directory/'benchmark.json').read_text())['cases'][0]
+                        entry['benchmark_summary']=case['summary']
+                        if condition in ('shared','stress'):
+                            entry['load_coverage']=load_coverage(case['requests'],
+                                read_events(directory/'replay/events.jsonl'),entry.get('replay_ended_monotonic'))
+                            if not entry['load_coverage']['valid'] and entry['status']=='recorded':
+                                entry['status']='invalid_load_window'
+                    if (directory/'replay/summary.json').exists():
+                        entry['replay_summary']=json.loads((directory/'replay/summary.json').read_text())
                     if condition in ('shared','stress'):
-                        entry['load_coverage']=load_coverage(case['requests'],
-                            read_events(directory/'replay/events.jsonl'),entry.get('replay_ended_monotonic'))
-                        if not entry['load_coverage']['valid']:entry['status']='invalid_load_window'
-                if (directory/'replay/summary.json').exists():
-                    entry['replay_summary']=json.loads((directory/'replay/summary.json').read_text())
+                        entry['replay_errors']=replay_errors(entry)
+                        if entry['replay_errors'] and entry['status']=='recorded':entry['status']='invalid_replay'
+                except (OSError,ValueError,KeyError,TypeError,IndexError) as exc:
+                    entry['artifact_error']=repr(exc)
+                    if entry['status']=='recorded':entry['status']='artifact_failed'
+                if condition in ('shared','stress'):
+                    entry['load_qualified']=bool(entry['status']=='recorded' and entry.get('benchmark_exit')==0
+                        and entry.get('load_coverage',{}).get('valid') and not entry.get('replay_errors'))
                 entry['ended_wall']=time.time()
                 record['results'].append(entry)
                 (args.output/'matrix.json').write_text(json.dumps(record,indent=2)+'\n')
