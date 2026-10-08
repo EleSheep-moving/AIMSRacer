@@ -262,6 +262,88 @@ def test_startup_acceleration_proposal_does_not_catch_up_past_raw_envelope_bound
     assert np.max(np.abs(np.diff(np.r_[0.,executed[:,0]])))<=cfg.jerk_limit*.02+1e-12
 
 
+def test_recorded_turn_reversal_uses_rate_proposal_without_angle_catch_up():
+    # Frozen seq18 from the 20 Hz QP ROS lap: raw/rebased E<1 but the
+    # previous angle catch-up smoother overshot the endpoints, E=1.00238829.
+    cfg=VehicleConfig(cruise_speed=1.,max_speed=1.5,enforce_corridor=False)
+    initial=[1.9997559271901302, 0.05921209287385421, 1.5809914758518657, 0.21619726072657378, 12.624264524554068, 0.09566828730884487]
+    controls=[
+        [0.48793451625015394, 0.14968746946174596, 0.24149355651882456],
+        [0.48793451625015394, 0.1933651935578563, 0.29028195274563434],
+        [0.48793451625015394, 0.2277150618404539, 0.3390703489718037],
+        [0.48793451625015394, 0.24469071265235384, 0.38785874519622177],
+        [0.48793451625015394, 0.24290293610453947, 0.4366471414237709],
+        [0.48793451625015394, 0.22557466845468535, 0.4854355376487038],
+        [0.48793451625015394, 0.1987559704364171, 0.534223933875227],
+        [0.48613245396277427, 0.16950181874726572, 0.5829222363213816],
+        [0.4856348097942709, 0.1428820011981779, 0.6315055653608879],
+        [0.4856348097942709, 0.11895978304652849, 0.6800640147651503]]
+    previous=[0.48793451625015505, 0.11363961547613144, 0.16047850432368535]
+    now=392542.330401044
+    s,candidate,actual=prepared(cfg,initial,previous,controls,now)
+    s.last_command=Command(0.3054128769332148,0.11363961902937746)
+    s.last_tick=392542.31039285
+    actual['speed']=0.3054128885269165
+    assert candidate['validation']['accepted']
+    assert s.accept(candidate,now)
+    assert s.activate(now,s.state,actual)
+    executed=s.execution_validation
+    assert executed['envelope']['future_slack_max']==0.
+    assert executed['envelope']['terminal_utilization']<.994
+    # Preserve live angle/rate: the first output advances .02 from the actual
+    # prior rate through the unchanged 2 rad/s^2 smoother, never resets to pose.
+    elapsed=now-s.last_tick
+    rate=min((controls[0][1]-actual['steering'])/.1,previous[2]+cfg.steer_acceleration*elapsed)
+    assert executed['wire_commands'][0][1]==pytest.approx(s.last_command.steering+rate*elapsed,abs=1e-12)
+    trace=np.asarray(executed['internal_commands'])
+    intervals=np.asarray(executed['output_intervals_s'])
+    assert np.all(np.abs(np.diff(np.r_[previous[2],trace[:,3]]))<=cfg.steer_acceleration*intervals+1e-12)
+    assert np.max(np.abs(trace[:,3]))<=cfg.steer_rate+1e-12
+    assert np.max(np.abs(trace[:,1]))<=cfg.steer_limit+1e-12
+
+
+@pytest.mark.parametrize('status,solve_period,remaining,expected_rate',[
+    ('RUNNING',.2,100.,.14),('RUNNING',.2,.4,.14),
+    ('STOPPING',.2,100.,.06),('RECOVERING',.2,100.,.06),
+    ('RUNNING',None,100.,.06)])
+def test_rate_proposals_preserve_status_and_finish_braking_context(status,solve_period,remaining,expected_rate):
+    cfg=VehicleConfig(cruise_speed=1.,max_speed=1.5,enforce_corridor=False)
+    s,candidate,_=prepared(cfg,[0.,0.,0.,.3,0.,.02],[0.,.05,.1],[[0.,.07,.3]]*10)
+    s.status=status;s.solve_period=solve_period;s.plan=candidate
+    s.plan['stamp']=10.;s.last_tick=10.02
+    s.last_command=Command(.3,.06);s.last_steering_rate=.1
+    s.lap_goal=s.progress+remaining;s.state_received=s.mode_received=10.04
+    s.command(10.04)
+    assert s.last_steering_rate==pytest.approx(expected_rate,abs=1e-12)
+    assert s.last_command.steering==pytest.approx(.06+expected_rate*.02,abs=1e-12)
+    if remaining<1. or status in ('STOPPING','RECOVERING'):
+        assert s.last_acceleration<0.
+
+
+def test_repeated_handover_continues_live_steering_angle_and_rate():
+    cfg=VehicleConfig(cruise_speed=1.,max_speed=1.5,enforce_corridor=False)
+    initial=[0.,0.,0.,.2,0.,.02]
+    s,candidate,applied=prepared(cfg,initial,[0.,.1,.04],[[0.,.12,.2]]*10)
+    assert s.accept(candidate,10.02);assert s.activate(10.02,s.state,applied)
+    s.command(10.02)
+    first=s.last_command.steering;rate=s.last_steering_rate
+    assert first==pytest.approx(.1016,abs=1e-12)
+    assert rate==pytest.approx(.08,abs=1e-12)
+    # A reversed second plan starts from the actual emitted target/rate while
+    # physical steering remains different. Neither internal state is reset.
+    initial[5]=.025
+    _,second,actual=prepared(cfg,initial,[0.,first,rate],[[0.,first-.01,.2]]*10,10.04)
+    s.state=State(0.,0.,0.,.2,.025,100.04)
+    s.state_received=s.mode_received=10.04
+    assert s.accept(second,10.04);assert s.activate(10.04,s.state,actual)
+    certificate=s.execution_validation
+    assert s.last_command.steering==first and s.last_steering_rate==rate
+    s.command(10.04)
+    assert s.last_steering_rate==pytest.approx(.04,abs=1e-12)
+    assert s.last_command.steering==pytest.approx(first+.04*.02,abs=1e-12)
+    assert certificate['wire_commands'][0][1]==pytest.approx(s.last_command.steering,abs=1e-12)
+
+
 def projected_case(seed=0,remaining=None,branches=False):
     rng=np.random.default_rng(seed);angle=np.arange(64)*2*np.pi/64
     if branches:points=np.c_[8*np.cos(angle),.3*np.sin(angle)]

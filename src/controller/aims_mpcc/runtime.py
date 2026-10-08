@@ -392,6 +392,8 @@ class Supervisor:
         Running asynchronous plans supply an acceleration proposal to the
         existing jerk smoother. Speed targets select caps and braking; lag in
         target speed does not authorize acceleration beyond that proposal.
+        Their macro steering slopes similarly propose rates to the existing
+        angular smoother, without catching up accumulated angle lag.
         """
         if not self.active:
             return Command(0., self.last_command.steering)
@@ -426,7 +428,7 @@ class Supervisor:
                 if self.status!='STOPPING':
                     self.status,self.reason='RECOVERING','Plan expired' if expired else 'Prediction horizon exhausted'
                 recovering=self.status=='RECOVERING'
-        acceleration_proposal=None
+        acceleration_proposal=steering_rate_proposal=None
         if self.plan is None or recovering:
             target_speed=0.
             target_steer=self.last_command.steering
@@ -449,6 +451,8 @@ class Supervisor:
                 target_speed=states[index][3]*(1-fraction)+states[index+1][3]*fraction
             previous_steer=self.plan.get('previous_steering',self.last_command.steering) if index==0 else controls[index-1][1]
             target_steer=previous_steer+(controls[index][1]-previous_steer)*fraction
+            if self.solve_period is not None and self.status=='RUNNING':
+                steering_rate_proposal=(controls[index][1]-previous_steer)/.1
         remaining = self.lap_goal-self.progress
         uncapped_speed=target_speed
         if self.status in ('STOPPING','RECOVERING') or remaining <= max(.05, self.minimum_speed_stop_distance()):
@@ -481,7 +485,8 @@ class Supervisor:
             accel = clip(desired_accel, accel_lower, accel_upper)
             speed = clip(self.last_command.speed+accel*dt, 0., self.config.max_speed)
             accel = (speed-self.last_command.speed)/dt
-            desired_rate = clip((target_steer-self.last_command.steering)/dt,
+            desired_rate = clip(steering_rate_proposal if steering_rate_proposal is not None
+                                else (target_steer-self.last_command.steering)/dt,
                                 -self.config.steer_rate,self.config.steer_rate)
             # Reserve enough angular distance to brake the steering rate before
             # a hard angle limit. r*dt + r*r/(2*a) <= remaining angle.
