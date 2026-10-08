@@ -453,6 +453,7 @@ class MPCCNode(Node):
                     map_correction_change=self.map_correction_change,
                     pending_handover_in=None if s.pending_plan is None else s.pending_plan['stamp']-now,
                     handover_error=s.handover_error,rejected_plans=s.rejected_plans,
+                    handover_reprojection=None if s.plan is None else s.plan.get('handover_reprojection'),
                     handover_limits={**s.HANDOVER_STATE_LIMITS,**s.HANDOVER_COMMAND_LIMITS},
                     solver_max_iterations=self.config.solver_max_iterations,
                     solver_status=self.last_solver_status,solver_iterations=self.last_solver_iterations,

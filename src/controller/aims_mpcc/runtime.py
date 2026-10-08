@@ -190,6 +190,51 @@ class Supervisor:
                 now-self.last_usable_update>=2*self.solve_period-1e-9):
             self.status,self.reason='RECOVERING',str(reason)
 
+    def reproject_controls(self, initial, applied, controls, optimized_applied, dt):
+        """Repair only actuator-prefix differences in never-executed controls.
+
+        This does not authorize execution: original and repaired trajectories
+        must both pass independent validation, including the operating envelope.
+        """
+        import hashlib
+        import json
+        from .envelope import jerk_limits
+        limits=jerk_limits(initial,applied,self.config,dt,len(controls))
+        acceleration,steering,rate=applied
+        repaired=[]
+        acceleration_change=steering_change=0.
+        changed_intervals=0
+        for command,jerk in zip(controls,limits):
+            lower=max(-self.config.brake_limit,acceleration-jerk*dt)
+            upper=min(self.config.accel_limit,acceleration+jerk*dt)
+            rate_lower=max(-self.config.steer_rate,rate-self.config.steer_acceleration*dt,
+                           (-self.config.steer_limit-steering)/dt)
+            rate_upper=min(self.config.steer_rate,rate+self.config.steer_acceleration*dt,
+                           (self.config.steer_limit-steering)/dt)
+            if lower>upper or rate_lower>rate_upper:
+                raise ValueError('Actual actuator prefix has no bounded continuation')
+            acceleration=clip(command[0],lower,upper)
+            rate=clip((command[1]-steering)/dt,rate_lower,rate_upper)
+            steering+=rate*dt
+            repaired.append([acceleration,steering,command[2]])
+            da,ds=abs(acceleration-command[0]),abs(steering-command[1])
+            acceleration_change=max(acceleration_change,da)
+            steering_change=max(steering_change,ds)
+            changed_intervals+=int(da>1e-12 or ds>1e-12)
+        prefix_difference=[abs(a-b) for a,b in zip(applied,optimized_applied)]
+        # A projection must be attributable to the changed input prefix. A
+        # different recovery jerk regime or other large repair is rejected.
+        if (acceleration_change>prefix_difference[0]+1e-4 or
+                steering_change>min(self.HANDOVER_COMMAND_LIMITS['command_steering'],
+                    prefix_difference[1]+len(controls)*dt*prefix_difference[2])+1e-4):
+            raise ValueError('Control reprojection exceeds actual-prefix correction bound')
+        return repaired,dict(
+            original_controls_sha256=hashlib.sha256(json.dumps(controls,sort_keys=True,
+                allow_nan=False).encode()).hexdigest(),
+            actual_prefix_difference=prefix_difference,
+            max_acceleration_correction=acceleration_change,
+            max_steering_correction=steering_change,changed_intervals=changed_intervals)
+
     def activate(self,now,actual,actual_command=None,expected_at_activation=None,path=None,progress=None,
                  map_alignment=None):
         """Activate at the scheduled epoch and record prediction error."""
@@ -254,8 +299,11 @@ class Supervisor:
             applied=[actual_command[k] for k in ('acceleration','steering','steering_rate')]
             dt=result.get('dt',.1)
             try:
-                samples=independent_rollout(initial,applied,result['controls'],self.config,dt)
-                rebased=dict(result,states=samples[::round(dt/.02)].tolist(),
+                controls,correction=self.reproject_controls(initial,applied,result['controls'],
+                                                             result['validation_applied'],dt)
+                samples=independent_rollout(initial,applied,controls,self.config,dt)
+                rebased=dict(result,states=samples[::round(dt/.02)].tolist(),controls=controls,
+                             handover_reprojection=correction,
                              validation_applied=applied,previous_steering=actual_command['steering'])
                 if map_alignment is not None:
                     rebased['map_alignment']=map_alignment
