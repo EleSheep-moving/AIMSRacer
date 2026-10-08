@@ -27,6 +27,7 @@ from .runtime import Supervisor, State, Command, angle_difference, clip
 from .worker import AsyncSolver
 from .history import AppliedHistory
 from .localization import LocalizationHealth
+from .speed_planner import SpeedPlanner
 
 
 class MPCCNode(Node):
@@ -37,6 +38,11 @@ class MPCCNode(Node):
         self.declare_parameter('simulation',False)
         self.declare_parameter('odom_topic','/odometry/filtered')
         self.declare_parameter('log_directory','')
+        self.declare_parameter('backend','ipopt',ParameterDescriptor(read_only=True))
+        self.declare_parameter('artifact_directory','',ParameterDescriptor(read_only=True))
+        self.backend=self.get_parameter('backend').value
+        if self.backend not in ('ipopt','acados','qp'):
+            raise ValueError('backend must be ipopt, acados or qp')
         self.declare_parameter('horizon',10,ParameterDescriptor(
             description='Number of 0.1 s prediction intervals; prepare matching native cache before launch',
             read_only=True))
@@ -50,13 +56,17 @@ class MPCCNode(Node):
         self.declare_parameter('solver_timeout',.25,ParameterDescriptor(
             description='Seconds from request submission to parent reply; late results are skipped without killing the worker',
             read_only=True))
+        self.declare_parameter('handover_delay',.02,ParameterDescriptor(
+            description='Forecast lead in seconds, independent of the solve period',read_only=True))
         frequency=self.get_parameter('solve_frequency').value
         self.plan_ttl=self.get_parameter('plan_ttl').value
         if not math.isfinite(frequency) or not 0<frequency<=50:
             raise ValueError('solve_frequency must be positive and at most 50 Hz')
         self.solve_period=1./frequency
         self.solver_timeout=self.get_parameter('solver_timeout').value
-        self.handover_delay=self.solve_period
+        self.handover_delay=self.get_parameter('handover_delay').value
+        if not math.isfinite(self.handover_delay) or self.handover_delay<=0:
+            raise ValueError('Positive finite handover delay required')
         if not math.isfinite(self.solver_timeout) or self.solver_timeout<=0:
             raise ValueError('solver_timeout result budget must be positive and finite')
         if (not math.isfinite(self.plan_ttl)
@@ -68,6 +78,7 @@ class MPCCNode(Node):
         self.config.validate(require_verified=True,allow_synthetic=self.get_parameter('simulation').value)
         self.path=ReferencePath.load(self.get_parameter('path_directory').value)
         self.path.validate_config(self.config,require_recording=not self.get_parameter('simulation').value)
+        self.speed_planner=SpeedPlanner(self.path,self.config)
         self.localization_health=LocalizationHealth()
         self.map_sha256=None
         self.map_buffer=None;self.map_alignment=None
@@ -79,10 +90,12 @@ class MPCCNode(Node):
             latched_id=QoSProfile(depth=1,durability=DurabilityPolicy.TRANSIENT_LOCAL)
             self.create_subscription(String,'/localization/map_sha256',self.map_identity,latched_id)
             self.create_subscription(DiagnosticArray,'/localization/status',self.localization_status,10)
-        self.supervisor=Supervisor(self.config,self.path.length,self.plan_ttl,self.handover_delay)
+        self.supervisor=Supervisor(self.config,self.path.length,self.plan_ttl,self.handover_delay,
+                                   solve_period=self.solve_period)
         directory=self.get_parameter('log_directory').value
         self.worker=AsyncSolver(self.get_parameter('path_directory').value,self.config,self.horizon,
-                                deadline=self.solver_timeout,log_directory=directory)
+                                deadline=self.solver_timeout,log_directory=directory,backend=self.backend,
+                                artifact_directory=self.get_parameter('artifact_directory').value or None)
         self.last_solve=-math.inf
         self.next_solve=-math.inf
         self.last_forwarded=0.; self.last_forwarded_time=-math.inf
@@ -326,6 +339,9 @@ class MPCCNode(Node):
                      source_stamp=s.state_received,stamp=takeover,submitted_at=now,elapsed=elapsed,
                      handover_command=dict(previous))
         if self.path.frame_id=='map':request['map_alignment']=self.map_alignment
+        if hasattr(self,'speed_planner'):
+            caps=self.speed_planner.refs(forecast.progress,self.horizon,.1)
+            request['speed_refs']=[min(target,cap) for target,cap in zip(request['speed_refs'],caps)]
         return request
 
     def tick(self):
@@ -341,8 +357,12 @@ class MPCCNode(Node):
         if reply:
             if reply['kind']=='error':
                 s.fault(reply['error']);self.get_logger().error(reply['error'])
+            elif reply['kind']=='restarting':
+                s.solver_failure(now,reply['reason'])
+                self.get_logger().warning(reply['reason'])
             elif reply['kind']=='skipped':
                 self.deadline_misses+=1
+                s.solver_failure(now,'Solver request deadline exceeded')
             elif reply['kind']=='result':
                 self.solve_times.append(reply['solve_time_s'])
                 self.last_solver_status=reply.get('status')
@@ -360,19 +380,33 @@ class MPCCNode(Node):
                     # Keep the last accepted plan and its original expiry.
                     # The failed trajectory never becomes an executed plan.
                     self.iteration_limit_skips+=1
+                    s.solver_failure(now,'Solver iteration budget exhausted')
                 if reply.get('discarded'):
                     if not reply.get('skip_notified'): self.deadline_misses+=1
+                    if not reply.get('skip_notified') and not iteration_limited:
+                        s.solver_failure(now,'Late solver result discarded')
                 elif not iteration_limited and s.accept(reply,now):
                     self.publish_path(self.prediction_pub,
                                       [dict(x=r[0],y=r[1],yaw=r[2]) for r in reply['states']],
                                       frame_id='odom')
         if (s.active and s.pending_plan is not None
-                and now>=s.pending_plan['stamp']-s.HANDOVER_TOLERANCE):
+                and now>=s.pending_plan['stamp']):
             try:
                 self.applied_ready(now)
                 if not s.fresh(now):raise ValueError('Fresh state required at plan handover')
                 actual,_=self.history.predict(s.state,s.state_received,now,self.config)
-                s.activate(now,actual,self.history.command_at(now))
+                pending=s.pending_plan
+                predicted=pending['states'][0]
+                expected=State(predicted[0],predicted[1],predicted[2],predicted[3],predicted[5],s.state.timestamp)
+                expected,_=self.history.predict(expected,pending['stamp'],now,self.config)
+                xy=[actual.x,actual.y]
+                if self.path.frame_id=='map':
+                    mx,my,_=apply_alignment(actual.x,actual.y,actual.yaw,self.map_alignment)
+                    xy=[mx,my]
+                progress,_=self.path.project(xy)
+                progress=predicted[4]+(progress-predicted[4]+self.path.length/2)%self.path.length-self.path.length/2
+                s.activate(now,actual,self.history.command_at(now),expected_at_activation=expected,
+                           path=self.path,progress=progress,map_alignment=self.map_alignment)
             except ValueError as exc:
                 s.fault(str(exc))
         if s.active and self.count_publishers('/drive')>1:
@@ -401,6 +435,9 @@ class MPCCNode(Node):
             except ValueError as exc:
                 s.fault(str(exc))
         values=dict(status=s.status,reason=s.reason,worker_ready=self.worker.ready,horizon=self.horizon,
+                    backend=self.backend,solver_restart_count=self.worker.restart_count,
+                    consecutive_solver_failures=s.consecutive_failures,
+                    recovery_good_candidates=s.recovery_good_candidates,
                     corridor_enforced=self.config.enforce_corridor,
                     autonomy_selected=s.mode,progress=s.progress,
                     start_progress=s.start_progress,lap_progress=s.progress-s.start_progress,

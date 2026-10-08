@@ -15,7 +15,10 @@ def summarize(rows, budget_s=.05):
     for duration in durations:
         run = run + 1 if duration > budget_s else 0
         longest = max(longest, run)
+    checked=[row for row in rows if row.get('validation') is not None]
     return dict(requests=len(rows), failures=sum(not row['success'] for row in rows),
+                independently_checked=len(checked),
+                executable_candidates=sum(row['success'] and row['validation']['accepted'] for row in checked),
                 overruns=sum(t > budget_s for t in durations),
                 max_consecutive_overruns=longest,
                 full_request_p95_s=float(np.percentile(durations, 95)) if durations else None,
@@ -66,9 +69,15 @@ def main():
             start = time.perf_counter()
             result = solver.solve(request['state'], request['previous'], request['speed_refs'],
                                   request['elapsed'], request.get('map_alignment'))
+            validation=None
+            if result.get('success') and hasattr(config,'envelope_soft_enabled'):
+                from .validation import validate_candidate
+                validation=validate_candidate(dict(result, dt=fixture['dt'],
+                    validation_applied=[request['previous'][k] for k in ('acceleration','steering','steering_rate')],
+                    map_alignment=request.get('map_alignment')),config,path)
             duration = time.perf_counter() - start
             rows.append(dict(id=fixture['id'], repeat=repeat, backend=args.backend,
-                             config=asdict(config), full_request_s=duration,
+                             config=asdict(config), full_request_s=duration, validation=validation,
                              **{k: v for k, v in result.items() if k not in ['failure_snapshot', 'solve_input']}))
     report = dict(schema_version=1, layer='fixed-input-direct-call', hardware_validated=False,
                   includes_ipc=False, includes_solver_construction=False,

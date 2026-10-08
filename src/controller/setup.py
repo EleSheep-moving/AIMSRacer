@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='aims_mpcc', version='0.1.0', packages=find_packages(),
-    package_data={'aims_mpcc.vendor': ['*LICENSE']},
+    package_data={'aims_mpcc.vendor': ['*LICENSE'],'aims_mpcc':['kernels/*.c']},
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/aims_mpcc']),
         ('share/aims_mpcc', ['package.xml', 'LICENSE', 'NOTICE.md']),
@@ -18,6 +18,7 @@ setup(
         'record_path = aims_mpcc.recorder:main',
         'prepare_path = aims_mpcc.prepare:main',
         'prepare_solver = aims_mpcc.prepare_solver:main',
+        'benchmark_solver = aims_mpcc.benchmark:main',
         'mpcc_node = aims_mpcc.node:main',
         'closed_loop_test = aims_mpcc.integration:main',
     ]},

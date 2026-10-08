@@ -43,6 +43,14 @@ def jerk_limits(initial_state, applied, config, dt, horizon):
 
 
 def independent_rollout(initial_state, applied, controls, config, dt=.1, steering_bias=0.):
+    from .rollout_native import kernel_path,native_rollout
+    result=native_rollout(kernel_path(),initial_state,applied,controls,config,dt,steering_bias)
+    if result is not None:
+        return result
+    return python_rollout(initial_state,applied,controls,config,dt,steering_bias)
+
+
+def python_rollout(initial_state, applied, controls, config, dt=.1, steering_bias=0.):
     """Return unique 20 ms samples; command ramps match the OCP's held microsteps."""
     if not np.isfinite(dt) or dt <= 0 or not np.isfinite(steering_bias):
         raise ValueError('finite dt and steering bias required; dt must be positive')

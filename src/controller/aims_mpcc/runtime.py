@@ -43,7 +43,7 @@ class Supervisor:
     HANDOVER_COMMAND_LIMITS = dict(command_speed=.30,
                                    command_steering=math.radians(20))
 
-    def __init__(self, config, length, plan_ttl=PLAN_TTL, handover_delay=.10):
+    def __init__(self, config, length, plan_ttl=PLAN_TTL, handover_delay=.10, solve_period=None):
         self.config, self.length = config, float(length)
         if not math.isfinite(plan_ttl) or plan_ttl<=0:
             raise ValueError('Positive finite plan lifetime required')
@@ -51,6 +51,12 @@ class Supervisor:
         if not math.isfinite(handover_delay) or not 0<handover_delay<plan_ttl:
             raise ValueError('Handover delay must be positive and shorter than plan lifetime')
         self.handover_delay=handover_delay
+        if solve_period is not None and (not math.isfinite(solve_period) or solve_period<=0):
+            raise ValueError('Positive finite solve period required')
+        self.solve_period=solve_period
+        self.last_usable_update=None
+        self.consecutive_failures=0
+        self.recovery_good_candidates=0
         self.status, self.reason = 'READY', 'Waiting for fresh inputs'
         self.state = None
         self.state_received = self.mode_received = -math.inf
@@ -72,7 +78,7 @@ class Supervisor:
 
     @property
     def active(self):
-        return self.status in ('RUNNING', 'STOPPING')
+        return self.status in ('RUNNING', 'RECOVERING', 'STOPPING')
 
     def fault(self, reason):
         if self.status != 'FAULT':
@@ -102,6 +108,8 @@ class Supervisor:
         self.state, self.state_received = state, received
 
     def set_mode(self, enabled, received):
+        if self.solve_period is not None and self.active and self.mode and not enabled:
+            self.fault('Autonomy withdrawn; re-enable required')
         self.mode, self.mode_received = bool(enabled), received
 
     def fresh(self, now):
@@ -123,6 +131,8 @@ class Supervisor:
         self.pending_plan = None
         self.handover_error = None
         self.started = self.last_tick = now
+        self.last_usable_update=now
+        self.consecutive_failures=self.recovery_good_candidates=0
         self.start_progress = self.wrapped_progress
         self.progress = self.start_progress
         self.lap_goal = self.start_progress+self.length
@@ -150,6 +160,7 @@ class Supervisor:
                      and len(result['controls']) == len(result['states'])-1
                      and all(len(row)==6 for row in result['states'])
                      and all(len(row)==3 for row in result['controls'])
+                     and math.isclose(result.get('dt',.1),.1,rel_tol=0.,abs_tol=1e-9)
                      and math.isfinite(result['constraint_violation'])
                      and result['constraint_violation'] < 1e-4
                      and 0 <= now-result['source_stamp'] <= self.PLAN_TTL)
@@ -160,13 +171,27 @@ class Supervisor:
         except (KeyError, TypeError, ValueError):
             valid = False
         if not valid:
-            self.fault('Invalid, failed, or expired solver result'); return False
+            if self.solve_period is None:
+                self.fault('Invalid, failed, or expired solver result')
+            else:
+                self.solver_failure(now, 'Invalid, failed, or expired solver result')
+            return False
         # A result can arrive early; it must not change the input prefix
         # used to predict its own initial state. Missing epochs are rejected.
         self.pending_plan = result
         return True
 
-    def activate(self,now,actual,actual_command=None):
+    def solver_failure(self, now, reason):
+        """A bad optimization result cannot extend a plan or revoke fresh inputs."""
+        self.consecutive_failures+=1
+        self.recovery_good_candidates=0
+        if (self.active and self.solve_period is not None and
+                self.status!='STOPPING' and self.last_usable_update is not None and
+                now-self.last_usable_update>=2*self.solve_period-1e-9):
+            self.status,self.reason='RECOVERING',str(reason)
+
+    def activate(self,now,actual,actual_command=None,expected_at_activation=None,path=None,progress=None,
+                 map_alignment=None):
         """Activate at the scheduled epoch and record prediction error."""
         result=self.pending_plan
         if result is None or now<result['stamp']-self.HANDOVER_TOLERANCE:
@@ -175,8 +200,16 @@ class Supervisor:
         if not self.active or result.get('generation')!=self.generation:
             return False
         if not 0<=now-result['source_stamp']<=self.PLAN_TTL:
-            self.fault('Expired plan at handover');return False
+            if self.solve_period is None:
+                self.fault('Expired plan at handover')
+            else:
+                self.rejected_plans+=1
+                self.solver_failure(now,'Expired candidate at handover')
+            return False
         expected=result['states'][0]
+        if expected_at_activation is not None:
+            expected=[expected_at_activation.x,expected_at_activation.y,expected_at_activation.yaw,
+                      expected_at_activation.speed,expected[4],expected_at_activation.steering]
         self.handover_error=dict(position=math.hypot(actual.x-expected[0],actual.y-expected[1]),
                                 yaw=abs(angle_difference(actual.yaw,expected[2])),
                                 speed=abs(actual.speed-expected[3]),
@@ -191,14 +224,64 @@ class Supervisor:
             limits.update(self.HANDOVER_COMMAND_LIMITS)
         if any(self.handover_error[key]>limit+1e-12 for key,limit in limits.items()):
             self.rejected_plans+=1
+            if self.solve_period is not None:
+                self.solver_failure(now,'Candidate differs from actual handover state or command')
             return False
+        if self.solve_period is not None:
+            # New controls were never executed while the solver ran. Replay
+            # every interval from the current state, with the real input boundary.
+            if actual_command is None:
+                self.rejected_plans+=1
+                self.solver_failure(now,'Actual applied command required at handover')
+                return False
+            import time
+            from .envelope import independent_rollout
+            from .validation import validate_candidate,candidate_fingerprint
+            validation_started=time.perf_counter()
+            raw_validation=result.get('validation')
+            try:
+                if (raw_validation is None or
+                        raw_validation.get('candidate_fingerprint')!=candidate_fingerprint(result,self.config)):
+                    raw_validation=validate_candidate(result,self.config,path)
+            except (ValueError,TypeError) as exc:
+                raw_validation=dict(accepted=False,reason=str(exc))
+            if not raw_validation['accepted']:
+                self.rejected_plans+=1
+                self.solver_failure(now,raw_validation['reason'])
+                return False
+            initial=[actual.x,actual.y,actual.yaw,max(0.,actual.speed),
+                     expected[4] if progress is None else progress,actual.steering]
+            applied=[actual_command[k] for k in ('acceleration','steering','steering_rate')]
+            dt=result.get('dt',.1)
+            try:
+                samples=independent_rollout(initial,applied,result['controls'],self.config,dt)
+                rebased=dict(result,states=samples[::round(dt/.02)].tolist(),
+                             validation_applied=applied,previous_steering=actual_command['steering'])
+                if map_alignment is not None:
+                    rebased['map_alignment']=map_alignment
+                validation=validate_candidate(rebased,self.config,path)
+            except (ValueError,TypeError,OverflowError) as exc:
+                validation=dict(accepted=False,reason=str(exc))
+            if not validation['accepted']:
+                self.rejected_plans+=1
+                self.solver_failure(now,validation['reason'])
+                return False
+            result=dict(rebased,validation=validation,
+                        handover_validation_time_s=time.perf_counter()-validation_started)
         # Execution starts here, even if the control tick is a little late.
         # Never skip new inputs that were not executed during that lateness.
         self.plan=dict(result,scheduled_stamp=result['stamp'],stamp=now)
+        self.last_usable_update=now
+        self.consecutive_failures=0
+        if self.status=='RECOVERING':
+            self.recovery_good_candidates+=1
+            if self.recovery_good_candidates>=2 and actual.speed>=.05:
+                self.status,self.reason='RUNNING',''
+                self.recovery_good_candidates=0
         return True
 
     def refs(self, n, dt):
-        if self.status == 'STOPPING':
+        if self.status in ('STOPPING','RECOVERING'):
             return [0.]*(n+1)
         remaining = max(0., self.lap_goal-self.progress)
         speed = max(0., self.state.speed)
@@ -240,26 +323,43 @@ class Supervisor:
             self.fault('Command scheduling discontinuity'); return self.last_command
         dt = clip(now-(self.last_tick if self.last_tick is not None else now), 0., .05)
         self.last_tick = now
-        if self.plan is None:
+        if (enforce_plan_age and self.solve_period is not None and self.status=='RUNNING' and
+                self.last_usable_update is not None and
+                now-self.last_usable_update>=2*self.solve_period-1e-9):
+            self.status,self.reason='RECOVERING','No usable plan update for two planning periods'
+            self.recovery_good_candidates=0
+        recovering=self.status=='RECOVERING'
+        if self.plan is None and not recovering:
             if now-self.started > self.PLAN_TTL:
                 self.fault('Initial plan deadline expired')
             return Command(0., self.last_command.steering)
-        age = now-self.plan.get('source_stamp',self.plan['stamp'])
-        if age < 0 or (enforce_plan_age and age > self.PLAN_TTL):
-            self.fault('Plan expired'); return self.last_command
-        phase = now-self.plan['stamp']
-        if phase<0:
-            self.fault('Plan activated before handover');return self.last_command
-        if phase>=len(self.plan['controls'])*.1:
-            self.fault('Prediction horizon exhausted');return self.last_command
-        index = min(len(self.plan['controls'])-1, int(phase/.1))
-        fraction = clip((phase-index*.1)/.1, 0., 1.)
-        states, controls = self.plan['states'], self.plan['controls']
-        target_speed = states[index][3]*(1-fraction)+states[index+1][3]*fraction
-        previous_steer = self.plan.get('previous_steering', self.last_command.steering) if index==0 else controls[index-1][1]
-        target_steer = previous_steer+(controls[index][1]-previous_steer)*fraction
+        if self.plan is not None:
+            age=now-self.plan.get('source_stamp',self.plan['stamp'])
+            phase=now-self.plan['stamp']
+            expired=age<0 or (enforce_plan_age and age>self.PLAN_TTL)
+            exhausted=phase>=len(self.plan['controls'])*.1
+            if phase<0:
+                self.fault('Plan activated before handover');return self.last_command
+            if expired or exhausted:
+                if self.solve_period is None or not enforce_plan_age or age<0:
+                    self.fault('Plan expired' if expired else 'Prediction horizon exhausted')
+                    return self.last_command
+                self.plan=None
+                if self.status!='STOPPING':
+                    self.status,self.reason='RECOVERING','Plan expired' if expired else 'Prediction horizon exhausted'
+                recovering=self.status=='RECOVERING'
+        if self.plan is None or recovering:
+            target_speed=0.
+            target_steer=self.last_command.steering
+        else:
+            index=min(len(self.plan['controls'])-1,int(phase/.1))
+            fraction=clip((phase-index*.1)/.1,0.,1.)
+            states,controls=self.plan['states'],self.plan['controls']
+            target_speed=states[index][3]*(1-fraction)+states[index+1][3]*fraction
+            previous_steer=self.plan.get('previous_steering',self.last_command.steering) if index==0 else controls[index-1][1]
+            target_steer=previous_steer+(controls[index][1]-previous_steer)*fraction
         remaining = self.lap_goal-self.progress
-        if self.status=='STOPPING' or remaining <= max(.05, self.minimum_speed_stop_distance()):
+        if self.status in ('STOPPING','RECOVERING') or remaining <= max(.05, self.minimum_speed_stop_distance()):
             target_speed = 0.
         # Enforce the finish envelope on executed targets as well as the OCP's
         # soft speed references. The command still passes through smooth limits.
@@ -312,12 +412,13 @@ class Supervisor:
         self.last_command = Command(speed, clip(steer, -self.config.steer_limit, self.config.steer_limit))
         finish_tolerance = max(.2, self.minimum_speed_stop_distance()+.05)
         finish = abs(remaining) <= finish_tolerance and self.progress >= self.lap_goal-finish_tolerance
-        if (finish or self.status=='STOPPING') and abs(self.state.speed)<.05 and speed<1e-6:
+        if (finish or self.status in ('STOPPING','RECOVERING')) and abs(self.state.speed)<.05 and speed<1e-6:
             if self.stationary_since is None:
                 self.stationary_since = now
             if now-self.stationary_since >= .5:
+                recovery_stopped=self.status=='RECOVERING'
                 self.status = 'COMPLETE' if finish else 'READY'
-                self.reason = 'One lap complete' if finish else 'Stopped'
+                self.reason = 'One lap complete' if finish else ('Recovery stopped; re-enable required' if recovery_stopped else 'Stopped')
                 self.plan = None
                 self.pending_plan = None
                 self.last_command = Command(0., self.last_command.steering)
