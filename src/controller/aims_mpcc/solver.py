@@ -9,6 +9,7 @@ import numpy as np
 from .config import VehicleConfig
 from .path import ReferencePath
 from .vendor import global_kinematic_model, contouring_lag, normalized_cost
+from .solver_diagnostics import constraint_summary, convergence, json_safe
 
 class MPCCSolver:
     def __init__(self, path: ReferencePath, config: VehicleConfig, horizon=10, dt=.1, jit_enabled=False, native_options=None):
@@ -39,6 +40,8 @@ class MPCCSolver:
 
     def reset(self):
         self.previous=None; self.previous_theta=None;self.previous_yaw=None
+        self.previous_elapsed=0.
+        self.consecutive_failures=0
 
     def _dynamics(self, state, control, symbolic=True, steering_bias=0., previous_steering=None):
         if previous_steering is None:
@@ -76,17 +79,23 @@ class MPCCSolver:
         contour_w, heading_w, speed_w, steering_w, rate_w, rate_accel_w, terminal_w = (
             self.cost_weights[i] for i in range(7))
         self.map_alignment = op.parameter(3) if self.path.frame_id == 'map' else None
-        op.subject_to(x[:, 0] == self.initial)
-        op.subject_to(op.bounded(0., x[3, :], self.config.max_speed))
-        op.subject_to(op.bounded(-self.config.brake_limit, u[0, :], self.config.accel_limit))
-        op.subject_to(op.bounded(-self.steer_limit, u[1, :], self.steer_limit))
-        op.subject_to(op.bounded(0., u[2, :], self.config.max_speed))
+        self.constraint_blocks=[]
+        def constrain(expression, group, interval=None, substep=None):
+            first=op.ng
+            op.subject_to(expression)
+            self.constraint_blocks.append(dict(first=first,end=op.ng,group=group,
+                                               interval=interval,substep=substep))
+        constrain(x[:, 0] == self.initial, 'initial_state')
+        constrain(op.bounded(0., x[3, :], self.config.max_speed), 'speed_bounds')
+        constrain(op.bounded(-self.config.brake_limit, u[0, :], self.config.accel_limit), 'acceleration_bounds')
+        constrain(op.bounded(-self.steer_limit, u[1, :], self.steer_limit), 'steering_bounds')
+        constrain(op.bounded(0., u[2, :], self.config.max_speed), 'progress_speed_bounds')
         weights = self.weights
         objective = 0
         self.margins = []
         self.corridor_rows = []
 
-        def geometry(state):
+        def geometry(state, interval, substep=None):
             # Dynamics and warm starts remain continuous in odom. The persistent
             # map spline is compared through one alignment snapshot per solve.
             if self.map_alignment is not None:
@@ -106,7 +115,8 @@ class MPCCSolver:
                 corner = reference_state[:2] + along * heading + across * left
                 lateral = ca.dot(corner - ref["xy"], normal)
                 if self.config.enforce_corridor:
-                    op.subject_to(op.bounded(-self.path.right_width, lateral, self.path.left_width))
+                    constrain(op.bounded(-self.path.right_width, lateral, self.path.left_width),
+                              'corridor', interval, substep)
                     self.corridor_rows.append(op.ng - 1)
                 self.margins.extend((self.path.left_width - lateral, self.path.right_width + lateral))
             # Periodic, wrap-safe heading error: 2*(1-cos(error)) ~ error^2.
@@ -124,19 +134,22 @@ class MPCCSolver:
             previous = self.applied if k == 0 else u[:2, k - 1]
             end, sample_matrix = transition(x[:, k], u[:, k], previous[1], self.steering_bias)
             stages = [sample_matrix[:, j] for j in range(self.substeps + 1)]
-            op.subject_to(x[:, k + 1] == end)
-            op.subject_to(op.bounded(-self.jerk_limit * self.dt, u[0, k] - previous[0], self.jerk_limit * self.dt))
+            constrain(x[:, k + 1] == end, 'dynamics', k)
+            constrain(op.bounded(-self.jerk_limit * self.dt, u[0, k] - previous[0], self.jerk_limit * self.dt),
+                      'jerk', k)
             rate = (u[1, k] - previous[1]) / self.dt
             previous_rate = self.applied[2] if k == 0 else (u[1, k - 1] - (self.applied[1] if k == 1 else u[1, k - 2])) / self.dt
-            op.subject_to(op.bounded(-self.steer_rate, rate, self.steer_rate))
-            op.subject_to(op.bounded(-self.steer_acceleration * self.dt, rate - previous_rate, self.steer_acceleration * self.dt))
+            constrain(op.bounded(-self.steer_rate, rate, self.steer_rate), 'steering_rate', k)
+            constrain(op.bounded(-self.steer_acceleration * self.dt, rate - previous_rate, self.steer_acceleration * self.dt),
+                      'steering_acceleration', k)
             # Check acceleration utilization at each 20 ms integration node.
-            for stage in stages:
+            for substep, stage in enumerate(stages):
                 lateral_accel = stage[3] ** 2 * ca.tan(stage[5]) / (self.wheelbase * (1 + self.understeer_coefficient * stage[3] ** 2))
                 scale = ca.if_else(u[0, k] >= 0, self.config.accel_limit, self.config.brake_limit)
-                op.subject_to((u[0, k] / scale) ** 2 + (lateral_accel / self.config.lateral_accel_limit) ** 2 <= 1.)
-            ec, el, ref = geometry(x[:, k])
-            geometry(stages[(self.substeps + 1) // 2])
+                constrain((u[0, k] / scale) ** 2 + (lateral_accel / self.config.lateral_accel_limit) ** 2 <= 1.,
+                          'acceleration_ellipse', k, substep)
+            ec, el, ref = geometry(x[:, k], k, 0)
+            geometry(stages[(self.substeps + 1) // 2], k, (self.substeps + 1) // 2)
             delta_ff = ca.atan(self.wheelbase * (1 + self.understeer_coefficient * x[3, k] ** 2) * ref["curvature"]) - self.steering_bias
             objective += contour_w * (ec / .05) ** 2 + weights["lag"] * (el / .20) ** 2
             objective += heading_w * ref["heading_error_squared"] / .05 ** 2
@@ -145,7 +158,7 @@ class MPCCSolver:
             objective += steering_w * ((u[1, k] - delta_ff) / .314159) ** 2
             objective += weights["accel"] * (u[0, k] / 2.) ** 2
             objective += rate_w * (rate / self.steer_rate) ** 2 + rate_accel_w * ((rate - previous_rate) / (self.steer_acceleration * self.dt)) ** 2
-        ec, el, ref = geometry(x[:, -1])
+        ec, el, ref = geometry(x[:, -1], self.n, 0)
         objective += terminal_w * (contour_w * (ec / .05) ** 2 + weights["lag"] * (el / .20) ** 2
                           + heading_w * ref["heading_error_squared"] / .05 ** 2
                           + speed_w * ((x[3, -1] - self.speed_refs[-1]) / .60) ** 2)
@@ -164,7 +177,7 @@ class MPCCSolver:
     def _warm_start(self, initial, applied, refs, elapsed):
         states=[initial]
         shifted=None
-        if self.previous is not None:
+        if self.previous is not None and elapsed < self.n*self.dt:
             shift=min(self.n,max(1,round(elapsed/self.dt)))
             shifted=np.vstack((self.previous['controls'][shift:],
                                np.repeat(self.previous['controls'][-1:],shift,axis=0)))
@@ -192,6 +205,25 @@ class MPCCSolver:
             end,_=self.transition(state,control,steering,0.)
             states.append(np.asarray(end).reshape(-1));controls.append(control);steering=next_steering
         return np.asarray(states),np.asarray(controls)
+
+    def _diagnostics(self, stats, value):
+        """Value may be a solution or Opti.debug after a failed IPOPT call."""
+        summary=dict(schema_version=1, iteration_limit=self.config.solver_max_iterations,
+                     **convergence(stats))
+        constraints=None
+        try:
+            constraints=[np.asarray(value(item),dtype=float).reshape(-1)
+                         for item in (self.op.g,self.op.lbg,self.op.ubg)]
+            summary.update(constraint_summary(*constraints,self.constraint_blocks))
+        except (RuntimeError,ValueError,TypeError) as exc:
+            summary.update(max_constraint_violation=None,constraint_violations={},
+                           worst_constraints=[],constraint_diagnostic_error=str(exc))
+        if summary['objective'] is None:
+            try:
+                summary['objective']=json_safe(float(value(self.op.f)))
+            except (RuntimeError,ValueError,TypeError):
+                pass
+        return summary,constraints
 
     def solve(self, state, previous, speed_refs=None, elapsed=.1, map_alignment=None):
         started=time.perf_counter()
@@ -227,30 +259,75 @@ class MPCCSolver:
         self.op.set_value(self.cost_weights, [self.config.contour_weight, self.config.heading_weight,
             self.config.speed_weight, self.config.steering_weight, self.config.steering_rate_weight,
             self.config.steering_acceleration_weight, self.config.terminal_weight])
-        warm_states,warm_u=self._warm_start(initial,applied,refs,elapsed)
+        # elapsed is between REQUESTS. Retained controls belong to the last
+        # successful request, so failed cycles must accumulate their full age.
+        if self.previous is not None:
+            self.previous_elapsed+=elapsed
+        cache_age=self.previous_elapsed if self.previous is not None else None
+        use_cache=self.previous is not None and cache_age < self.n*self.dt
+        shift=min(self.n,max(1,round(cache_age/self.dt))) if use_cache else 0
+        warm_states,warm_u=self._warm_start(initial,applied,refs,cache_age if cache_age is not None else elapsed)
         self.op.set_initial(self.x,np.asarray(warm_states).T);self.op.set_initial(self.u,warm_u.T)
+        prepared=time.perf_counter()
+        error=None
         try:
             solution=self.op.solve()
         except RuntimeError as exc:
-            self.previous=None
-            return dict(success=False,status=self.op.stats().get('return_status','exception'),
-                        iterations=int(self.op.stats().get('iter_count',0)),
-                        solve_time_s=time.perf_counter()-started,error=str(exc))
-        states=np.asarray(solution.value(self.x)).reshape(6,self.n+1).T
-        controls=np.asarray(solution.value(self.u)).reshape(3,self.n).T
-        stats=self.op.stats()
-        g,lower,upper=(np.asarray(solution.value(item)).reshape(-1) for item in (self.op.g,self.op.lbg,self.op.ubg))
-        violation=float(np.maximum(np.maximum(lower-g,g-upper),0).max())
-        rows=self.corridor_rows
-        minimum_margin=(float(np.minimum(upper[rows]-g[rows],g[rows]-lower[rows]).min())
-                        if len(rows) else None)
-        success=bool(stats['success'] and violation<1e-4 and np.isfinite(states).all() and np.isfinite(controls).all())
-        result=dict(success=success,status=stats['return_status'],states=states.tolist(),controls=controls.tolist(),
-                    iterations=int(stats['iter_count']),constraint_violation=violation,
-                    minimum_predicted_margin_m=minimum_margin,
+            solution=None
+            error=str(exc)
+        optimized=time.perf_counter()
+        try:
+            stats=self.op.stats()
+        except RuntimeError:
+            stats={}
+        value=solution.value if solution is not None else self.op.debug.value
+        diagnostics,constraints=self._diagnostics(stats,value)
+        violation=diagnostics['max_constraint_violation']
+        states=controls=None
+        try:
+            states=np.asarray(value(self.x),dtype=float).reshape(6,self.n+1).T
+            controls=np.asarray(value(self.u),dtype=float).reshape(3,self.n).T
+        except (RuntimeError,ValueError,TypeError):
+            pass
+        success=bool(solution is not None and stats.get('success') and violation is not None and
+                     violation<1e-4 and states is not None and controls is not None and
+                     np.isfinite(states).all() and np.isfinite(controls).all())
+        result=dict(success=success,status=stats.get('return_status','exception'),
+                    iterations=int(stats.get('iter_count',0)),constraint_violation=violation,
                     corridor_enforced=self.config.enforce_corridor)
+        result['solve_input']=json_safe(dict(initial_state=initial,applied=applied,speed_refs=refs,
+                                             map_alignment=map_alignment,warm_states=warm_states,warm_controls=warm_u))
+        if error is not None:
+            result['error']=error
         if success:
-            self.previous=dict(states=states,controls=controls);self.previous_theta=theta;self.previous_yaw=yaw
-        else: self.previous=None
+            result.update(states=states.tolist(),controls=controls.tolist())
+            g,lower,upper=constraints
+            rows=self.corridor_rows
+            result['minimum_predicted_margin_m']=(float(np.minimum(upper[rows]-g[rows],g[rows]-lower[rows]).min())
+                                                  if len(rows) else None)
+            self.previous=dict(states=states,controls=controls)
+            self.previous_theta=theta;self.previous_yaw=yaw
+            self.previous_elapsed=0.
+            self.consecutive_failures=0
+        else:
+            # Failed iterates are diagnostic only. Keep the last VALID seed;
+            # next solve re-integrates shifted controls from the new state.
+            self.consecutive_failures+=1
+            result['failure_snapshot']=json_safe(dict(
+                **result['solve_input'],
+                candidate_states=states,candidate_controls=controls,
+                iterations=stats.get('iterations',{}),
+                constraint_values=constraints[0] if constraints is not None else None,
+                constraint_lower=constraints[1] if constraints is not None else None,
+                constraint_upper=constraints[2] if constraints is not None else None,
+                constraint_blocks=self.constraint_blocks))
+        diagnostics.update(warm_start_source='last_success' if use_cache else 'feedforward',
+                           warm_start_age_s=cache_age,warm_start_shift_steps=shift,
+                           warm_start_cache_expired=cache_age is not None and not use_cache,
+                           warm_start_retained=self.previous is not None,
+                           consecutive_failures=self.consecutive_failures,
+                           preparation_time_s=prepared-started,optimizer_time_s=optimized-prepared,
+                           diagnostics_time_s=time.perf_counter()-optimized)
+        result['diagnostics']=json_safe(diagnostics)
         result['solve_time_s']=time.perf_counter()-started
         return result

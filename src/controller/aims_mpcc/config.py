@@ -35,9 +35,9 @@ class VehicleConfig:
     speed_weight: float = 4000 / 30
     steering_weight: float = 20 / 30
     steering_rate_weight: float = .3
-    steering_acceleration_weight: float = .3
+    steering_acceleration_weight: float = .6
     terminal_weight: float = 3.
-    solver_max_iterations: int = 30
+    solver_max_iterations: int = 35
 
     def validate(self, require_verified=False, allow_synthetic=True):
         if type(self.geometry_verified) is not bool:

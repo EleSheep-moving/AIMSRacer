@@ -80,8 +80,9 @@ class MPCCNode(Node):
             self.create_subscription(String,'/localization/map_sha256',self.map_identity,latched_id)
             self.create_subscription(DiagnosticArray,'/localization/status',self.localization_status,10)
         self.supervisor=Supervisor(self.config,self.path.length,self.plan_ttl,self.handover_delay)
+        directory=self.get_parameter('log_directory').value
         self.worker=AsyncSolver(self.get_parameter('path_directory').value,self.config,self.horizon,
-                                deadline=self.solver_timeout)
+                                deadline=self.solver_timeout,log_directory=directory)
         self.last_solve=-math.inf
         self.next_solve=-math.inf
         self.last_forwarded=0.; self.last_forwarded_time=-math.inf
@@ -93,12 +94,12 @@ class MPCCNode(Node):
         self.solve_times=[];self.deadline_misses=0
         self.iteration_limit_skips=0
         self.last_solver_status=None;self.last_solver_iterations=None
+        self.last_solver_diagnostics=None;self.last_solve_sequence=None
         self.request_timing=None
         self.map_tf_age=None
         self.map_correction_change=None
         self.last_time_rejection=None
         self.log=None
-        directory=self.get_parameter('log_directory').value
         if directory:
             Path(directory).mkdir(parents=True,exist_ok=True)
             self.log=(Path(directory)/f'controller-{time.time_ns()}.jsonl').open('x')
@@ -346,6 +347,8 @@ class MPCCNode(Node):
                 self.solve_times.append(reply['solve_time_s'])
                 self.last_solver_status=reply.get('status')
                 self.last_solver_iterations=reply.get('iterations')
+                self.last_solver_diagnostics=reply.get('diagnostics')
+                self.last_solve_sequence=reply.get('solve_sequence')
                 self.request_timing=dict(source_to_submit=reply['submitted_at']-reply['source_stamp'],
                     request_to_reply=now-reply['submitted_at'],
                     worker_queue=reply['worker_started_at']-reply['submitted_at'],
@@ -416,6 +419,7 @@ class MPCCNode(Node):
                     handover_limits={**s.HANDOVER_STATE_LIMITS,**s.HANDOVER_COMMAND_LIMITS},
                     solver_max_iterations=self.config.solver_max_iterations,
                     solver_status=self.last_solver_status,solver_iterations=self.last_solver_iterations,
+                    solve_sequence=self.last_solve_sequence,solver_diagnostics=self.last_solver_diagnostics,
                     iteration_limit_skips=self.iteration_limit_skips,
                     late_result_skips=self.deadline_misses,solver_busy=self.worker.pending is not None,
                     speed_command=actuator.speed,model_speed_command=command.speed,

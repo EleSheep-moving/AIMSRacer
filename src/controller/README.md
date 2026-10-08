@@ -23,7 +23,8 @@ footprint checks are disabled. The reference still describes a centered 1 m
 corridor; cross-track error is still measured and penalized. RC authority,
 actuator limits, estimator validity and plan expiry remain active. Set the flag
 to true to restore track constraints and prepare the matching native cache.
-`solver_max_iterations: 30` caps IPOPT iterations. A result with status
+The default steering acceleration weight is B's `0.6`.
+`solver_max_iterations: 35` caps IPOPT iterations. A result with status
 `Maximum_Iterations_Exceeded` is skipped and the next request is attempted;
 the last accepted plan retains its original expiry. This does not accept an
 unconverged trajectory. Replies received more than 250 ms after submission
@@ -35,6 +36,11 @@ submission-to-reply time to 0.25 s. See the
 [runtime timing parameters](docs/usage.md#runtime-timing-parameters); omit a
 `plan_ttl` override to derive its value from horizon. Only one request is in flight;
 after a late solve finishes, its reply is drained and a fresh request can run.
+Failed solves retain the last valid trajectory seed, shifted by cumulative time
+since its successful request and rolled forward from the current state. A seed
+older than the prediction horizon falls back to reference speed/curvature.
+See [solver diagnostics](docs/solver-diagnostics.md) for residuals, constraint
+groups, timing breakdowns and complete failed-request records.
 The real-car configuration sets `minimum_drive_speed: 0.2` m/s from the
 operator's observed motor dead zone. A positive running proposal below this
 threshold is sent as 0.2 m/s; disabled/faulted commands remain zero, and

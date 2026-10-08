@@ -15,7 +15,7 @@ geometry_verified: true
 # geometry, but omit its OCP constraints and measured/start footprint stop gates.
 # RC authority, estimator validity, actuator limits and plan expiry remain active.
 enforce_corridor: false
-# Initial low-speed cruise target; stop and safety states still command zero.
+# Cruise target for the B-weight 1.0 m/s trial; stop and safety states command zero.
 # This map lap peaks near 0.93 1/m curvature, so 1.0 m/s is within the
 # assumed 1.0 m/s^2 lateral-acceleration limit at the tightest sampled bend.
 cruise_speed: 1.0
@@ -45,11 +45,12 @@ heading_weight: 4.0
 speed_weight: 133.33333333333334
 steering_weight: 0.6666666666666666
 steering_rate_weight: 0.3
-steering_acceleration_weight: 0.3
+# B completed the 0.5 m/s comparison lap with the best observed tracking.
+steering_acceleration_weight: 0.6
 terminal_weight: 3.0
 # On this status only, keep the valid previous plan and retry next cycle.
 # A skipped result does not refresh the old plan's original source epoch.
 # plan_ttl defaults to horizon * 0.8 * dt (0.8 s at horizon 10, dt 0.1 s).
 # Replies later than the 250 ms acceptance budget
 # are also discarded; neither case kills the solver process.
-solver_max_iterations: 50
+solver_max_iterations: 35

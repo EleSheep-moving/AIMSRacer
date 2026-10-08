@@ -1,5 +1,6 @@
 """Build/refresh the native solver cache without ROS or actuator access."""
 import argparse
+import json
 import time
 from pathlib import Path
 
@@ -28,6 +29,9 @@ def main(args=None):
             dict(x=point['x'], y=point['y'], yaw=point['yaw'], speed=0., steering=0.),
             dict(acceleration=0., steering=0., steering_rate=0.), [0.] * (solver.n + 1),
             map_alignment=(0., 0., 0.) if path.frame_id == 'map' else None)
+        print(json.dumps(dict(status=result['status'],iterations=result['iterations'],
+                              solve_time_s=result['solve_time_s'],diagnostics=result['diagnostics']),
+                         allow_nan=False),flush=True)
         if not result['success']:
             raise RuntimeError('Solver preparation failed: ' + result['status'])
         del solver

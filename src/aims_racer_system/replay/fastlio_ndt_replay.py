@@ -74,15 +74,20 @@ def main():
         parser.error('another replay owns this ROS domain; wait for its complete shutdown')
     installed_hashes={}
     source_root=Path(__file__).resolve().parents[1]
-    for relative in ('scripts/activate_ndt.py','scripts/relocalize_known_map.py','scripts/localization_monitor.py',
+    for relative in ('scripts/activate_ndt.py','scripts/relocalize_known_map.py',
                      'scripts/localization_policy.py','scripts/localization_map_io.py',
-                     'params/ndt_fastlio.yaml','params/localization_monitor.yaml'):
+                     'params/ndt_fastlio.yaml','params/localization_monitor.yaml',
+                     'launch/known_map_localization.launch.py'):
         source=source_root/relative
         installed=(Path(get_package_prefix('aims_racer_system'))/'lib/aims_racer_system'/Path(relative).name
                    if relative.startswith('scripts/') else Path(get_package_share_directory('aims_racer_system'))/relative)
         installed_hashes[relative]=hashlib.sha256(installed.read_bytes()).hexdigest()
         if source.exists() and hashlib.sha256(source.read_bytes()).hexdigest()!=installed_hashes[relative]:
             parser.error('installed artifact differs from source; rebuild overlay: '+relative)
+    monitor_binary=Path(get_package_prefix('aims_racer_system'))/'lib/aims_racer_system/localization_monitor'
+    if not monitor_binary.is_file() or not os.access(monitor_binary, os.X_OK):
+        parser.error('native localization monitor missing; rebuild overlay')
+    installed_hashes['lib/aims_racer_system/localization_monitor']=hashlib.sha256(monitor_binary.read_bytes()).hexdigest()
     args.output.mkdir(parents=True,exist_ok=False)
     database=list(args.bag.glob('*.db3'))
     if len(database)!=1:

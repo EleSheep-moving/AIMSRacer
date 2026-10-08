@@ -147,17 +147,22 @@ a live field test.
 ## Warm start
 
 After a successful solve, the solver saves the optimized controls. On the next
-request, `_warm_start()` shifts them by `round(elapsed / dt)` (clamped to at least
+request, `_warm_start()` shifts them by `round(age / dt)` (clamped to at least
 one step and at most the horizon), repeating the last control at the tail.
 It limits acceleration/steering changes relative to the applied command,
 recomputes virtual progress speed, and rolls the model forward from the new
 predicted takeover state. `set_initial()` receives those rebuilt states and controls.
 
 The previous state array is not copied as the new initial trajectory. No previous
-Lagrange multipliers are supplied. Failed solves and worker generation changes
-clear the stored warm start; the fallback uses reference speed and curvature.
+Lagrange multipliers are supplied. Failed solves preserve the last valid controls.
+Their age accumulates request intervals since the successful request; consecutive
+failures therefore advance the shift rather than repeatedly shifting by one
+request interval. A seed at least one prediction horizon old uses reference speed
+and curvature instead. Worker generation changes explicitly clear the seed.
 `warm_start_init_point=yes` is configured in IPOPT, but this implementation reuses
 primal variables only.
+Failed iterates are retained only in [diagnostic records](solver-diagnostics.md),
+never as executable plans or replacement seeds.
 
 ## Measurement time, computation and takeover
 

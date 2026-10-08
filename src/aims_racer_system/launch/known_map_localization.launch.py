@@ -27,7 +27,7 @@ def build_nodes(context):
                          ('initial_map', '/localizer/map_cloud')]),
         Node(package='aims_racer_system', executable='activate_ndt.py', name='activate_ndt',
              parameters=[common], output='screen'),
-        Node(package='aims_racer_system', executable='localization_monitor.py', name='localization_monitor',
+        Node(package='aims_racer_system', executable='localization_monitor', name='localization_monitor',
              parameters=[get('monitor_config'), common, {'map_file': str(path)}],
              additional_env={'OPENBLAS_NUM_THREADS': '1'}, output='screen'),
     ]

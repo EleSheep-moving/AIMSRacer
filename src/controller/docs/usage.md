@@ -125,7 +125,6 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc prepare_solver \
   src/controller/recordings/current --vehicle-config src/controller/config/vehicle.yaml --horizon 10
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 launch aims_mpcc mpcc.launch.py \
   path_directory:=/home/aims/AIMSRacer/src/controller/recordings/current \
-  vehicle_config:=/home/aims/AIMSRacer/src/controller/config/vehicle.yaml \
   horizon:=10 solve_frequency:=5.0 solver_timeout:=0.25
 ```
 
@@ -173,7 +172,6 @@ selection are independent. There is no separate preview mode or output topic.
 ```bash
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 launch aims_mpcc mpcc.launch.py \
   path_directory:=/home/aims/AIMSRacer/src/controller/recordings/current \
-  vehicle_config:=/home/aims/AIMSRacer/src/controller/config/vehicle.yaml \
   horizon:=10 solve_frequency:=5.0 solver_timeout:=0.25 \
   log_directory:=/home/aims/mpcc-logs/manual-evaluation
 ```
@@ -228,7 +226,7 @@ for isolated synthetic tests and must not be used for real operation.
 
 ## Runtime timing parameters
 
-**Current settings, updated 2026-10-04.** This table defines the parameter units
+**Current settings, updated 2026-10-08.** This table defines the parameter units
 and time origins. Older timing experiments retain their original configurations
 as historical evidence; do not copy their budgets into a current launch.
 
@@ -240,7 +238,7 @@ as historical evidence; do not copy their budgets into a current launch.
 | `handover_delay` | Seconds | `1 / solve_frequency` = 0.2 | Submission to scheduled takeover; internally derived, not a launch argument |
 | `solver_timeout` | Seconds | 0.25 | Request submission to parent receipt of the reply; late results are skipped |
 | `plan_ttl` | Seconds | `horizon * 0.8 * dt` = 0.8 | Maximum plan age from the original EKF measurement; checked on receipt, takeover and real command output |
-| `solver_max_iterations` | Iterations | 30 | IPOPT iteration cap, configured in `vehicle.yaml` |
+| `solver_max_iterations` | Iterations | 35 | IPOPT iteration cap, configured in `vehicle.yaml` |
 | Command output interval | Seconds | 0.02 | 50 Hz command publication; not the model decision spacing |
 
 For horizon 15 with the same dt, default `plan_ttl` is 1.2 s. An explicit
@@ -307,11 +305,14 @@ measured-speed operating-range rejection gates are removed.
   gates; independent scan/map consistency is diagnostic. TF timer republication
   cannot renew trusted anchor age. Map x/y/yaw are projected for the planar model.
   Finite-state checks, stationary-start checks and actuator target limits remain.
-- IPOPT is capped by `solver_max_iterations` (30).
+- IPOPT is capped by `solver_max_iterations` (35).
   `Maximum_Iterations_Exceeded` results are discarded and counted in
   `iteration_limit_skips`; the previous valid plan continues until its original
   expiry while the next scheduled request retries. Other solver failures still
   fault. `solver_status` and `solver_iterations` identify the last returned result.
+  Failed solves preserve the last valid trajectory seed, shifted by total elapsed
+  request time. See [solver diagnostics](solver-diagnostics.md) for residuals,
+  constraint groups, warm-start age and failed-request snapshots.
 - Faults request zero speed immediately; emergency commands supersede ordinary
   acceleration/jerk limits. A zero-speed command is not evidence of instantaneous
   physical stopping. Existing VESC watchdogs remain enabled.
