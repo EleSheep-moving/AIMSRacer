@@ -109,6 +109,7 @@ class MPCCNode(Node):
         self.last_solver_status=None;self.last_solver_iterations=None
         self.last_solver_diagnostics=None;self.last_solve_sequence=None
         self.request_timing=None
+        self.last_activation_timing=None
         self.map_tf_age=None
         self.map_correction_change=None
         self.last_time_rejection=None
@@ -410,8 +411,21 @@ class MPCCNode(Node):
                     xy=[mx,my]
                 progress,_=self.path.project(xy)
                 progress=predicted[4]+(progress-predicted[4]+self.path.length/2)%self.path.length-self.path.length/2
-                s.activate(now,actual,self.history.command_at(now),expected_at_activation=expected,
-                           path=self.path,progress=progress,map_alignment=self.map_alignment)
+                if s.activate(now,actual,self.history.command_at(now),expected_at_activation=expected,
+                              path=self.path,progress=progress,map_alignment=self.map_alignment):
+                    # Keep this event even if command() finishes the lap and
+                    # clears the plan on the same tick. Submission time is a
+                    # unique identity when worker sequence resets after restart.
+                    activated_at=time.monotonic()
+                    self.last_activation_timing=dict(
+                        generation=s.plan['generation'],solve_sequence=s.plan.get('solve_sequence'),
+                        submitted_at=s.plan['submitted_at'],source_stamp=s.plan['source_stamp'],
+                        scheduled_at=s.plan['scheduled_stamp'],activated_tick_at=now,
+                        activation_completed_at=activated_at,first_proposal_published_at=None,
+                        request_to_activation_s=activated_at-s.plan['submitted_at'],
+                        source_to_activation_s=activated_at-s.plan['source_stamp'],
+                        handover_validation_s=s.plan.get('handover_validation_time_s'),
+                        execution_validation_s=s.plan.get('execution_validation_time_s'))
             except ValueError as exc:
                 s.fault(str(exc))
         if s.active and self.count_publishers('/drive')>1:
@@ -426,6 +440,11 @@ class MPCCNode(Node):
         msg.drive.speed=actuator.speed;msg.drive.steering_angle=actuator.steering
         msg.drive.acceleration=0.;msg.drive.jerk=0.
         self.command_pub.publish(msg)
+        activation=getattr(self,'last_activation_timing',None)
+        if activation is not None and activation['first_proposal_published_at'] is None:
+            published_at=time.monotonic()
+            activation.update(first_proposal_published_at=published_at,
+                              request_to_first_proposal_s=published_at-activation['submitted_at'])
         if (s.active and s.fresh(now) and now>=self.next_solve-1e-6
                 and self.worker.pending is None and s.pending_plan is None):
             try:
@@ -454,6 +473,7 @@ class MPCCNode(Node):
                     solve_frequency=1./self.solve_period,plan_ttl=self.plan_ttl,
                     solver_timeout=self.solver_timeout,
                     handover_delay=self.handover_delay,request_timing=self.request_timing,
+                    last_activation_timing=getattr(self,'last_activation_timing',None),
                     map_tf_age=self.map_tf_age,last_time_rejection=self.last_time_rejection,
                     map_correction_change=self.map_correction_change,
                     pending_handover_in=None if s.pending_plan is None else s.pending_plan['stamp']-now,
