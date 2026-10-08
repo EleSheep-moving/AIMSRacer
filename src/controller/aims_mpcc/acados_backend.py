@@ -245,17 +245,25 @@ class AcadosSolver(NumericalBackend):
         self._constraints=ca.Function('acados_constraints',[x,u,p],[model.con_h_expr])
         self._terminal_constraints=ca.Function('acados_terminal_constraints',[x,p],[model.con_h_expr_e])
         self._groups=groups
+        self._constraints_batch=self._constraints.map(self.n)
+        self._transition_batch=self._transition.map(self.n)
+        self._forward_transition=self._transition.mapaccum(self.n)
+        group_names=np.asarray(groups)
+        self._violation_group_indices={group:np.flatnonzero(group_names==group)
+                                       for group in dict.fromkeys(groups)}
         return ocp
 
     def _trajectory_violations(self,states,controls,params,initial,upper,terminal_upper):
-        violations={}
-        for k in range(self.n):
-            value=np.asarray(self._constraints(states[k],controls[k],params[k])).ravel()
-            errors=np.maximum.reduce((self._ocp.constraints.lh-value,value-upper,np.zeros(len(value))))
-            for group,error in zip(self._groups,errors):
-                violations[group]=max(violations.get(group,0.),float(error))
-            dynamics=float(np.max(np.abs(states[k+1]-np.asarray(self._transition(states[k],controls[k])).ravel())))
-            violations['dynamics']=max(violations.get('dynamics',0.),dynamics)
+        value=np.asarray(self._constraints_batch(states[:-1].T,controls.T,np.asarray(params)[:-1].T))
+        errors=np.maximum(np.maximum(self._ocp.constraints.lh[:,None]-value,value-upper[:,None]),0.)
+        # The scalar path uses max(previous, error), ignoring NaN errors while
+        # retaining finite violations. Preserve that diagnostic behavior; the
+        # separate finite-state gate continues to reject nonfinite candidates.
+        violations={group:float(np.fmax.reduce(errors[indices].ravel(),initial=0.))
+                    for group,indices in self._violation_group_indices.items()}
+        transitions=np.asarray(self._transition_batch(states[:-1].T,controls.T)).T
+        stage_defects=np.max(np.abs(states[1:]-transitions),axis=1)
+        violations['dynamics']=float(np.fmax.reduce(stage_defects,initial=0.))
         value=np.asarray(self._terminal_constraints(states[-1],params[-1])).ravel()
         violations['terminal_constraints']=float(np.max(np.maximum.reduce((self._ocp.constraints.lh_e-value,
             value-terminal_upper,np.zeros(len(value))))))
@@ -304,10 +312,7 @@ class AcadosSolver(NumericalBackend):
         # RTI passes linearize dynamics. Execute the final unchanged inputs
         # through our nonlinear RK4 transition to construct a consistent plan.
         # The separate validator still uses its independent midpoint model.
-        projected=[initial9]
-        for control in full_u:
-            projected.append(np.asarray(self._transition(projected[-1],control)).ravel())
-        states9=np.asarray(projected)
+        states9=np.vstack((initial9,np.asarray(self._forward_transition(initial9,full_u.T)).T))
         violations=self._trajectory_violations(states9,full_u,params,initial9,
             self._physical_upper,self._physical_terminal_upper)
         finite=np.isfinite(states9).all() and np.isfinite(full_u).all()
