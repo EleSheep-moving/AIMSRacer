@@ -15,12 +15,12 @@ Approved scope: repair constraints and timing, compare IPOPT/acados/QP, validate
 ## Execution checklist
 
 - [x] Preserve live NX tracked and untracked changes and create isolated branch.
-- [ ] Verify baseline tests and capture fixed failure requests with map/reference hashes.
+- [x] Verify baseline tests and capture fixed failure requests with map/reference hashes.
 - [ ] Separate actuator bounds from operating envelope; diagnose fixed initial violations, bound/penalize future slack, compare strict jerk with recovery-only relaxation. Independently validate recovery against a bounded deceleration rollout.
-- [ ] Decouple handover from solve period, validate the actual command prefix, preserve source-based TTL, keep one request in flight and correctly age warm starts.
-- [ ] Introduce recoverable degradation: single failure retains an unexpired plan; two planning periods without usable updates triggers bounded deceleration; two valid candidates can resume while moving; stopped/localization-lost/operator-disabled requires re-enable. Isolate and restart hung workers.
+- [x] Decouple handover from solve period, validate the actual command prefix, preserve source-based TTL, keep one request in flight and correctly age warm starts.
+- [x] Introduce recoverable degradation: single failure retains an unexpired plan; two planning periods without usable updates triggers bounded deceleration; two valid candidates can resume while moving; stopped/localization-lost/operator-disabled requires re-enable. Isolate and restart hung workers.
 - [ ] Use consistent actuator assumptions in optimization, history, validation and simulation; distinguish measured parameters from unknowns. Add curvature and forward/backward acceleration speed planning.
-- [ ] Implement generated-C acados SQP_RTI/HPIPM and fixed-sparsity C/C++ OSQP candidates behind a common versioned plan/result interface. Preserve IPOPT baseline. Precompile ARM64 offline.
+- [x] Implement generated-C acados SQP_RTI/HPIPM and fixed-sparsity C/C++ OSQP candidates behind a common versioned plan/result interface. Preserve IPOPT baseline. Precompile ARM64 offline.
 - [ ] Run fixed-input and independent closed-loop comparisons at matched 1.0/1.5/2.0 s horizons and 0.1 s steps. Parameter tuning uses fixed per-run YAML and held-out evaluation.
 - [ ] Run NX idle/shared-estimation/limited-stress performance conditions, three five-minute repeats each; include failed/late requests and upstream source ages.
 - [ ] Run 0.5 and 1 m/s supervised real laps, then 1.5/2/2.5 straight targets with curvature-limited turns.
@@ -35,3 +35,20 @@ Field: >=3 laps each at 0.5 and 1 m/s, at 1 m/s lateral P95 <=0.10 m and max <=0
 ## Progress records
 
 Implementation commits and reports append evidence below. Any unmet test/field gate remains explicit; candidate backends do not become the default until acceptance.
+
+### Current execution status
+
+- Evidence and precise timing boundaries are recorded in
+  [`nx-optimization.md`](../../../src/controller/docs/nx-optimization.md).
+- Numerical recovery gates are implemented; final output smoothing exposed an
+  execution-schedule mismatch during independent review. A nominal executed
+  schedule check is in progress, so the constraint/model consistency items stay
+  open until that repair is verified.
+- Matched 1/1.5/2 s solver and ROS comparisons are recorded. Weights were held
+  fixed; held-out tuning and real-car model identification remain pending.
+- NX three five-minute repeats per idle/shared/stress condition are running at
+  frozen source `9eb309d`. First shared run has valid estimator-load coverage,
+  but 88 rejected acados candidates and P95 25.117 ms; it is not overall PASS.
+- The car is now in a different venue. Map-matched bag replay supplies estimator
+  load; no vehicle driving publisher is started. Supervised laps remain pending.
+- No backend has been promoted to the default or selected as passing.
