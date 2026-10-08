@@ -375,7 +375,8 @@ class MPCCNode(Node):
                 self.last_solver_iterations=reply.get('iterations')
                 self.last_solver_diagnostics=reply.get('diagnostics')
                 self.last_solve_sequence=reply.get('solve_sequence')
-                self.request_timing=dict(source_to_submit=reply['submitted_at']-reply['source_stamp'],
+                self.request_timing=dict(submitted_at=reply['submitted_at'],reply_received_tick_at=now,
+                    source_to_submit=reply['submitted_at']-reply['source_stamp'],
                     request_to_reply=now-reply['submitted_at'],
                     worker_queue=reply['worker_started_at']-reply['submitted_at'],
                     result_delivery=now-reply['worker_finished_at'],
