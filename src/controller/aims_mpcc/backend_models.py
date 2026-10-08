@@ -2,7 +2,7 @@
 import math
 import time
 import numpy as np
-from .envelope import independent_rollout, jerk_limits, evaluate_envelope
+from .envelope import independent_rollout, jerk_limits, evaluate_envelope, evaluate_strict_envelope
 from .solver_diagnostics import json_safe
 
 
@@ -84,8 +84,11 @@ class NumericalBackend:
                                   speed_refs=refs.tolist(),map_alignment=alignment.tolist() if self.path.frame_id=='map' else None)
         if result.get('controls') is not None and 'envelope' not in result['diagnostics']:
             try:
-                envelope=evaluate_envelope(initial,applied,result['controls'],self.config,self.dt)
-                for k in ('candidate_samples','reference_samples','reference_controls'):envelope.pop(k)
+                if self.config.envelope_soft_enabled:
+                    envelope=evaluate_envelope(initial,applied,result['controls'],self.config,self.dt)
+                    for k in ('candidate_samples','reference_samples','reference_controls'):envelope.pop(k)
+                else:
+                    envelope,_=evaluate_strict_envelope(initial,applied,result['controls'],self.config,self.dt)
                 result['diagnostics']['envelope']=envelope
             except (ValueError,OverflowError) as exc:
                 result['diagnostics']['envelope']=dict(diagnostic_error=str(exc),execution_authorized=False)

@@ -5,7 +5,7 @@ import json
 from dataclasses import asdict
 import numpy as np
 
-from .envelope import evaluate_envelope
+from .envelope import evaluate_envelope, evaluate_strict_envelope
 from .frames import apply_alignment
 
 
@@ -27,10 +27,14 @@ def validate_candidate(plan, config, path=None, tolerance=1e-4):
                 controls.shape != (len(states)-1, 3) or applied.shape != (3,) or
                 not all(np.isfinite(v).all() for v in (states, controls, applied))):
             raise ValueError('Invalid candidate shape or nonfinite values')
-        diagnostic = evaluate_envelope(states[0], applied, controls, config, dt, tolerance=tolerance)
-        samples = np.asarray(diagnostic.pop('candidate_samples'))
-        diagnostic.pop('reference_samples')
-        diagnostic.pop('reference_controls')
+        if config.envelope_soft_enabled:
+            diagnostic = evaluate_envelope(states[0], applied, controls, config, dt, tolerance=tolerance)
+            samples = np.asarray(diagnostic.pop('candidate_samples'))
+            diagnostic.pop('reference_samples')
+            diagnostic.pop('reference_controls')
+        else:
+            diagnostic, samples = evaluate_strict_envelope(states[0], applied, controls, config, dt,
+                                                          tolerance=tolerance)
         independent = samples[::round(dt/.02)]
         residual = np.max(np.abs(states-independent), axis=0)
         dynamics_ok = bool(np.all(residual <= np.array([.005, .005, .001, tolerance, .005, .001])))

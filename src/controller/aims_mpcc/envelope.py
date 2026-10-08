@@ -216,3 +216,80 @@ def evaluate_envelope(initial_state, applied, controls, config, dt=.1, steering_
                 reference_control_prefix_intervals=1, reference_braking_begins_s=dt,
                 candidate_samples=candidate_states.tolist(),reference_samples=reference_states.tolist(),
                 reference_controls=reference.tolist())
+
+
+def evaluate_strict_envelope(initial_state, applied, controls, config, dt=.1,
+                             steering_bias=0., tolerance=1e-4):
+    """Return candidate bounds and independent NumPy samples, without recovery.
+
+    This strict-only diagnostic preserves the full evaluator's command boundary
+    samples. Braking reference fields are omitted because no comparison is made.
+    The samples remain arrays for dynamics, physical steering and corridor checks.
+    """
+    if not np.isfinite(dt) or dt<=0 or not np.isfinite(tolerance) or tolerance<0:
+        raise ValueError('finite positive dt and finite nonnegative tolerance required')
+    if not np.isfinite(steering_bias):
+        raise ValueError('finite steering bias required')
+    initial_state,applied,controls=[np.asarray(v,dtype=float) for v in (initial_state,applied,controls)]
+    if (initial_state.shape!=(6,) or applied.shape!=(3,) or controls.ndim!=2 or
+            controls.shape[1]!=3 or len(controls)<1):
+        raise ValueError('expected initial(6), applied(3), controls(N,3)')
+    if not all(np.isfinite(v).all() for v in (initial_state,applied,controls)):
+        raise ValueError('finite rollout inputs required')
+    config.validate()
+    if config.envelope_soft_enabled:
+        raise ValueError('strict envelope helper cannot evaluate soft recovery')
+    count=round(dt/.02)
+    if count<1 or not np.isclose(count*.02,dt):
+        raise ValueError('dt must be a positive multiple of 20 ms')
+    limits=jerk_limits(initial_state,applied,config,dt,len(controls))
+    states=independent_rollout(initial_state,applied,controls,config,dt,steering_bias)
+    if not np.isfinite(states).all():
+        raise ValueError('finite independent rollout required')
+    # A state at an acceleration change is checked with both adjacent commands.
+    # Exclude only the immutable t=0 sample; its utilization is checked below.
+    indices=(np.arange(len(controls))[:,None]*count+np.arange(count+1)).ravel()[1:]
+    accelerations=np.repeat(controls[:,0],count+1)[1:]
+    times=(np.arange(len(controls))[:,None]*dt+np.arange(count+1)*.02).ravel()[1:]
+    sample_speed=states[indices,3];sample_steering=states[indices,5]
+    accel_axis,brake_axis,lateral_axis=config.envelope_halfaxes()
+    ay=(sample_speed**2*np.tan(sample_steering)/
+        (config.wheelbase*(1+config.understeer_coefficient*sample_speed**2)))
+    lateral=(ay/lateral_axis)**2
+    values=(accelerations/np.where(accelerations>=0.,accel_axis,brake_axis))**2+lateral
+    if not np.isfinite(values).all():
+        raise ValueError('finite independent utilization required')
+    excess=np.maximum(values-1.,0.)
+    duration=float(times[excess>tolerance].max(initial=0.))
+    previous=np.vstack((applied[:2],controls[:-1,:2]))
+    rates=(controls[:,1]-previous[:,1])/dt
+    previous_rates=np.r_[applied[2],rates[:-1]]
+    hard=max(float(np.max(controls[:,0]-config.accel_limit)),
+             float(np.max(-config.brake_limit-controls[:,0])),
+             float(np.max(np.abs(controls[:,1])-config.steer_limit)),
+             float(np.max(np.abs(controls[:,0]-previous[:,0])-limits*dt)),
+             float(np.max(np.abs(rates)-config.steer_rate)),
+             float(np.max(np.abs(rates-previous_rates)-config.steer_acceleration*dt)),
+             float(np.max(-controls[:,2])),float(np.max(controls[:,2]-config.max_speed)),0.)
+    speed_violation=max(float(np.max(-states[:,3])),float(np.max(states[:,3]-config.max_speed)),0.)
+    steering_violation=max(float(np.max(np.abs(states[:,5])-config.steer_limit)),0.)
+    initial=initial_envelope_diagnostic(initial_state,applied,config,dt)
+    initial_candidate=utilization(initial_state,controls[0,0],config)
+    initial_ok=bool(initial_candidate<=1.+tolerance)
+    deadline_ok=bool(np.all(values[times>=config.envelope_recovery_time-1e-10]<=1.+tolerance))
+    recovery_needed=bool(np.max(excess)>tolerance or initial['initial_unavoidable_violation'] is None or
+                         initial['initial_unavoidable_violation']>tolerance or not initial_ok)
+    bounds=bool(hard<=tolerance and speed_violation<=tolerance and initial_ok and
+                np.max(excess)<=tolerance and deadline_ok and
+                duration<=config.envelope_recovery_time+tolerance and values[-1]<=1.+tolerance)
+    diagnostic=dict(**initial,initial_candidate_utilization=initial_candidate,
+        future_slack_max=float(np.max(excess)),future_violation_duration_s=duration,
+        terminal_utilization=float(values[-1]),candidate_excess_integral=float(np.trapz(excess,times)),
+        candidate_lateral_excess_integral=float(np.trapz(np.maximum(lateral-1.,0.),times)),
+        hard_control_violation=hard,speed_bound_violation=speed_violation,
+        actual_steering_bound_violation=steering_violation,recovery_needed=recovery_needed,
+        recovery_bounds_satisfied=bounds,recovery_deadline_satisfied=deadline_ok,
+        initial_envelope_satisfied=initial_ok,active_envelope_slack_limit=0.,
+        execution_authorized=False,active_jerk_limits=limits.tolist(),
+        diagnostic_scope='independent_strict_bounds',braking_comparison_performed=False)
+    return diagnostic,states
