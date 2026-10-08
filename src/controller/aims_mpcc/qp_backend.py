@@ -13,6 +13,12 @@ from .envelope import evaluate_strict_envelope,jerk_limits
 from .vendor.normalized_cost import RATIOS
 
 
+# Match the former scalar facet arithmetic exactly; angles never depend on
+# vehicle configuration or the current seed.
+ELLIPSE_FACETS=tuple((np.cos(angle),np.sin(angle))
+                    for angle in np.arange(16)*2*np.pi/16)
+
+
 class QPSolver(NumericalBackend):
     def __init__(self,path,config,horizon=10,dt=.1):
         super().__init__(path,config,horizon,dt)
@@ -111,6 +117,7 @@ class QPSolver(NumericalBackend):
                     constraint({state(k,0):1.,state(k,1):along},-self.path.right_width+cfg.half_width,self.path.left_width-cfg.half_width)
         jerk=jerk_limits(initial,applied,cfg,self.dt,self.n)
         accel_axis=min(cfg.envelope_halfaxes()[:2]);lateral_axis=cfg.envelope_halfaxes()[2]
+        envelope_radius=np.cos(np.pi/16)*np.sqrt(1.-cfg.optimization_envelope_margin)
         for k in range(self.n):
             accel,steer=control(k,0),control(k,1)
             constraint({accel:1.},-cfg.brake_limit,cfg.accel_limit)
@@ -141,9 +148,8 @@ class QPSolver(NumericalBackend):
                 v=float(seed[0][node,3]);d=float(seed[0][node,5])
                 factor=v*v/(cfg.wheelbase*(1+cfg.understeer_coefficient*v*v)*lateral_axis)
                 slope=factor/(np.cos(d)**2);offset=factor*np.tan(d)-slope*d
-                for angle in np.arange(16)*2*np.pi/16:
-                    a,b=np.cos(angle),np.sin(angle)
-                    constraint({accel:a/accel_axis,state(node,2):b*slope},-np.inf,np.cos(np.pi/16)*np.sqrt(1.-cfg.optimization_envelope_margin)-b*offset)
+                for a,b in ELLIPSE_FACETS:
+                    constraint({accel:a/accel_axis,state(node,2):b*slope},-np.inf,envelope_radius-b*offset)
         self._p_structure=P_structure;self._a_structure=np.asarray(structures)
         return P,q,np.asarray(rows),np.asarray(low),np.asarray(high)
 
