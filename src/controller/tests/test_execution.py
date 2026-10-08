@@ -74,7 +74,9 @@ def test_macro_valid_soft_recovery_cannot_activate_deadline_violating_execution(
     validation=s.execution_validation
     assert not validation['envelope']['recovery_deadline_satisfied']
     samples=np.asarray(validation['states']);realized=np.asarray(validation['controls'])
-    assert utilization(samples[12],realized[11,0],cfg)==pytest.approx(1.115235,abs=1e-6)
+    # Direct acceleration proposals change the old catch-up trace (E=1.115235)
+    # but still cannot meet the unchanged 0.24 s physical recovery deadline.
+    assert utilization(samples[12],realized[11,0],cfg)>1.05
 
 
 def test_soft_comparator_keeps_macro_prefix_steering_and_strict_executor_jerk():
@@ -238,3 +240,22 @@ def test_map_alignment_is_used_for_physical_progress_projection():
     plan=dict(candidate,execution_speed_targets=[.5]*11,map_alignment=[4.,-2.,np.pi/2])
     schedule=execution_schedule(s,plan,initial,applied,10.02,path)
     np.testing.assert_allclose(schedule['physical_progress'],schedule['states'][:,0],atol=1e-12)
+
+
+def test_startup_acceleration_proposal_does_not_catch_up_past_raw_envelope_bound():
+    # Recorded QP startup witness: internal and wire speeds BOTH start at zero;
+    # no minimum-drive mapping is involved. Speed-target catch-up previously
+    # requested a=.5 although the accepted raw tail was a=.4879345.
+    cfg=VehicleConfig(cruise_speed=1.,max_speed=1.5,enforce_corridor=False)
+    angles=[.018811171532362166,.048500264023987355,.0830530116554766,.11804330638595645,
+            .15045975119839408,.17861679007908948,.20205181293919747,.2213103773220904,
+            .2376105181814578,.2524562267031009]
+    controls=[[a,d,.5] for a,d in zip([.1,.2,.3,.4]+[.4879345]*6,angles)]
+    s,candidate,applied=prepared(cfg,[0.,0.,0.,0.,0.,0.],[0.,0.,0.],controls)
+    assert candidate['validation']['envelope']['terminal_utilization']<.97
+    assert s.accept(candidate,10.02)
+    assert s.activate(10.02,s.state,applied)
+    executed=np.asarray(s.execution_validation['controls'])
+    assert np.max(executed[:,0])<=.4879345+1e-12
+    assert s.execution_validation['envelope']['future_slack_max']<=1e-4
+    assert np.max(np.abs(np.diff(np.r_[0.,executed[:,0]])))<=cfg.jerk_limit*.02+1e-12

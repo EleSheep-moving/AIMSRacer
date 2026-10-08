@@ -389,6 +389,9 @@ class Supervisor:
         Real output always uses the default expiry check. A forecast can use
         remaining prediction controls without turning future expiry into an
         immediate fault or extending the real plan's lifetime.
+        Running asynchronous plans supply an acceleration proposal to the
+        existing jerk smoother. Speed targets select caps and braking; lag in
+        target speed does not authorize acceleration beyond that proposal.
         """
         if not self.active:
             return Command(0., self.last_command.steering)
@@ -423,6 +426,7 @@ class Supervisor:
                 if self.status!='STOPPING':
                     self.status,self.reason='RECOVERING','Plan expired' if expired else 'Prediction horizon exhausted'
                 recovering=self.status=='RECOVERING'
+        acceleration_proposal=None
         if self.plan is None or recovering:
             target_speed=0.
             target_steer=self.last_command.steering
@@ -430,12 +434,13 @@ class Supervisor:
             index=min(len(self.plan['controls'])-1,int(phase/.1))
             fraction=clip((phase-index*.1)/.1,0.,1.)
             states,controls=self.plan['states'],self.plan['controls']
+            if self.solve_period is not None and self.status=='RUNNING':
+                acceleration_proposal=controls[index][0]
             if self.solve_period is not None and 'execution_speed_targets' in self.plan:
                 targets=self.plan['execution_speed_targets']
-                # Publish the end target for this output interval, matching
-                # the acceleration already selected for its first microstep.
-                # Targeting the boundary itself would request zero acceleration
-                # on every phase-zero handover, regardless of the new control.
+                # Retain the interval's target for speed-cap and braking
+                # decisions. Ordinary running consumes its acceleration
+                # proposal directly instead of catching up to this target.
                 speed_phase=min(phase+dt,len(controls)*.1)
                 speed_index=min(len(controls)-1,int(speed_phase/.1))
                 speed_fraction=clip((speed_phase-speed_index*.1)/.1,0.,1.)
@@ -445,6 +450,7 @@ class Supervisor:
             previous_steer=self.plan.get('previous_steering',self.last_command.steering) if index==0 else controls[index-1][1]
             target_steer=previous_steer+(controls[index][1]-previous_steer)*fraction
         remaining = self.lap_goal-self.progress
+        uncapped_speed=target_speed
         if self.status in ('STOPPING','RECOVERING') or remaining <= max(.05, self.minimum_speed_stop_distance()):
             target_speed = 0.
         # Enforce the finish envelope on executed targets as well as the OCP's
@@ -454,7 +460,11 @@ class Supervisor:
         target_speed = clip(target_speed, 0., min(self.config.max_speed,
                                                 self.config.cruise_speed, finish_speed))
         if dt > 0:
-            desired_accel = clip((target_speed-self.last_command.speed)/dt,
+            speed_override=(self.status!='RUNNING' or
+                            remaining<=max(.05,self.minimum_speed_stop_distance()) or
+                            target_speed<uncapped_speed-1e-12)
+            desired_accel = clip(acceleration_proposal if acceleration_proposal is not None and not speed_override
+                                 else (target_speed-self.last_command.speed)/dt,
                                  -self.config.brake_limit, self.config.accel_limit)
             # Reserve speed change to ramp acceleration to zero before a hard
             # speed bound: a*dt + a*a/(2*jerk) <= remaining speed change.
