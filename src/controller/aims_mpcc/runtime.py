@@ -71,6 +71,7 @@ class Supervisor:
         self.rejected_plans = 0
         self.handover_error = None
         self.execution_validation = None
+        self.recovery_braking = None
         self.started = self.last_tick = None
         self.progress = self.wrapped_progress = 0.
         self.start_progress = 0.
@@ -398,7 +399,11 @@ class Supervisor:
         target speed does not authorize acceleration beyond that proposal.
         Their macro steering slopes similarly propose rates to the existing
         angular smoother, without catching up accumulated angle lag.
+        Asynchronous recovery proposes braking within a conservative nominal
+        20 ms lateral budget. Infeasible budgets retain bounded emergency
+        braking; this proposal is not a motor or execution certificate.
         """
+        self.recovery_braking = None
         if not self.active:
             return Command(0., self.last_command.steering)
         if not self.fresh(now):
@@ -486,9 +491,6 @@ class Supervisor:
             if accel_lower > accel_upper+1e-10:
                 self.fault('Acceleration cannot stop within speed limits')
                 return self.last_command
-            accel = clip(desired_accel, accel_lower, accel_upper)
-            speed = clip(self.last_command.speed+accel*dt, 0., self.config.max_speed)
-            accel = (speed-self.last_command.speed)/dt
             desired_rate = clip(steering_rate_proposal if steering_rate_proposal is not None
                                 else (target_steer-self.last_command.steering)/dt,
                                 -self.config.steer_rate,self.config.steer_rate)
@@ -510,6 +512,20 @@ class Supervisor:
             rate = clip(desired_rate, lower, upper)
             steer = clip(self.last_command.steering+rate*dt,
                          -self.config.steer_limit, self.config.steer_limit)
+            if recovering and self.solve_period is not None:
+                budget=self.recovery_braking_budget(accel_lower,accel_upper,steer)
+                budget['uncapped_proposal']=desired_accel
+                if budget['feasible']:
+                    desired_accel=max(desired_accel,-budget['brake_capacity'])
+                self.recovery_braking=budget
+            accel = clip(desired_accel, accel_lower, accel_upper)
+            speed = clip(self.last_command.speed+accel*dt, 0., self.config.max_speed)
+            accel = (speed-self.last_command.speed)/dt
+            if self.recovery_braking is not None:
+                budget=self.recovery_braking
+                budget['achieved_acceleration']=accel
+                budget['achieved_within_capacity']=bool(budget['feasible'] and
+                    -budget['brake_capacity']-1e-12<=accel<=budget['accel_capacity']+1e-12)
             self.last_steering_rate = (steer-self.last_command.steering)/dt
             self.last_acceleration = accel
         else:
@@ -532,3 +548,41 @@ class Supervisor:
         if remaining < -.2:
             self.fault('Finish overshoot')
         return self.last_command
+
+    def recovery_braking_budget(self, lower, upper, commanded_steering):
+        """Bound lateral load over one nominal held 20 ms command interval.
+
+        Ideal v(t)=v0+a*t has its maximum absolute value at endpoints of
+        the time/acceleration rectangle. v²/(1+Ku*v²) increases with v²
+        for Ku>=0. First-order steering stays between its initial angle and
+        the held command; the independent 2 ms midpoint integrator does too
+        when tau>=1 ms. These bounds also cover steering sign crossings.
+        The measured signed physical speed remains separate from the internal
+        forward-only speed target used by the existing stopping reserves.
+        """
+        cfg=self.config;horizon=.02
+        budget=dict(available=False,feasible=False,horizon_s=horizon,
+                    accel_capacity=None,brake_capacity=None,
+                    lateral_utilization_bound=None,
+                    reason='nominal response bound unavailable')
+        speed=max(abs(self.state.speed),abs(self.state.speed+lower*horizon),
+                  abs(self.state.speed+upper*horizon))
+        angle=max(abs(self.state.steering),abs(commanded_steering))
+        budget.update(physical_speed_abs_bound=speed,physical_steering_abs_bound=angle)
+        ax,bx,ay=cfg.envelope_halfaxes()
+        if (not all(math.isfinite(x) for x in (speed,angle,lower,upper,ax,bx,ay,
+                                              cfg.steering_tau,cfg.understeer_coefficient,cfg.wheelbase)) or
+                cfg.steering_tau<.001 or cfg.understeer_coefficient<0. or
+                cfg.wheelbase<=0. or min(ax,bx,ay)<=0. or angle>=math.pi/2):
+            return budget
+        lateral=(speed*speed*math.tan(angle)/
+                 (cfg.wheelbase*(1+cfg.understeer_coefficient*speed*speed))/ay)**2
+        capacity=math.sqrt(max(0.,1.-lateral))
+        accel=min(cfg.accel_limit,ax*capacity)
+        brake=min(cfg.brake_limit,bx*capacity)
+        feasible=lateral<=1. and max(lower,-brake)<=min(upper,accel)
+        budget.update(available=True,feasible=feasible,accel_capacity=accel,
+                      brake_capacity=brake,lateral_utilization_bound=lateral,
+                      reason=('' if feasible else 'lateral load exceeds nominal envelope' if lateral>1.
+                              else 'jerk and nominal capacity intervals do not intersect'))
+        return budget
