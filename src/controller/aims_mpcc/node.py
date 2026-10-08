@@ -445,7 +445,7 @@ class MPCCNode(Node):
             published_at=time.monotonic()
             activation.update(first_proposal_published_at=published_at,
                               request_to_first_proposal_s=published_at-activation['submitted_at'])
-        if (s.active and s.fresh(now) and now>=self.next_solve-1e-6
+        if (s.active and s.status!='STOPPING' and s.fresh(now) and now>=self.next_solve-1e-6
                 and self.worker.pending is None and s.pending_plan is None):
             try:
                 request=self.prepare_request(now)

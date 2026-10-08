@@ -153,8 +153,16 @@ def test_gate_uses_prospective_status_and_stopping_context(status,good,expected)
     cfg=VehicleConfig(cruise_speed=1.,max_speed=1.5,enforce_corridor=False)
     s,candidate,applied=prepared(cfg,[0.,0.,0.,.5,0.,0.],[0.,0.,0.],[[.1,0.,.5]]*10)
     s.status=status;s.recovery_good_candidates=good
-    assert s.accept(candidate,10.02);assert s.activate(10.02,s.state,applied)
-    validation=s.plan['execution_validation']
+    if status=='STOPPING':
+        from aims_mpcc.execution import validate_execution
+        # The helper can diagnose stopping, but operator stop accepts no new
+        # plan and cannot renew an old plan's validity through a late result.
+        assert not s.accept(candidate,10.02)
+        validation=validate_execution(s,candidate,candidate['states'][0],applied,10.02)
+        assert s.plan is None
+    else:
+        assert s.accept(candidate,10.02);assert s.activate(10.02,s.state,applied)
+        validation=s.plan['execution_validation']
     assert validation['context']['status']==expected
     assert s.status==expected
     acceleration=validation['controls'][0][0]

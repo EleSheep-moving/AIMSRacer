@@ -151,6 +151,7 @@ class Supervisor:
         if self.active:
             if self.mode:
                 self.status, self.reason = 'STOPPING', 'Operator stop requested'
+                self.pending_plan = None
             else:
                 self.status, self.reason, self.plan = 'READY', 'Controller disabled in manual mode', None
                 self.pending_plan = None
@@ -158,7 +159,7 @@ class Supervisor:
                 self.last_acceleration = self.last_steering_rate = 0.
 
     def accept(self, result, now):
-        if not self.active or result.get('generation') != self.generation:
+        if self.status=='STOPPING' or not self.active or result.get('generation') != self.generation:
             return False
         try:
             finite = all(math.isfinite(v) for row in result['states']+result['controls'] for v in row)
@@ -244,6 +245,9 @@ class Supervisor:
     def activate(self,now,actual,actual_command=None,expected_at_activation=None,path=None,progress=None,
                  map_alignment=None):
         """Activate at the scheduled epoch and record prediction error."""
+        if self.status=='STOPPING':
+            self.pending_plan=None
+            return False
         result=self.pending_plan
         if result is None or now<result['stamp']-self.HANDOVER_TOLERANCE:
             return False
@@ -409,7 +413,7 @@ class Supervisor:
             self.status,self.reason='RECOVERING','No usable plan update for two planning periods'
             self.recovery_good_candidates=0
         recovering=self.status=='RECOVERING'
-        if self.plan is None and not recovering:
+        if self.plan is None and not recovering and self.status!='STOPPING':
             if now-self.started > self.PLAN_TTL:
                 self.fault('Initial plan deadline expired')
             return Command(0., self.last_command.steering)
@@ -421,7 +425,7 @@ class Supervisor:
             if phase<0:
                 self.fault('Plan activated before handover');return self.last_command
             if expired or exhausted:
-                if self.solve_period is None or not enforce_plan_age or age<0:
+                if (self.status!='STOPPING' and (self.solve_period is None or not enforce_plan_age)) or age<0:
                     self.fault('Plan expired' if expired else 'Prediction horizon exhausted')
                     return self.last_command
                 self.plan=None
