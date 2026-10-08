@@ -10,6 +10,7 @@ import scipy.sparse as sparse
 import casadi as ca
 from .backend_models import NumericalBackend
 from .envelope import evaluate_strict_envelope,jerk_limits
+from .path import ReferencePath
 from .vendor.normalized_cost import RATIOS
 
 
@@ -17,6 +18,7 @@ from .vendor.normalized_cost import RATIOS
 # vehicle configuration or the current seed.
 ELLIPSE_FACETS=tuple((np.cos(angle),np.sin(angle))
                     for angle in np.arange(16)*2*np.pi/16)
+_REFERENCE_AT=ReferencePath.at
 
 
 class QPSolver(NumericalBackend):
@@ -220,8 +222,19 @@ class QPSolver(NumericalBackend):
             if self.config.enforce_corridor:
                 offsets=self.config.longitudinal_offsets()
                 c,s=np.cos(alignment[2]),np.sin(alignment[2]);rotation=np.array([[c,-s],[s,c]])
-                for x in microstates:
-                    xy=rotation@x[:2]+alignment[:2];ref=self.path.at(x[4]);normal=np.array([-np.sin(ref['yaw']),np.cos(ref['yaw'])])
+                reference=tangent=None
+                if (type(self.path) is ReferencePath and
+                        getattr(self.path.at,'__func__',None) is _REFERENCE_AT):
+                    # Keep SciPy's per-point polynomial arithmetic, omitting
+                    # unused curvature. Custom paths retain their scalar at().
+                    reference=self.path.curve.numpy(microstates[:,4])
+                    tangent=self.path.curve.numpy(microstates[:,4],1)
+                for i,x in enumerate(microstates):
+                    xy=rotation@x[:2]+alignment[:2]
+                    ref=(self.path.at(x[4]) if reference is None else
+                         dict(x=float(reference[i,0]),y=float(reference[i,1]),
+                              yaw=float(np.arctan2(tangent[i,1],tangent[i,0]))))
+                    normal=np.array([-np.sin(ref['yaw']),np.cos(ref['yaw'])])
                     yaw=x[2]+alignment[2];forward=np.array([np.cos(yaw),np.sin(yaw)]);left=np.array([-np.sin(yaw),np.cos(yaw)])
                     for along in offsets:
                         for sign in (-1,1):
