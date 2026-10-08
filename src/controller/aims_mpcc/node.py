@@ -462,6 +462,7 @@ class MPCCNode(Node):
                     backend=self.backend,solver_restart_count=self.worker.restart_count,
                     consecutive_solver_failures=s.consecutive_failures,
                     recovery_good_candidates=s.recovery_good_candidates,
+                    recovery_braking=getattr(s,'recovery_braking',None),
                     corridor_enforced=self.config.enforce_corridor,
                     autonomy_selected=s.mode,progress=s.progress,
                     start_progress=s.start_progress,lap_progress=s.progress-s.start_progress,
