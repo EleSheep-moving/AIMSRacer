@@ -1,0 +1,62 @@
+# Experimental native-backend comparison profile. Not the deployment default.
+# Same field limits and weights as vehicle.yaml; 1% optimization reserve only.
+# Physical validator retains E <= 1. Two acados passes have a fixed budget.
+# Body envelope supplied for this car; confirm clearances on the physical track.
+# Dynamic limits below are low-speed operating assumptions, not identified grip.
+profile: measured
+wheelbase: 0.36
+# Rear-axle base_link from the V2 rear-frame odometry pipeline.
+rear_offset: 0.0
+# 620 mm total length: 100 mm behind the rear axle, 520 mm in front.
+# 320 mm total width: 160 mm to either side of base_link.
+half_length: null
+front_extent: 0.52
+rear_extent: 0.10
+half_width: 0.16
+geometry_verified: true
+# User-requested complete-lap experiment: retain the recorded 1 m corridor
+# geometry, but omit its OCP constraints and measured/start footprint stop gates.
+# RC authority, estimator validity, actuator limits and plan expiry remain active.
+enforce_corridor: false
+# Cruise target for the B-weight 1.0 m/s trial; stop and safety states command zero.
+# This map lap peaks near 0.93 1/m curvature, so 1.0 m/s is within the
+# assumed 1.0 m/s^2 lateral-acceleration limit at the tightest sampled bend.
+cruise_speed: 1.0
+max_speed: 1.5
+# Operator-reported minimum effective speed-mode setpoint. Physical speed may
+# pass below this during acceleration/braking; zero remains a valid stop.
+minimum_drive_speed: 0.2
+steer_limit: 0.45
+# Conservative command rate limit (rad/s); bag-derived effective turn-angle
+# response is about 4.6 rad/s median at low speed, not a servo-encoder limit.
+steer_rate: 2.0
+steer_acceleration: 2.0
+accel_limit: 0.5
+brake_limit: 0.5
+jerk_limit: 1.0
+# Speed-mode command-to-effective-turn fit at about 0.85-1.15 m/s on 2026-09-28:
+# 0.0806 s with wheel speed, 0.0798 s with LIO speed. Lumped yaw response,
+# not a servo constant or a separately measured dead time.
+steering_tau: 0.08
+# Unidentifiable from the present low-speed bag without independent slip/steer data.
+understeer_coefficient: 0.0
+lateral_accel_limit: 1.0
+# Objective tuning for 1.0 m/s cruise. Keep heading/rate penalties to avoid
+# aggressive corrections; emphasize lateral error relative to the old weight 1.
+contour_weight: 16.0
+heading_weight: 4.0
+speed_weight: 133.33333333333334
+steering_weight: 0.6666666666666666
+steering_rate_weight: 0.3
+# B completed the 0.5 m/s comparison lap with the best observed tracking.
+steering_acceleration_weight: 0.6
+terminal_weight: 3.0
+# On this status only, keep the valid previous plan and retry next cycle.
+# A skipped result does not refresh the old plan's original source epoch.
+# plan_ttl defaults to horizon * 0.8 * dt (0.8 s at horizon 10, dt 0.1 s).
+# Replies later than the 250 ms acceptance budget
+# are also discarded; neither case kills the solver process.
+solver_max_iterations: 35
+
+optimization_envelope_margin: 0.01
+acados_rti_steps: 2

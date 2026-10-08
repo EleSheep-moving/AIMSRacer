@@ -21,7 +21,7 @@ handover state and current command epoch before accepting a plan.
 
 The acados cost retains the baseline normalized contour, lag, periodic heading,
 speed, progress, steering feedforward, acceleration, steering rate, steering
-acceleration and terminal weights. One SQP_RTI call is made per request. An RTI
+acceleration and terminal weights. By default one SQP_RTI call is made per request. An RTI
 step can return native status zero while nonlinear constraints remain violated;
 `success` additionally requires the returned candidate to obey the physical
 bounds with violation below `1e-4`. The stage zero nonlinear rows are supplied
@@ -32,6 +32,45 @@ transition using the unchanged native controls. Raw optimizer defects and
 constraints remain in diagnostics, and every physical inequality is checked again
 on that reconstruction. The separate midpoint validator remains independent. Rejected candidates do not overwrite the last successful seed; successful warm
 state caches contain the forward reconstruction.
+
+### Bounded second RTI pass experiment
+
+`VehicleConfig.acados_rti_steps` defaults to `1` and accepts only the integers
+`1` and `2`. The explicit value `2` runs exactly two complete preparation and
+feedback calls on the same OCP parameters and native iterate, without shifting
+or re-seeding between them. This is an experiment with an extra SQP step per
+request. The [official acados RTI loop example](https://github.com/acados/acados/blob/7e1d1152c1babd6ea04af1c9d73444fe8381057b/examples/acados_python/pendulum_on_cart/ocp/example_sqp_rti_loop.py)
+demonstrates repeated full RTI steps for an unchanged OCP.
+
+The final native status and final physical candidate determine backend success;
+both passes execute even if the first returns a nonzero status. The independent
+candidate validator and handover validator still apply. No native controls,
+physical bounds, acceptance tolerances, envelope slack caps or reserve margins
+are changed by this option. Its value participates in the artifact fingerprint,
+so changing it requires offline preparation. Diagnostics retain each pass's
+status, native time, wall time, SQP iteration count and recomputed nonlinear
+residuals; combined native time and iterations include both passes. A rejected
+backend candidate also retains a rare `failure_snapshot` containing native
+states and controls, projected states, frozen parameters and physical violations.
+The worker writes that snapshot to disk and omits it from the parent reply.
+
+Recorded request replay from `forecast-internal-acados-n10-v10` on source
+`38dae97` reproduced all 292 original one-pass results exactly. One pass accepted
+268 candidates and rejected 24; two full passes accepted all 292 under the same
+physical bounds and independent validator. At request 240 the one-pass peak
+utilization was 1.0068368 at the second interval's starting acceleration change;
+the second pass removed this excess. Request 239's initial utilization decreased
+from 0.9982138 to 0.9900207, restoring the configured reserve. These results came
+from an experiment wrapper before this option was introduced; its full artifact
+is `acados-fixed-pass-request-replay-38dae97.json` in the external experiment
+directory. The checked-in request-240 fixture tests the unchanged failure and
+the explicit two-pass option with the real native solver.
+
+This replay holds measured states and request references fixed. It does not
+establish handover acceptance, closed-loop completion, NX timing or hardware
+readiness. The original controller log lacks the rejected rebase trajectory and
+detailed rebase validation verdict, so the precise handover failure at request
+239 still requires a fresh diagnostic closed-loop run.
 
 The QP uses separate lateral and speed objectives. Progress is derived from
 bounded longitudinal speed and the local tangent norm; it has no independent lag

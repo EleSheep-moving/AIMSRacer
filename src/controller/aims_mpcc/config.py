@@ -39,6 +39,8 @@ class VehicleConfig:
     # Acados single-RTI nonlinear ellipse reserve in squared utilization E.
     # Physical candidate validation still uses E<=1 and the original soft cap.
     acados_envelope_margin: float = .01
+    # Explicit experiment: one or two full RTI passes on an unchanged OCP.
+    acados_rti_steps: int = 1
     # Explicit common optimization-only E reserve; physical acceptance stays E<=1.
     optimization_envelope_margin: float = 0.
     recovery_jerk_enabled: bool = False
@@ -61,6 +63,8 @@ class VehicleConfig:
     solver_max_iterations: int = 35
 
     def validate(self, require_verified=False, allow_synthetic=True):
+        if type(self.acados_rti_steps) is not int or self.acados_rti_steps not in (1, 2):
+            raise ValueError('acados_rti_steps must be integer one or two')
         if type(self.geometry_verified) is not bool:
             raise ValueError('geometry_verified must be a boolean')
         boolean_fields = {'geometry_verified', 'enforce_corridor', 'envelope_soft_enabled', 'recovery_jerk_enabled'}

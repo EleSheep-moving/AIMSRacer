@@ -280,12 +280,28 @@ class AcadosSolver(NumericalBackend):
             if k<self.n:
                 self._native.set(k,'u',np.r_[seed[1][k],0.] if self.config.envelope_soft_enabled else seed[1][k])
         self._native.set(0,'lbx',initial9);self._native.set(0,'ubx',initial9)
-        prepared=time.perf_counter();status=self._native.solve();optimized=time.perf_counter()
+        prepared=time.perf_counter();native_passes=[]
+        # Each call performs preparation AND feedback. Keep the same OCP
+        # parameters and the preceding native iterate between bounded passes;
+        # never re-seed from the successful-candidate cache inside this loop.
+        self._native.options_set('rti_phase',0)
+        for step in range(self.config.acados_rti_steps):
+            pass_started=time.perf_counter();status=self._native.solve()
+            record=dict(pass_index=step+1,native_status=int(status),
+                native_total_time_s=float(self._native.get_stats('time_tot')),
+                wall_time_s=time.perf_counter()-pass_started,
+                sqp_iterations=int(self._native.get_stats('sqp_iter')))
+            try:
+                record['nlp_residuals']=np.asarray(self._native.get_residuals(recompute=True)).tolist()
+            except (RuntimeError,ValueError,OverflowError) as exc:
+                record['residual_diagnostic_error']=str(exc)
+            native_passes.append(record)
+        optimized=time.perf_counter()
         raw_states9=np.asarray([self._native.get(k,'x') for k in range(self.n+1)])
         full_u=np.asarray([self._native.get(k,'u') for k in range(self.n)])
         native_violations=self._trajectory_violations(raw_states9,full_u,params,initial9,
             self._ocp.constraints.uh,self._ocp.constraints.uh_e)
-        # A single RTI step linearizes dynamics. Execute its unchanged inputs
+        # RTI passes linearize dynamics. Execute the final unchanged inputs
         # through our nonlinear RK4 transition to construct a consistent plan.
         # The separate validator still uses its independent midpoint model.
         projected=[initial9]
@@ -307,10 +323,22 @@ class AcadosSolver(NumericalBackend):
             raw_native_constraint_violations=native_violations,raw_native_max_constraint_violation=max(native_violations.values()),
             raw_optimizer_state_dynamics_defect=native_violations['dynamics'],
             frozen_geometry=True,internal_state_dimension=9,nlp_solver='SQP_RTI',
-            native_total_time_s=float(self._native.get_stats('time_tot')),
-            sqp_iterations=int(self._native.get_stats('sqp_iter')))
+            acados_rti_steps=self.config.acados_rti_steps,native_passes=native_passes,
+            native_pass_statuses=[record['native_status'] for record in native_passes],
+            native_total_time_s=sum(record['native_total_time_s'] for record in native_passes),
+            sqp_iterations=sum(record['sqp_iterations'] for record in native_passes))
         if self.config.envelope_soft_enabled:diagnostics['optimizer_slack_max']=float(np.max(full_u[:,3]))
         result=dict(success=success,status=f'acados_status_{status}' if success else f'acados_candidate_rejected_{status}',
-            iterations=int(self._native.get_stats('sqp_iter')),constraint_violation=violation,
+            iterations=diagnostics['sqp_iterations'],constraint_violation=violation,
             states=states9[:,:6].tolist(),controls=full_u[:,:3].tolist(),diagnostics=diagnostics)
+        if not success:
+            # Worker keeps this rare snapshot on disk, outside the compact
+            # parent reply. Preserve rejected native inputs for exact diagnosis.
+            result['failure_snapshot']=dict(initial_state=initial9.tolist(),
+                applied=applied.tolist(),speed_refs=refs.tolist(),
+                map_alignment=alignment.tolist(),raw_native_states=raw_states9.tolist(),
+                raw_native_controls=full_u.tolist(),projected_states=states9.tolist(),
+                frozen_parameters=np.asarray(params).tolist(),native_passes=native_passes,
+                physical_constraint_violations=violations,
+                raw_native_constraint_violations=native_violations)
         return self.finish(result,initial,applied,refs,alignment,started,prepared,optimized)
