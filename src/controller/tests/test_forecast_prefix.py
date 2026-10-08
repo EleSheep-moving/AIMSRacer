@@ -99,7 +99,7 @@ def test_current_proposal_seeds_future_while_past_replays_real_selector_history(
     assert list(node.history.records) == records
 
 
-def test_minimum_drive_clamp_seeds_effective_wire_speed_and_zero_acceleration():
+def test_minimum_drive_clamp_preserves_internal_smoothing_for_three_output_ticks():
     node = forecast_node(minimum_drive_speed=.2, applied_speed=.04)
     issued = issue_current_proposal(node)
     assert issued['speed'] == .2
@@ -107,13 +107,26 @@ def test_minimum_drive_clamp_seeds_effective_wire_speed_and_zero_acceleration():
     assert node.supervisor.last_acceleration > 0.
     assert issued['acceleration'] == 0.
     records = list(node.history.records)
+    supervisor_snapshot = copy.deepcopy(node.supervisor.__dict__)
+    real_output = copy.deepcopy(node.supervisor)
+    expected = []
+    continuous_speeds = []
+    for tick in range(3):
+        command = real_output.command(10. + tick * .02)
+        actuator = real_output.actuator_command(command)
+        continuous_speeds.append(command.speed)
+        expected.append(dict(speed=actuator.speed, steering=actuator.steering,
+                             acceleration=real_output.last_acceleration if actuator.speed == command.speed else 0.,
+                             steering_rate=real_output.last_steering_rate))
+    assert continuous_speeds == pytest.approx([.0414, .0432, .0454])
 
     MPCCNode.prepare_request(node, 10.)
 
-    assert future_steps(node)[0] == pytest.approx(issued)
-    next_tick = next(command for stamp, command in node.history.steps if stamp >= 100.06 - 1e-9)
-    assert next_tick['speed'] > issued['speed']
-    assert next_tick['acceleration'] == pytest.approx(node.config.jerk_limit * .02)
+    for tick, effective in enumerate(expected):
+        forecast_output = next(command for stamp, command in node.history.steps
+                               if stamp >= 100.04 + tick * .02 - 1e-9)
+        assert forecast_output == pytest.approx(effective)
+    assert node.supervisor.__dict__ == supervisor_snapshot
     assert list(node.history.records) == records
 
 

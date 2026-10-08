@@ -296,19 +296,16 @@ class MPCCNode(Node):
         s=self.supervisor
         self.applied_ready(now)
         actual=self.history.command_at(now)
-        seed=actual
-        proposals=getattr(self,'recent_proposals',())
-        if s.mode and proposals and proposals[-1][0]==now:
-            # tick() has already issued this effective actuator target. Use it
-            # only for the future bridge; past replay still uses REAL history.
-            _,issued,acceleration,rate=proposals[-1]
-            seed=dict(speed=issued.speed,steering=issued.steering,
-                      acceleration=acceleration,steering_rate=rate)
         forecast=copy.copy(s)
         forecast.pending_plan=None
-        forecast.last_command=Command(seed['speed'],seed['steering'])
-        forecast.last_acceleration=seed['acceleration']
-        forecast.last_steering_rate=seed['steering_rate']
+        proposals=getattr(self,'recent_proposals',())
+        if not (s.mode and proposals and proposals[-1][0]==now):
+            forecast.last_command=Command(actual['speed'],actual['steering'])
+            forecast.last_acceleration=actual['acceleration']
+            forecast.last_steering_rate=actual['steering_rate']
+        # A current tick retains the INTERNAL smoothing state. actuator_command
+        # reproduces its issued wire target without feeding the minimum-drive
+        # clamp back into smoothing. Past replay still uses only REAL history.
         forecast.last_tick=now
         last_forecast=[now]
         def future_command(stamp,state):
