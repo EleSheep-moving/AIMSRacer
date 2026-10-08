@@ -50,18 +50,33 @@ def validate_candidate(plan, config, path=None, tolerance=1e-4):
             alignment = plan.get('map_alignment')
             if path.frame_id == 'map' and alignment is None:
                 raise ValueError('Map corridor validation requires alignment')
-            for row in samples:
-                x,y,yaw = row[:3]
-                if path.frame_id == 'map':
-                    x,y,yaw = apply_alignment(x,y,yaw,alignment)
-                reference = path.at(row[4])
-                normal = np.array([-math.sin(reference['yaw']), math.cos(reference['yaw'])])
-                for along in config.longitudinal_offsets():
-                    for across in (-config.half_width, config.half_width):
-                        corner = np.array([x + along*math.cos(yaw)-across*math.sin(yaw),
-                                           y + along*math.sin(yaw)+across*math.cos(yaw)])
-                        lateral = float(normal @ (corner-np.array([reference['x'], reference['y']])))
-                        margin = min(margin,path.left_width-lateral,path.right_width+lateral)
+            positions=samples[:,:2].copy()
+            yaw=samples[:,2].copy()
+            if path.frame_id=='map':
+                alignment=np.asarray(alignment,dtype=float)
+                if alignment.shape!=(3,) or not np.isfinite(alignment).all():
+                    raise ValueError('Finite map alignment(3) required')
+                c,s=math.cos(alignment[2]),math.sin(alignment[2])
+                positions=positions @ np.array([[c,s],[-s,c]])+alignment[:2]
+                yaw+=alignment[2]
+            if hasattr(path,'curve'):
+                references=path.curve.numpy(samples[:,4])
+                tangent=path.curve.numpy(samples[:,4],1)
+                norms=np.linalg.norm(tangent,axis=1)
+                if np.any(norms<1e-9):
+                    raise ValueError('Degenerate reference tangent')
+                normals=np.c_[-tangent[:,1],tangent[:,0]]/norms[:,None]
+            else:
+                reference=[path.at(row[4]) for row in samples]
+                references=np.array([[p['x'],p['y']] for p in reference])
+                normals=np.array([[-math.sin(p['yaw']),math.cos(p['yaw'])] for p in reference])
+            offsets=np.array([(along,across) for along in config.longitudinal_offsets()
+                              for across in (-config.half_width,config.half_width)])
+            cs,ss=np.cos(yaw)[:,None],np.sin(yaw)[:,None]
+            corners=np.stack((positions[:,0,None]+cs*offsets[:,0]-ss*offsets[:,1],
+                              positions[:,1,None]+ss*offsets[:,0]+cs*offsets[:,1]),axis=-1)
+            lateral=np.einsum('nij,nj->ni',corners-references[:,None,:],normals)
+            margin=float(min(np.min(path.left_width-lateral),np.min(path.right_width+lateral)))
         accepted = bool(dynamics_ok and hard_ok and envelope_ok and margin >= -tolerance)
         return dict(accepted=accepted, candidate_fingerprint=candidate_fingerprint(plan,config),
                     dynamics_max_residual=residual.tolist(),

@@ -54,7 +54,10 @@ def _serve(connection, path_directory, config_dict, horizon, log=None,backend='i
                 horizon=horizon,dt=solver.dt,backend=backend,
                 artifact_fingerprint=getattr(solver,'fingerprint',None),
                 source_sha256={name:hashlib.sha256((sources/name).read_bytes()).hexdigest()
-                               for name in ('solver.py','solver_diagnostics.py','worker.py','native.py','path.py','config.py')}),
+                               for name in ('solver.py','solver_diagnostics.py','worker.py','native.py',
+                                            'path.py','config.py','backends.py','backend_models.py',
+                                            'acados_backend.py','qp_backend.py','validation.py',
+                                            'envelope.py','rollout_native.py','kernels/rollout.c')}),
                 allow_nan=False)+'\n')
         p = path.at(0.)
         # Compile/load native solver before exposing READY to the operator.

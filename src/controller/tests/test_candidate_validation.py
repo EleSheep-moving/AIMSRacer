@@ -42,6 +42,27 @@ def test_physical_steering_bound_is_checked_even_at_zero_speed():
     plan['states']=independent_rollout(initial,[0.,0.,0.],controls,c)[::5].tolist()
     plan['controls']=controls.tolist()
     assert not validate_candidate(plan,c)['accepted']
+
+
+def test_corridor_validation_evaluates_geometry_in_batch():
+    from aims_mpcc.validation import validate_candidate
+    from aims_mpcc.path import ReferencePath
+    from dataclasses import replace
+    angles=np.arange(64)*2*np.pi/64
+    path=ReferencePath(np.c_[3*np.cos(angles),3*np.sin(angles)],1.,1.)
+    c,plan=candidate()
+    c=replace(c,enforce_corridor=True)
+    initial=[3.,0.,np.pi/2,.2,0.,0.]
+    plan['states']=independent_rollout(initial,[0.,0.,0.],plan['controls'],c)[::5].tolist()
+    calls=[]
+    original=path.at
+    def counted(progress):
+        calls.append(progress)
+        return original(progress)
+    path.at=counted
+    result=validate_candidate(plan,c,path)
+    assert result['accepted']
+    assert len(calls)<=2, 'Scalar geometry in every sample overwhelms the 50 Hz callback budget'
     c, plan = candidate()
     del plan['validation_applied']
     assert not validate_candidate(plan, c)['accepted']
