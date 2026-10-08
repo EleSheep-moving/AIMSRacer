@@ -28,6 +28,22 @@ class VehicleConfig:
     steering_tau: float = .115
     understeer_coefficient: float = 0.
     lateral_accel_limit: float = 1.
+    # Operating envelope halfaxes are independent of hard actuator capabilities.
+    # None preserves the historical halfaxes for existing vehicle profiles.
+    longitudinal_envelope_accel: float | None = None
+    longitudinal_envelope_brake: float | None = None
+    envelope_soft_enabled: bool = False
+    envelope_slack_limit: float = .5  # excess of squared utilization E, not m/s^2
+    envelope_slack_weight: float = 10000.
+    envelope_recovery_time: float = .6
+    recovery_jerk_enabled: bool = False
+    recovery_jerk_limit: float = 2.
+    contour_scale: float = .05
+    lag_scale: float = .20
+    heading_scale: float = .05
+    speed_scale: float = .60
+    steering_scale: float = .314159
+    acceleration_scale: float = 2.
     # Dimensionless objective weights; supplied as solver parameters so tuning
     # these values does not change the compiled symbolic graph.
     contour_weight: float = 1.
@@ -42,15 +58,18 @@ class VehicleConfig:
     def validate(self, require_verified=False, allow_synthetic=True):
         if type(self.geometry_verified) is not bool:
             raise ValueError('geometry_verified must be a boolean')
-        if type(self.enforce_corridor) is not bool:
-            raise ValueError('enforce_corridor must be a boolean')
+        boolean_fields = {'geometry_verified', 'enforce_corridor', 'envelope_soft_enabled', 'recovery_jerk_enabled'}
+        for name in boolean_fields:
+            if type(getattr(self, name)) is not bool:
+                raise ValueError(f'{name} must be a boolean')
         if self.profile not in ('measured', 'synthetic'):
             raise ValueError('profile must be measured or synthetic')
         if self.profile == 'synthetic' and not allow_synthetic:
             raise ValueError('synthetic geometry is permitted only in simulation')
-        optional = {'rear_offset', 'half_length', 'front_extent', 'rear_extent', 'half_width'}
+        optional = {'rear_offset', 'half_length', 'front_extent', 'rear_extent', 'half_width',
+                    'longitudinal_envelope_accel', 'longitudinal_envelope_brake'}
         for field in fields(self):
-            if field.name in {'geometry_verified', 'enforce_corridor', 'profile'}: continue
+            if field.name in boolean_fields | {'profile'}: continue
             value = getattr(self, field.name)
             if value is None and field.name in optional: continue
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
@@ -64,6 +83,10 @@ class VehicleConfig:
         if self.cruise_speed > self.max_speed: raise ValueError('cruise_speed exceeds max_speed')
         if self.minimum_drive_speed > self.cruise_speed:
             raise ValueError('minimum_drive_speed exceeds cruise_speed')
+        if self.recovery_jerk_enabled and self.recovery_jerk_limit < self.jerk_limit:
+            raise ValueError('recovery_jerk_limit must not be below jerk_limit')
+        if self.recovery_jerk_enabled and not self.envelope_soft_enabled:
+            raise ValueError('recovery jerk requires experimental soft envelope')
         asymmetric = self.front_extent is not None or self.rear_extent is not None
         if asymmetric and (self.front_extent is None or self.rear_extent is None or
                            self.half_length is not None):
@@ -74,6 +97,11 @@ class VehicleConfig:
                     (self.half_length is None and not asymmetric)):
                 raise ValueError('verified rear_offset and body geometry required')
         return self
+
+    def envelope_halfaxes(self):
+        return (self.accel_limit if self.longitudinal_envelope_accel is None else self.longitudinal_envelope_accel,
+                self.brake_limit if self.longitudinal_envelope_brake is None else self.longitudinal_envelope_brake,
+                self.lateral_accel_limit)
 
     def longitudinal_offsets(self):
         """Front and rear body edges measured from the rear-axle state origin."""

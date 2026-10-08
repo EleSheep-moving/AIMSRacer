@@ -1,0 +1,46 @@
+# Numerical experiment only; not a measured grip or vehicle deployment profile.
+# E <= 1 + 0.5 for future nodes strictly before 0.6 s, E <= 1 thereafter.
+# Independent recovery diagnostics never authorize an executable command.
+profile: measured
+wheelbase: 0.36
+rear_offset: 0.0
+half_length: null
+front_extent: 0.52
+rear_extent: 0.1
+half_width: 0.16
+geometry_verified: true
+enforce_corridor: false
+cruise_speed: 1.0
+max_speed: 1.5
+minimum_drive_speed: 0.2
+steer_limit: 0.45
+steer_rate: 2.0
+steer_acceleration: 2.0
+accel_limit: 0.5
+brake_limit: 0.5
+jerk_limit: 1.0
+steering_tau: 0.08
+understeer_coefficient: 0.0
+lateral_accel_limit: 1.0
+contour_weight: 16.0
+heading_weight: 4.0
+speed_weight: 133.33333333333334
+steering_weight: 0.6666666666666666
+steering_rate_weight: 0.3
+steering_acceleration_weight: 0.6
+terminal_weight: 3.0
+solver_max_iterations: 35
+envelope_soft_enabled: true
+longitudinal_envelope_accel: 0.5
+longitudinal_envelope_brake: 0.5
+envelope_slack_limit: 0.5
+envelope_slack_weight: 10000.0
+envelope_recovery_time: 0.6
+recovery_jerk_enabled: true
+recovery_jerk_limit: 2.0
+contour_scale: 0.05
+lag_scale: 0.2
+heading_scale: 0.05
+speed_scale: 0.6
+steering_scale: 0.314159
+acceleration_scale: 2.0

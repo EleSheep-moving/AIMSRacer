@@ -10,6 +10,7 @@ from .config import VehicleConfig
 from .path import ReferencePath
 from .vendor import global_kinematic_model, contouring_lag, normalized_cost
 from .solver_diagnostics import constraint_summary, convergence, json_safe
+from .envelope import evaluate_envelope, initial_envelope_diagnostic, jerk_limits
 
 class MPCCSolver:
     def __init__(self, path: ReferencePath, config: VehicleConfig, horizon=10, dt=.1, jit_enabled=False, native_options=None):
@@ -76,6 +77,8 @@ class MPCCSolver:
         self.steering_bias = op.parameter()
         self.speed_refs = op.parameter(self.n + 1)
         self.cost_weights = op.parameter(7)
+        self.active_jerk = op.parameter(self.n)
+        self.envelope_slack = op.variable(self.n) if self.config.envelope_soft_enabled else None
         contour_w, heading_w, speed_w, steering_w, rate_w, rate_accel_w, terminal_w = (
             self.cost_weights[i] for i in range(7))
         self.map_alignment = op.parameter(3) if self.path.frame_id == 'map' else None
@@ -92,6 +95,13 @@ class MPCCSolver:
         constrain(op.bounded(0., u[2, :], self.config.max_speed), 'progress_speed_bounds')
         weights = self.weights
         objective = 0
+        if self.envelope_slack is not None:
+            for k in range(self.n):
+                # No slack at/after the bounded recovery deadline. An interval
+                # straddling that deadline uses its own early samples only.
+                cap = self.config.envelope_slack_limit if k*self.dt < self.config.envelope_recovery_time-1e-10 else 0.
+                constrain(op.bounded(0., self.envelope_slack[k], cap), 'envelope_slack_bounds', k)
+            objective += self.config.envelope_slack_weight*ca.sumsqr(self.envelope_slack)
         self.margins = []
         self.corridor_rows = []
 
@@ -135,7 +145,7 @@ class MPCCSolver:
             end, sample_matrix = transition(x[:, k], u[:, k], previous[1], self.steering_bias)
             stages = [sample_matrix[:, j] for j in range(self.substeps + 1)]
             constrain(x[:, k + 1] == end, 'dynamics', k)
-            constrain(op.bounded(-self.jerk_limit * self.dt, u[0, k] - previous[0], self.jerk_limit * self.dt),
+            constrain(op.bounded(-self.active_jerk[k] * self.dt, u[0, k] - previous[0], self.active_jerk[k] * self.dt),
                       'jerk', k)
             rate = (u[1, k] - previous[1]) / self.dt
             previous_rate = self.applied[2] if k == 0 else (u[1, k - 1] - (self.applied[1] if k == 1 else u[1, k - 2])) / self.dt
@@ -145,23 +155,31 @@ class MPCCSolver:
             # Check acceleration utilization at each 20 ms integration node.
             for substep, stage in enumerate(stages):
                 lateral_accel = stage[3] ** 2 * ca.tan(stage[5]) / (self.wheelbase * (1 + self.understeer_coefficient * stage[3] ** 2))
-                scale = ca.if_else(u[0, k] >= 0, self.config.accel_limit, self.config.brake_limit)
-                constrain((u[0, k] / scale) ** 2 + (lateral_accel / self.config.lateral_accel_limit) ** 2 <= 1.,
-                          'acceleration_ellipse', k, substep)
+                accel_axis, brake_axis, lateral_axis = self.config.envelope_halfaxes()
+                scale = ca.if_else(u[0, k] >= 0, accel_axis, brake_axis)
+                utilization = (u[0, k]/scale)**2 + (lateral_accel/lateral_axis)**2
+                if self.envelope_slack is not None:
+                    if k == 0 and substep == 0:
+                        continue  # immutable initial state is diagnosed independently
+                    slack = (self.envelope_slack[k] if k*self.dt+substep*self.actuator_dt
+                             < self.config.envelope_recovery_time-1e-10 else 0.)
+                    constrain(utilization <= 1.+slack, 'operating_envelope', k, substep)
+                else:
+                    constrain(utilization <= 1., 'acceleration_ellipse', k, substep)
             ec, el, ref = geometry(x[:, k], k, 0)
             geometry(stages[(self.substeps + 1) // 2], k, (self.substeps + 1) // 2)
             delta_ff = ca.atan(self.wheelbase * (1 + self.understeer_coefficient * x[3, k] ** 2) * ref["curvature"]) - self.steering_bias
-            objective += contour_w * (ec / .05) ** 2 + weights["lag"] * (el / .20) ** 2
-            objective += heading_w * ref["heading_error_squared"] / .05 ** 2
-            objective += speed_w * ((x[3, k] - self.speed_refs[k]) / .60) ** 2
-            objective += weights["progress"] * ((u[2, k] - self.speed_refs[k]) / .60) ** 2
-            objective += steering_w * ((u[1, k] - delta_ff) / .314159) ** 2
-            objective += weights["accel"] * (u[0, k] / 2.) ** 2
+            objective += contour_w * (ec / self.config.contour_scale) ** 2 + weights["lag"] * (el / self.config.lag_scale) ** 2
+            objective += heading_w * ref["heading_error_squared"] / self.config.heading_scale ** 2
+            objective += speed_w * ((x[3, k] - self.speed_refs[k]) / self.config.speed_scale) ** 2
+            objective += weights["progress"] * ((u[2, k] - self.speed_refs[k]) / self.config.speed_scale) ** 2
+            objective += steering_w * ((u[1, k] - delta_ff) / self.config.steering_scale) ** 2
+            objective += weights["accel"] * (u[0, k] / self.config.acceleration_scale) ** 2
             objective += rate_w * (rate / self.steer_rate) ** 2 + rate_accel_w * ((rate - previous_rate) / (self.steer_acceleration * self.dt)) ** 2
         ec, el, ref = geometry(x[:, -1], self.n, 0)
-        objective += terminal_w * (contour_w * (ec / .05) ** 2 + weights["lag"] * (el / .20) ** 2
-                          + heading_w * ref["heading_error_squared"] / .05 ** 2
-                          + speed_w * ((x[3, -1] - self.speed_refs[-1]) / .60) ** 2)
+        objective += terminal_w * (contour_w * (ec / self.config.contour_scale) ** 2 + weights["lag"] * (el / self.config.lag_scale) ** 2
+                          + heading_w * ref["heading_error_squared"] / self.config.heading_scale ** 2
+                          + speed_w * ((x[3, -1] - self.speed_refs[-1]) / self.config.speed_scale) ** 2)
         op.minimize(objective)
         # Standalone diagnostics retain their default; the worker supplies cached
         # -O2 callbacks in a private working directory.
@@ -182,6 +200,7 @@ class MPCCSolver:
             shifted=np.vstack((self.previous['controls'][shift:],
                                np.repeat(self.previous['controls'][-1:],shift,axis=0)))
         acceleration,steering,rate=applied
+        limits=jerk_limits(initial,applied,self.config,self.dt,self.n)
         controls=[]
         for k in range(self.n):
             state=states[-1]
@@ -192,8 +211,8 @@ class MPCCSolver:
             else:
                 desired_acceleration,desired_steering=shifted[k,:2]
             acceleration=np.clip(desired_acceleration,
-                max(-self.config.brake_limit,acceleration-self.jerk_limit*self.dt),
-                min(self.config.accel_limit,acceleration+self.jerk_limit*self.dt))
+                max(-self.config.brake_limit,acceleration-limits[k]*self.dt),
+                min(self.config.accel_limit,acceleration+limits[k]*self.dt))
             desired_rate=(np.clip(desired_steering,-self.steer_limit,self.steer_limit)-steering)/self.dt
             rate=np.clip(desired_rate,max(-self.steer_rate,rate-self.steer_acceleration*self.dt),
                          min(self.steer_rate,rate+self.steer_acceleration*self.dt))
@@ -255,6 +274,7 @@ class MPCCSolver:
             yaw=self.previous_yaw+(yaw-self.previous_yaw+np.pi)%(2*np.pi)-np.pi
         initial=np.r_[measured[:2],yaw,measured[3],theta,measured[4]]
         self.op.set_value(self.initial,initial);self.op.set_value(self.applied,applied)
+        self.op.set_value(self.active_jerk,jerk_limits(initial,applied,self.config,self.dt,self.n))
         self.op.set_value(self.steering_bias,0.);self.op.set_value(self.speed_refs,refs)
         self.op.set_value(self.cost_weights, [self.config.contour_weight, self.config.heading_weight,
             self.config.speed_weight, self.config.steering_weight, self.config.steering_rate_weight,
@@ -268,6 +288,8 @@ class MPCCSolver:
         shift=min(self.n,max(1,round(cache_age/self.dt))) if use_cache else 0
         warm_states,warm_u=self._warm_start(initial,applied,refs,cache_age if cache_age is not None else elapsed)
         self.op.set_initial(self.x,np.asarray(warm_states).T);self.op.set_initial(self.u,warm_u.T)
+        if self.envelope_slack is not None:
+            self.op.set_initial(self.envelope_slack,0.)
         prepared=time.perf_counter()
         error=None
         try:
@@ -289,12 +311,31 @@ class MPCCSolver:
             controls=np.asarray(value(self.u),dtype=float).reshape(3,self.n).T
         except (RuntimeError,ValueError,TypeError):
             pass
+        envelope_traces = None
+        if not self.config.envelope_soft_enabled:
+            # The common validator independently checks accepted trajectories.
+            # Keep the baseline solver's hot reply to the cheap x0 proof only.
+            diagnostics['envelope'] = dict(
+                **initial_envelope_diagnostic(initial,applied,self.config,self.dt),
+                execution_authorized=False, diagnostic_scope='initial_state_only')
+        elif controls is not None and np.isfinite(controls).all():
+            try:
+                envelope = evaluate_envelope(initial,applied,controls,self.config,self.dt)
+                envelope_traces = {key: envelope.pop(key) for key in
+                                   ('candidate_samples','reference_samples','reference_controls')}
+                diagnostics['envelope'] = dict(envelope,diagnostic_scope='independent_recovery_summary')
+                if self.envelope_slack is not None:
+                    diagnostics['envelope']['optimizer_slack_max']=float(np.max(value(self.envelope_slack)))
+            except (RuntimeError,ValueError,TypeError,OverflowError) as exc:
+                diagnostics['envelope']={'execution_authorized':False,'diagnostic_error':str(exc)}
         success=bool(solution is not None and stats.get('success') and violation is not None and
                      violation<1e-4 and states is not None and controls is not None and
                      np.isfinite(states).all() and np.isfinite(controls).all())
         result=dict(success=success,status=stats.get('return_status','exception'),
                     iterations=int(stats.get('iter_count',0)),constraint_violation=violation,
-                    corridor_enforced=self.config.enforce_corridor)
+                    corridor_enforced=self.config.enforce_corridor,
+                    envelope_soft_enabled=self.config.envelope_soft_enabled,
+                    execution_authorized=False)
         result['solve_input']=json_safe(dict(initial_state=initial,applied=applied,speed_refs=refs,
                                              map_alignment=map_alignment,warm_states=warm_states,warm_controls=warm_u))
         if error is not None:
@@ -320,7 +361,8 @@ class MPCCSolver:
                 constraint_values=constraints[0] if constraints is not None else None,
                 constraint_lower=constraints[1] if constraints is not None else None,
                 constraint_upper=constraints[2] if constraints is not None else None,
-                constraint_blocks=self.constraint_blocks))
+                constraint_blocks=self.constraint_blocks,
+                envelope_traces=envelope_traces))
         diagnostics.update(warm_start_source='last_success' if use_cache else 'feedforward',
                            warm_start_age_s=cache_age,warm_start_shift_steps=shift,
                            warm_start_cache_expired=cache_age is not None and not use_cache,
