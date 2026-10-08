@@ -15,9 +15,68 @@ import numpy as np
 
 from .envelope import evaluate_envelope,independent_rollout,utilization
 from .validation import validate_candidate
+from .path import ReferencePath
 
 
 STEP=.02
+
+
+def _reference_positions(states,path,plan):
+    positions=np.asarray(states)[:,:2]
+    if path.frame_id!='map':
+        return positions
+    alignment=np.asarray(plan.get('map_alignment'),float)
+    if alignment.shape!=(3,) or not np.isfinite(alignment).all():
+        raise ValueError('Physical execution projection requires finite map alignment')
+    c,s=np.cos(alignment[2]),np.sin(alignment[2])
+    rotation=np.array([[c,-s],[s,c]])
+    # Retain the original scalar matrix product for every row. A BLAS batch
+    # product can round differently and alter a nearest-grid tie.
+    return np.asarray([rotation@xy+alignment[:2] for xy in positions])
+
+
+def _finish_independent(supervisor,remaining):
+    from .runtime import speed_envelope
+    minimum=supervisor.minimum_speed_stop_distance()
+    threshold=max(.05,minimum,.2,minimum+.05)
+    return bool(remaining>threshold+1e-9 and
+                speed_envelope(remaining,supervisor.config.brake_limit,
+                               supervisor.config.jerk_limit,supervisor.PLAN_TTL)>=supervisor.config.cruise_speed)
+
+
+def _finish_certificate(supervisor,plan,states,path):
+    """Bound the EXACT scalar projector's output without its refinements.
+
+    ReferencePath.project selects the first nearest coarse grid point and then
+    refines within guess +/- step. Refinements cannot alter an unwrap branch
+    when adjacent coarse differences stay more than 2*step from +/-length/2.
+    The refined differences telescope: uncertainty relative to the LIVE
+    progress base is +/-2*step, including both initial and current errors.
+    """
+    positions=_reference_positions(states,path,plan)
+    if not np.isfinite(positions).all():
+        return None
+    if hasattr(path,'_projection_grid'):
+        grid,points,step=path._projection_grid,path._projection_points,path._projection_step
+    else:
+        grid=np.linspace(0,path.length,max(100,int(path.length/.05)),endpoint=False)
+        points=path.curve.numpy(grid);step=path.length/len(grid)
+    distances=np.sum((points[None,:,:]-positions[:,None,:])**2,axis=2)
+    guesses=grid[np.argmin(distances,axis=1)]
+    deltas=(np.diff(guesses)+path.length/2)%path.length-path.length/2
+    if np.any(np.abs(deltas)>=path.length/2-2*step):
+        return None
+    relative=np.r_[0.,np.cumsum(deltas)]
+    center=supervisor.progress+relative
+    bounds=np.column_stack((center-2*step,center+2*step))
+    bounds[0]=supervisor.progress  # first command consumes the real live base
+    remaining=supervisor.lap_goal-bounds[:,1]
+    if not all(_finish_independent(supervisor,r) for r in remaining):
+        return None
+    return dict(proven=True,bound_source='ReferencePath coarse guesses and bounded refinements',
+                projection_error_bound_m=float(2*step),grid_step_m=float(step),
+                minimum_remaining_m=float(np.min(remaining)),
+                physical_progress_bounds_m=bounds.tolist())
 
 
 def prospective_status(supervisor,actual_speed):
@@ -54,7 +113,7 @@ def execution_fingerprint(supervisor,plan,initial,applied,now,path=None):
     return hashlib.sha256(json.dumps(payload,sort_keys=True,allow_nan=False).encode()).hexdigest()
 
 
-def execution_schedule(supervisor,plan,initial,applied,now,path=None,held_steering=None):
+def execution_schedule(supervisor,plan,initial,applied,now,path=None,held_steering=None,force_slow=False):
     """Replay the real smoother on a clone; never change real state/history."""
     if not math.isclose(plan.get('dt',.1),.1,rel_tol=0.,abs_tol=1e-9):
         raise ValueError('Execution schedule requires the runtime 100 ms plan interval')
@@ -62,6 +121,13 @@ def execution_schedule(supervisor,plan,initial,applied,now,path=None,held_steeri
     if initial.shape!=(6,) or not np.isfinite(initial).all():
         raise ValueError('Finite physical initial state(6) required')
     context=execution_context(supervisor,plan,initial.tolist(),applied,now,path)
+    # This is only a cheap prefilter. The generated physical trace must prove
+    # finish independence through the actual projector's bounds afterward.
+    tentative_fast=(not force_slow and context['status']=='RUNNING' and isinstance(path,ReferencePath)
+                    and getattr(path.project,'__func__',None) is ReferencePath.project and
+                    _finish_independent(supervisor,supervisor.lap_goal-supervisor.progress-
+                                         supervisor.config.max_speed*len(plan['controls'])*.1))
+    context['finish_independent_certificate']=dict(proven=False)
     forecast=copy.copy(supervisor)
     forecast.pending_plan=None;forecast.plan=dict(plan,stamp=now)
     forecast.status=context['status'];forecast.last_usable_update=now
@@ -71,15 +137,8 @@ def execution_schedule(supervisor,plan,initial,applied,now,path=None,held_steeri
     previous=seed;physical=initial.copy();progress=supervisor.progress
     physical_progress=[progress]
     def project(state):
-        xy=state[:2]
-        if path.frame_id=='map':
-            alignment=np.asarray(plan.get('map_alignment'),float)
-            if alignment.shape!=(3,) or not np.isfinite(alignment).all():
-                raise ValueError('Physical execution projection requires finite map alignment')
-            c,s=np.cos(alignment[2]),np.sin(alignment[2])
-            xy=np.array([[c,-s],[s,c]])@xy+alignment[:2]
-        return path.project(xy)[0]
-    wrapped=project(physical) if hasattr(path,'project') else None
+        return path.project(_reference_positions(state[None,:],path,plan)[0])[0]
+    wrapped=project(physical) if not tentative_fast and hasattr(path,'project') else None
     for i in range(5*len(plan['controls'])):
         stamp=now+i*STEP
         previous_tick=forecast.last_tick
@@ -102,6 +161,12 @@ def execution_schedule(supervisor,plan,initial,applied,now,path=None,held_steeri
         wire.append([actuator.speed,steering]);elapsed.append(interval)
         statuses.append(forecast.status)
         before=physical
+        if tentative_fast:
+            # command() only reads physical speed outside finish decisions.
+            # Match the independent integrator's ten held 2 ms increments;
+            # all spatial/steering dynamics are rolled out once below.
+            for _ in range(10):physical[3]+=.002*acceleration
+            continue
         physical=independent_rollout(physical,previous,[controls[-1]],supervisor.config,STEP)[-1]
         rows.append(physical.copy());previous=[acceleration,steering,rate]
         if wrapped is None:
@@ -113,9 +178,19 @@ def execution_schedule(supervisor,plan,initial,applied,now,path=None,held_steeri
             progress+=(projected-wrapped+path.length/2)%path.length-path.length/2
             wrapped=projected
         physical_progress.append(progress)
+    bounds=None
+    if tentative_fast:
+        rows=independent_rollout(initial,seed,controls,supervisor.config,STEP)
+        certificate=_finish_certificate(supervisor,plan,rows,path)
+        if certificate is None:
+            return execution_schedule(supervisor,plan,initial,applied,now,path,held_steering,force_slow=True)
+        context['finish_independent_certificate']=certificate
+        context['progress_model']='bounded_physical_projection_finish_independent'
+        bounds=certificate['physical_progress_bounds_m']
+        physical_progress=None
     return dict(controls=np.asarray(controls),states=np.asarray(rows),internal=np.asarray(internal),
                 wire=np.asarray(wire),elapsed=np.asarray(elapsed),statuses=statuses,
-                physical_progress=physical_progress,context=context,seed=seed)
+                physical_progress=physical_progress,physical_progress_bounds_m=bounds,context=context,seed=seed)
 
 
 def _hard_bounds(schedule,config,tolerance):
@@ -233,6 +308,7 @@ def validate_execution(supervisor,plan,initial,applied,now,path=None,tolerance=1
                     internal_commands=schedule['internal'].tolist(),wire_commands=schedule['wire'].tolist(),
                     output_intervals_s=schedule['elapsed'].tolist(),statuses=schedule['statuses'],
                     physical_progress=schedule['physical_progress'],
+                    physical_progress_bounds_m=schedule['physical_progress_bounds_m'],
                     hard_control_violation=hard_violation,state_bound_violation=state_bounds,
                     minimum_margin_m=margin,envelope=diagnostic,execution_authorized=False,
                     scope='activation_only_nominal_20ms_schedule',

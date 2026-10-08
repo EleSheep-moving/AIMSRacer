@@ -9,6 +9,7 @@ import pytest
 from aims_mpcc.config import VehicleConfig
 from aims_mpcc.envelope import evaluate_envelope,independent_rollout,utilization
 from aims_mpcc.runtime import Command,State,Supervisor
+from aims_mpcc.path import ReferencePath
 from aims_mpcc.validation import validate_candidate
 
 
@@ -259,3 +260,109 @@ def test_startup_acceleration_proposal_does_not_catch_up_past_raw_envelope_bound
     assert np.max(executed[:,0])<=.4879345+1e-12
     assert s.execution_validation['envelope']['future_slack_max']<=1e-4
     assert np.max(np.abs(np.diff(np.r_[0.,executed[:,0]])))<=cfg.jerk_limit*.02+1e-12
+
+
+def projected_case(seed=0,remaining=None,branches=False):
+    rng=np.random.default_rng(seed);angle=np.arange(64)*2*np.pi/64
+    if branches:points=np.c_[8*np.cos(angle),.3*np.sin(angle)]
+    else:
+        radius=3.+.6*np.cos(3*angle)+.15*np.sin(5*angle)
+        points=np.c_[radius*np.cos(angle),radius*np.sin(angle)]
+    frame='map' if seed%2 else 'odom'
+    path=ReferencePath(points,1.2,1.,frame,{'map_sha256':'a'*64} if frame=='map' else None)
+    cfg=VehicleConfig(cruise_speed=1.,max_speed=1.5,enforce_corridor=False)
+    theta=float(rng.uniform(0.,path.length));ref=path.at(theta)
+    alignment=np.r_[rng.normal(size=2),rng.uniform(-.5,.5)] if frame=='map' else None
+    if branches:
+        xy=np.array([0.,.02]);yaw=-np.pi/2;theta=path.project(xy)[0]
+    else:
+        xy=np.array([ref['x'],ref['y']])+rng.normal(size=2)*.025;yaw=ref['yaw']+rng.uniform(-.15,.15)
+    if alignment is not None:
+        c,sn=np.cos(alignment[2]),np.sin(alignment[2])
+        xy=np.array([[c,sn],[-sn,c]])@(xy-alignment[:2]);yaw-=alignment[2]
+    speed=.3 if branches else rng.uniform(.25,.8);steering=rng.uniform(-.1,.1)
+    initial=[*xy,yaw,speed,theta,steering]
+    controls=[];acceleration=0.;endpoint=steering;rate=0.
+    for _ in range(10):
+        acceleration=np.clip(acceleration+rng.uniform(-.08,.08),-.2,.2)
+        rate=np.clip(rate+rng.uniform(-.2,.2),-.2,.2)
+        endpoint=np.clip(endpoint+rate*.1,-.15,.15)
+        controls.append([float(acceleration),float(endpoint),float(rng.uniform(0.,1.5))])
+    s,candidate,applied=prepared(cfg,initial,[0.,steering,0.],controls)
+    s.length=path.length;s.progress=theta+3*path.length
+    s.lap_goal=s.progress+(path.length if remaining is None else remaining)
+    targets=[applied['speed']]
+    for control in controls:targets.append(np.clip(targets[-1]+control[0]*.1,0.,cfg.max_speed))
+    return s,dict(candidate,execution_speed_targets=targets,map_alignment=alignment),initial,applied,path
+
+
+def test_far_finish_schedule_avoids_scalar_projection_refinements(monkeypatch):
+    from aims_mpcc.execution import execution_schedule
+    s,plan,initial,applied,path=projected_case();calls=[];original=ReferencePath.project
+    def recorded(self,xy):
+        calls.append(True)
+        return original(self,xy)
+    monkeypatch.setattr(ReferencePath,'project',recorded)
+    schedule=execution_schedule(s,plan,initial,applied,10.02,path)
+    assert len(calls)<=1
+    assert schedule['context']['finish_independent_certificate']['proven']
+
+
+@pytest.mark.parametrize('seed',range(40))
+def test_finish_independent_schedule_matches_forced_physical_projection(seed):
+    from aims_mpcc.execution import execution_schedule
+    s,plan,initial,applied,path=projected_case(seed)
+    snapshot=copy.deepcopy(s.__dict__)
+    fast=execution_schedule(s,plan,initial,applied,10.02,path)
+    slow=execution_schedule(s,plan,initial,applied,10.02,path,force_slow=True)
+    assert fast['context']['finish_independent_certificate']['proven']
+    assert s.__dict__==snapshot
+    for key in ('controls','internal','wire','elapsed'):
+        assert np.array_equal(fast[key],slow[key]),(seed,key)
+    assert fast['statuses']==slow['statuses']
+    np.testing.assert_allclose(fast['states'],slow['states'],rtol=0.,atol=1e-12)
+    bounds=np.asarray(fast['physical_progress_bounds_m'])
+    assert np.all(np.asarray(slow['physical_progress'])>=bounds[:,0]-1e-12)
+    assert np.all(np.asarray(slow['physical_progress'])<=bounds[:,1]+1e-12)
+    assert fast['physical_progress'] is None  # bounds never claim exact projection
+
+
+@pytest.mark.parametrize('remaining',[.15,.65,2.3,3.8])
+def test_near_finish_schedule_falls_back_to_physical_projection(remaining):
+    from aims_mpcc.execution import execution_schedule
+    s,plan,initial,applied,path=projected_case(4,remaining)
+    if remaining==.15:
+        # A stopped snapshot exercises finish completion instead of asking a
+        # moving vehicle to stop inside an infeasible remaining distance.
+        initial[3]=0.;applied['speed']=0.;s.state=replace(s.state,speed=0.)
+        s.last_command=Command(0.,initial[5]);s.config.cruise_speed=0.
+        plan['controls']=[[0.,initial[5],0.]]*10;plan['execution_speed_targets']=[0.]*11
+    actual=execution_schedule(s,plan,initial,applied,10.02,path)
+    slow=execution_schedule(s,plan,initial,applied,10.02,path,force_slow=True)
+    if remaining<3.8:
+        assert not actual['context']['finish_independent_certificate']['proven']
+    for key in ('controls','internal','wire','elapsed','states'):
+        assert np.array_equal(actual[key],slow[key])
+    if remaining==.15:assert actual['statuses'][-1]=='COMPLETE'
+
+
+def test_near_branch_switch_does_not_certify_an_ambiguous_unwrap():
+    from aims_mpcc.execution import execution_schedule
+    s,plan,initial,applied,path=projected_case(0,branches=True)
+    actual=execution_schedule(s,plan,initial,applied,10.02,path)
+    slow=execution_schedule(s,plan,initial,applied,10.02,path,force_slow=True)
+    assert not actual['context']['finish_independent_certificate']['proven']
+    for key in ('controls','internal','wire','elapsed','states'):
+        assert np.array_equal(actual[key],slow[key])
+
+
+def test_instance_projection_override_uses_actual_projector_and_slow_fallback():
+    from aims_mpcc.execution import execution_schedule
+    s,plan,initial,applied,path=projected_case()
+    original=path.project
+    path.project=lambda xy:original(xy)
+    actual=execution_schedule(s,plan,initial,applied,10.02,path)
+    slow=execution_schedule(s,plan,initial,applied,10.02,path,force_slow=True)
+    assert not actual['context']['finish_independent_certificate']['proven']
+    for key in ('controls','internal','wire','elapsed','states'):
+        assert np.array_equal(actual[key],slow[key])
