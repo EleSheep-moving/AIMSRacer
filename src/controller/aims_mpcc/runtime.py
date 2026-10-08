@@ -1,4 +1,8 @@
-"""Clock-explicit command supervision; no ROS or optimizer dependencies."""
+"""Clock-explicit supervision with separate physical states and speed targets.
+
+The six-state prediction assumes ideal longitudinal acceleration. It is an
+unidentified approximation, not an identified speed-mode motor response.
+"""
 from dataclasses import dataclass, asdict
 import math
 
@@ -299,11 +303,22 @@ class Supervisor:
             applied=[actual_command[k] for k in ('acceleration','steering','steering_rate')]
             dt=result.get('dt',.1)
             try:
+                wire_speed=actual_command['speed']
+                if not math.isfinite(wire_speed) or not 0.<=wire_speed<=self.config.max_speed:
+                    raise ValueError('Applied speed target outside configured wire bounds')
                 controls,correction=self.reproject_controls(initial,applied,result['controls'],
                                                              result['validation_applied'],dt)
                 samples=independent_rollout(initial,applied,controls,self.config,dt)
+                # The forwarded motor target can lead or lag physical speed.
+                # Continue its acceleration sequence without resetting it to
+                # the measured speed at every asynchronous plan handover.
+                speed_targets=[wire_speed]
+                for control in controls:
+                    speed_targets.append(clip(speed_targets[-1]+control[0]*dt,
+                                              0.,self.config.max_speed))
                 rebased=dict(result,states=samples[::round(dt/.02)].tolist(),controls=controls,
                              handover_reprojection=correction,
+                             execution_speed_targets=speed_targets,
                              validation_applied=applied,previous_steering=actual_command['steering'])
                 if map_alignment is not None:
                     rebased['map_alignment']=map_alignment
@@ -403,7 +418,18 @@ class Supervisor:
             index=min(len(self.plan['controls'])-1,int(phase/.1))
             fraction=clip((phase-index*.1)/.1,0.,1.)
             states,controls=self.plan['states'],self.plan['controls']
-            target_speed=states[index][3]*(1-fraction)+states[index+1][3]*fraction
+            if self.solve_period is not None and 'execution_speed_targets' in self.plan:
+                targets=self.plan['execution_speed_targets']
+                # Publish the end target for this output interval, matching
+                # the acceleration already selected for its first microstep.
+                # Targeting the boundary itself would request zero acceleration
+                # on every phase-zero handover, regardless of the new control.
+                speed_phase=min(phase+dt,len(controls)*.1)
+                speed_index=min(len(controls)-1,int(speed_phase/.1))
+                speed_fraction=clip((speed_phase-speed_index*.1)/.1,0.,1.)
+                target_speed=targets[speed_index]*(1-speed_fraction)+targets[speed_index+1]*speed_fraction
+            else:
+                target_speed=states[index][3]*(1-fraction)+states[index+1][3]*fraction
             previous_steer=self.plan.get('previous_steering',self.last_command.steering) if index==0 else controls[index-1][1]
             target_steer=previous_steer+(controls[index][1]-previous_steer)*fraction
         remaining = self.lap_goal-self.progress
