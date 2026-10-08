@@ -19,6 +19,8 @@ from .path import ReferencePath
 
 
 STEP=.02
+_REFERENCE_PROJECT=ReferencePath.project
+_REFERENCE_PROJECT_THETA=ReferencePath.project_theta
 
 
 def _reference_positions(states,path,plan):
@@ -121,10 +123,12 @@ def execution_schedule(supervisor,plan,initial,applied,now,path=None,held_steeri
     if initial.shape!=(6,) or not np.isfinite(initial).all():
         raise ValueError('Finite physical initial state(6) required')
     context=execution_context(supervisor,plan,initial.tolist(),applied,now,path)
+    standard_projection=(isinstance(path,ReferencePath) and
+                         getattr(path.project,'__func__',None) is _REFERENCE_PROJECT and
+                         getattr(path.project_theta,'__func__',None) is _REFERENCE_PROJECT_THETA)
     # This is only a cheap prefilter. The generated physical trace must prove
     # finish independence through the actual projector's bounds afterward.
-    tentative_fast=(not force_slow and context['status']=='RUNNING' and isinstance(path,ReferencePath)
-                    and getattr(path.project,'__func__',None) is ReferencePath.project and
+    tentative_fast=(not force_slow and context['status']=='RUNNING' and standard_projection and
                     _finish_independent(supervisor,supervisor.lap_goal-supervisor.progress-
                                          supervisor.config.max_speed*len(plan['controls'])*.1))
     context['finish_independent_certificate']=dict(proven=False)
@@ -137,7 +141,8 @@ def execution_schedule(supervisor,plan,initial,applied,now,path=None,held_steeri
     previous=seed;physical=initial.copy();progress=supervisor.progress
     physical_progress=[progress]
     def project(state):
-        return path.project(_reference_positions(state[None,:],path,plan)[0])[0]
+        xy=_reference_positions(state[None,:],path,plan)[0]
+        return path.project_theta(xy) if standard_projection else path.project(xy)[0]
     wrapped=project(physical) if not tentative_fast and hasattr(path,'project') else None
     for i in range(5*len(plan['controls'])):
         stamp=now+i*STEP

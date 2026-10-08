@@ -68,13 +68,19 @@ class ReferencePath:
 
     numpy=at
 
-    def project(self,xy):
+    def project_theta(self,xy):
+        """Return the same refined progress without unused lateral geometry."""
         xy=np.asarray(xy,float)
         if xy.shape!=(2,) or not np.isfinite(xy).all(): raise ValueError('finite xy required')
         guess=self._projection_grid[np.argmin(np.sum((self._projection_points-xy)**2,axis=1))]
         step=self._projection_step
         result=minimize_scalar(lambda s:float(np.sum((self.curve.numpy(s)-xy)**2)),bounds=(guess-step,guess+step),method='bounded',options={'xatol':1e-12})
-        s=float(result.x%self.length)
+        return float(result.x%self.length)
+
+    def project(self,xy):
+        xy=np.asarray(xy,float)
+        if xy.shape!=(2,) or not np.isfinite(xy).all(): raise ValueError('finite xy required')
+        s=self.project_theta(xy)
         ref=self.at(s);normal=np.array([-np.sin(ref['yaw']),np.cos(ref['yaw'])])
         return s,float(np.dot(xy-np.array([ref['x'],ref['y']]),normal))
 

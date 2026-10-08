@@ -388,13 +388,14 @@ def projected_case(seed=0,remaining=None,branches=False):
 
 def test_far_finish_schedule_avoids_scalar_projection_refinements(monkeypatch):
     from aims_mpcc.execution import execution_schedule
-    s,plan,initial,applied,path=projected_case();calls=[];original=ReferencePath.project
-    def recorded(self,xy):
+    import aims_mpcc.path as path_module
+    s,plan,initial,applied,path=projected_case();calls=[];original=path_module.minimize_scalar
+    def recorded(*args,**kwargs):
         calls.append(True)
-        return original(self,xy)
-    monkeypatch.setattr(ReferencePath,'project',recorded)
+        return original(*args,**kwargs)
+    monkeypatch.setattr(path_module,'minimize_scalar',recorded)
     schedule=execution_schedule(s,plan,initial,applied,10.02,path)
-    assert len(calls)<=1
+    assert calls==[]
     assert schedule['context']['finish_independent_certificate']['proven']
 
 
