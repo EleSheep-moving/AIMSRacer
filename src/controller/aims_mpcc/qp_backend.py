@@ -184,8 +184,18 @@ class QPSolver(NumericalBackend):
         self._native.warm_start(x=primal,y=np.zeros(A.shape[0]))
         prepared=time.perf_counter();solution=self._native.solve(raise_error=False);optimized=time.perf_counter()
         self.last_native=solution
-        success=solution.info.status_val==1;controls=None;states=None;violation=None
+        # OSQP status 2 meets its optimality test at 10x solver tolerance.
+        # It may supply a candidate under the SAME physical/matrix bounds;
+        # status 7 (maximum iterations) remains ineligible. Neither status
+        # eligibility nor candidate feasibility establishes output authority.
+        status_val=int(solution.info.status_val)
+        eligible=status_val in (1,2)
+        success=False;controls=None;states=None;violation=None
         diagnostics=dict(native_core='OSQP C',osqp_status=solution.info.status,
+            osqp_status_val=status_val,osqp_primal_residual=float(solution.info.prim_res),
+            osqp_dual_residual=float(solution.info.dual_res),native_converged=status_val==1,
+            native_candidate_status_eligible=eligible,candidate_feasible=False,
+            success_scope='candidate_feasibility',
             optimization_envelope_margin=self.config.optimization_envelope_margin,
             warm_start_source='last_success' if use_cache else 'feedforward',
             warm_start_age_s=cache_age,warm_start_shift_steps=shift,
@@ -220,7 +230,8 @@ class QPSolver(NumericalBackend):
                 violation=max(violation,-margin)
             diagnostics.update(envelope=envelope,max_constraint_violation=violation,qp_constraint_violation=qp_violation,
                                minimum_predicted_margin_m=float(margin) if np.isfinite(margin) else None)
-            success=bool(success and violation<1e-4)
+            diagnostics['candidate_feasible']=bool(violation<1e-4)
+            success=bool(eligible and diagnostics['candidate_feasible'])
         result=dict(success=success,status=solution.info.status if success else 'qp_candidate_rejected:'+solution.info.status,
                     iterations=int(solution.info.iter),constraint_violation=violation,diagnostics=diagnostics,
                     solve_input=dict(warm_states=seed[0].tolist(),warm_controls=seed[1].tolist()))
