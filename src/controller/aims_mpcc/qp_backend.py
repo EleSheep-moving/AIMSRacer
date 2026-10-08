@@ -97,6 +97,7 @@ class QPSolver(NumericalBackend):
                 else:offset=bias[j]+coeff[j,4]*applied[1]
                 constraint(equation,offset,offset)
             constraint({state(k+1,3):1.,state(k,3):-1.,control(k,0):-self.dt},0.,0.)
+        offsets=cfg.longitudinal_offsets() if cfg.enforce_corridor else ()
         for k in range(self.n+1):
             terminal=cfg.terminal_weight if k==self.n else 1.
             cost({state(k,0):1.},0.,terminal*cfg.contour_weight/cfg.contour_scale**2)
@@ -105,7 +106,7 @@ class QPSolver(NumericalBackend):
             constraint({state(k,3):1.},0.,cfg.max_speed)
             constraint({state(k,2):1.},-cfg.steer_limit,cfg.steer_limit)
             if cfg.enforce_corridor:
-                for along in cfg.longitudinal_offsets():
+                for along in offsets:
                     constraint({state(k,0):1.,state(k,1):along},-self.path.right_width+cfg.half_width,self.path.left_width-cfg.half_width)
         jerk=jerk_limits(initial,applied,cfg,self.dt,self.n)
         accel_axis=min(cfg.envelope_halfaxes()[:2]);lateral_axis=cfg.envelope_halfaxes()[2]
@@ -200,11 +201,12 @@ class QPSolver(NumericalBackend):
                           envelope['future_slack_max'],max(0.,envelope['initial_candidate_utilization']-1.))
             margin=np.inf
             if self.config.enforce_corridor:
+                offsets=self.config.longitudinal_offsets()
                 c,s=np.cos(alignment[2]),np.sin(alignment[2]);rotation=np.array([[c,-s],[s,c]])
                 for x in microstates:
                     xy=rotation@x[:2]+alignment[:2];ref=self.path.at(x[4]);normal=np.array([-np.sin(ref['yaw']),np.cos(ref['yaw'])])
                     yaw=x[2]+alignment[2];forward=np.array([np.cos(yaw),np.sin(yaw)]);left=np.array([-np.sin(yaw),np.cos(yaw)])
-                    for along in self.config.longitudinal_offsets():
+                    for along in offsets:
                         for sign in (-1,1):
                             lateral=np.dot(xy+along*forward+sign*self.config.half_width*left-np.array([ref['x'],ref['y']]),normal)
                             margin=min(margin,self.path.left_width-lateral,self.path.right_width+lateral)
