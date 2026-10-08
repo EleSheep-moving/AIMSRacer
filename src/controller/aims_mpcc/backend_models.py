@@ -6,6 +6,17 @@ from .envelope import independent_rollout, jerk_limits, evaluate_envelope, evalu
 from .solver_diagnostics import json_safe
 
 
+def _angular_stopping_rate(distance,acceleration,dt):
+    """Largest ramp rate whose discrete braking sequence fits the angle room.
+
+    A rate r consumes dt * sum(max(r-j*acceleration*dt,0)) before stopping,
+    including the proposed interval. Invert its piecewise linear sum exactly.
+    """
+    distance=max(0.,float(distance));change=acceleration*dt
+    intervals=math.floor((math.sqrt(1.+8.*distance/(dt*change))-1.)/2.)+1
+    return distance/(intervals*dt)+change*(intervals-1)/2.
+
+
 class NumericalBackend:
     def __init__(self,path,config,horizon=10,dt=.1):
         config.validate(require_verified=True);path.validate_config(config)
@@ -66,9 +77,18 @@ class NumericalBackend:
             acceleration=float(np.clip(desired_accel,max(-self.config.brake_limit,acceleration-limits[k]*self.dt),
                                         min(self.config.accel_limit,acceleration+limits[k]*self.dt)))
             desired_rate=(np.clip(desired_steer,-self.config.steer_limit,self.config.steer_limit)-steering)/self.dt
-            rate=float(np.clip(desired_rate,max(-self.config.steer_rate,rate-self.config.steer_acceleration*self.dt),
-                                min(self.config.steer_rate,rate+self.config.steer_acceleration*self.dt)))
-            endpoint=float(np.clip(steering+rate*self.dt,-self.config.steer_limit,self.config.steer_limit))
+            room_left=self.config.steer_limit+steering;room_right=self.config.steer_limit-steering
+            rate_lower=max(-self.config.steer_rate,rate-self.config.steer_acceleration*self.dt,
+                -room_left/self.dt,-_angular_stopping_rate(room_left,self.config.steer_acceleration,self.dt))
+            rate_upper=min(self.config.steer_rate,rate+self.config.steer_acceleration*self.dt,
+                room_right/self.dt,_angular_stopping_rate(room_right,self.config.steer_acceleration,self.dt))
+            if rate_lower>rate_upper+1e-12:
+                raise ValueError(f'Applied steering prefix has no bounded angular continuation at interval {k}: '
+                                 f'steering={steering:.6g}, rate={rate:.6g}')
+            rate=float(np.clip(desired_rate,rate_lower,rate_upper))
+            # The selected rate already reserves its complete stopping distance;
+            # clipping this endpoint would hide an angular acceleration jump.
+            endpoint=float(steering+rate*self.dt)
             progress=max(0.,x[3]+.5*acceleration*self.dt)/tangent_norm
             control=np.array([acceleration,endpoint,min(self.config.max_speed,progress)])
             states.append(independent_rollout(x,[acceleration,steering,rate],[control],self.config,self.dt)[-1])
