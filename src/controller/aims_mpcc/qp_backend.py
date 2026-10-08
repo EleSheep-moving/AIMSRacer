@@ -9,7 +9,7 @@ import numpy as np
 import scipy.sparse as sparse
 import casadi as ca
 from .backend_models import NumericalBackend
-from .envelope import independent_rollout,evaluate_envelope,jerk_limits
+from .envelope import evaluate_strict_envelope,jerk_limits
 from .vendor.normalized_cost import RATIOS
 
 
@@ -190,11 +190,12 @@ class QPSolver(NumericalBackend):
                 progress=np.clip((current[3]+.5*a*self.dt)/np.linalg.norm(self.path.curve.numpy(current[4],1)),0.,self.config.max_speed)
                 u=np.array([a,d,progress]);controls.append(u)
                 current[3]+=a*self.dt;current[4]+=progress*self.dt
-            controls=np.asarray(controls);microstates=independent_rollout(initial,applied,controls,self.config,self.dt)
+            controls=np.asarray(controls)
+            envelope,microstates=evaluate_strict_envelope(initial,applied,controls,self.config,self.dt)
             states=microstates[::round(self.dt/.02)]
             value=A@z;qp_violation=max(float(np.max(lower-value)),float(np.max(value-upper)),0.)
-            envelope=evaluate_envelope(initial,applied,controls,self.config,self.dt)
             violation=max(qp_violation,envelope['hard_control_violation'],envelope['speed_bound_violation'],
+                          envelope['actual_steering_bound_violation'],
                           envelope['future_slack_max'],max(0.,envelope['initial_candidate_utilization']-1.))
             margin=np.inf
             if self.config.enforce_corridor:
@@ -207,7 +208,6 @@ class QPSolver(NumericalBackend):
                             lateral=np.dot(xy+along*forward+sign*self.config.half_width*left-np.array([ref['x'],ref['y']]),normal)
                             margin=min(margin,self.path.left_width-lateral,self.path.right_width+lateral)
                 violation=max(violation,-margin)
-            for key in ('candidate_samples','reference_samples','reference_controls'):envelope.pop(key)
             diagnostics.update(envelope=envelope,max_constraint_violation=violation,qp_constraint_violation=qp_violation,
                                minimum_predicted_margin_m=float(margin) if np.isfinite(margin) else None)
             success=bool(success and violation<1e-4)
