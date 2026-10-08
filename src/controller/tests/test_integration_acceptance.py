@@ -7,6 +7,7 @@ import numpy as np
 from aims_mpcc import integration
 from aims_mpcc.io import load_config
 from aims_mpcc.path import ReferencePath
+from aims_mpcc.config import VehicleConfig
 
 
 def metrics(status='COMPLETE'):
@@ -15,6 +16,37 @@ def metrics(status='COMPLETE'):
                 cross_track_rms_m=.02, cross_track_max_m=.04,
                 finish_error_m=.03, final_speed_mps=.001,
                 lap_progress_m=12.5, reference_length_m=12.56)
+
+
+def test_annular_metric_accepts_field_asymmetric_geometry():
+    config_file=Path(integration.__file__).parents[1]/'config/experimental_native_rti2.yaml'
+    config=load_config(config_file)
+    assert config.half_length is None
+    offsets=config.longitudinal_offsets()
+    assert offsets==(.52,-.10)
+    actual=integration.annular_footprint_margins(2.,0.,0.,offsets,config.half_width)
+    expected=[.9-abs(np.hypot(2.+along,across)-2.)
+              for along in (-.10,.52) for across in (-.16,.16)]
+    assert actual==pytest.approx(expected,abs=1e-15)
+
+
+@pytest.mark.parametrize('seed',range(20))
+def test_symmetric_annular_metric_matches_original_corner_arithmetic_exactly(seed):
+    import math
+    rng=np.random.default_rng(seed)
+    config=VehicleConfig(profile='synthetic',rear_offset=.18,half_length=.5,
+                         half_width=.3,geometry_verified=True)
+    offsets=config.longitudinal_offsets()
+    for _ in range(5):
+        x,y=rng.uniform(-3.,3.,2);yaw=float(rng.uniform(-np.pi,np.pi))
+        c,sn=math.cos(yaw),math.sin(yaw);expected=[]
+        for sx in (-1,1):
+            for sy in (-1,1):
+                along=config.rear_offset+sx*config.half_length;across=sy*config.half_width
+                corner_x=x+along*c-across*sn;corner_y=y+along*sn+across*c
+                expected.append(.9-abs(math.hypot(corner_x,corner_y)-2.))
+        actual=integration.annular_footprint_margins(x,y,yaw,offsets,config.half_width)
+        assert actual==expected
 
 
 def test_nominal_recovery_stop_reports_cause_without_waiting_for_timeout():

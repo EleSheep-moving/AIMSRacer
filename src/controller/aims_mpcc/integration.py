@@ -211,11 +211,26 @@ def check_scenario_acceptance(result,scenario,max_speed,steer_limit,speed_target
         assert abs(speed_target)<1e-9 and last_command_speed==0.
 
 
+def annular_footprint_margins(x,y,yaw,longitudinal_offsets,half_width):
+    """Original four-corner synthetic-circle metric for either body geometry."""
+    front,rear=longitudinal_offsets
+    c,sn=math.cos(yaw),math.sin(yaw)
+    margins=[]
+    for along in (rear,front):
+        for sy in (-1,1):
+            across=sy*half_width
+            corner_x=x+along*c-across*sn
+            corner_y=y+along*sn+across*c
+            margins.append(.9-abs(math.hypot(corner_x,corner_y)-2.))
+    return margins
+
+
 def run(args):
     prefix=getattr(args,'topic_prefix','')
     remaps=topic_remap_arguments(prefix)
     out=Path(args.output).resolve();out.mkdir(parents=True,exist_ok=True)
     config_file=Path(args.vehicle_config).resolve();config=load_config(config_file)
+    footprint_offsets=config.longitudinal_offsets()
     if args.reuse_prepared_reference:
         path=ReferencePath.load(out/'reference')
         path.validate_config(config,require_recording=True)
@@ -294,15 +309,10 @@ def run(args):
             if now-last_metrics>=.019:
                 last_metrics=now
                 progress,error=path.project([plant.x,plant.y]);errors.append(error)
-                c,sn=math.cos(plant.yaw),math.sin(plant.yaw)
-                for sx in (-1,1):
-                    for sy in (-1,1):
-                        along=config.rear_offset+sx*config.half_length;across=sy*config.half_width
-                        corner_x=plant.x+along*c-across*sn
-                        corner_y=plant.y+along*sn+across*c
-                        # Exact annular corridor of the synthetic radius-2 circle,
-                        # independent of the optimizer's tangent approximation.
-                        margins.append(.9-abs(math.hypot(corner_x,corner_y)-2.))
+                # Exact annular corridor at the original four corners,
+                # independent of the optimizer's tangent approximation.
+                margins.extend(annular_footprint_margins(plant.x,plant.y,plant.yaw,
+                                                       footprint_offsets,config.half_width))
                 plant.samples.append((now-started,plant.x,plant.y,plant.speed,error,plant.speed_target,plant.steer_target))
             if s.status=='FAULT':
                 if args.scenario in ('nominal','solver_stall','solver_crash'):
