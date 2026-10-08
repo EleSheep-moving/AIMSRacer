@@ -27,6 +27,8 @@ class QPSolver(NumericalBackend):
         P,q,A,l,u=self._assemble(initial,np.zeros(3),np.full(self.n+1,config.cruise_speed),np.zeros(3),seed)
         self._p_pattern=sparse.csc_matrix(np.triu(self._p_structure.astype(float)))
         self._a_pattern=sparse.csc_matrix(self._a_structure.astype(float))
+        self._p_columns=np.repeat(np.arange(self.dimension),np.diff(self._p_pattern.indptr))
+        self._a_columns=np.repeat(np.arange(self.dimension),np.diff(self._a_pattern.indptr))
         self._native=osqp.OSQP()
         self._native.setup(P=self._p_values(P),q=q,A=self._a_values(A),l=l,u=u,
             verbose=False,warm_starting=True,polishing=True,eps_abs=1e-7,eps_rel=1e-7,max_iter=4000)
@@ -40,16 +42,12 @@ class QPSolver(NumericalBackend):
 
     def _p_values(self,P):
         result=self._p_pattern.copy()
-        for col in range(self.dimension):
-            begin,end=result.indptr[col:col+2]
-            result.data[begin:end]=P[result.indices[begin:end],col]
+        result.data[:]=P[result.indices,self._p_columns]
         return result
 
     def _a_values(self,A):
         result=self._a_pattern.copy()
-        for col in range(self.dimension):
-            begin,end=result.indptr[col:col+2]
-            result.data[begin:end]=A[result.indices[begin:end],col]
+        result.data[:]=A[result.indices,self._a_columns]
         return result
 
     def _linear_transition(self):
@@ -77,10 +75,13 @@ class QPSolver(NumericalBackend):
             structure=np.zeros(D,dtype=bool);structure[list(values)]=True
             rows.append(row);structures.append(structure);low.append(lo);high.append(hi)
         def cost(values,target,weight):
-            vector=np.zeros(D)
-            for i,v in values.items():vector[i]+=v
-            P[:]+=2*weight*np.outer(vector,vector);q[:]-=2*weight*target*vector
-            indices=list(values);P_structure[np.ix_(indices,indices)]=True
+            # Each objective term involves at most three variables. Preserve
+            # its accumulation order while updating only those active entries.
+            for i,vi in values.items():
+                q[i]-=2*weight*target*vi
+                for j,vj in values.items():
+                    P[i,j]+=2*weight*(vi*vj)
+                    P_structure[i,j]=True
         state=lambda k,j:4*k+j
         control=lambda k,j:4*(self.n+1)+2*k+j
         geometries=self.geometries(seed[0][:,4],alignment)
