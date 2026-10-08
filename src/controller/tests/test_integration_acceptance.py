@@ -84,7 +84,8 @@ def test_speed_attainment_uses_requested_speed_and_rejects_missing_central_motio
 
 
 @pytest.mark.parametrize('horizon', [10,15,20])
-def test_same_horizon_reaches_offline_cache_and_online_ros_node(horizon,tmp_path,monkeypatch):
+@pytest.mark.parametrize('prefix', ['', '/mpcc_shadow'])
+def test_same_horizon_reaches_offline_cache_and_online_ros_node(horizon,prefix,tmp_path,monkeypatch):
     from aims_mpcc import prepare_solver
     config_file=Path(integration.__file__).parents[1]/'config/synthetic.yaml'
     config=load_config(config_file)
@@ -96,7 +97,7 @@ def test_same_horizon_reaches_offline_cache_and_online_ros_node(horizon,tmp_path
     path.save(tmp_path/'reference')
     args=SimpleNamespace(output=str(tmp_path),vehicle_config=str(config_file),
                          reuse_prepared_reference=True,prepare_only=True,
-                         backend='qp',solve_frequency=20.,horizon=horizon)
+                         backend='qp',solve_frequency=20.,horizon=horizon,topic_prefix=prefix)
     prepared=[]
     monkeypatch.setattr(prepare_solver,'main',prepared.append)
     integration.run(args)
@@ -110,3 +111,109 @@ def test_same_horizon_reaches_offline_cache_and_online_ros_node(horizon,tmp_path
     with pytest.raises(RuntimeError,match='ROS arguments captured'):
         integration.run(args)
     assert f'horizon:={horizon}' in ros_arguments
+    if prefix:
+        assert ros_arguments[-len(integration.topic_remap_arguments(prefix)):]==integration.topic_remap_arguments(prefix)
+    else:
+        assert '-r' not in ros_arguments
+
+
+def test_shadow_remaps_cover_all_command_routes_and_auxiliary_entities():
+    remaps=integration.topic_remap_arguments('/mpcc_shadow')
+    mapping=dict(rule.split(':=') for rule in remaps[1::2])
+    topics={'/drive','/ackermann_cmd','/commands/motor/speed',
+            '/commands/motor/current','/commands/motor/duty_cycle',
+            '/commands/servo/position','/rc/channels','/control/autonomy_speed_enabled',
+            '/odometry/filtered','/calib/ackermann_cmd','/sensors/core',
+            '/mpcc/status','/mpcc/reference','/mpcc/prediction','/mpcc/enable',
+            '/localization/map_sha256','/localization/status','/tf','/tf_static'}
+    assert topics<=mapping.keys()
+    assert all(mapping[topic]=='/mpcc_shadow'+topic for topic in topics)
+    assert remaps[::2]==['-r']*len(mapping)
+    for command in integration.child_commands('vesc.yaml',remaps):
+        assert command[1][-len(remaps):]==remaps
+        assert command[1].count('--ros-args')==1
+
+
+def test_empty_prefix_preserves_original_child_arguments():
+    assert integration.topic_remap_arguments('')==[]
+    assert integration.child_commands('vesc.yaml',[])==[
+        ('rc',['ros2','run','ackermann_mux','joystick_control_v2','--ros-args',
+               '-p','channel_profile:=steering_ch1_throttle_ch3_aux_ch5_to_ch10']),
+        ('converter',['ros2','run','vesc_ackermann','ackermann_to_vesc_node',
+                      '--ros-args','--params-file','vesc.yaml'])]
+
+
+@pytest.mark.parametrize('prefix',['/','shadow','/shadow/','/shadow//a',
+                                   '/shadow-invalid','/3shadow','/shadow:=/drive'])
+def test_invalid_prefix_is_rejected_before_ros_start(prefix):
+    with pytest.raises(ValueError,match='namespace'):
+        integration.topic_remap_arguments(prefix)
+
+
+def test_isolation_checks_raw_graph_and_requires_complete_shadow_route():
+    class Graph:
+        def __init__(self):self.counts={};self.queries=[]
+        def count_publishers(self,topic):
+            self.queries.append(topic)
+            return self.counts.get(topic,0)
+    graph=Graph()
+    report=integration.shadow_graph_report(graph,'/mpcc_shadow')
+    assert not report['shadow_route_ready']
+    assert report['unprefixed_driving_publishers_zero']
+    assert all(count==0 for count in report['unprefixed_driving_publisher_counts'].values())
+    for topic in report['shadow_driving_publisher_counts']:
+        graph.counts[topic]=1
+    assert integration.shadow_graph_report(graph,'/mpcc_shadow')['shadow_route_ready']
+    graph.counts['/commands/motor/current']=1
+    assert not integration.shadow_graph_report(graph,'/mpcc_shadow')['unprefixed_driving_publishers_zero']
+
+
+def test_harness_authority_graph_query_applies_ros_topic_resolution(monkeypatch):
+    queries=[]
+    monkeypatch.setattr(integration.Node,'count_publishers',lambda self,topic:queries.append(topic) or 1)
+    node=object.__new__(integration.ShadowMPCCNode)
+    monkeypatch.setattr(integration.ShadowMPCCNode,'resolve_topic_name',
+                        lambda self,topic:'/mpcc_shadow'+topic)
+    assert node.count_publishers('/drive')==1
+    assert queries==['/mpcc_shadow/drive']
+
+
+@pytest.mark.parametrize('appears_after_first_audit',[False,True])
+def test_unprefixed_publisher_blocks_enable_and_records_failed_graph(tmp_path,monkeypatch,appears_after_first_audit):
+    """Even a ready worker and enable service cannot bypass the raw graph gate."""
+    import json
+    enable_requests=[]
+    client=SimpleNamespace(service_is_ready=lambda:True,
+                           call_async=lambda request:enable_requests.append(request))
+    controller=SimpleNamespace(worker=SimpleNamespace(ready=True),
+                               supervisor=SimpleNamespace(fresh=lambda now:True,status='READY'),
+                               destroy_node=lambda:None)
+    queries=[]
+    def count_publishers(topic):
+        queries.append(topic)
+        if topic.startswith('/mpcc_shadow/'):return 1
+        return int(topic=='/commands/motor/current' and
+                   (not appears_after_first_audit or len(queries)>12))
+    plant=SimpleNamespace(samples=[],destroy_node=lambda:None,
+                          create_client=lambda *args:client,
+                          count_publishers=count_publishers)
+    executor=SimpleNamespace(add_node=lambda node:None,spin_once=lambda **kwargs:None)
+    monkeypatch.setattr(integration,'fixture',lambda *args:object())
+    monkeypatch.setattr(integration,'child_commands',lambda *args:[])
+    monkeypatch.setattr(integration,'ShadowMPCCNode',lambda:controller)
+    monkeypatch.setattr(integration,'Plant',lambda *args:plant)
+    monkeypatch.setattr(integration,'SingleThreadedExecutor',lambda:executor)
+    monkeypatch.setattr(integration.rclpy,'init',lambda **kwargs:None)
+    monkeypatch.setattr(integration.rclpy,'ok',lambda:False)
+    args=SimpleNamespace(output=str(tmp_path),topic_prefix='/mpcc_shadow',
+        vehicle_config=str(Path(integration.__file__).parents[1]/'config/synthetic.yaml'),
+        reuse_prepared_reference=False,prepare_only=False,clockwise=False,backend='qp',
+        horizon=10,solve_frequency=20.,scenario='nominal',vesc_config='unused',
+        speed_tau=.2,steer_tau=.15,odom_delay=0.,timeout=1.)
+    with pytest.raises(RuntimeError,match='Unprefixed driving publisher'):
+        integration.run(args)
+    assert not enable_requests
+    result=json.loads((tmp_path/'result.json').read_text())
+    assert result['status']=='FAIL'
+    assert result['unprefixed_driving_publisher_counts']['/commands/motor/current']==1
+    assert not result['unprefixed_driving_publishers_zero']

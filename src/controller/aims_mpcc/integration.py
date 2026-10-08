@@ -10,6 +10,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
 import time
@@ -25,6 +26,50 @@ from crsf_receiver_msg.msg import CRSFChannels16
 from .io import load_config
 from .path import prepare_recording,ReferencePath
 from .node import MPCCNode
+
+
+# Include every actuator output, even unused converter current/duty modes.
+DRIVING_TOPICS=('/drive','/ackermann_cmd','/commands/motor/speed',
+                '/commands/servo/position','/commands/motor/current',
+                '/commands/motor/duty_cycle')
+SHADOW_ENTITIES=DRIVING_TOPICS+('/rc/channels','/control/autonomy_speed_enabled',
+    '/odometry/filtered','/calib/ackermann_cmd','/sensors/core','/mpcc/status',
+    '/mpcc/reference','/mpcc/prediction','/mpcc/enable',
+    '/localization/map_sha256','/localization/status','/tf','/tf_static')
+
+
+def topic_remap_arguments(prefix):
+    """Remap absolute source names for both Python nodes and ROS subprocesses."""
+    if not prefix:return []
+    if not re.fullmatch(r'(?:/[A-Za-z_][A-Za-z0-9_]*)+',prefix):
+        raise ValueError('topic-prefix must be an absolute ROS namespace without a trailing slash')
+    return [argument for topic in SHADOW_ENTITIES
+            for argument in ('-r',f'{topic}:={prefix}{topic}')]
+
+
+def child_commands(vesc_config,remaps):
+    return [
+        ('rc',['ros2','run','ackermann_mux','joystick_control_v2','--ros-args',
+               '-p','channel_profile:=steering_ch1_throttle_ch3_aux_ch5_to_ch10',*remaps]),
+        ('converter',['ros2','run','vesc_ackermann','ackermann_to_vesc_node',
+                      '--ros-args','--params-file',vesc_config,*remaps])]
+
+
+class ShadowMPCCNode(MPCCNode):
+    def count_publishers(self,topic_name):
+        # Humble graph counts do not apply remaps. Keep the existing authority
+        # checks querying the same resolved topic as the command publisher.
+        return super().count_publishers(self.resolve_topic_name(topic_name))
+
+
+def shadow_graph_report(node,prefix):
+    """Query original names directly; graph counts intentionally ignore remaps."""
+    original={topic:node.count_publishers(topic) for topic in DRIVING_TOPICS}
+    shadow={prefix+topic:node.count_publishers(prefix+topic) for topic in DRIVING_TOPICS}
+    return dict(unprefixed_driving_publisher_counts=original,
+                unprefixed_driving_publishers_zero=not any(original.values()),
+                shadow_driving_publisher_counts=shadow,
+                shadow_route_ready=all(count==1 for count in shadow.values()))
 
 
 class Plant(Node):
@@ -167,6 +212,8 @@ def check_scenario_acceptance(result,scenario,max_speed,steer_limit,speed_target
 
 
 def run(args):
+    prefix=getattr(args,'topic_prefix','')
+    remaps=topic_remap_arguments(prefix)
     out=Path(args.output).resolve();out.mkdir(parents=True,exist_ok=True)
     config_file=Path(args.vehicle_config).resolve();config=load_config(config_file)
     if args.reuse_prepared_reference:
@@ -183,31 +230,48 @@ def run(args):
                      '-p',f'vehicle_config:={config_file}',
                      '-p',f'horizon:={args.horizon}',
                      '-p',f'backend:={args.backend}','-p',f'solve_frequency:={args.solve_frequency}',
-                     '-p','simulation:=true','-p',f'log_directory:={out}'])
+                     '-p','simulation:=true','-p',f'log_directory:={out}',*remaps])
     children=[];logs=[];controller=plant=None
     result=dict(status='FAIL',scenario=args.scenario,physics='independent lagged kinematic bicycle',
                 hardware_validated=False)
+    if prefix:result.update(topic_prefix=prefix,shadow_graph_checks=0,
+                           authority_graph_adapter='ROS resolved topic names; original publisher-count thresholds')
     started=None;injected=None;fault_observed=None;errors=[];margins=[];last_metrics=0.
     recovery_observed=False;post_restart_activations=0;last_activation=None
     stopped_latch_since=None
     try:
-        for name,cmd in [
-            ('rc',['ros2','run','ackermann_mux','joystick_control_v2','--ros-args',
-                   '-p','channel_profile:=steering_ch1_throttle_ch3_aux_ch5_to_ch10']),
-            ('converter',['ros2','run','vesc_ackermann','ackermann_to_vesc_node','--ros-args','--params-file',args.vesc_config]),
-        ]:
+        for name,cmd in child_commands(args.vesc_config,remaps):
             log=(out/f'{name}.log').open('w');logs.append(log)
             children.append(subprocess.Popen(cmd,stdout=log,stderr=subprocess.STDOUT,start_new_session=True))
-        controller=MPCCNode();plant=Plant(path,config,args.speed_tau,args.steer_tau,args.odom_delay)
+        controller=(ShadowMPCCNode if prefix else MPCCNode)()
+        plant=Plant(path,config,args.speed_tau,args.steer_tau,args.odom_delay)
         executor=SingleThreadedExecutor();executor.add_node(controller);executor.add_node(plant)
         client=plant.create_client(SetBool,'/mpcc/enable')
         enable_future=None
+        graph_ready=not prefix;last_graph_check=0.
         deadline=time.monotonic()+args.timeout
         while time.monotonic()<deadline:
             executor.spin_once(timeout_sec=.005)
             now=time.monotonic();s=controller.supervisor
             if any(p.poll() is not None for p in children):raise RuntimeError('RC/converter process exited')
-            if started is None and enable_future is None and controller.worker.ready and s.fresh(now) and client.service_is_ready():
+            if prefix and now-last_graph_check>=.1:
+                result.update(shadow_graph_report(plant,prefix))
+                result['shadow_graph_checks']+=1;last_graph_check=now
+                if not result['unprefixed_driving_publishers_zero']:
+                    raise RuntimeError('Unprefixed driving publisher detected: '+
+                                       repr(result['unprefixed_driving_publisher_counts']))
+                graph_ready=result['shadow_route_ready']
+                if started is not None and not graph_ready:
+                    raise RuntimeError('Shadow driving publisher graph changed during run')
+            if started is None and enable_future is None and graph_ready and controller.worker.ready and s.fresh(now) and client.service_is_ready():
+                if prefix:
+                    # Audit immediately before the enable request as well as
+                    # periodically; never enable using a cached graph sample.
+                    result.update(shadow_graph_report(plant,prefix));result['shadow_graph_checks']+=1
+                    if not result['unprefixed_driving_publishers_zero']:
+                        raise RuntimeError('Unprefixed driving publisher detected: '+
+                                           repr(result['unprefixed_driving_publisher_counts']))
+                    if not result['shadow_route_ready']:continue
                 request=SetBool.Request();request.data=True;enable_future=client.call_async(request)
             if enable_future is not None and enable_future.done() and started is None:
                 response=enable_future.result()
@@ -270,6 +334,10 @@ def run(args):
                     break
             if s.status=='COMPLETE':break
         else:raise RuntimeError('Acceptance run timed out')
+        if prefix:
+            result.update(shadow_graph_report(plant,prefix));result['shadow_graph_checks']+=1
+            assert result['unprefixed_driving_publishers_zero'],'Unprefixed driving publisher at completion'
+            assert result['shadow_route_ready'],'Shadow driving publisher graph changed at completion'
         samples=np.asarray(plant.samples);commands=np.asarray(plant.commands)
         result.update(elapsed_s=time.monotonic()-started,status_at_end=controller.supervisor.status,
                       reason_at_end=controller.supervisor.reason,
@@ -335,6 +403,8 @@ def run(args):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output',required=True)
+    parser.add_argument('--topic-prefix',default='',
+                        help='Hardware-free shadow namespace, e.g. /mpcc_shadow; empty preserves existing topics')
     parser.add_argument('--vehicle-config',default='/ws/src/controller/config/synthetic.yaml')
     parser.add_argument('--scenario',choices=['nominal','odom_drop','manual','rc_loss','clock_reset','solver_stall','solver_crash','disable'],default='nominal')
     parser.add_argument('--clockwise',action='store_true')
