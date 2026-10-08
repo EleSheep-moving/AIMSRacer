@@ -514,7 +514,7 @@ class Supervisor:
                          -self.config.steer_limit, self.config.steer_limit)
             if recovering and self.solve_period is not None:
                 budget=self.recovery_braking_budget(accel_lower,accel_upper,steer)
-                budget['uncapped_proposal']=desired_accel
+                budget['uncapped_proposal']=float(desired_accel)
                 if budget['feasible']:
                     desired_accel=max(desired_accel,-budget['brake_capacity'])
                 self.recovery_braking=budget
@@ -523,7 +523,7 @@ class Supervisor:
             accel = (speed-self.last_command.speed)/dt
             if self.recovery_braking is not None:
                 budget=self.recovery_braking
-                budget['achieved_acceleration']=accel
+                budget['achieved_acceleration']=float(accel)
                 budget['achieved_within_capacity']=bool(budget['feasible'] and
                     -budget['brake_capacity']-1e-12<=accel<=budget['accel_capacity']+1e-12)
             self.last_steering_rate = (steer-self.last_command.steering)/dt
@@ -561,6 +561,8 @@ class Supervisor:
         forward-only speed target used by the existing stopping reserves.
         """
         cfg=self.config;horizon=.02
+        # Node diagnostics serialize this budget directly. Normalize output
+        # scalars while retaining the numerical calculations and live state.
         budget=dict(available=False,feasible=False,horizon_s=horizon,
                     accel_capacity=None,brake_capacity=None,
                     lateral_utilization_bound=None,
@@ -568,7 +570,7 @@ class Supervisor:
         speed=max(abs(self.state.speed),abs(self.state.speed+lower*horizon),
                   abs(self.state.speed+upper*horizon))
         angle=max(abs(self.state.steering),abs(commanded_steering))
-        budget.update(physical_speed_abs_bound=speed,physical_steering_abs_bound=angle)
+        budget.update(physical_speed_abs_bound=float(speed),physical_steering_abs_bound=float(angle))
         ax,bx,ay=cfg.envelope_halfaxes()
         if (not all(math.isfinite(x) for x in (speed,angle,lower,upper,ax,bx,ay,
                                               cfg.steering_tau,cfg.understeer_coefficient,cfg.wheelbase)) or
@@ -580,9 +582,9 @@ class Supervisor:
         capacity=math.sqrt(max(0.,1.-lateral))
         accel=min(cfg.accel_limit,ax*capacity)
         brake=min(cfg.brake_limit,bx*capacity)
-        feasible=lateral<=1. and max(lower,-brake)<=min(upper,accel)
-        budget.update(available=True,feasible=feasible,accel_capacity=accel,
-                      brake_capacity=brake,lateral_utilization_bound=lateral,
+        feasible=bool(lateral<=1. and max(lower,-brake)<=min(upper,accel))
+        budget.update(available=True,feasible=feasible,accel_capacity=float(accel),
+                      brake_capacity=float(brake),lateral_utilization_bound=float(lateral),
                       reason=('' if feasible else 'lateral load exceeds nominal envelope' if lateral>1.
                               else 'jerk and nominal capacity intervals do not intersect'))
         return budget

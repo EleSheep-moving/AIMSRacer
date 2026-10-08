@@ -573,3 +573,31 @@ def test_positive_live_acceleration_requires_positive_halfaxis_budget(positive_a
     assert d['brake_capacity']>.45
     assert d['feasible'] is feasible and d['achieved_within_capacity'] is feasible
     if not feasible:assert d['accel_capacity']<s.last_acceleration
+
+
+@pytest.mark.parametrize('outside',[False,True])
+@pytest.mark.parametrize('scalar',[np.float32,np.float64])
+def test_numpy_live_prefix_recovery_budget_is_native_json(outside,scalar):
+    import json
+    s=recovering(1.5 if outside else .55,.35 if outside else .25,.3,0. if outside else .1,1.1)
+    s.state=replace(s.state,speed=scalar(s.state.speed),steering=scalar(s.state.steering))
+    s.last_command=Command(scalar(s.last_command.speed),scalar(s.last_command.steering))
+    s.last_acceleration=scalar(s.last_acceleration);s.last_steering_rate=scalar(s.last_steering_rate)
+    s.command(10.)
+    budget=s.recovery_braking
+    json.dumps(budget,allow_nan=False)
+    assert type(budget['feasible']) is bool
+    for value in budget.values():
+        assert value is None or type(value) in (str,bool,float)
+
+
+def test_numpy_unavailable_response_budget_remains_native_json():
+    import json
+    s=recovering();s.config.steering_tau=.0009
+    s.state=replace(s.state,speed=np.float64(s.state.speed),steering=np.float64(s.state.steering))
+    s.command(10.)
+    budget=s.recovery_braking
+    assert budget['available'] is False and budget['feasible'] is False
+    json.dumps(budget,allow_nan=False)
+    for value in budget.values():
+        assert value is None or type(value) in (str,bool,float)
