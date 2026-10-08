@@ -5,7 +5,7 @@ import numpy as np
 
 from aims_mpcc.config import VehicleConfig
 from aims_mpcc.envelope import independent_rollout
-from aims_mpcc.runtime import State, Supervisor
+from aims_mpcc.runtime import Command, State, Supervisor
 from aims_mpcc.validation import validate_candidate
 
 
@@ -34,6 +34,11 @@ def test_trace_acceleration_prefix_is_reprojected_without_renewing_or_skipping()
     snapshot=copy.deepcopy(result)
     applied=dict(speed=.1,steering=.02195948362350464,
                  acceleration=.034749730002609176,steering_rate=.08204024390415686)
+    # Model a consistent live internal smoother and actual selector prefix.
+    # The optimizer prefix remains different and still needs reprojection.
+    s.last_command=Command(applied['speed'],applied['steering'])
+    s.last_acceleration=applied['acceleration']
+    s.last_steering_rate=applied['steering_rate']
     assert s.accept(result,10.02)
     assert s.activate(10.02,s.state,applied)
     assert s.plan['validation']['accepted']
@@ -49,6 +54,7 @@ def test_actual_steering_rate_prefix_preserves_all_hard_limits():
     controls=[[0.,angle,.1] for angle in (.15,.2,.25,.28,.29,.29,.29,.29,.29,.29)]
     s,result=prepared([0.,0.,0.,.1,0.,.1],[0.,.1,.3],controls)
     assert s.accept(result,10.02)
+    s.last_command=Command(.1,.1)
     assert s.activate(10.02,s.state,dict(speed=.1,steering=.1,acceleration=0.,steering_rate=0.))
     assert s.plan['validation']['envelope']['hard_control_violation']<=1e-12
     assert s.plan['controls'][0][1]<=.12+1e-12

@@ -70,6 +70,7 @@ class Supervisor:
         self.pending_plan = None
         self.rejected_plans = 0
         self.handover_error = None
+        self.execution_validation = None
         self.started = self.last_tick = None
         self.progress = self.wrapped_progress = 0.
         self.start_progress = 0.
@@ -134,6 +135,7 @@ class Supervisor:
         self.status, self.reason, self.plan = 'RUNNING', '', None
         self.pending_plan = None
         self.handover_error = None
+        self.execution_validation = None
         self.started = self.last_tick = now
         self.last_usable_update=now
         self.consecutive_failures=self.recovery_good_candidates=0
@@ -329,7 +331,17 @@ class Supervisor:
                 self.rejected_plans+=1
                 self.solver_failure(now,validation['reason'])
                 return False
+            from .execution import validate_execution
+            execution_started=time.perf_counter()
+            self.execution_validation=validate_execution(self,rebased,initial,actual_command,now,path)
+            execution_validation_time=time.perf_counter()-execution_started
+            if not self.execution_validation['accepted']:
+                self.rejected_plans+=1
+                self.solver_failure(now,self.execution_validation['reason'])
+                return False
             result=dict(rebased,validation=validation,
+                        execution_validation=self.execution_validation,
+                        execution_validation_time_s=execution_validation_time,
                         handover_validation_time_s=time.perf_counter()-validation_started)
         # Execution starts here, even if the control tick is a little late.
         # Never skip new inputs that were not executed during that lateness.
