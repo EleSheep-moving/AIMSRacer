@@ -183,11 +183,15 @@ def evaluate_envelope(initial_state, applied, controls, config, dt=.1, steering_
                                     float(np.max(reference_states[:,3]-config.max_speed)),0.)
     reference_feasible = bool(reference_reserve_feasible and reference_hard<=tolerance and
                               reference_speed_violation<=tolerance and hard<=tolerance)
-    comparison = bool(reference_feasible and np.max(excess)<=np.max(ref_excess)+tolerance and
-                      candidate_integral<=reference_integral+tolerance and
-                      np.max(lateral_excess)<=np.max(ref_lateral_excess)+tolerance and
-                      lateral_integral<=ref_lateral_integral+tolerance and
-                      lateral[-1]<=ref_lateral[-1]+tolerance)
+    # Compare physical violations. A lower lateral acceleration once both
+    # candidates are inside the envelope is a preference, not a recovery gate.
+    comparisons = dict(reference_feasible=reference_feasible,
+        peak_excess=np.max(excess)<=np.max(ref_excess)+tolerance,
+        integrated_excess=candidate_integral<=reference_integral+tolerance,
+        peak_lateral_excess=np.max(lateral_excess)<=np.max(ref_lateral_excess)+tolerance,
+        integrated_lateral_excess=lateral_integral<=ref_lateral_integral+tolerance,
+        terminal_lateral_excess=lateral_excess[-1]<=ref_lateral_excess[-1]+tolerance)
+    comparison = all(comparisons.values())
     deadline_ok = bool(np.all(values[times>=config.envelope_recovery_time-1e-10]<=1.+tolerance))
     cap = config.envelope_slack_limit if config.envelope_soft_enabled else 0.
     initial_ok = bool(config.envelope_soft_enabled or initial_candidate<=1.+tolerance)
@@ -211,6 +215,11 @@ def evaluate_envelope(initial_state, applied, controls, config, dt=.1, steering_
                 recovery_deadline_satisfied=deadline_ok, initial_envelope_satisfied=initial_ok,
                 active_envelope_slack_limit=cap,
                 braking_comparison_satisfied=comparison,
+                braking_comparison_failures=[key for key,value in comparisons.items() if not value],
+                candidate_terminal_lateral_utilization=float(lateral[-1]),
+                reference_terminal_lateral_utilization=float(ref_lateral[-1]),
+                candidate_terminal_lateral_excess=float(lateral_excess[-1]),
+                reference_terminal_lateral_excess=float(ref_lateral_excess[-1]),
                 recovery_acceptable=bool(bounds and comparison and initial['initial_actuator_jerk_feasible']),
                 execution_authorized=False, active_jerk_limits=limits.tolist(),
                 reference_control_prefix_intervals=1, reference_braking_begins_s=dt,

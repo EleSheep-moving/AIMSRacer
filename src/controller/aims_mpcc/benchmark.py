@@ -32,6 +32,9 @@ def main():
     parser.add_argument('--output', required=True)
     parser.add_argument('--vehicle-config', help='Override recorded vehicle profile for the candidate')
     parser.add_argument('--backend', choices=['ipopt', 'acados', 'qp'], default='ipopt')
+    parser.add_argument('--artifact-directory')
+    parser.add_argument('--recovery-speed-refs',action='store_true',
+                        help='Compare the recovery policy with zero speed references; keep recorded state and applied inputs')
     parser.add_argument('--repeats', type=int, default=1)
     args = parser.parse_args()
     if args.repeats < 1:
@@ -55,7 +58,8 @@ def main():
                     solvers[key] = MPCCSolver(path, config, horizon=fixture['horizon'], dt=fixture['dt'])
                 else:
                     from .backends import create_solver
-                    solvers[key] = create_solver(args.backend, path, config, fixture['horizon'], fixture['dt'])
+                    solvers[key] = create_solver(args.backend, path, config, fixture['horizon'], fixture['dt'],
+                                                 artifact_directory=args.artifact_directory)
             solver = solvers[key]
             solver.reset()
             # Reproduce the original IPOPT primal seed rather than inferring it
@@ -65,7 +69,9 @@ def main():
                     np.asarray(f['recorded_warm_states']), np.asarray(f['recorded_warm_controls']))
                 solver.previous_theta = fixture['recorded_initial'][4]
                 solver.previous_yaw = fixture['recorded_initial'][2]
-            request = fixture['request']
+            request = dict(fixture['request'])
+            if args.recovery_speed_refs:
+                request['speed_refs']=[0.]*(fixture['horizon']+1)
             start = time.perf_counter()
             result = solver.solve(request['state'], request['previous'], request['speed_refs'],
                                   request['elapsed'], request.get('map_alignment'))
@@ -81,6 +87,7 @@ def main():
                              **{k: v for k, v in result.items() if k not in ['failure_snapshot', 'solve_input']}))
     report = dict(schema_version=1, layer='fixed-input-direct-call', hardware_validated=False,
                   includes_ipc=False, includes_solver_construction=False,
+                  speed_reference_policy='recovery-zero-speed' if args.recovery_speed_refs else 'recorded',
                   fixtures_sha256=hashlib.sha256(fixtures_file.read_bytes()).hexdigest(),
                   reference_sha256=hashlib.sha256((Path(args.reference)/'path.csv').read_bytes()).hexdigest(),
                   summary=summarize(rows), requests=rows)

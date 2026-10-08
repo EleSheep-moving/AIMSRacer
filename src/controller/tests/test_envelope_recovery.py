@@ -229,3 +229,22 @@ def test_soft_solver_compact_diagnostics_omit_full_rollout_traces():
     diagnostic = result['diagnostics']['envelope']
     assert diagnostic['future_slack_max'] <= 1e-4
     assert not {'candidate_samples','reference_samples','reference_controls'} & diagnostic.keys()
+
+
+@pytest.mark.parametrize('index',range(7))
+def test_captured_recovery_compares_terminal_excess_within_physical_bounds(index):
+    import json
+    from pathlib import Path
+    cases=json.loads((Path(__file__).parent/'fixtures/nx_recovery_controls.json').read_text())
+    case=cases[index]
+    result=envelope().evaluate_envelope(np.asarray(case['initial']),np.asarray(case['applied']),
+        np.asarray(case['controls']),VehicleConfig(**case['config']),dt=case['dt'])
+    assert result['recovery_acceptable']==case['expected_acceptable'],case['id']
+    if case['expected_acceptable']:
+        assert result['recovery_bounds_satisfied'] and result['recovery_deadline_satisfied']
+        assert result['terminal_utilization']<=1.+1e-4
+        assert result['candidate_terminal_lateral_excess']==0.
+        assert result['reference_terminal_lateral_excess']==0.
+    else:
+        assert result['braking_comparison_failures']
+    assert not result['execution_authorized']

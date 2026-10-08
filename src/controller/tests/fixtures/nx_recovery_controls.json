@@ -1,0 +1,821 @@
+[
+  {
+    "id": "235908-b-1mps-35iter-request-246",
+    "initial": [
+      2.9500699298083366,
+      0.4641549493418971,
+      0.595176124804417,
+      0.8142638731515698,
+      36.63769777636935,
+      0.4478385696423154
+    ],
+    "applied": [
+      0.3834011186629816,
+      0.4496358293411407,
+      -0.004552229191590595
+    ],
+    "config": {
+      "profile": "measured",
+      "wheelbase": 0.36,
+      "rear_offset": 0.0,
+      "half_length": null,
+      "front_extent": 0.52,
+      "rear_extent": 0.1,
+      "half_width": 0.16,
+      "geometry_verified": true,
+      "enforce_corridor": false,
+      "cruise_speed": 1.0,
+      "max_speed": 1.5,
+      "minimum_drive_speed": 0.2,
+      "steer_limit": 0.45,
+      "steer_rate": 2.0,
+      "steer_acceleration": 2.0,
+      "accel_limit": 0.5,
+      "brake_limit": 0.5,
+      "jerk_limit": 1.0,
+      "steering_tau": 0.08,
+      "understeer_coefficient": 0.0,
+      "lateral_accel_limit": 1.0,
+      "longitudinal_envelope_accel": 0.5,
+      "longitudinal_envelope_brake": 0.5,
+      "envelope_soft_enabled": true,
+      "envelope_slack_limit": 0.5,
+      "envelope_slack_weight": 10000.0,
+      "envelope_recovery_time": 0.6,
+      "acados_envelope_margin": 0.01,
+      "optimization_envelope_margin": 0.0,
+      "recovery_jerk_enabled": true,
+      "recovery_jerk_limit": 2.0,
+      "contour_scale": 0.05,
+      "lag_scale": 0.2,
+      "heading_scale": 0.05,
+      "speed_scale": 0.6,
+      "steering_scale": 0.314159,
+      "acceleration_scale": 2.0,
+      "contour_weight": 16.0,
+      "heading_weight": 4.0,
+      "speed_weight": 133.33333333333334,
+      "steering_weight": 0.6666666666666666,
+      "steering_rate_weight": 0.3,
+      "steering_acceleration_weight": 0.6,
+      "terminal_weight": 3.0,
+      "solver_max_iterations": 35
+    },
+    "controls": [
+      [
+        0.1834011234805902,
+        0.438832768590755,
+        1.4999997740785407
+      ],
+      [
+        -0.016598864570342244,
+        0.4080297118785249,
+        1.4999997231222428
+      ],
+      [
+        -0.21659883088537146,
+        0.35722665822804434,
+        1.499999411029267
+      ],
+      [
+        -0.33610131348061395,
+        0.28642360829814706,
+        1.4161967451534943
+      ],
+      [
+        -0.4102998423369468,
+        0.195620563961874,
+        0.7177922765948552
+      ],
+      [
+        -0.46117598907531754,
+        0.0848175297716178,
+        0.43289964339371995
+      ],
+      [
+        -0.4889871718863226,
+        -0.045985480026931695,
+        0.26555662598630303
+      ],
+      [
+        -0.49781861375314135,
+        -0.19678831481854422,
+        0.14675184893827134
+      ],
+      [
+        -0.4903683894342079,
+        -0.33339333140393207,
+        0.04308494686274275
+      ],
+      [
+        -0.48330149442666304,
+        -0.44999989831506393,
+        1.809286337067863e-05
+      ]
+    ],
+    "dt": 0.1,
+    "expected_acceptable": true
+  },
+  {
+    "id": "235908-b-1mps-35iter-request-247",
+    "initial": [
+      3.0294537403927486,
+      0.5244744261146282,
+      0.7400027702830592,
+      0.8391898363543852,
+      36.72572276035034,
+      0.4395376905727807
+    ],
+    "applied": [
+      0.3071539452140294,
+      0.4292107051787562,
+      -0.26582457500754353
+    ],
+    "config": {
+      "profile": "measured",
+      "wheelbase": 0.36,
+      "rear_offset": 0.0,
+      "half_length": null,
+      "front_extent": 0.52,
+      "rear_extent": 0.1,
+      "half_width": 0.16,
+      "geometry_verified": true,
+      "enforce_corridor": false,
+      "cruise_speed": 1.0,
+      "max_speed": 1.5,
+      "minimum_drive_speed": 0.2,
+      "steer_limit": 0.45,
+      "steer_rate": 2.0,
+      "steer_acceleration": 2.0,
+      "accel_limit": 0.5,
+      "brake_limit": 0.5,
+      "jerk_limit": 1.0,
+      "steering_tau": 0.08,
+      "understeer_coefficient": 0.0,
+      "lateral_accel_limit": 1.0,
+      "longitudinal_envelope_accel": 0.5,
+      "longitudinal_envelope_brake": 0.5,
+      "envelope_soft_enabled": true,
+      "envelope_slack_limit": 0.5,
+      "envelope_slack_weight": 10000.0,
+      "envelope_recovery_time": 0.6,
+      "acados_envelope_margin": 0.01,
+      "optimization_envelope_margin": 0.0,
+      "recovery_jerk_enabled": true,
+      "recovery_jerk_limit": 2.0,
+      "contour_scale": 0.05,
+      "lag_scale": 0.2,
+      "heading_scale": 0.05,
+      "speed_scale": 0.6,
+      "steering_scale": 0.314159,
+      "acceleration_scale": 2.0,
+      "contour_weight": 16.0,
+      "heading_weight": 4.0,
+      "speed_weight": 133.33333333333334,
+      "steering_weight": 0.6666666666666666,
+      "steering_rate_weight": 0.3,
+      "steering_acceleration_weight": 0.6,
+      "terminal_weight": 3.0,
+      "solver_max_iterations": 35
+    },
+    "controls": [
+      [
+        0.10715395010049955,
+        0.3966969449799259,
+        1.4999998772819354
+      ],
+      [
+        -0.09284603783100313,
+        0.34418319303314054,
+        1.4999998086125523
+      ],
+      [
+        -0.29284600381828224,
+        0.2716694482744125,
+        1.499999470308038
+      ],
+      [
+        -0.4007996190061411,
+        0.17915571356703647,
+        1.3112748755863262
+      ],
+      [
+        -0.45848005508499917,
+        0.06664199763158314,
+        0.5676465288327434
+      ],
+      [
+        -0.48979746037789496,
+        -0.0658716552736169,
+        0.2948295235797596
+      ],
+      [
+        -0.49678035400396076,
+        -0.19190353977805535,
+        0.17248109095375314
+      ],
+      [
+        -0.4891979162456142,
+        -0.29793554203108014,
+        0.09155132505421293
+      ],
+      [
+        -0.4832650055370438,
+        -0.3839676349529421,
+        0.018652467452173024
+      ],
+      [
+        -0.48134495352874274,
+        -0.4499999283319179,
+        1.968663434747558e-05
+      ]
+    ],
+    "dt": 0.1,
+    "expected_acceptable": true
+  },
+  {
+    "id": "235908-b-1mps-35iter-request-248",
+    "initial": [
+      3.113309792858801,
+      0.6160346122332274,
+      0.9141427900161165,
+      0.8761517757480097,
+      36.83233869363205,
+      0.4174822876654241
+    ],
+    "applied": [
+      0.30467616655093765,
+      0.3954728960706086,
+      -0.44568466519964156
+    ],
+    "config": {
+      "profile": "measured",
+      "wheelbase": 0.36,
+      "rear_offset": 0.0,
+      "half_length": null,
+      "front_extent": 0.52,
+      "rear_extent": 0.1,
+      "half_width": 0.16,
+      "geometry_verified": true,
+      "enforce_corridor": false,
+      "cruise_speed": 1.0,
+      "max_speed": 1.5,
+      "minimum_drive_speed": 0.2,
+      "steer_limit": 0.45,
+      "steer_rate": 2.0,
+      "steer_acceleration": 2.0,
+      "accel_limit": 0.5,
+      "brake_limit": 0.5,
+      "jerk_limit": 1.0,
+      "steering_tau": 0.08,
+      "understeer_coefficient": 0.0,
+      "lateral_accel_limit": 1.0,
+      "longitudinal_envelope_accel": 0.5,
+      "longitudinal_envelope_brake": 0.5,
+      "envelope_soft_enabled": true,
+      "envelope_slack_limit": 0.5,
+      "envelope_slack_weight": 10000.0,
+      "envelope_recovery_time": 0.6,
+      "acados_envelope_margin": 0.01,
+      "optimization_envelope_margin": 0.0,
+      "recovery_jerk_enabled": true,
+      "recovery_jerk_limit": 2.0,
+      "contour_scale": 0.05,
+      "lag_scale": 0.2,
+      "heading_scale": 0.05,
+      "speed_scale": 0.6,
+      "steering_scale": 0.314159,
+      "acceleration_scale": 2.0,
+      "contour_weight": 16.0,
+      "heading_weight": 4.0,
+      "speed_weight": 133.33333333333334,
+      "steering_weight": 0.6666666666666666,
+      "steering_rate_weight": 0.3,
+      "steering_acceleration_weight": 0.6,
+      "terminal_weight": 3.0,
+      "solver_max_iterations": 35
+    },
+    "controls": [
+      [
+        0.10467616594331405,
+        0.33090443442984385,
+        1.4999999110733047
+      ],
+      [
+        -0.09532382967127599,
+        0.2463359796552614,
+        1.4999998239140544
+      ],
+      [
+        -0.2953238101952888,
+        0.14176753833704964,
+        1.4999993831896918
+      ],
+      [
+        -0.4537729705767191,
+        0.017199145277162143,
+        1.0735453667916808
+      ],
+      [
+        -0.49287358331838915,
+        -0.10609884879591452,
+        0.4362614502895463
+      ],
+      [
+        -0.4914561644480154,
+        -0.20939704186432398,
+        0.2745383992428939
+      ],
+      [
+        -0.480241407152599,
+        -0.2926954018017061,
+        0.20594329534098313
+      ],
+      [
+        -0.4728942039258474,
+        -0.3559941844716793,
+        0.14248733324220844
+      ],
+      [
+        -0.4709868127253557,
+        -0.40538694369423517,
+        0.07978289588422027
+      ],
+      [
+        -0.4709867859376497,
+        -0.4499992248907469,
+        0.03537623638081786
+      ]
+    ],
+    "dt": 0.1,
+    "expected_acceptable": true
+  },
+  {
+    "id": "235908-b-1mps-35iter-request-249",
+    "initial": [
+      3.1884434745093246,
+      0.726712921873072,
+      1.0715237309827277,
+      0.9121094112051703,
+      36.94722350718823,
+      0.3371315650591858
+    ],
+    "applied": [
+      0.38555778324839657,
+      0.29284382829180217,
+      -0.7718454331993223
+    ],
+    "config": {
+      "profile": "measured",
+      "wheelbase": 0.36,
+      "rear_offset": 0.0,
+      "half_length": null,
+      "front_extent": 0.52,
+      "rear_extent": 0.1,
+      "half_width": 0.16,
+      "geometry_verified": true,
+      "enforce_corridor": false,
+      "cruise_speed": 1.0,
+      "max_speed": 1.5,
+      "minimum_drive_speed": 0.2,
+      "steer_limit": 0.45,
+      "steer_rate": 2.0,
+      "steer_acceleration": 2.0,
+      "accel_limit": 0.5,
+      "brake_limit": 0.5,
+      "jerk_limit": 1.0,
+      "steering_tau": 0.08,
+      "understeer_coefficient": 0.0,
+      "lateral_accel_limit": 1.0,
+      "longitudinal_envelope_accel": 0.5,
+      "longitudinal_envelope_brake": 0.5,
+      "envelope_soft_enabled": true,
+      "envelope_slack_limit": 0.5,
+      "envelope_slack_weight": 10000.0,
+      "envelope_recovery_time": 0.6,
+      "acados_envelope_margin": 0.01,
+      "optimization_envelope_margin": 0.0,
+      "recovery_jerk_enabled": true,
+      "recovery_jerk_limit": 2.0,
+      "contour_scale": 0.05,
+      "lag_scale": 0.2,
+      "heading_scale": 0.05,
+      "speed_scale": 0.6,
+      "steering_scale": 0.314159,
+      "acceleration_scale": 2.0,
+      "contour_weight": 16.0,
+      "heading_weight": 4.0,
+      "speed_weight": 133.33333333333334,
+      "steering_weight": 0.6666666666666666,
+      "steering_rate_weight": 0.3,
+      "steering_acceleration_weight": 0.6,
+      "terminal_weight": 3.0,
+      "solver_max_iterations": 35
+    },
+    "controls": [
+      [
+        0.28555777555790984,
+        0.19565929328873574,
+        1.499999899824524
+      ],
+      [
+        0.1855577683290976,
+        0.08436992352968416,
+        1.49999975273069
+      ],
+      [
+        0.08555776173979303,
+        -0.006919462969143249,
+        1.4999984099097288
+      ],
+      [
+        -0.014442243915409337,
+        -0.07820885994498293,
+        0.9670275072081854
+      ],
+      [
+        -0.1144422481045604,
+        -0.12949826713491808,
+        0.7961570278315928
+      ],
+      [
+        -0.21444224973689346,
+        -0.1607876871405705,
+        0.5917190239045509
+      ],
+      [
+        -0.3144422460361002,
+        -0.17207712758515478,
+        0.4281488542039148
+      ],
+      [
+        -0.4144422257747684,
+        -0.1633666157007293,
+        0.3379764262633242
+      ],
+      [
+        -0.4701935225917369,
+        -0.13465667310880294,
+        0.29386513407283055
+      ],
+      [
+        -0.4805230570748794,
+        -0.10263520797818426,
+        0.262086756073551
+      ]
+    ],
+    "dt": 0.1,
+    "expected_acceptable": true
+  },
+  {
+    "id": "000919-b-1mps-a0p6-j2-request-243",
+    "initial": [
+      1.6866558331035626,
+      10.101342761237946,
+      1.7757402380294254,
+      0.929244062604693,
+      48.99384407147993,
+      0.38725464713826224
+    ],
+    "applied": [
+      -0.019913249247769927,
+      0.408192453611921,
+      0.16728958917493592
+    ],
+    "config": {
+      "profile": "measured",
+      "wheelbase": 0.36,
+      "rear_offset": 0.0,
+      "half_length": null,
+      "front_extent": 0.52,
+      "rear_extent": 0.1,
+      "half_width": 0.16,
+      "geometry_verified": true,
+      "enforce_corridor": false,
+      "cruise_speed": 1.0,
+      "max_speed": 1.5,
+      "minimum_drive_speed": 0.2,
+      "steer_limit": 0.45,
+      "steer_rate": 2.0,
+      "steer_acceleration": 2.0,
+      "accel_limit": 0.5,
+      "brake_limit": 0.5,
+      "jerk_limit": 1.0,
+      "steering_tau": 0.08,
+      "understeer_coefficient": 0.0,
+      "lateral_accel_limit": 1.0,
+      "longitudinal_envelope_accel": 0.5,
+      "longitudinal_envelope_brake": 0.5,
+      "envelope_soft_enabled": true,
+      "envelope_slack_limit": 0.5,
+      "envelope_slack_weight": 10000.0,
+      "envelope_recovery_time": 0.6,
+      "acados_envelope_margin": 0.01,
+      "optimization_envelope_margin": 0.0,
+      "recovery_jerk_enabled": true,
+      "recovery_jerk_limit": 2.0,
+      "contour_scale": 0.05,
+      "lag_scale": 0.2,
+      "heading_scale": 0.05,
+      "speed_scale": 0.6,
+      "steering_scale": 0.314159,
+      "acceleration_scale": 2.0,
+      "contour_weight": 16.0,
+      "heading_weight": 4.0,
+      "speed_weight": 133.33333333333334,
+      "steering_weight": 0.6666666666666666,
+      "steering_rate_weight": 0.3,
+      "steering_acceleration_weight": 0.6,
+      "terminal_weight": 3.0,
+      "solver_max_iterations": 35
+    },
+    "controls": [
+      [
+        -0.11991319615198846,
+        0.4049214287587938,
+        2.4403913641862456e-06
+      ],
+      [
+        -0.12509335929887702,
+        0.382384349553112,
+        0.39371156002171015
+      ],
+      [
+        -0.18395306517327664,
+        0.36173093328530415,
+        1.0905397244840938
+      ],
+      [
+        -0.26168485013073883,
+        0.3210779070027711,
+        1.3204437312699198
+      ],
+      [
+        -0.33940777185819027,
+        0.26042509498234906,
+        1.245493995352049
+      ],
+      [
+        -0.4081106992349849,
+        0.1797725211359338,
+        1.019405660901737
+      ],
+      [
+        -0.45758590191594967,
+        0.07912036135745153,
+        0.8102518660383166
+      ],
+      [
+        -0.4876426002145539,
+        -0.04152990040614216,
+        0.6644170097340995
+      ],
+      [
+        -0.4977344083882343,
+        -0.17071402347452244,
+        0.5711924739554307
+      ],
+      [
+        -0.4891189465552951,
+        -0.29980087258703714,
+        0.5004652956226687
+      ]
+    ],
+    "dt": 0.1,
+    "expected_acceptable": false
+  },
+  {
+    "id": "000919-b-1mps-a0p6-j2-request-244",
+    "initial": [
+      1.6394245525038684,
+      10.252547297986087,
+      2.0217169256238385,
+      0.918535947441802,
+      49.13211747942229,
+      0.4373289321884284
+    ],
+    "applied": [
+      -0.17606411603215794,
+      0.43660781706854807,
+      -0.1575462243832482
+    ],
+    "config": {
+      "profile": "measured",
+      "wheelbase": 0.36,
+      "rear_offset": 0.0,
+      "half_length": null,
+      "front_extent": 0.52,
+      "rear_extent": 0.1,
+      "half_width": 0.16,
+      "geometry_verified": true,
+      "enforce_corridor": false,
+      "cruise_speed": 1.0,
+      "max_speed": 1.5,
+      "minimum_drive_speed": 0.2,
+      "steer_limit": 0.45,
+      "steer_rate": 2.0,
+      "steer_acceleration": 2.0,
+      "accel_limit": 0.5,
+      "brake_limit": 0.5,
+      "jerk_limit": 1.0,
+      "steering_tau": 0.08,
+      "understeer_coefficient": 0.0,
+      "lateral_accel_limit": 1.0,
+      "longitudinal_envelope_accel": 0.5,
+      "longitudinal_envelope_brake": 0.5,
+      "envelope_soft_enabled": true,
+      "envelope_slack_limit": 0.5,
+      "envelope_slack_weight": 10000.0,
+      "envelope_recovery_time": 0.6,
+      "acados_envelope_margin": 0.01,
+      "optimization_envelope_margin": 0.0,
+      "recovery_jerk_enabled": true,
+      "recovery_jerk_limit": 2.0,
+      "contour_scale": 0.05,
+      "lag_scale": 0.2,
+      "heading_scale": 0.05,
+      "speed_scale": 0.6,
+      "steering_scale": 0.314159,
+      "acceleration_scale": 2.0,
+      "contour_weight": 16.0,
+      "heading_weight": 4.0,
+      "speed_weight": 133.33333333333334,
+      "steering_weight": 0.6666666666666666,
+      "steering_rate_weight": 0.3,
+      "steering_acceleration_weight": 0.6,
+      "terminal_weight": 3.0,
+      "solver_max_iterations": 35
+    },
+    "controls": [
+      [
+        -0.06112799798195784,
+        0.4008531942926002,
+        0.6555467487420658
+      ],
+      [
+        -0.06157118413012637,
+        0.3450985722868084,
+        1.2123153689755306
+      ],
+      [
+        -0.22004261211456036,
+        0.2693439528079366,
+        1.1359760293810224
+      ],
+      [
+        -0.3537551649368412,
+        0.17358933998732268,
+        0.9194240638965613
+      ],
+      [
+        -0.4401807225496136,
+        0.05783474808905799,
+        0.7379826437945889
+      ],
+      [
+        -0.486197857694663,
+        -0.07791954530262843,
+        0.618092880459428
+      ],
+      [
+        -0.4940651284859645,
+        -0.1946643248977875,
+        0.5620035328662842
+      ],
+      [
+        -0.48174657898949025,
+        -0.29140964705027,
+        0.5785066818937004
+      ],
+      [
+        -0.4713857829767596,
+        -0.37189006204920244,
+        0.5947313719828387
+      ],
+      [
+        -0.46527136857293566,
+        -0.44684417120668274,
+        0.528023319718614
+      ]
+    ],
+    "dt": 0.1,
+    "expected_acceptable": false
+  },
+  {
+    "id": "000919-b-1mps-a0p6-j2-request-285",
+    "initial": [
+      -2.944123349084019,
+      12.825927715165696,
+      3.5077163253602457,
+      1.0165032832907812,
+      54.530737662446384,
+      -0.2727330554330794
+    ],
+    "applied": [
+      -0.18240897931340172,
+      -0.3187647796137296,
+      -0.5456794433841661
+    ],
+    "config": {
+      "profile": "measured",
+      "wheelbase": 0.36,
+      "rear_offset": 0.0,
+      "half_length": null,
+      "front_extent": 0.52,
+      "rear_extent": 0.1,
+      "half_width": 0.16,
+      "geometry_verified": true,
+      "enforce_corridor": false,
+      "cruise_speed": 1.0,
+      "max_speed": 1.5,
+      "minimum_drive_speed": 0.2,
+      "steer_limit": 0.45,
+      "steer_rate": 2.0,
+      "steer_acceleration": 2.0,
+      "accel_limit": 0.5,
+      "brake_limit": 0.5,
+      "jerk_limit": 1.0,
+      "steering_tau": 0.08,
+      "understeer_coefficient": 0.0,
+      "lateral_accel_limit": 1.0,
+      "longitudinal_envelope_accel": 0.5,
+      "longitudinal_envelope_brake": 0.5,
+      "envelope_soft_enabled": true,
+      "envelope_slack_limit": 0.5,
+      "envelope_slack_weight": 10000.0,
+      "envelope_recovery_time": 0.6,
+      "acados_envelope_margin": 0.01,
+      "optimization_envelope_margin": 0.0,
+      "recovery_jerk_enabled": true,
+      "recovery_jerk_limit": 2.0,
+      "contour_scale": 0.05,
+      "lag_scale": 0.2,
+      "heading_scale": 0.05,
+      "speed_scale": 0.6,
+      "steering_scale": 0.314159,
+      "acceleration_scale": 2.0,
+      "contour_weight": 16.0,
+      "heading_weight": 4.0,
+      "speed_weight": 133.33333333333334,
+      "steering_weight": 0.6666666666666666,
+      "steering_rate_weight": 0.3,
+      "steering_acceleration_weight": 0.6,
+      "terminal_weight": 3.0,
+      "solver_max_iterations": 35
+    },
+    "controls": [
+      [
+        -0.25546958840449535,
+        -0.35333272360840734,
+        1.4999848802877225
+      ],
+      [
+        -0.206133055412424,
+        -0.36790066764459517,
+        0.9524471989191857
+      ],
+      [
+        -0.18302643936901725,
+        -0.3624686124269893,
+        0.6423363646334083
+      ],
+      [
+        -0.18630102749422447,
+        -0.33703655901533636,
+        0.5750891773176909
+      ],
+      [
+        -0.24750059041039835,
+        -0.2916045092480123,
+        0.5410771972339751
+      ],
+      [
+        -0.33253798388564676,
+        -0.22617246665529187,
+        0.47858328377676107
+      ],
+      [
+        -0.40683146058920294,
+        -0.14074043897888938,
+        0.41712752335889397
+      ],
+      [
+        -0.46192289898878486,
+        -0.03530844708566961,
+        0.38451190219796755
+      ],
+      [
+        -0.4918241341905258,
+        0.09012342550512294,
+        0.3733350166231998
+      ],
+      [
+        -0.4913818430230828,
+        0.23555371884323945,
+        0.35479828694569476
+      ]
+    ],
+    "dt": 0.1,
+    "expected_acceptable": false
+  }
+]
