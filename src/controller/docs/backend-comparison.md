@@ -9,13 +9,13 @@ handover state and current command epoch before accepting a plan.
 | Property | IPOPT | acados | QP |
 |---|---|---|---|
 | Numerical core | CasADi/IPOPT/MUMPS | Generated C, SQP_RTI, HPIPM | OSQP native C extension |
-| Physical prediction | Six state nonlinear rear axle model | Same six state discrete model plus three previous input states | Four state linear lateral/speed prediction; six state nonlinear output rollout |
+| Physical prediction | Six state nonlinear rear axle model | Same six state discrete model plus three previous input states; returned states reconstructed from unchanged native controls | Four state linear lateral/speed prediction; six state nonlinear output rollout |
 | Reference | Periodic spline inside the nonlinear program | Frozen local spline geometry per interval, refreshed each request | Frozen speed/curvature per interval, refreshed each request |
 | Steering actuator | 20 ms endpoint ramp, first order lag | Same ramp/lag and RK4 discretization | Same ramp/lag in the linear predictor; complete nonlinear independent output rollout |
 | Longitudinal/lateral coupling | Nonlinear | Nonlinear | Coupling approximated using seeded speed; exact candidate checked afterward |
 | Hard limits | Speed, acceleration, steering endpoint, jerk, steering rate/acceleration | Same | Same, with conservative actual steering bounds in predictor |
 | Corridor | Nonlinear footprint at integration samples | Frozen tangent footprint at start/middle/end; current spline checked independently | Linear footprint approximation; complete independent rollout checks current spline |
-| Strict envelope | Nonlinear ellipse | Nonlinear ellipse at 20 ms nodes | Inscribed 16-sided conservative ellipse approximation plus exact independent checks |
+| Strict envelope | Nonlinear ellipse | Nonlinear ellipse at 20 ms nodes with explicit RTI reserve | Inscribed 16-sided conservative ellipse approximation plus exact independent checks |
 | Soft envelope | Optional bounded recovery slack | Same finite utilization cap and recovery deadline; independent recovery comparator | Explicit `unsupported` result; no slack approximation is silently substituted |
 | Warm start | Last successful candidate | Shifted last successful controls, re-integrated from new measured state | Explicit elapsed shift of last successful controls; all primal nodes projected through current alignment; duals reset |
 
@@ -23,8 +23,15 @@ The acados cost retains the baseline normalized contour, lag, periodic heading,
 speed, progress, steering feedforward, acceleration, steering rate, steering
 acceleration and terminal weights. One SQP_RTI call is made per request. An RTI
 step can return native status zero while nonlinear constraints remain violated;
-`success` additionally requires the nonlinear candidate residual to be below
-`1e-4`. Such failures do not overwrite the last successful seed.
+`success` additionally requires the returned candidate to obey the physical
+bounds with violation below `1e-4`. The stage zero nonlinear rows are supplied
+explicitly, since acados does not inherit interior path rows at stage zero.
+A single RTI step can leave a nonlinear dynamics defect in its optimized states;
+returned states are reconstructed through the backend's own nonlinear RK4
+transition using the unchanged native controls. Raw optimizer defects and
+constraints remain in diagnostics, and every physical inequality is checked again
+on that reconstruction. The separate midpoint validator remains independent. Rejected candidates do not overwrite the last successful seed; successful warm
+state caches contain the forward reconstruction.
 
 The QP uses separate lateral and speed objectives. Progress is derived from
 bounded longitudinal speed and the local tangent norm; it has no independent lag
@@ -141,3 +148,48 @@ source and kernel SHA-256 hashes, and acados artifact fingerprint are saved sepa
 `/evidence/experiments/mpcc-nx-optimization/backend-contract-timing-native-rollout.json`.
 Both samples exclude ROS, IPC and actual handover work, and establish no NX or
 20 Hz closed loop result.
+
+
+## First interval constraints and RTI envelope reserve
+
+The generated OCP explicitly sets `con_h_expr_0`, `lh_0`, and `uh_0`. Without
+these fields, acados v0.5.3 leaves `nh_0=0`, so the first input would omit jerk,
+steering slew/acceleration and the nonlinear sample constraints. The artifact
+loader also verifies stage zero/interior/terminal nonlinear dimensions.
+
+`VehicleConfig.acados_envelope_margin` defaults to **0.01**, is dimensionless,
+and permits `0 <= margin < 1`. Acados uses `max(acados_envelope_margin, optimization_envelope_margin)` and
+optimizes `E - slack <= 1 - effective_margin` to
+reserve room for one RTI step's ellipse linearization error. Its physical
+candidate gate and the independent validator still enforce the original
+`E - slack <= 1`. Soft slack cap, recovery deadline and recovery comparison retain
+their original values. IPOPT and QP do not use the acados-specific reserve. The margin is
+included in configuration and the artifact fingerprint and reported in diagnostics.
+
+Cold acceleration regressions use N=10/15/20 at a 0.5 m/s reference and N=10
+at a 1.0 m/s reference. They verify the actual native first input obeys the
+previous input's jerk and steering acceleration constraints, and that returned
+forward states pass independent physical validation. A native output corruption
+test verifies that forward reconstruction does not repair or authorize unsafe
+controls. Corridor rejection and native failure remain separate hard gates.
+
+
+`optimization_envelope_margin` is an optional common optimization reserve,
+defaulting to **0** to preserve the original IPOPT/QP profiles. It has the same
+finite range `0 <= margin < 1`. IPOPT optimizes `E - slack <= 1 - margin`, including
+the last integration node. QP contracts its conservative polygon by
+`sqrt(1-margin)`. Acados uses the maximum of this common reserve and its own
+reserve. Configuration, diagnostics and fingerprints record the selected values.
+The physical validator still uses `E <= 1` and the original recovery contract.
+A reserve cannot guarantee that an arbitrary RTI step is physically feasible:
+an abrupt moving 1.0 to 1.5 m/s request with a 0.02 reserve produced an envelope
+violation and was rejected by the unchanged gate.
+
+`python3 -m aims_mpcc.worker_benchmark` measures submission, IPC, worker solve and
+validation, delivery, and caller validation with every failed/late reply retained.
+Its separate `--prepare-only` mode records native warmup status and compiles only
+offline. `--sample-lap` generates nominal reference-following states using the
+spline parameter derivative; it is not recorded motion or closed loop evidence.
+The default minimal polling interval does not reproduce the ROS node's 50 Hz
+callback quantization or Supervisor handover. CPU counters use two process reads
+outside request timing, exclude startup, and report unknown counters explicitly.

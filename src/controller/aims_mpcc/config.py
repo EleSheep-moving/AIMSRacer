@@ -36,6 +36,11 @@ class VehicleConfig:
     envelope_slack_limit: float = .5  # excess of squared utilization E, not m/s^2
     envelope_slack_weight: float = 10000.
     envelope_recovery_time: float = .6
+    # Acados single-RTI nonlinear ellipse reserve in squared utilization E.
+    # Physical candidate validation still uses E<=1 and the original soft cap.
+    acados_envelope_margin: float = .01
+    # Explicit common optimization-only E reserve; physical acceptance stays E<=1.
+    optimization_envelope_margin: float = 0.
     recovery_jerk_enabled: bool = False
     recovery_jerk_limit: float = 2.
     contour_scale: float = .05
@@ -74,9 +79,11 @@ class VehicleConfig:
             if value is None and field.name in optional: continue
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
                 raise ValueError(f'{field.name} must be finite')
-            if field.name in {'rear_offset', 'understeer_coefficient', 'cruise_speed', 'minimum_drive_speed'}:
+            if field.name in {'rear_offset', 'understeer_coefficient', 'cruise_speed', 'minimum_drive_speed', 'acados_envelope_margin', 'optimization_envelope_margin'}:
                 if value < 0: raise ValueError(f'{field.name} must be nonnegative')
             elif value <= 0: raise ValueError(f'{field.name} must be positive')
+        for name in ('acados_envelope_margin','optimization_envelope_margin'):
+            if getattr(self,name)>=1:raise ValueError(f'{name} must be below one')
         if not 0 < self.steer_limit < math.pi/2: raise ValueError('steer_limit must be below pi/2')
         if type(self.solver_max_iterations) is not int or self.solver_max_iterations<1:
             raise ValueError('solver_max_iterations must be a positive integer')

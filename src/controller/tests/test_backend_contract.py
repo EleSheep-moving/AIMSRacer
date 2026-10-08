@@ -214,3 +214,46 @@ def test_acados_rejects_redirected_loader_metadata_without_online_compile(tmp_pa
                 create_solver('acados',circle(),config(),artifact_directory=tmp_path)
     finally:
         solver.json_file.write_bytes(original_json);solver._manifest.write_bytes(original_manifest)
+
+
+@pytest.mark.parametrize('horizon,speed',[(10,.5),(15,.5),(20,.5),(10,1.)])
+def test_acados_cold_first_interval_has_native_jerk_and_steering_constraints(tmp_path,horizon,speed):
+    if importlib.util.find_spec('acados_template') is None:pytest.skip('acados native installation required')
+    import json
+    from aims_mpcc.backends import create_solver
+    from aims_mpcc.validation import validate_candidate
+    cfg=config(cruise_speed=speed,max_speed=max(1.,speed*1.5));solver=create_solver('acados',circle(),cfg,horizon,prepare=True,artifact_directory=tmp_path)
+    state,previous=inputs();state.update(speed=0.,steering=0.);previous.update(steering=0.)
+    result=solver.solve(state,previous,np.full(horizon+1,speed))
+    first=np.asarray(result['controls'])[0]
+    assert abs(first[0])<=cfg.jerk_limit*.1+1e-6  # immutable prior acceleration is zero
+    assert abs(first[1])<=cfg.steer_acceleration*.1**2+1e-6  # immutable prior steering/rate are zero
+    metadata=json.loads(solver.json_file.read_text())
+    assert metadata['dims']['nh_0']==metadata['dims']['nh']>0
+    assert result['diagnostics']['acados_envelope_margin']==.01
+    assert result['diagnostics']['native_controls_modified'] is False
+    assert result['diagnostics']['constraint_violations']['dynamics']<1e-12
+    if horizon in (15,20):assert result['diagnostics']['raw_optimizer_state_dynamics_defect']>1e-4
+    assert result['success'],result
+    assert validate_candidate(dict(result,validation_applied=[0.,0.,0.],dt=.1),cfg,circle())['accepted']
+
+
+def test_acados_forward_projection_does_not_authorize_invalid_native_controls(tmp_path):
+    if importlib.util.find_spec('acados_template') is None:pytest.skip('acados native installation required')
+    from aims_mpcc.backends import create_solver
+    from aims_mpcc.validation import validate_candidate
+    cfg=config();solver=create_solver('acados',circle(),cfg,prepare=True,artifact_directory=tmp_path)
+    native_solve=solver._native.solve
+    def corrupt_first_control():
+        status=native_solve();assert status==0
+        control=solver._native.get(0,'u');control[0]=cfg.accel_limit+.1
+        solver._native.set(0,'u',control)
+        return status
+    solver._native.solve=corrupt_first_control
+    state,previous=inputs();result=solver.solve(state,previous,np.full(11,.5))
+    assert result['diagnostics']['native_status']==0
+    assert not result['success'] and result['constraint_violation']>.1
+    assert result['diagnostics']['native_controls_modified'] is False
+    assert result['controls'][0][0]==pytest.approx(cfg.accel_limit+.1)
+    assert not validate_candidate(dict(result,validation_applied=[0.,previous['steering'],0.],dt=.1),cfg,circle())['accepted']
+    assert solver.previous is None

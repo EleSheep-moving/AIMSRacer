@@ -163,9 +163,9 @@ class MPCCSolver:
                         continue  # immutable initial state is diagnosed independently
                     slack = (self.envelope_slack[k] if k*self.dt+substep*self.actuator_dt
                              < self.config.envelope_recovery_time-1e-10 else 0.)
-                    constrain(utilization <= 1.+slack, 'operating_envelope', k, substep)
+                    constrain(utilization <= 1.-self.config.optimization_envelope_margin+slack, 'operating_envelope', k, substep)
                 else:
-                    constrain(utilization <= 1., 'acceleration_ellipse', k, substep)
+                    constrain(utilization <= 1.-self.config.optimization_envelope_margin, 'acceleration_ellipse', k, substep)
             ec, el, ref = geometry(x[:, k], k, 0)
             geometry(stages[(self.substeps + 1) // 2], k, (self.substeps + 1) // 2)
             delta_ff = ca.atan(self.wheelbase * (1 + self.understeer_coefficient * x[3, k] ** 2) * ref["curvature"]) - self.steering_bias
@@ -363,7 +363,7 @@ class MPCCSolver:
                 constraint_upper=constraints[2] if constraints is not None else None,
                 constraint_blocks=self.constraint_blocks,
                 envelope_traces=envelope_traces))
-        diagnostics.update(warm_start_source='last_success' if use_cache else 'feedforward',
+        diagnostics.update(optimization_envelope_margin=self.config.optimization_envelope_margin,warm_start_source='last_success' if use_cache else 'feedforward',
                            warm_start_age_s=cache_age,warm_start_shift_steps=shift,
                            warm_start_cache_expired=cache_age is not None and not use_cache,
                            warm_start_retained=self.previous is not None,

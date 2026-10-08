@@ -6,6 +6,7 @@ from dataclasses import asdict
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import platform
 import time
@@ -13,6 +14,14 @@ import time
 import numpy as np
 from .benchmark import summarize as direct_summary
 from .solver_diagnostics import json_safe
+
+
+def process_cpu_snapshot(pid):
+    """Linux process-wide CPU ticks and threads; absent process is unknown."""
+    try:
+        fields=(Path('/proc')/str(pid)/'stat').read_text().rsplit(')',1)[1].split()
+        return dict(cpu_s=(int(fields[11])+int(fields[12]))/os.sysconf('SC_CLK_TCK'),threads=int(fields[17]))
+    except (OSError,ValueError,IndexError):return None
 
 
 def _distribution(values):
@@ -95,7 +104,9 @@ def run_case(reference,config,backend,horizon,samples=100,duration=None,period=.
         result_deadline_s=deadline,budget_s=budget,caller_poll_period_s=poll_period,
         includes_ipc=True,includes_caller_validation=True,includes_solver_construction=False,
         production_node_timer_included=False,supervisor_handover_included=False,
-        online_compilation_allowed=False,execution_authorized=False,requests=rows,events=events,status='completed')
+        online_compilation_allowed=False,execution_authorized=False,
+        worker_pid=worker.process.pid,worker_cpu_time_s=None,worker_cpu_cores=None,parent_cpu_time_s=None,
+        worker_threads_start=None,worker_threads_end=None,requests=rows,events=events,status='completed')
     try:
         while not worker.ready:
             now=time.monotonic();event=worker.poll(now)
@@ -105,6 +116,8 @@ def run_case(reference,config,backend,horizon,samples=100,duration=None,period=.
             if now-started>startup_timeout:raise TimeoutError('Worker initialization timeout; prepare artifacts offline first')
             if not worker.ready:time.sleep(poll_period)
         report['startup_s']=time.monotonic()-started
+        measured_pid=worker.process.pid;cpu_start=process_cpu_snapshot(measured_pid)
+        parent_cpu_start=time.process_time()
         collection_start=time.monotonic();next_due=collection_start;last_submission=None;theta=0.
         while True:
             now=time.monotonic();event=worker.poll(now);received=time.monotonic()
@@ -140,6 +153,13 @@ def run_case(reference,config,backend,horizon,samples=100,duration=None,period=.
                         events.append(dict(kind='submission_rejected',stamp=submit_end));blocked+=1
             time.sleep(poll_period)
         report['collection_wall_time_s']=time.monotonic()-collection_start
+        cpu_end=process_cpu_snapshot(measured_pid) if worker.process.pid==measured_pid else None
+        report['parent_cpu_time_s']=time.process_time()-parent_cpu_start
+        report['worker_threads_start']=cpu_start['threads'] if cpu_start else None
+        report['worker_threads_end']=cpu_end['threads'] if cpu_end else None
+        if cpu_start is not None and cpu_end is not None:
+            report['worker_cpu_time_s']=max(0.,cpu_end['cpu_s']-cpu_start['cpu_s'])
+            report['worker_cpu_cores']=report['worker_cpu_time_s']/report['collection_wall_time_s']
     except (RuntimeError,TimeoutError) as exc:
         report.update(status='startup_failed' if not worker.ready else 'worker_error',error=str(exc))
     finally:

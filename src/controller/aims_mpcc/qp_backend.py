@@ -83,7 +83,7 @@ class QPSolver(NumericalBackend):
             indices=list(values);P_structure[np.ix_(indices,indices)]=True
         state=lambda k,j:4*k+j
         control=lambda k,j:4*(self.n+1)+2*k+j
-        geometries=[self.geometry(x[4],alignment) for x in seed[0]]
+        geometries=self.geometries(seed[0][:,4],alignment)
         g=geometries[0];normal=np.array([-np.sin(g[2]),np.cos(g[2])])
         lateral=float(np.dot(initial[:2]-g[:2],normal));heading=(initial[2]-g[2]+np.pi)%(2*np.pi)-np.pi
         for j,value in enumerate((lateral,heading,initial[5],initial[3])):
@@ -141,7 +141,7 @@ class QPSolver(NumericalBackend):
                 slope=factor/(np.cos(d)**2);offset=factor*np.tan(d)-slope*d
                 for angle in np.arange(16)*2*np.pi/16:
                     a,b=np.cos(angle),np.sin(angle)
-                    constraint({accel:a/accel_axis,state(node,2):b*slope},-np.inf,np.cos(np.pi/16)-b*offset)
+                    constraint({accel:a/accel_axis,state(node,2):b*slope},-np.inf,np.cos(np.pi/16)*np.sqrt(1.-cfg.optimization_envelope_margin)-b*offset)
         self._p_structure=P_structure;self._a_structure=np.asarray(structures)
         return P,q,np.asarray(rows),np.asarray(low),np.asarray(high)
 
@@ -149,8 +149,8 @@ class QPSolver(NumericalBackend):
         # Native QP coordinates are path-relative, while retained trajectories
         # stay in odom. Re-project every node through this request's alignment.
         states=[]
-        for x in seed[0]:
-            geometry=self.geometry(x[4],alignment)
+        geometries=self.geometries(seed[0][:,4],alignment)
+        for x,geometry in zip(seed[0],geometries):
             normal=np.array([-np.sin(geometry[2]),np.cos(geometry[2])])
             lateral=float(np.dot(x[:2]-geometry[:2],normal))
             heading=(x[2]-geometry[2]+np.pi)%(2*np.pi)-np.pi
@@ -178,6 +178,7 @@ class QPSolver(NumericalBackend):
         self.last_native=solution
         success=solution.info.status_val==1;controls=None;states=None;violation=None
         diagnostics=dict(native_core='OSQP C',osqp_status=solution.info.status,
+            optimization_envelope_margin=self.config.optimization_envelope_margin,
             warm_start_source='last_success' if use_cache else 'feedforward',
             warm_start_age_s=cache_age,warm_start_shift_steps=shift,
             warm_start_cache_expired=cache_age is not None and not use_cache,

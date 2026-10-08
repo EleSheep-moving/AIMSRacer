@@ -50,6 +50,9 @@ def test_real_qp_worker_late_delivery_and_caller_validation_are_timed(tmp_path):
         assert row['components']['caller_validation_s']>=0.
         assert row['components']['worker_validation_s']>=0.
     assert result['blocked_submission_opportunities']>0
+    assert result['worker_cpu_time_s']>0. and result['worker_cpu_cores']>0.
+    assert result['parent_cpu_time_s']>0.
+    assert result['worker_threads_start']>=1 and result['worker_threads_end']>=1
 
 
 def test_acados_missing_prepared_artifact_is_reported_without_compilation(tmp_path):
@@ -130,3 +133,8 @@ def test_optional_sample_lap_moves_nominal_reference_inputs(tmp_path):
     assert theta[0]==0. and theta[0]<theta[1]<theta[2]
     assert all(r['validation']['accepted'] for r in result['requests'])
     assert not result['execution_authorized']
+
+
+def test_cpu_snapshot_missing_process_is_explicit():
+    from aims_mpcc.worker_benchmark import process_cpu_snapshot
+    assert process_cpu_snapshot(2147483647) is None

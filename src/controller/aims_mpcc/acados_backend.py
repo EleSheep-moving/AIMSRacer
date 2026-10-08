@@ -121,6 +121,9 @@ class AcadosSolver(NumericalBackend):
         dims=document['dims'];options=document['solver_options']
         if self._expected_lib_path is None:return False
         library_directory=Path(self._expected_lib_path)
+        sample_count=round(self.dt/.02)+1
+        corner_probes=len({0,(sample_count+1)//2,sample_count-1})
+        nonlinear_rows=3+sample_count+(4*corner_probes if self.config.enforce_corridor else 0)+int(self.config.envelope_soft_enabled)
         return bool(
             document['name']==self.model_name and document['model']['name']==self.model_name and
             document['problem_class']=='OCP' and document['shared_lib_ext']=='.so' and
@@ -128,7 +131,9 @@ class AcadosSolver(NumericalBackend):
             Path(document['acados_lib_path']).resolve()==library_directory.resolve() and
             Path(document['acados_include_path']).resolve()==(library_directory.parent/'include').resolve() and
             type(dims['N']) is int and dims['N']==self.n and dims['nx']==9 and dims['np']==10 and
-            dims['nu']==(4 if self.config.envelope_soft_enabled else 3) and dims['nbx_0']==9 and
+            dims['nu']==(4 if self.config.envelope_soft_enabled else 3) and
+            dims['nh_0']==nonlinear_rows and dims['nh']==nonlinear_rows and
+            dims['nh_e']==1+(4 if self.config.enforce_corridor else 0) and dims['nbx_0']==9 and
             dims['nbxe_0']==9 and document['constraints']['has_x0'] is True and
             type(options['N_horizon']) is int and options['N_horizon']==self.n and
             options['nlp_solver_type']=='SQP_RTI' and options['qp_solver']=='PARTIAL_CONDENSING_HPIPM' and
@@ -204,11 +209,21 @@ class AcadosSolver(NumericalBackend):
         if cfg.envelope_soft_enabled:
             constraint(u[3]-ca.if_else(p[8]>1e-10,cfg.envelope_slack_limit,0.),-1e15,0.,'slack_cap')
         model.con_h_expr=ca.vertcat(*h)
+        # acados does not inherit nonlinear path constraints into stage zero.
+        # The first input must obey the same jerk/slew/envelope/footprint rows.
+        model.con_h_expr_0=model.con_h_expr
         terminal_h=[utilization(x,x[6])]+corridor(x)
         model.con_h_expr_e=ca.vertcat(*terminal_h)
-        ocp.constraints.lh=np.asarray(lo);ocp.constraints.uh=np.asarray(hi)
+        self.effective_envelope_margin=max(cfg.optimization_envelope_margin,cfg.acados_envelope_margin)
+        self._physical_upper=np.asarray(hi)
+        native_upper=self._physical_upper.copy()
+        native_upper[np.array(groups)=='operating_envelope']-=self.effective_envelope_margin
+        ocp.constraints.lh=np.asarray(lo);ocp.constraints.uh=native_upper
+        ocp.constraints.lh_0=np.asarray(lo);ocp.constraints.uh_0=native_upper.copy()
         ocp.constraints.lh_e=np.r_[-1e15,[-self.path.right_width]*(len(terminal_h)-1)]
-        ocp.constraints.uh_e=np.r_[1.,[self.path.left_width]*(len(terminal_h)-1)]
+        self._physical_terminal_upper=np.r_[1.,[self.path.left_width]*(len(terminal_h)-1)]
+        ocp.constraints.uh_e=self._physical_terminal_upper.copy()
+        ocp.constraints.uh_e[0]-=self.effective_envelope_margin
         ocp.constraints.idxbu=np.arange(u.shape[0]);ocp.constraints.lbu=np.array([-cfg.brake_limit,-cfg.steer_limit,0.]+([0.] if cfg.envelope_soft_enabled else []))
         ocp.constraints.ubu=np.array([cfg.accel_limit,cfg.steer_limit,cfg.max_speed]+([cfg.envelope_slack_limit] if cfg.envelope_soft_enabled else []))
         ocp.constraints.idxbx=np.array([3]);ocp.constraints.lbx=np.array([0.]);ocp.constraints.ubx=np.array([cfg.max_speed])
@@ -232,15 +247,33 @@ class AcadosSolver(NumericalBackend):
         self._groups=groups
         return ocp
 
+    def _trajectory_violations(self,states,controls,params,initial,upper,terminal_upper):
+        violations={}
+        for k in range(self.n):
+            value=np.asarray(self._constraints(states[k],controls[k],params[k])).ravel()
+            errors=np.maximum.reduce((self._ocp.constraints.lh-value,value-upper,np.zeros(len(value))))
+            for group,error in zip(self._groups,errors):
+                violations[group]=max(violations.get(group,0.),float(error))
+            dynamics=float(np.max(np.abs(states[k+1]-np.asarray(self._transition(states[k],controls[k])).ravel())))
+            violations['dynamics']=max(violations.get('dynamics',0.),dynamics)
+        value=np.asarray(self._terminal_constraints(states[-1],params[-1])).ravel()
+        violations['terminal_constraints']=float(np.max(np.maximum.reduce((self._ocp.constraints.lh_e-value,
+            value-terminal_upper,np.zeros(len(value))))))
+        violations['input_bounds']=max(0.,float(np.max(self._ocp.constraints.lbu-controls)),float(np.max(controls-self._ocp.constraints.ubu)))
+        violations['speed_bounds']=max(0.,float(np.max(-states[:,3])),float(np.max(states[:,3]-self.config.max_speed)))
+        violations['initial_state']=float(np.max(np.abs(states[0]-initial)))
+        return violations
+
     def solve(self,state,previous,speed_refs=None,elapsed=.1,map_alignment=None):
         started=time.perf_counter();initial,applied,refs,alignment,seed=self.inputs(state,previous,speed_refs,elapsed,map_alignment)
         initial9=np.r_[initial,applied]
+        geometries=self.geometries(seed[0][:,4],alignment)
         params=[];jerk=jerk_limits(initial,applied,self.config,self.dt,self.n)
         for k in range(self.n+1):
             cap=0.
             if self.config.envelope_soft_enabled and k*self.dt<self.config.envelope_recovery_time-1e-10:
                 cap=self.config.envelope_recovery_time-k*self.dt
-            p=np.r_[self.geometry(seed[0][k,4],alignment),refs[k],jerk[min(k,self.n-1)],cap,float(k==0)]
+            p=np.r_[geometries[k],refs[k],jerk[min(k,self.n-1)],cap,float(k==0)]
             params.append(p);self._native.set(k,'p',p)
             memory=applied if k==0 else np.r_[seed[1][k-1,:2],(seed[1][k-1,1]-(applied[1] if k==1 else seed[1][k-2,1]))/self.dt]
             self._native.set(k,'x',np.r_[seed[0][k],memory])
@@ -248,26 +281,31 @@ class AcadosSolver(NumericalBackend):
                 self._native.set(k,'u',np.r_[seed[1][k],0.] if self.config.envelope_soft_enabled else seed[1][k])
         self._native.set(0,'lbx',initial9);self._native.set(0,'ubx',initial9)
         prepared=time.perf_counter();status=self._native.solve();optimized=time.perf_counter()
-        states9=np.asarray([self._native.get(k,'x') for k in range(self.n+1)])
+        raw_states9=np.asarray([self._native.get(k,'x') for k in range(self.n+1)])
         full_u=np.asarray([self._native.get(k,'u') for k in range(self.n)])
-        violation=0.;violations={}
-        for k in range(self.n):
-            value=np.asarray(self._constraints(states9[k],full_u[k],params[k])).ravel()
-            errors=np.maximum.reduce((self._ocp.constraints.lh-value,value-self._ocp.constraints.uh,np.zeros(len(value))))
-            for group,error in zip(self._groups,errors):violations[group]=max(violations.get(group,0.),float(error))
-            dynamics=float(np.max(np.abs(states9[k+1]-np.asarray(self._transition(states9[k],full_u[k])).ravel())))
-            violations['dynamics']=max(violations.get('dynamics',0.),dynamics)
-        value=np.asarray(self._terminal_constraints(states9[-1],params[-1])).ravel()
-        terminal=float(np.max(np.maximum.reduce((self._ocp.constraints.lh_e-value,value-self._ocp.constraints.uh_e,np.zeros(len(value))))))
-        violations['terminal_constraints']=terminal
-        violations['input_bounds']=max(0.,float(np.max(self._ocp.constraints.lbu-full_u)),float(np.max(full_u-self._ocp.constraints.ubu)))
-        violations['speed_bounds']=max(0.,float(np.max(-states9[:,3])),float(np.max(states9[:,3]-self.config.max_speed)))
-        violations['initial_state']=float(np.max(np.abs(states9[0]-initial9)))
-        violation=max(violations.values())
+        native_violations=self._trajectory_violations(raw_states9,full_u,params,initial9,
+            self._ocp.constraints.uh,self._ocp.constraints.uh_e)
+        # A single RTI step linearizes dynamics. Execute its unchanged inputs
+        # through our nonlinear RK4 transition to construct a consistent plan.
+        # The separate validator still uses its independent midpoint model.
+        projected=[initial9]
+        for control in full_u:
+            projected.append(np.asarray(self._transition(projected[-1],control)).ravel())
+        states9=np.asarray(projected)
+        violations=self._trajectory_violations(states9,full_u,params,initial9,
+            self._physical_upper,self._physical_terminal_upper)
         finite=np.isfinite(states9).all() and np.isfinite(full_u).all()
+        violation=max(violations.values()) if finite else np.inf
         success=bool(status==0 and finite and violation<1e-4)
         diagnostics=dict(native_core='acados/HPIPM',native_status=int(status),max_constraint_violation=violation,
             constraint_violations=violations,artifact_fingerprint=self.fingerprint,
+            constraint_violation_scope='forward_candidate_physical_bounds_and_dynamics',
+            candidate_projection='forward_nonlinear_discrete_model',native_controls_modified=False,
+            candidate_finite=bool(finite),
+            acados_envelope_margin=self.config.acados_envelope_margin,physical_envelope_upper=1.,
+            optimization_envelope_margin=self.config.optimization_envelope_margin,effective_envelope_margin=self.effective_envelope_margin,
+            raw_native_constraint_violations=native_violations,raw_native_max_constraint_violation=max(native_violations.values()),
+            raw_optimizer_state_dynamics_defect=native_violations['dynamics'],
             frozen_geometry=True,internal_state_dimension=9,nlp_solver='SQP_RTI',
             native_total_time_s=float(self._native.get_stats('time_tot')),
             sqp_iterations=int(self._native.get_stats('sqp_iter')))
