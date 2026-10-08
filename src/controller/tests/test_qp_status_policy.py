@@ -1,5 +1,6 @@
 """Native status eligibility never replaces matrix or physical candidate gates."""
 import copy
+import json
 
 import numpy as np
 import pytest
@@ -49,6 +50,8 @@ def test_feasible_native_candidate_preserves_accuracy_status_and_downstream_gate
     assert diagnostic['osqp_status_val']==status_val
     assert result['status']==captured['info'].status==diagnostic['osqp_status']
     assert diagnostic['native_converged']==(status_val==1)
+    assert diagnostic['native_residuals_finite'] is True
+    assert diagnostic['native_error_kind'] is None
     assert diagnostic['native_candidate_status_eligible'] is True
     assert diagnostic['candidate_feasible'] is True
     assert diagnostic['success_scope']=='candidate_feasibility'
@@ -129,3 +132,30 @@ def test_status_two_requires_finite_primal_candidate(damage,monkeypatch):
     assert not result['success']
     assert result['diagnostics']['candidate_feasible'] is False
     assert 'states' not in result and 'controls' not in result
+
+
+@pytest.mark.parametrize('status_val',[1,2])
+@pytest.mark.parametrize('field',['prim_res','dual_res'])
+@pytest.mark.parametrize('value',[np.nan,np.inf,-np.inf])
+def test_nonfinite_native_residual_metadata_rejects_and_remains_json_safe(status_val,field,value,monkeypatch):
+    solver,state,previous=fixture()
+    captured=native_status(solver,monkeypatch,status_val,
+                           lambda solution:setattr(solution.info,field,value))
+    result=solver.solve(state,previous,np.full(4,.5))
+    assert not result['success']
+    assert result['constraint_violation']<1e-4
+    diagnostic=result['diagnostics']
+    assert diagnostic['candidate_feasible'] is True
+    assert diagnostic['native_candidate_status_eligible'] is False
+    assert diagnostic['native_converged'] is False
+    assert diagnostic['native_residuals_finite'] is False
+    assert diagnostic['native_error_kind']=='nonfinite_residual_metadata'
+    assert diagnostic['osqp_status_val']==status_val
+    assert diagnostic['osqp_status']==captured['info'].status
+    assert result['status']=='qp_candidate_rejected:'+captured['info'].status
+    key='osqp_primal_residual' if field=='prim_res' else 'osqp_dual_residual'
+    other='osqp_dual_residual' if field=='prim_res' else 'osqp_primal_residual'
+    assert diagnostic[key] is None
+    assert np.isfinite(diagnostic[other])
+    json.dumps(result,allow_nan=False)
+    assert solver.previous is None

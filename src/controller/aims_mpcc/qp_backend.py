@@ -191,11 +191,17 @@ class QPSolver(NumericalBackend):
         # status 7 (maximum iterations) remains ineligible. Neither status
         # eligibility nor candidate feasibility establishes output authority.
         status_val=int(solution.info.status_val)
-        eligible=status_val in (1,2)
+        primal_residual=float(solution.info.prim_res);dual_residual=float(solution.info.dual_res)
+        primal_finite=bool(np.isfinite(primal_residual));dual_finite=bool(np.isfinite(dual_residual))
+        residuals_finite=primal_finite and dual_finite
+        eligible=status_val in (1,2) and residuals_finite
         success=False;controls=None;states=None;violation=None
         diagnostics=dict(native_core='OSQP C',osqp_status=solution.info.status,
-            osqp_status_val=status_val,osqp_primal_residual=float(solution.info.prim_res),
-            osqp_dual_residual=float(solution.info.dual_res),native_converged=status_val==1,
+            osqp_status_val=status_val,osqp_primal_residual=primal_residual if primal_finite else None,
+            osqp_dual_residual=dual_residual if dual_finite else None,
+            native_residuals_finite=residuals_finite,
+            native_error_kind=None if residuals_finite else 'nonfinite_residual_metadata',
+            native_converged=status_val==1 and residuals_finite,
             native_candidate_status_eligible=eligible,candidate_feasible=False,
             success_scope='candidate_feasibility',
             optimization_envelope_margin=self.config.optimization_envelope_margin,
