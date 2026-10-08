@@ -11,10 +11,17 @@ import tempfile
 
 import numpy as np
 
+_KERNEL_SOURCE=Path(__file__).parent/'kernels'/'rollout.c'
+
+
+@lru_cache(maxsize=8)
+def _source_digest(source,mtime_ns,ctime_ns,size,machine):
+    return hashlib.sha256(Path(source).read_bytes()+machine.encode()).hexdigest()
+
 
 def kernel_path(directory=None):
-    source=Path(__file__).parent/'kernels'/'rollout.c'
-    digest=hashlib.sha256(source.read_bytes()+platform.machine().encode()).hexdigest()
+    stat=_KERNEL_SOURCE.stat()
+    digest=_source_digest(str(_KERNEL_SOURCE),stat.st_mtime_ns,stat.st_ctime_ns,stat.st_size,platform.machine())
     root=Path(directory or os.environ.get('AIMS_MPCC_ROLLOUT_DIR',Path.home()/'.cache'/'aims_mpcc'/'rollout'))
     return root/f'rollout-{digest}.so'
 
@@ -23,7 +30,7 @@ def prepare_kernel(directory=None):
     target=kernel_path(directory)
     if not target.is_file():
         target.parent.mkdir(parents=True,exist_ok=True)
-        source=Path(__file__).parent/'kernels'/'rollout.c'
+        source=_KERNEL_SOURCE
         with tempfile.TemporaryDirectory(dir=target.parent) as work:
             compiled=Path(work)/'rollout.so'
             subprocess.run(['gcc','-O3','-shared','-fPIC',str(source),'-lm','-o',str(compiled)],check=True)
