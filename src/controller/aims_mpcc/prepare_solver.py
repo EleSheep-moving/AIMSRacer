@@ -26,6 +26,8 @@ def main(args=None):
     started = time.monotonic()
     from .rollout_native import prepare_kernel
     print(f'Independent rollout library: {prepare_kernel()}',flush=True)
+    from .projection_native import prepare_kernel as prepare_projector
+    print(f'Exact projection library: {prepare_projector() or "Python fallback"}',flush=True)
     with (build_context(allow_compile=True) if args.backend=='ipopt' else nullcontext(args.artifact_directory)) as cache:
         print(f'Preparing {args.backend} solver cache: {cache}', flush=True)
         solver = create_solver(args.backend,path,config,horizon=args.horizon,prepare=True,

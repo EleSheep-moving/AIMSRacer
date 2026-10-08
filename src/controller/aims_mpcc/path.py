@@ -72,6 +72,8 @@ class ReferencePath:
         """Return the same refined progress without unused lateral geometry."""
         xy=np.asarray(xy,float)
         if xy.shape!=(2,) or not np.isfinite(xy).all(): raise ValueError('finite xy required')
+        native=_projection_native.project_theta(self,xy)
+        if native is not None:return native
         guess=self._projection_grid[np.argmin(np.sum((self._projection_points-xy)**2,axis=1))]
         step=self._projection_step
         result=minimize_scalar(lambda s:float(np.sum((self.curve.numpy(s)-xy)**2)),bounds=(guess-step,guess+step),method='bounded',options={'xatol':1e-12})
@@ -204,3 +206,7 @@ def prepare_recording(csv_path, output_directory, config, left_width, right_widt
     result.save(output)
     if src.resolve()!=(output/'raw.csv').resolve(): shutil.copyfile(src,output/'raw.csv')
     return result
+
+
+# Import after defining ReferencePath so guards capture its canonical methods.
+from . import projection_native as _projection_native
