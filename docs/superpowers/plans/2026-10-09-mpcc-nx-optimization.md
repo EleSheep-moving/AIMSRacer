@@ -28,7 +28,7 @@ Approved scope: repair constraints and timing, compare IPOPT/acados/QP, validate
 
 ## Acceptance
 
-Regression: requests 246/247/248 (235908) and 244 (000919) recover or explain degradation; requests 243/285 remain separate unidentified failures; request 249 proves handover correctness. No TTL renewal, unexecuted-input replay, unsafe slack acceptance or queue buildup.
+Regression: requests 246/247/248 (235908) and 244 (000919) recover or explain degradation; requests 243/285 remain separate diagnosed rejection regressions. Request 249 is a frozen-input regression; handover correctness requires separate runtime evidence. No TTL renewal, unexecuted-input replay, unsafe slack acceptance or queue buildup.
 New-core targets (not measured guarantees): 20 Hz planning, 50 Hz output; full-request P95 <=25 ms and P99 <=40 ms; >50 ms rate <0.1%, max consecutive overruns <=2. Include prep, solve, validation and IPC.
 Field: >=3 laps each at 0.5 and 1 m/s, at 1 m/s lateral P95 <=0.10 m and max <=0.30 m, no expiry-induced stop or persistent oscillation. Higher speeds P95 <=0.15 m and max <=0.30 m. Replay, simulation and hardware proof are separate.
 
@@ -41,14 +41,31 @@ Implementation commits and reports append evidence below. Any unmet test/field g
 - Evidence and precise timing boundaries are recorded in
   [`nx-optimization.md`](../../../src/controller/docs/nx-optimization.md).
 - Numerical recovery gates are implemented; final output smoothing exposed an
-  execution-schedule mismatch during independent review. A nominal executed
-  schedule check is in progress, so the constraint/model consistency items stay
-  open until that repair is verified.
+  execution-schedule mismatch during independent review. Nominal executed
+  schedule checks exposed acceleration and steering target catch-up errors.
+  Direct proposals fix both, with three synthetic ROS laps passing. Field
+  stopping still exposes the unidentified longitudinal model and mismatched
+  finish rule, so constraint/model consistency stays open.
 - Matched 1/1.5/2 s solver and ROS comparisons are recorded. Weights were held
   fixed; held-out tuning and real-car model identification remain pending.
-- NX three five-minute repeats per idle/shared/stress condition are running at
-  frozen source `9eb309d`. First shared run has valid estimator-load coverage,
-  but 88 rejected acados candidates and P95 25.117 ms; it is not overall PASS.
+- The old-source NX matrix completed three shared and one stress five-minute
+  repeats at `9eb309d`, then stopped at a case boundary after repeated numerical
+  failure. All four have valid estimator-load coverage, but 87–89 rejected acados
+  candidates; none is overall PASS. Partial stress-2 is retained and ineligible.
+  QP source `48391d9` completed all nine five-minute worker repeats: 53,991
+  requests, six failures and 12 >50 ms requests. Shared P95 23.905–24.133 ms
+  meets the worker target; limited-stress P95 25.712–27.109 ms exceeds it.
+  All six replay-backed load windows qualify. This historical matrix does not
+  qualify the later QP/path source changes. Final-node NX ROS remains a separate
+  failed gate. Frozen `e123c27` passes 709 desktop tests; its first complete
+  shadow stops 0.293 m before the goal. Execution-check P95 is 47.14 ms and
+  request-to-activation-completion P95 is 152.12 ms (249 accepted activations).
+  The subsequent all-rejection run fails on odometry freshness after an
+  85.998 ms callback. Exact replay identifies
+  output-smoothing steering mismatch in the first rejection; later causes need
+  complete snapshots. The all-rejection capture is complete; its sequence25
+  fails the rebase gate before execution validation. Exact native projection
+  performance proof is in progress. Timing/physical thresholds remain unchanged.
 - The car is now in a different venue. Map-matched bag replay supplies estimator
   load; no vehicle driving publisher is started. Supervised laps remain pending.
 - No backend has been promoted to the default or selected as passing.
