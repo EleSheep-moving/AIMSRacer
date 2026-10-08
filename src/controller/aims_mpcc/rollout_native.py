@@ -43,11 +43,18 @@ def prepare_kernel(directory=None):
 def _load(path):
     if not Path(path).is_file():
         return None
-    library=ctypes.CDLL(str(path))
-    pointer=ctypes.POINTER(ctypes.c_double)
-    library.aims_rollout.argtypes=[pointer,pointer,pointer,ctypes.c_int,ctypes.c_int,
-                                 ctypes.c_double,ctypes.c_double,ctypes.c_double,ctypes.c_double,pointer]
-    library.aims_rollout.restype=ctypes.c_int
+    try:
+        library=ctypes.CDLL(str(path))
+        pointer=ctypes.POINTER(ctypes.c_double)
+        library.aims_rollout.argtypes=[pointer,pointer,pointer,ctypes.c_int,ctypes.c_int,
+                                     ctypes.c_double,ctypes.c_double,ctypes.c_double,ctypes.c_double,pointer]
+        library.aims_rollout.restype=ctypes.c_int
+    except (OSError, AttributeError) as exc:
+        # Missing caches retain the Python fallback; an existing invalid cache
+        # must reject the candidate through the normal validation error path.
+        # Runtime loading never repairs or compiles the artifact.
+        raise ValueError(f'Cannot load independent rollout cache {path}; '
+                         'replace the artifact offline before restarting') from exc
     return library
 
 
