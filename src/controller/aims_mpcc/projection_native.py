@@ -42,6 +42,9 @@ _PPOLY_EVALUATE=PPoly._evaluate
 _PPOLY_CONTIGUOUS=PPoly._ensure_c_contiguous
 _PPOLY_KERNEL=_interpolate._ppoly.evaluate
 _POINTER=ctypes.POINTER(ctypes.c_double)
+# dlopen can return an already mapped handle after same-path file replacement.
+# Keep loaded cache identities for the process lifetime; never hot-reload them.
+_LOADED_CACHES={}
 
 
 def _covered_environment():
@@ -146,12 +149,20 @@ def prepare_kernel(directory=None):
 
 def _stat_key(path):
     stat=path.stat()
-    return stat.st_mtime_ns,stat.st_ctime_ns,stat.st_size
+    return stat.st_dev,stat.st_ino,stat.st_mtime_ns,stat.st_ctime_ns,stat.st_size
 
 
 @lru_cache(maxsize=8)
 def _load_library(folder,manifest_stat,binary_path,binary_stat):
     folder=Path(folder)
+    cache_key=str(folder.resolve())
+    fingerprint=(manifest_stat,str(Path(binary_path).resolve()),binary_stat)
+    previous=_LOADED_CACHES.get(cache_key)
+    if previous is not None:
+        if previous[0]!=fingerprint:
+            raise ValueError(f'Native projection cache changed after loading {folder}; '
+                             'restart the process before using its replacement')
+        return previous[1]
     metadata,binary=_metadata(folder)
     try:
         if str(binary)!=binary_path or hashlib.sha256(binary.read_bytes()).hexdigest()!=metadata['binary_sha256']:
@@ -170,6 +181,7 @@ def _load_library(folder,manifest_stat,binary_path,binary_stat):
         library.aims_project_checked.restype=ctypes.c_int
     except (OSError,AttributeError,ValueError) as exc:
         raise _cache_error(folder) from exc
+    _LOADED_CACHES[cache_key]=(fingerprint,library)
     return library
 
 

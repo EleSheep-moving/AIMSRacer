@@ -256,6 +256,27 @@ def test_cache_corruption_after_warm_load_is_not_hidden_by_memoization(enabled):
         finally:os.environ['AIMS_MPCC_PROJECTOR_DIR']=old
 
 
+def test_hash_valid_replacement_after_warm_load_requires_restart(enabled,tmp_path,monkeypatch):
+    import ctypes.util,hashlib,os,shutil
+    native,library=enabled
+    shutil.copytree(library.parent.parent,tmp_path/'cache')
+    monkeypatch.setenv('AIMS_MPCC_PROJECTOR_DIR',str(tmp_path/'cache'))
+    path=circle();xy=np.array([1.8,.3])
+    assert native.project_theta(path,xy) is not None
+    artifact=native.kernel_path();manifest=artifact.parent/'manifest.json'
+    metadata=json.loads(manifest.read_text())
+    libm=ctypes.util.find_library('m')
+    candidates=list(Path('/lib').glob('**/'+libm))+list(Path('/usr/lib').glob('**/'+libm))
+    replacement=tmp_path/'replacement.so';replacement.write_bytes(candidates[0].read_bytes())
+    os.replace(replacement,artifact)
+    metadata['binary_sha256']=hashlib.sha256(artifact.read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(metadata))
+    def forbidden(*a,**kw):raise AssertionError('warm cache change attempted runtime repair')
+    monkeypatch.setattr(subprocess,'run',forbidden)
+    with pytest.raises(ValueError,match='projection cache'):
+        path.project_theta(xy)
+
+
 def test_prepare_solver_prepares_projector_only_in_explicit_offline_hook(enabled,tmp_path,monkeypatch):
     from aims_mpcc import prepare_solver,rollout_native,backends,io
     from aims_mpcc.config import VehicleConfig
