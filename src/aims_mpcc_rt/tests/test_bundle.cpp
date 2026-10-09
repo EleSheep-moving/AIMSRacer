@@ -5,8 +5,18 @@
 #include <stdexcept>
 #include <unistd.h>
 #include <yaml-cpp/yaml.h>
+#include <openssl/sha.h>
+#include <iomanip>
+#include <sstream>
 using aims_mpcc_rt::Bundle;
 namespace fs=std::filesystem;
+std::string file_sha(const fs::path &path) {
+  std::ifstream file(path,std::ios::binary);std::ostringstream data;data<<file.rdbuf();
+  auto bytes=data.str();unsigned char hash[SHA256_DIGEST_LENGTH];
+  SHA256(reinterpret_cast<const unsigned char*>(bytes.data()),bytes.size(),hash);
+  std::ostringstream out;for(auto byte:hash)out<<std::hex<<std::setw(2)<<std::setfill('0')<<int(byte);
+  return out.str();
+}
 template<class F> void rejected(F f,const char *message) {
   bool threw=false;try {f();}catch(const std::exception&){threw=true;}
   if(!threw)throw std::runtime_error(message);
@@ -23,6 +33,19 @@ int main(int argc,char **argv) {
   fs::create_directories(temp);
   fs::copy(root,temp/"copy",fs::copy_options::recursive);
   auto copy=temp/"copy";
+  auto near_manifest=YAML::LoadFile((copy/"manifest.json").string());
+  double canonical=near_manifest["dt"].as<double>();
+  near_manifest["dt"]=canonical+5e-13;
+  {std::ofstream changed(copy/"manifest.json");changed<<YAML::Dump(near_manifest);}
+  auto near_native=YAML::LoadFile((copy/"native_manifest.json").string());
+  near_native["source_manifest_sha256"]=file_sha(copy/"manifest.json");
+  {std::ofstream changed(copy/"native_manifest.json");changed<<YAML::Dump(near_native);}
+  {
+    auto near_bundle=Bundle::load(copy.string());
+    if(near_bundle.config().dt!=canonical)throw std::runtime_error("near stage duration must canonicalize consistently with legacy mesh");
+  }  // Unload the copied library before subsequent corruption tests overwrite it.
+  fs::copy_file(root/"manifest.json",copy/"manifest.json",fs::copy_options::overwrite_existing);
+  fs::copy_file(root/"native_manifest.json",copy/"native_manifest.json",fs::copy_options::overwrite_existing);
   auto native=YAML::LoadFile((copy/"native_manifest.json").string());
   native["machine"]="incorrect_target";
   {std::ofstream changed(copy/"native_manifest.json");changed<<YAML::Dump(native);}

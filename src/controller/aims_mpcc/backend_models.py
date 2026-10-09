@@ -148,16 +148,29 @@ class NumericalBackend:
 
 
 def interval_symbolic(x,u,previous_steering,config,dt):
-    """Discrete rear axle dynamics: 20 ms command ramp and RK4 actuator lag."""
+    """Rear-axle RK4 with held ramp commands and a final partial microstep.
+
+    The historical 100 ms interval retains its five 20 ms microsteps exactly.
+    Offline fractional intervals include their complete duration, e.g. a
+    50 ms stage uses 20 + 20 + 10 ms. Legacy backend dt validation is unchanged.
+    """
     import casadi as ca
-    state=x; samples=[state];count=round(dt/.02)
+    if not math.isfinite(dt) or dt<=0:
+        raise ValueError('finite positive interval duration required')
+    rounded=round(dt/.02)
+    # Match the public legacy backend's accepted near-multiple tolerance and
+    # its original fixed microsteps. Only nonmultiples opt into partial steps.
+    legacy_mesh=bool(np.isclose(rounded*.02,dt))
+    state=x; samples=[state];count=rounded if legacy_mesh else max(1,math.ceil(dt/.02-1e-12))
     def rhs(v,command):
         return ca.vertcat(v[3]*ca.cos(v[2]),v[3]*ca.sin(v[2]),
             v[3]*ca.tan(v[5])/(config.wheelbase*(1+config.understeer_coefficient*v[3]**2)),
             u[0],u[2],(command-v[5])/config.steering_tau)
     for j in range(count):
-        commanded=previous_steering+(u[1]-previous_steering)*(j+1)/count
-        k1=rhs(state,commanded);k2=rhs(state+.01*k1,commanded)
-        k3=rhs(state+.01*k2,commanded);k4=rhs(state+.02*k3,commanded)
-        state=state+.02*(k1+2*k2+2*k3+k4)/6;samples.append(state)
+        h=.02 if legacy_mesh else min(.02,dt-j*.02)
+        fraction=(j+1)/count if legacy_mesh else min((j+1)*.02,dt)/dt
+        commanded=previous_steering+(u[1]-previous_steering)*fraction
+        k1=rhs(state,commanded);k2=rhs(state+.5*h*k1,commanded)
+        k3=rhs(state+.5*h*k2,commanded);k4=rhs(state+h*k3,commanded)
+        state=state+h*(k1+2*k2+2*k3+k4)/6;samples.append(state)
     return state,samples

@@ -112,9 +112,13 @@ Bundle Bundle::load(const std::string &directory,const std::string &config_path,
   c.enforce_corridor=data["enforce_corridor"].as<bool>();c.envelope_soft_enabled=data["envelope_soft_enabled"].as<bool>();
   c.recovery_jerk_enabled=data["recovery_jerk_enabled"].as<bool>();
   c.horizon=manifest["horizon"].as<int>();c.dt=manifest["dt"].as<double>();
-  if(c.horizon<1||c.dt<=0.||std::abs(std::round(c.dt/.02)*.02-c.dt)>1e-12||
+  bool hundred_ms=std::abs(c.dt-.1)<1e-12,fifty_ms=std::abs(c.dt-.05)<1e-12;
+  // Old 100 ms bundles may describe a near-multiple duration while their
+  // generated model retains exactly five 20 ms steps. Use that physical mesh.
+  if(hundred_ms)c.dt=.1;else if(fifty_ms)c.dt=.05;
+  if(c.horizon<1||c.dt<=0.||!(hundred_ms||fifty_ms)||
      i.cost_scaling.size()!=size_t(c.horizon+1)||!finite(i.cost_scaling)||
-     i.sample_count!=int(std::round(c.dt/.02))+1||
+     i.sample_count!=(hundred_ms?6:4)||
      i.nu!=(c.envelope_soft_enabled?4:3)||i.lower.size()!=size_t(i.nh)||i.upper.size()!=size_t(i.nh))
     throw std::runtime_error("artifact dimensions mismatch");
   auto reference=YAML::LoadFile((root/"reference.json").string());auto &r=i.reference;

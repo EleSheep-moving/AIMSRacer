@@ -31,9 +31,20 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def canonical_runtime_dt(dt):
+    if not np.isfinite(dt):
+        raise ValueError('isolated evaluation supports only 100 ms and 50 ms stages')
+    for value in (.1,.05):
+        if np.isclose(dt,value,rtol=0.,atol=1e-12):return value
+    raise ValueError('isolated evaluation supports only 100 ms and 50 ms stages')
+
+
 def export(config_path, reference_dir, output, horizon=10, dt=.1, source_only=False):
     from acados_template import AcadosOcpSolver
     cfg = load_config(config_path)
+    dt=canonical_runtime_dt(dt)
+    if dt==.05 and cfg.envelope_soft_enabled:
+        raise ValueError('50 ms evaluation requires the strict envelope profile')
     path = ReferencePath.load(reference_dir)
     cfg.validate(require_verified=True)
     path.validate_config(cfg)
@@ -59,7 +70,10 @@ def export(config_path, reference_dir, output, horizon=10, dt=.1, source_only=Fa
     (output / 'reference.json').write_text(json.dumps(reference, sort_keys=True, indent=2) + '\n')
     # _build_ocp is the same OCP constructor used by the tested Python backend.
     solver = AcadosSolver.__new__(AcadosSolver)
-    NumericalBackend.__init__(solver, path, cfg, horizon, dt)
+    # Preserve legacy backend validation. The offline runtime exporter alone
+    # opts into the separately evaluated fractional integration interval.
+    NumericalBackend.__init__(solver, path, cfg, horizon, .1)
+    solver.dt=dt
     solver.model_name = 'aims_runtime'
     solver._expected_lib_path = dependencies['acados_lib_path']
     ocp = solver._build_ocp()
@@ -112,6 +126,7 @@ def export(config_path, reference_dir, output, horizon=10, dt=.1, source_only=Fa
                     horizon=int(horizon), dt=float(dt), nx=9, nu=int(u.numel()), np=10,
                     cost_scaling=cost_scaling.tolist(),
                     candidate_sample_count=len(samples),
+                    integration_sample_times=[min(j*.02,dt) for j in range(len(samples))],
                     nh=int(ocp.model.con_h_expr.numel()), nh_e=int(ocp.model.con_h_expr_e.numel()),
                     lower=ocp.constraints.lh.tolist(), physical_upper=solver._physical_upper.tolist(),
                     terminal_lower=ocp.constraints.lh_e.tolist(), terminal_upper=solver._physical_terminal_upper.tolist(),

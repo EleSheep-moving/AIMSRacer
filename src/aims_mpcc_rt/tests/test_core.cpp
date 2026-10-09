@@ -62,7 +62,7 @@ int main(int argc,char **argv) {
     near(b.evaluate(4,x,u,p)[0],row["terminal_cost"].as<double>(),1e-10,"terminal cost parity");
     near(b.evaluate(4,x,u,p)[0],row["analytic_terminal_cost"].as<double>(),1e-8,"legacy frozen terminal objective equation parity");
     auto candidate=b.evaluate(5,x,u,p);
-    check(candidate.size()==10+constraints.size()+6*(int(std::round(b.config().dt/.02))+1),
+    check(candidate.size()==10+constraints.size()+6*(int(std::ceil(b.config().dt/.02-1e-12))+1),
           "single forward candidate must expose all integration samples");
     for(size_t i=0;i<x.size();++i)near(candidate[i],transition[i],1e-12,"single-pass candidate dynamics parity");
     for(size_t i=0;i<constraints.size();++i)near(candidate[9+i],constraints[i],1e-12,"single-pass candidate constraints parity");
@@ -97,10 +97,11 @@ int main(int argc,char **argv) {
   core.reset();
   auto ref=b.reference().at(0.);
   State initial{ref.x,ref.y,ref.yaw,0.,0.,0.};Applied applied{};
+  double execution_step=.5*b.config().dt;
   std::vector<double> timings;double sum_error=0.,peak_error=0.,progress=0.,last_theta=0.;int passes=0;
-  int count=int(std::ceil((b.reference().length()/b.config().cruise_speed+5.)/.05));
+  int count=int(std::ceil((b.reference().length()/b.config().cruise_speed+5.)/execution_step));
   for(int i=0;i<count;++i) {
-    auto plan=core.solve(initial,applied,{},.05,.05);
+    auto plan=core.solve(initial,applied,{},execution_step,.05);
     check(plan.success,"synthetic circle candidate rejected");
     near(plan.native_cost,plan.raw_optimizer_cost,1e-7,"actual native objective scaling parity");
     check(plan.native_passes<=2,"RTI pass limit");
@@ -109,8 +110,8 @@ int main(int argc,char **argv) {
     double previous_endpoint=applied[1];
     // Execute half an OCP stage with the exact prefix steering endpoint.
     u[1]=previous_endpoint+(u[1]-previous_endpoint)*.5;
-    initial=independent_plant(initial,u,previous_endpoint,.05,b.config());
-    applied={u[0],u[1],(u[1]-previous_endpoint)/.05};
+    initial=independent_plant(initial,u,previous_endpoint,execution_step,b.config());
+    applied={u[0],u[1],(u[1]-previous_endpoint)/execution_step};
     timings.push_back(plan.solve_time_s);passes+=plan.native_passes;
     auto theta=b.reference().project(initial[0],initial[1]);
     progress+=std::remainder(theta-last_theta,b.reference().length());last_theta=theta;
@@ -123,7 +124,8 @@ int main(int argc,char **argv) {
   check(std::sqrt(sum_error/count)<.1,"independent plant tracks circle");
   std::sort(timings.begin(),timings.end());
   std::cout<<"PASS: exact quintic/model/cost/constraint parity, fractional warm shift, independent lagged plant\n"
-           <<"cruise="<<b.config().cruise_speed<<" final_speed="<<initial[3]<<" rms_error="<<std::sqrt(sum_error/count)
+           <<"N="<<b.config().horizon<<" dt="<<b.config().dt<<" execution_step="<<execution_step
+           <<" cruise="<<b.config().cruise_speed<<" final_speed="<<initial[3]<<" rms_error="<<std::sqrt(sum_error/count)
            <<" peak_error="<<peak_error<<" lap_progress="<<progress/b.reference().length()<<" RTI_passes="<<passes
            <<" p50_ms="<<timings[count/2]*1000<<" p95_ms="<<timings[int(count*.95)]*1000
            <<" max_ms="<<timings.back()*1000<<"\n";
