@@ -44,9 +44,45 @@ class QPSolver(NumericalBackend):
 
     def reset(self):
         super().reset()
+        self._longitudinal_refresh=False
+        self._longitudinal_refresh_reason='no_cache'
+        self._longitudinal_seed_source='feedforward'
         if hasattr(self,'_native'):
             self._native.warm_start(x=np.zeros(self.dimension),y=np.zeros(self._a_pattern.shape[0]))
         self.last_native=None
+
+    def seed(self,initial,applied,refs):
+        """Retain shifted steering, refresh stopped-reference longitudinal goals."""
+        use_cache=self.previous is not None and self.previous_elapsed<self.n*self.dt
+        if self.previous is None:reason='no_cache'
+        elif not use_cache:reason='cache_expired'
+        elif np.shape(self.previous.get('speed_refs'))!=(self.n+1,):
+            reason='previous_reference_unavailable'
+        elif not np.all(self.previous['speed_refs']==0.):reason='previous_reference_not_stopped'
+        elif self.config.cruise_speed<=0.:reason='configured_cruise_not_positive'
+        elif refs[0]!=self.config.cruise_speed:reason='current_reference_not_cruise'
+        else:reason='stopped_reference_to_cruise'
+        refresh=bool(reason=='stopped_reference_to_cruise')
+        self._longitudinal_refresh=refresh
+        self._longitudinal_refresh_reason=reason
+        self._longitudinal_seed_source=('current_reference' if refresh else
+                                        'last_success' if use_cache else 'feedforward')
+        return super().seed(initial,applied,refs,refresh_longitudinal=refresh)
+
+    def finish(self,result,initial,applied,refs,alignment,started,prepared,optimized):
+        result['diagnostics'].update(
+            warm_start_longitudinal_refresh=self._longitudinal_refresh,
+            warm_start_longitudinal_refresh_reason=self._longitudinal_refresh_reason,
+            warm_start_longitudinal_source=self._longitudinal_seed_source)
+        result=super().finish(result,initial,applied,refs,alignment,started,prepared,optimized)
+        if result['success']:
+            # Provenance belongs to the same successful trajectory cache. A
+            # failed request retains both its controls and its copied goals.
+            self.previous['speed_refs']=np.asarray(refs).copy()
+        done=time.perf_counter()
+        result['solve_time_s']=done-started
+        result['diagnostics']['diagnostics_time_s']=done-optimized
+        return result
 
     def _p_values(self,P):
         result=self._p_pattern.copy()

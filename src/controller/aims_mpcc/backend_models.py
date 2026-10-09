@@ -57,7 +57,7 @@ class NumericalBackend:
         seed=self.seed(initial,applied,refs)
         return initial,applied,refs,alignment,seed
 
-    def seed(self,initial,applied,refs):
+    def seed(self,initial,applied,refs,*,refresh_longitudinal=False):
         shifted=None
         if self.previous is not None and self.previous_elapsed<self.n*self.dt:
             shift=min(self.n,max(1,round(self.previous_elapsed/self.dt)))
@@ -74,6 +74,8 @@ class NumericalBackend:
                 desired_steer=math.atan(self.config.wheelbase*(1+self.config.understeer_coefficient*x[3]**2)*curvature)
             else:
                 desired_accel,desired_steer=shifted[k,:2]
+                if refresh_longitudinal:
+                    desired_accel=(refs[k+1]-x[3])/self.dt
             acceleration=float(np.clip(desired_accel,max(-self.config.brake_limit,acceleration-limits[k]*self.dt),
                                         min(self.config.accel_limit,acceleration+limits[k]*self.dt)))
             desired_rate=(np.clip(desired_steer,-self.config.steer_limit,self.config.steer_limit)-steering)/self.dt
