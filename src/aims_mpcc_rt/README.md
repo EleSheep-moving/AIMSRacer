@@ -22,6 +22,8 @@ and starts disabled. Hardware driving acceptance is a separate step.
 > The [standard-interface follow-up](../../docs/reports/2026-10-10-mpcc-standard-interface.md)
 > records removal of the runtime mode and the desktop/NX interface verification.
 
+For the actual vehicle trial, follow the [NX field test runbook](../../docs/operations/mpcc-acados-field-test.md).
+
 ## Offline bundle and build
 
 Use an isolated checkout, ROS Humble, yaml-cpp/OpenSSL development headers,
