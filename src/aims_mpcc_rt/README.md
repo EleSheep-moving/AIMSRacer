@@ -45,6 +45,12 @@ dependency hashes. Online startup refuses missing or incompatible artifacts;
 it never generates or compiles a solver. Changing config/reference requires
 a new offline bundle. Custom runtime parameters are fixed until restart.
 
+The optional `--horizon 20 --dt .05` and `--horizon 25 --dt .05` exports
+use RK4 steps of 20 + 20 + 10 ms per stage. The default 100 ms stage retains
+five 20 ms steps. Stage costs scale by dt/0.1; terminal cost retains its
+original weight. These are evaluation profiles; the default remains N10/0.1.
+The existing Python backend retains its original dt validation.
+
 ## Select and roll back
 
 ```bash
@@ -63,8 +69,9 @@ The isolated acceptance harness additionally remaps **all** input/output
 topics and uses synthetic feedback. A shadow controller must not run beside
 an enabled real controller in an acceptance domain.
 
-Physical control uses `shadow:=false`, after operator field acceptance; it
-requires a measured, verified vehicle profile and a verified closed reference.
+Physical driving validation uses `shadow:=false` under operator control; the
+current evidence does not establish physical closed-loop acceptance. It requires
+a measured, verified vehicle profile and a verified closed reference.
 Start from a stationary vehicle within 30 degrees of the reference heading,
 with matching map hash, fresh protocol-v1 trusted anchor and sole drive owner.
 Enable via `/mpcc/enable`. Stop/withdraw authority before switching runtimes.
@@ -85,7 +92,11 @@ deadline arguments remain unchanged. The launch selects exactly one runtime.
 | stop/recovery/finish | output supervisor | bounded stopping; stationary recovery requires explicit reenable |
 
 Reanchoring constructs a distinct candidate from the actual state and applied
-prefix, so it needs its own validation. Its cost is included in the complete
+prefix, so it needs its own validation. A feasible original sequence stays
+unchanged. If the new prefix makes it infeasible, a bounded endpoint/acceleration
+transport may form an alternate candidate, with the same full nonlinear
+certificate. It neither skips unexecuted controls nor adds optimizer passes or
+extends source TTL. True envelope violations remain rejected. Its cost is included in the complete
 publisher callback. This is measured independently of the native optimizer.
 The strict vehicle profile is supported; experimental soft-envelope profiles
 are refused at ROS startup until their independent recovery comparator is
@@ -119,3 +130,36 @@ and power/temperature telemetry; replay is CPU load, **not controller feedback**
 Qualification requires sustained motion, request/publication coverage, all
 failed submissions/rejections, timing bounds and continuous native registration
 through the same measurement window. Neither experiment proves field tracking.
+
+
+## Fixed-input failure reproduction
+
+```bash
+ros2 run aims_mpcc_rt replay_requests /absolute/path/to/strict-bundle \
+  src/controller/tests/fixtures/nx_failure_requests.json /absolute/path/to/result.json
+```
+
+This is an offline executable with no ROS node or actuator publisher. It
+selects recorded cases matching horizon, dt and every recorded config key;
+requires a strict-envelope bundle; and cold-starts each request independently.
+It does not reconstruct the original warm-start history. Nonfinite diagnostic
+numbers are JSON null; no matching case returns a nonzero exit code. Native
+solver stdout is separate from the JSON output file.
+
+A state with initial minimum utilization above one is already infeasible under
+the strict acceleration envelope. Faster optimization cannot authorize it.
+Recovery follows the legacy bounded braking semantics: clip to the nominal
+lateral budget only when that budget is feasible. Otherwise retain bounded
+deceleration rather than clipping braking to zero. STOPPING uses the existing
+hard acceleration/jerk limits. Recovery requests target zero speed; stationary
+recovery requires explicit reenable.
+
+See [implementation and validation report](../../docs/reports/2026-10-09-mpcc-acados-runtime.md)
+for measured results, version boundaries and field limitations.
+
+
+For forensic takeover evidence, `AIMS_MPCC_CAPTURE_TAKEOVER=1` records exact
+source/actual state, applied prefixes and controls as JSON in `takeover_snapshot`
+CSV rows. It is disabled by default and uses the same bounded asynchronous logger.
+The output decision clock is sampled after acquiring state ownership; callback
+entry is retained separately for full callback timing.

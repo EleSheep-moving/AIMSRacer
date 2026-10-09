@@ -6,17 +6,17 @@ Goal: retain the rear-axle kinematic model and system contracts while reducing c
 
 ## Tasks
 
-- [ ] Preserve the baseline; create the isolated worktree and reproducible desktop container.
-- [ ] Export a portable solver bundle from the existing acados OCP: pin acados 0.5.5, publish configuration/reference fingerprints, model/constraint C functions and a small C ABI. Compile independently on x86/ARM; require matching artifacts at startup. No runtime generation.
-- [ ] Build `src/aims_mpcc_rt`: rear-axle state `[x,y,yaw,speed,progress,steering]`, controls `[acceleration,steering_command,progress_speed]`, three auxiliary previous-control states. Preserve existing RK4 transitions, objective scales, limits and tau=0.08.
-- [ ] Preserve the exact periodic quintic path; prepare stage geometry outside the solver. Shift warm starts by actual elapsed time with interpolation, not a minimum whole-stage shift. Generate one consistent nonlinear candidate and validate it once. One RTI pass, one optional corrective pass within the 50 ms request budget.
-- [ ] Separate latest-only 20 Hz solving and 50 Hz command publication. Use forwarded `/ackermann_cmd` history to forecast source/takeover states. Keep original source epoch and 0.8 s TTL. Discard late replies. Continue valid old plans after isolated failure; decelerate after expiry.
-- [ ] Preserve odometry, TF, localization identity/health, RC authority, enable service, drive and diagnostics contracts. Support `implementation:=legacy|acados_cpp`, default legacy, and isolated shadow outputs/services. Preserve localization protocol-v1 epoch/sequence/freshness rules. Prevent dual drive owners.
-- [ ] Audit gate ownership/cost; preserve first-round constraint semantics and `enforce_corridor=false`; merge duplicate rollouts/checks. Keep finite/status/nonlinear feasibility and takeover continuity checks. Record each rejection and timing.
-- [ ] Desktop model/cost equivalence and independent closed-loop 0.5/1.0 m/s checks. Cover startup, braking, reversal, wrap, map changes, stale input, clock reset, manual takeover, failure/late replies and artifact mismatch. Reproduce historical failures without extending near-finish repair scope.
-- [ ] Local commit/push; isolated NX pull/build. Run map-matched replay with FAST-LIO2+EKF+NDT genuinely registering, shadow controller only. Three runs >=180 s each, all attempts included. Compare matched legacy/new conditions; record power/temperature/clocks/threads/versions.
-- [ ] Evaluate 40 Hz and 20x0.05 / 25x0.05 only after the baseline passes. Integrator steps <=20 ms independent of publisher period; dt-scaled objective equivalence. Default delivery stays 20 Hz, 10x0.1.
-- [ ] Deliver source, builds, tests, manifests, timing report and launch/rollback instructions. Do not claim field qualification from simulated or replay evidence. Physical driving is a later operator test.
+- [x] Preserve the baseline; create the isolated worktree and reproducible desktop container.
+- [x] Export a portable solver bundle from the existing acados OCP: pin acados 0.5.5, publish configuration/reference fingerprints, model/constraint C functions and a small C ABI. Compile independently on x86/ARM; require matching artifacts at startup. No runtime generation.
+- [x] Build `src/aims_mpcc_rt`: rear-axle state `[x,y,yaw,speed,progress,steering]`, controls `[acceleration,steering_command,progress_speed]`, three auxiliary previous-control states. Preserve existing RK4 transitions, objective scales, limits and tau=0.08.
+- [x] Preserve the exact periodic quintic path; prepare stage geometry outside the solver. Shift warm starts by actual elapsed time with interpolation, not a minimum whole-stage shift. Generate one consistent nonlinear candidate and validate it once. One RTI pass, one optional corrective pass within the 50 ms request budget.
+- [x] Separate latest-only 20 Hz solving and 50 Hz command publication. Use forwarded `/ackermann_cmd` history to forecast source/takeover states. Keep original source epoch and 0.8 s TTL. Discard late replies. Continue valid old plans after isolated failure; decelerate after expiry.
+- [x] Preserve odometry, TF, localization identity/health, RC authority, enable service, drive and diagnostics contracts. Support `implementation:=legacy|acados_cpp`, default legacy, and isolated shadow outputs/services. Preserve localization protocol-v1 epoch/sequence/freshness rules. Prevent dual drive owners.
+- [x] Audit gate ownership/cost; preserve first-round constraint semantics and `enforce_corridor=false`; merge duplicate rollouts/checks. Keep finite/status/nonlinear feasibility and takeover continuity checks. Record each rejection and timing.
+- [x] Desktop model/cost equivalence and independent closed-loop 0.5/1.0 m/s checks. Cover startup, braking, reversal, wrap, map changes, stale input, clock reset, manual takeover, failure/late replies and artifact mismatch. Reproduce historical failures without extending near-finish repair scope.
+- [x] Local commit/push; isolated NX pull/build. Run map-matched replay with FAST-LIO2+EKF+NDT genuinely registering, shadow controller only. Three runs >=180 s each, all attempts included. Compare matched legacy/new conditions; record power/temperature/clocks/threads/versions.
+- [x] Evaluate 40 Hz and 20x0.05 / 25x0.05 only after the baseline passes. Integrator steps <=20 ms independent of publisher period; dt-scaled objective equivalence. Default delivery stays 20 Hz, 10x0.1.
+- [x] Deliver source, builds, tests, manifests, timing report and launch/rollback instructions. Do not claim field qualification from simulated or replay evidence. Physical driving is a later operator test.
 
 ## Acceptance
 
@@ -37,3 +37,46 @@ Existing own-car vehicle profile and reference bundle remain authoritative. Data
 - Existing Python acados applies native stage scaling dt, unlike the legacy IPOPT stage sum. Export explicitly uses stage scaling dt/0.1 and terminal scaling 1, preserving the baseline objective at dt=0.1 and the physical-time weighting when dt changes.
 - A plan arriving after its forecast cannot certify unexecuted new-plan controls as actual command history. Compare the forecast advanced through real old-plan history against observation, then construct and validate a reanchored candidate with the unchanged, not-yet-executed controls and actual applied prefix. Original source TTL remains unchanged. This distinct candidate requires validation; the native C++ activation cost is included in the complete publisher callback measurement. If that cost violates the output timing criterion, it must move to an independent activation worker without weakening acceptance semantics.
 - Strict envelope is the first production profile. Experimental soft-recovery profiles remain available in the legacy implementation and fail C++ node startup until their independent recovery comparator is implemented; they must not be silently accepted under only the optimizer slack certificate.
+
+
+### Recorded-route findings during delivery
+
+The real saved route geometry exposed a takeover failure absent in the R2 circle.
+Frozen replay of 1,401 actual activation snapshots reproduced 51 rejected
+unchanged-endpoint candidates exactly: delayed old commands alter first-stage
+slew and therefore the second-stage slew change. The validator is correct.
+Revised handling preserves every already-feasible candidate unchanged. Only a
+failed candidate may attempt a distinct bounded endpoint/acceleration transport
+to the actual applied prefix (wait <=50 ms, prefix changes bounded over wait plus
+one held 20 ms output slot). This alternate candidate receives the same complete
+nonlinear certificate; progress/order, original source TTL and RTI pass count do
+not change. Frozen replay restored 50 cases; the remaining true ellipse violation
+stays rejected. This changes the earlier unconditional unchanged-control rule for
+an already invalid candidate and requires recorded-route and NX revalidation.
+
+A separate output/receive race was confirmed: callback entry time was captured
+before locking state, so a receive callback could update valid timestamps while
+output waited. The stale entry epoch then made new data look future-dated. Output
+now captures its decision epoch after locking and retains entry time only for
+callback duration. A deterministic test compiles the actual callback and forces
+this interleaving; the old epoch failed, the corrected epoch passed. Receipt/source
+timestamps are preserved and forwarded proposal matching requires nonnegative age.
+
+Release pure contract tests explicitly retain assertions via -UNDEBUG.
+
+## Delivery status
+
+Implementation tasks and evaluation are complete; source and isolated ARM build
+are retained on `feat/mpcc-acados-runtime`. See
+[verification report](../../reports/2026-10-09-mpcc-acados-runtime.md).
+
+- Default N10/.1/20 Hz: all three 180 s genuine joint-load timing and absolute
+  synthetic tracking runs pass, with zero failures/rejections/deadlines.
+- The relative tracking criterion versus a completed same-condition legacy run
+  remains unestablished: legacy does not finish the recorded-route NX comparison.
+- Optional 40 Hz/2 ms lead N10 and N25/.05 pass one 60 s exploration each;
+  N20/.05 fails takeover fraction/streak. No optional profile becomes default.
+- Seven historical strict-profile requests: only one certified; speedup does
+  not repair initial infeasibility or guarantee convergence in two RTI passes.
+- Physical closed-loop field acceptance remains pending; new runtime is opt-in
+  and shadow by default. Existing physical worktrees and references are preserved.
