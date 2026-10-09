@@ -158,6 +158,8 @@ source /home/aims/AIMSRacer/install/setup.bash
 source /home/aims/AIMSRacer-fastlio-ndt/log/fastlio-ndt/install/ndt_omp_ros2/share/ndt_omp_ros2/package.bash
 source /home/aims/AIMSRacer-fastlio-ndt/log/fastlio-ndt/install/lidar_localization_ros2/share/lidar_localization_ros2/package.bash
 source /home/aims/aimsracer-data/experiments/mpcc-acados-runtime/repair-final-20261009/ros-install/local_setup.bash
+# 2026-10-10 standard-interface revision; the older overlay above supplies the tested monitor.
+source /home/aims/aimsracer-data/experiments/mpcc-acados-runtime/remove-shadow-20261010/ros-install/local_setup.bash
 ros2 launch aims_mpcc mpcc.launch.py implementation:=acados_cpp \
   cpp_solve_frequency:=20.0 vehicle_config:=/absolute/path/to/matching-v2.yaml \
   path_directory:=/absolute/path/to/verified-reference \

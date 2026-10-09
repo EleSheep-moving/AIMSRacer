@@ -19,6 +19,8 @@ and starts disabled. Hardware driving acceptance is a separate step.
 > trials. Synthetic motor-response violations remain recorded observations;
 > they are not a runtime stop gate or a prerequisite for those trials.
 > See [repair validation](../../docs/reports/2026-10-09-mpcc-runtime-repair-validation.md).
+> The [standard-interface follow-up](../../docs/reports/2026-10-10-mpcc-standard-interface.md)
+> records removal of the runtime mode and the desktop/NX interface verification.
 
 ## Offline bundle and build
 
@@ -81,6 +83,10 @@ There is no shadow mode or parameter. Startup and supervised restarts remain
 disabled; an explicit successful enable is required before driving.
 The isolated acceptance harness uses explicit ROS remaps for **all** input/output
 topics and synthetic feedback, independently of vehicle runtime behavior.
+On NX, source the tested vehicle/localization/monitor underlays followed by
+`/home/aims/aimsracer-data/experiments/mpcc-acados-runtime/remove-shadow-20261010/ros-install/local_setup.bash`.
+The preserved `repair-final-20261009/ros-install` controller still has the old
+interface switch; the new overlay supplies the standard-interface revision.
 
 Physical driving validation is under operator control; the current evidence
 does not establish physical closed-loop acceptance. It requires
