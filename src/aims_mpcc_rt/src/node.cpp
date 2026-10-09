@@ -222,8 +222,19 @@ class RuntimeNode final:public rclcpp::Node {
     }
     bool changed=health_.observe(values,ros.nanoseconds(),now);
     if(changed){snapshot_={};fault_locked("Localization epoch changed; fresh anchor state and explicit re-enable required");}
-    else if(enabled_&&(!health_.usable(ros.nanoseconds(),now)||
+    else {
+      // Odom coordinates remain valid across a trusted anchor update within
+      // one localization epoch. Adopt the atomic alignment record without
+      // refreshing or relabeling the physical measurement/history clocks.
+      if(snapshot_.present&&snapshot_.epoch==health_.epoch()&&health_.qualified()&&
+         health_.usable(ros.nanoseconds(),now)&&now>=snapshot_.source&&now-snapshot_.source<=.1&&
+         now>=snapshot_.received&&now-snapshot_.received<=.1&&history_->covers(snapshot_.source)){
+        snapshot_.alignment=health_.alignment();snapshot_.anchor_sequence=health_.anchor_sequence();
+        snapshot_.anchor_stamp_ns=health_.anchor_stamp_ns();
+      }
+      if(enabled_&&(!health_.usable(ros.nanoseconds(),now)||
       (cfg_.command_profile=="rate_bounded_v2"&&!health_.qualified())))fault_locked("Trusted localization unavailable");
+    }
   }
   bool footprint_locked(const State& mapped,double theta)const{
     if(!cfg_.enforce_corridor)return true;

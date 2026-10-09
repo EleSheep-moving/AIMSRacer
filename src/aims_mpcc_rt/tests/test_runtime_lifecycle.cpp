@@ -64,6 +64,41 @@ struct RuntimeClockProbe {
       node.forwarded(d);node.odometry(odom(node));}
     if(!node.snapshot_.present||node.snapshot_.ros_source>101.||node.enabled_)throw std::runtime_error("fresh reset clock did not recover without old watermark");
   }
+  static void anchor_order(RuntimeNode& node){
+    if(node.bundle_.reference().frame_id()!="map")throw std::runtime_error("map bundle required for anchor-order regression");
+    auto anchor=health("stable",node.get_clock()->now().nanoseconds());
+    anchor["map_sha256"]=node.bundle_.reference().map_sha256();node.accept_health(anchor);
+    {std::lock_guard<std::mutex> lock(node.mutex_);node.identity_=node.bundle_.reference().map_sha256();}
+    Drive stopped;node.forwarded(stopped);node.odometry(odom(node));
+    const double deadline=steady()+2.;
+    while(steady()<deadline){bool ready=false;{std::lock_guard<std::mutex> lock(node.mutex_);ready=node.solver_ready_;}if(ready)break;std::this_thread::yield();}
+    {std::lock_guard<std::mutex> lock(node.mutex_);node.mode_=true;node.mode_received_=steady();}
+    if(!enable(node))throw std::runtime_error("anchor-order fixture could not enable stationary controller");
+    for(int sequence:{2,3}){
+      // Both legal arrival orders: health then output before odom; odom then
+      // health then output. The odom-frame physical state remains unchanged.
+      if(sequence==3){node.forwarded(stopped);node.odometry(odom(node));}
+      Snapshot prior;double history_epoch=0.;{std::lock_guard<std::mutex> lock(node.mutex_);prior=node.snapshot_;history_epoch=node.history_->newest();}
+      anchor["health_sequence"]=anchor["anchor_sequence"]=anchor["alignment_anchor_sequence"]=std::to_string(sequence);
+      anchor["last_anchor_stamp_ns"]=anchor["alignment_stamp_ns"]=std::to_string(node.get_clock()->now().nanoseconds());
+      anchor["map_odom_x"]=std::to_string((sequence-1)*.001);node.accept_health(anchor);node.publish_command();
+      {std::lock_guard<std::mutex> lock(node.mutex_);
+        if(!node.enabled_||node.phase_!="RUNNING")throw std::runtime_error("healthy same-epoch anchor before odometry faulted: "+node.reason_);
+        if(node.snapshot_.epoch!="stable"||node.snapshot_.anchor_sequence!=sequence||
+           node.snapshot_.alignment!=node.health_.alignment())throw std::runtime_error("same-epoch snapshot did not atomically adopt trusted alignment identity");
+        if(node.snapshot_.state!=prior.state||node.snapshot_.source!=prior.source||node.snapshot_.received!=prior.received||
+           node.history_->newest()!=history_epoch)throw std::runtime_error("anchor update relabeled or refreshed odometry/history epochs");
+      }
+      if(sequence==2){node.forwarded(stopped);node.odometry(odom(node));}
+    }
+    const auto alignment=node.snapshot_.alignment;auto duplicate=anchor;duplicate["map_odom_x"]=".5";
+    node.accept_health(duplicate); // duplicate heartbeat cannot replace the committed record
+    if(node.snapshot_.alignment!=alignment||!node.enabled_)throw std::runtime_error("duplicate anchor mutated healthy alignment");
+    duplicate["health_sequence"]="4";node.accept_health(duplicate);
+    if(node.enabled_||node.snapshot_.alignment!=alignment)throw std::runtime_error("same identity changed transform bypassed immutable anchor guard");
+    auto next=health("new-epoch",node.get_clock()->now().nanoseconds());next["map_sha256"]=node.bundle_.reference().map_sha256();node.accept_health(next);
+    if(node.snapshot_.present||enable(node))throw std::runtime_error("new epoch reused old odometry after same-epoch adoption repair");
+  }
   static void stall(RuntimeNode& node){
     const char* domain=std::getenv("ROS_DOMAIN_ID");
     if(!domain||std::stoi(domain)<200)throw std::runtime_error("stall fixture requires a private ROS domain >=200");
@@ -220,6 +255,7 @@ int main(int argc,char** argv){
   int result=0;try{auto node=std::make_shared<aims_mpcc_rt::RuntimeNode>();
     if(mesh)throw std::runtime_error("unqualified v2 50 ms mesh started a controller");if(argc>2&&std::string(argv[2])=="delivery")aims_mpcc_rt::RuntimeClockProbe::delivery(*node);
     else if(argc>2&&std::string(argv[2])=="epoch")aims_mpcc_rt::RuntimeClockProbe::epoch(*node);
+    else if(argc>2&&std::string(argv[2])=="anchor_order")aims_mpcc_rt::RuntimeClockProbe::anchor_order(*node);
     else if(argc>2&&std::string(argv[2])=="stall")aims_mpcc_rt::RuntimeClockProbe::stall(*node);
     else if(argc>2&&std::string(argv[2])=="cap")aims_mpcc_rt::RuntimeClockProbe::cap(*node);
     else if(argc>2&&std::string(argv[2])=="capture")aims_mpcc_rt::RuntimeClockProbe::capture(*node);

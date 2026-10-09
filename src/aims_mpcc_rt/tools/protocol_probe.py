@@ -34,11 +34,35 @@ from ament_index_python.packages import get_package_prefix
 PREFIX = '/mpcc_protocol'
 
 
+def map_identity(path):
+    if path.frame_id!='map':return 'b'*64
+    value=path.metadata.get('map_sha256','')
+    if len(value)!=64 or any(c not in '0123456789abcdefABCDEF' for c in value):
+        raise ValueError('map reference requires a valid map_sha256')
+    return value
+
+
+def atomic_health_record(*,epoch,health_sequence,anchor_sequence,anchor_ns,map_hash,kind):
+    values=dict(protocol_version='1',epoch=epoch,health_sequence=str(health_sequence),
+        anchor_sequence=str(anchor_sequence),last_anchor_stamp_ns=str(anchor_ns),
+        ready='false' if kind=='not_ready' else 'true',state='synthetic',map_sha256=map_hash,
+        alignment_valid='true',alignment_epoch=epoch,alignment_anchor_sequence=str(anchor_sequence),
+        alignment_stamp_ns=str(anchor_ns),map_odom_x='0',map_odom_y='0',map_odom_z='0',
+        map_odom_qx='0',map_odom_qy='0',map_odom_qz='0',map_odom_qw='1')
+    if kind=='malformed':values.pop('last_anchor_stamp_ns')
+    return values
+
+
+def base_link_position(x,y,yaw,rear_offset):
+    return x+rear_offset*math.cos(yaw),y+rear_offset*math.sin(yaw)
+
+
 class Probe(Node):
     def __init__(self, bundle):
         super().__init__('mpcc_protocol_probe')
         self.config = load_config(bundle / 'input_config.yaml')
         path = ReferencePath.load(bundle / 'input_reference')
+        self.reference_frame=path.frame_id
         point = path.at(0.)
         self.x, self.y, self.yaw = point['x'], point['y'], point['yaw']
         self.speed = self.steer = 0.
@@ -50,7 +74,8 @@ class Probe(Node):
         self.health_seq = self.anchor_seq = 0
         self.anchor_ns = 0
         self.hold_anchor = False
-        self.map_hash = 'b' * 64
+        self.expected_map_hash=map_identity(path)
+        self.map_hash=self.expected_map_hash
         self.status = {}
         self.commands = []
         self.events = []
@@ -108,8 +133,8 @@ class Probe(Node):
         if self.odom_fault == 'backwards': stamp = self.last_odom_ns - 1_000_000
         odom.header.stamp.sec, odom.header.stamp.nanosec = divmod(stamp, 10**9)
         self.last_odom_ns = stamp
-        odom.pose.pose.position.x = self.x
-        odom.pose.pose.position.y = self.y
+        odom.pose.pose.position.x,odom.pose.pose.position.y=base_link_position(
+            self.x,self.y,self.yaw,self.config.rear_offset)
         if self.odom_fault != 'quaternion':
             scale = 2. if self.odom_fault == 'nonunit_quaternion' else 1.
             odom.pose.pose.orientation.z = scale * math.sin(self.yaw / 2)
@@ -127,11 +152,8 @@ class Probe(Node):
         if not self.hold_anchor and (not self.anchor_ns or ns - self.anchor_ns > 200_000_000):
             self.anchor_seq += 1
             self.anchor_ns = ns
-        values = dict(protocol_version='1', epoch=self.epoch,
-                      health_sequence=str(self.health_seq), anchor_sequence=str(self.anchor_seq),
-                      last_anchor_stamp_ns=str(self.anchor_ns),
-                      ready='false' if self.health_kind == 'not_ready' else 'true', state='synthetic')
-        if self.health_kind == 'malformed': values.pop('last_anchor_stamp_ns')
+        values=atomic_health_record(epoch=self.epoch,health_sequence=self.health_seq,
+            anchor_sequence=self.anchor_seq,anchor_ns=self.anchor_ns,map_hash=self.map_hash,kind=self.health_kind)
         status = DiagnosticStatus(name='aims_racer_system/localization',
                                   values=[KeyValue(key=k, value=v) for k, v in values.items()])
         self.health.publish(DiagnosticArray(status=[status]))
@@ -169,12 +191,26 @@ class Probe(Node):
         return dict(success=response.success, message=response.message)
 
 
+def lifecycle_pass(commands,statuses,baseline,ended,duration):
+    """Positive publication and repeated accepted activations must persist."""
+    if not commands or not statuses:return False
+    gaps=[after[0]-before[0] for before,after in zip(commands,commands[1:])]
+    return bool(commands[-1][0]-commands[0][0]>=duration-.05
+        and ended-commands[-1][0]<=.1 and len(commands)>=.95*50*duration
+        and all(row[1]>0. for row in commands) and max(gaps,default=math.inf)<=.1
+        and all(status.get('status')=='RUNNING' for status in statuses)
+        and statuses[-1].get('activated',0)-baseline.get('activated',0)>=2
+        and all(status.get(key,0)==baseline.get(key,0) for status in statuses for key in ('failed','rejected')))
+
+
 def run(args):
     if os.environ.get('ROS_DOMAIN_ID') != '225' or os.environ.get('ROS_LOCALHOST_ONLY') != '1':
         raise SystemExit('probe requires ROS_DOMAIN_ID=225 and ROS_LOCALHOST_ONLY=1')
     out = Path(args.output)
     out.mkdir(parents=True, exist_ok=False)
     bundle = Path(args.bundle).resolve()
+    if args.scenario=='health' and ReferencePath.load(bundle/'input_reference').frame_id!='map':
+        raise ValueError('health scenario requires a map reference; odom reference cannot test localization authorization')
     remaps = topic_remap_arguments(PREFIX)
     if args.scenario == 'shadow':
         remaps += [a for topic in ('/drive', '/mpcc/status', '/mpcc/reference', '/mpcc/prediction', '/mpcc/enable')
@@ -182,7 +218,9 @@ def run(args):
     command = ['ros2', 'run', 'aims_mpcc_rt', 'mpcc_rt_node', '--ros-args',
                '-p', 'artifact_directory:=' + str(bundle), '-p', 'simulation:=true',
                '-p', 'shadow:=' + ('true' if args.scenario == 'shadow' else 'false'),
-               '-p', 'repeat_laps:=true', '-p', 'log_directory:=' + str(out / 'controller'), *remaps]
+               '-p', 'repeat_laps:=true','-p',f'solve_frequency:={args.frequency}',
+               '-p',f'handover_delay:={args.handover_delay}','-p',f'solver_timeout:={args.budget}',
+               '-p', 'log_directory:=' + str(out / 'controller'), *remaps]
     command=[sys.executable,str(Path(__file__).with_name('runtime_supervisor.py')),
              '--status-topic',PREFIX+'/mpcc/status','--report',str(out/'supervisor.json'),
              '--restart-limit','1' if args.scenario=='watchdog' else '0','--',*command]
@@ -191,6 +229,7 @@ def run(args):
     binary = Path(get_package_prefix('aims_mpcc_rt')) / 'lib/aims_mpcc_rt/mpcc_rt_node'
     report = dict(scope='synthetic map identity, TF, health, selector echo and lagged bicycle plant; no hardware or NDT',
                   scenario=args.scenario, domain=225, prefix=PREFIX, command=command, checks=[],
+                  profile=dict(frequency=args.frequency,handover_delay=args.handover_delay,budget=args.budget,seconds=args.seconds),
                   controller_binary=str(binary), controller_binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
                   bundle_fingerprint=json.loads((bundle / 'manifest.json').read_text())['fingerprint'])
     log = (out / 'controller.log').open('w')
@@ -253,9 +292,9 @@ def run(args):
         report['unprefixed_driving_publishers'] = original
         check('unprefixed_driving_publishers_zero', not any(original.values()), counts=original)
         if args.scenario == 'health':
-            probe.map_hash = 'a' * 64; probe.settle()
+            probe.map_hash=('0' if probe.expected_map_hash[0]!='0' else '1')+probe.expected_map_hash[1:]; probe.settle()
             reply = probe.enable(); check('wrong_map_hash_blocks_enable', not reply['success'], reply=reply)
-            probe.map_hash = 'b' * 64; probe.health_kind = 'not_ready'; probe.settle()
+            probe.map_hash=probe.expected_map_hash; probe.health_kind = 'not_ready'; probe.settle()
             reply = probe.enable(); check('not_ready_blocks_enable', not reply['success'], reply=reply)
             probe.health_kind = 'ready'; probe.anchor_ns = 0; probe.settle(); activate()
             fault('malformed_health_faults', lambda: setattr(probe, 'health_kind', 'malformed'), 'localization')
@@ -267,7 +306,7 @@ def run(args):
             probe.health_kind = 'ready'; probe.settle()
             reply = probe.enable(); check('same_anchor_cannot_recover', not reply['success'], reply=reply)
             probe.hold_anchor = False; probe.anchor_ns = 0; probe.settle(); activate()
-            fault('active_map_identity_mismatch_faults', lambda: setattr(probe, 'map_hash', 'a' * 64), 'map identity')
+            fault('active_map_identity_mismatch_faults', lambda: setattr(probe,'map_hash',('0' if probe.expected_map_hash[0]!='0' else '1')+probe.expected_map_hash[1:]), 'map identity')
         elif args.scenario == 'odometry':
             for defect, reason in [('stale', 'odometry'), ('future', 'odometry'),
                                    ('backwards', 'backwards'), ('quaternion', 'quaternion'),
@@ -329,6 +368,18 @@ def run(args):
             check('restart_never_auto_enables',all(row[1]==0. for row in probe.commands)
                   and probe.status.get('status') in ('WAITING','READY'),status=probe.status)
             report['process_stall_scope']='whole process SIGSTOP, disabled synthetic domain; native-call wedging not exercised'
+        elif args.scenario == 'lifecycle':
+            activate()
+            baseline=dict(probe.status)
+            command_start,event_start=len(probe.commands),len(probe.events)
+            begin=time.monotonic();probe.settle(args.seconds);ended=time.monotonic()
+            commands=probe.commands[command_start:]
+            statuses=[event['status'] for event in probe.events[event_start:]]
+            report['lifecycle']=dict(duration_s=ended-begin,baseline=baseline,
+                command_samples=len(commands),status_samples=len(statuses),
+                accepted_activations_delta=statuses[-1].get('activated',0)-baseline.get('activated',0) if statuses else 0)
+            check('repeated_positive_accepted_activations',lifecycle_pass(commands,statuses,baseline,ended,args.seconds),
+                  evidence=report['lifecycle'],final_status=probe.status)
         elif args.scenario == 'freshness':
             activate()
             begin = time.monotonic()
@@ -397,5 +448,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bundle', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--scenario', choices=['health', 'odometry', 'ownership', 'shadow', 'freshness', 'watchdog'], required=True)
-    raise SystemExit(run(parser.parse_args()))
+    parser.add_argument('--scenario', choices=['health', 'odometry', 'ownership', 'shadow', 'freshness', 'watchdog', 'lifecycle'], required=True)
+    parser.add_argument('--frequency',type=float,default=20.)
+    parser.add_argument('--handover-delay',type=float,default=.02)
+    parser.add_argument('--budget',type=float,default=.05)
+    parser.add_argument('--seconds',type=float,default=6.)
+    options=parser.parse_args()
+    if any(not math.isfinite(v) for v in (options.frequency,options.handover_delay,options.budget,options.seconds)) or not 0<options.frequency<=50 or not 0<=options.handover_delay<=.1 or options.budget<=0 or options.seconds<1:
+        parser.error('frequency in (0,50], lead in [0,.1], positive budget and seconds>=1 required')
+    raise SystemExit(run(options))
