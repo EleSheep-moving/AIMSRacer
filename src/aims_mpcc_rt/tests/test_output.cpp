@@ -92,7 +92,11 @@ int main(){
   assert(saturated.continuous_speed==c.max_speed&&saturated.steering==c.steer_limit);
   assert(std::abs(saturated.steering_rate)<=c.steer_rate);
   selected.reset(.01,.1,100.);auto bounded_stop=selected.sample(nullptr,100.04,State{},true,.8);
-  assert(bounded_stop.continuous_speed==0.&&bounded_stop.speed==0.&&bounded_stop.steering==.1);
+  // ARM fused arithmetic can retain a sub-attometre/s internal residual.
+  // Wire output must still be exactly zero; continuous numerical state uses
+  // the same finite tolerance as the other retained-bound checks.
+  assert(std::isfinite(bounded_stop.continuous_speed)&&std::abs(bounded_stop.continuous_speed)<1e-12&&
+         bounded_stop.speed==0.&&std::abs(bounded_stop.steering-.1)<1e-12);
   selected.reset(.4,.1,110.);p.source_epoch=p.forecast_epoch=109.;
   auto v2_expired=selected.sample(&p,110.02,State{},false,.8);
   assert(v2_expired.expired&&v2_expired.continuous_acceleration<0.);
