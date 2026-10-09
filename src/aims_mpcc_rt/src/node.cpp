@@ -226,6 +226,7 @@ class RuntimeNode final:public rclcpp::Node {
         if(!enabled_||stopping_||!fresh_locked(submitted)||!localization_locked(submitted))continue;
         Snapshot snapshot=snapshot_;auto history=*history_;auto sampler=*sampler_;
         auto previous=active_;auto generation=generation_;auto sequence=++requests_;
+        const bool recovering=phase_=="RECOVERING";
         std::ostringstream submission;submission<<std::setprecision(17)<<"submission,"<<submitted<<','<<sequence
           <<','<<snapshot.source<<','<<submitted+lead_<<','<<submitted<<",0,0,0,0,0,0,0,0,0,0,0,0,0,\n";
         queue_log(submission.str());
@@ -240,7 +241,8 @@ class RuntimeNode final:public rclcpp::Node {
           candidate.applied={candidate.prefix.acceleration,candidate.prefix.steering,candidate.prefix.steering_rate};
           double elapsed=previous_submit?submitted-previous_submit:1./frequency_;previous_submit=submitted;
           std::vector<double> targets;
-          if(!repeat_laps_){
+          if(recovering)targets.assign(cfg_.horizon+1,0.);
+          else if(!repeat_laps_){
             auto mapped=map_point(initial,snapshot.alignment);
             auto theta=core.reference().project(mapped[0],mapped[1]);
             targets=core.reference().speed_refs(theta,cfg_.horizon,cfg_.dt);
@@ -373,7 +375,13 @@ class RuntimeNode final:public rclcpp::Node {
       value("activated",activated_);value("handover_rejected",handover_rejected_);value("complete_s",last_complete_);
       value("observation_age_s",last_observation_age_);value("native_status",last_.plan.status);
       value("native_passes",last_.plan.native_passes);value("max_violation",last_.plan.max_violation);
-      value("log_dropped",log_dropped_.load());}
+      value("log_dropped",log_dropped_.load());
+      const auto& b=sampler_->braking_budget();std::ostringstream budget;
+      budget<<std::boolalpha<<"{\"available\":"<<b.available<<",\"feasible\":"<<b.feasible
+        <<",\"lateral_utilization_bound\":";
+      if(std::isfinite(b.lateral_utilization))budget<<b.lateral_utilization;else budget<<"null";
+      budget<<",\"accel_capacity\":"<<b.accel_capacity<<",\"brake_capacity\":"<<b.brake_capacity<<'}';
+      diagnostic_msgs::msg::KeyValue kv;kv.key="braking_budget";kv.value=budget.str();status.values.push_back(kv);}
     message.status.push_back(status);status_pub_->publish(message);
   }
   void publish_reference(){

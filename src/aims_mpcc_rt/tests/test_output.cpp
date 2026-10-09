@@ -6,7 +6,7 @@ using namespace aims_mpcc_rt;
 int main(){
   Config c{};c.max_speed=1.5;c.steer_limit=.45;c.steer_rate=2.;
   c.steer_acceleration=2.;c.accel_limit=.5;c.brake_limit=.5;c.jerk_limit=1.;
-  c.minimum_drive_speed=.2;c.wheelbase=.36;c.lateral_accel_limit=1.;
+  c.minimum_drive_speed=.2;c.wheelbase=.36;c.lateral_accel_limit=1.;c.steering_tau=.08;
   c.envelope_accel=c.envelope_brake=.5;
   OutputSampler out(c);out.reset(0.,0.,10.);
   Plan p;p.success=true;p.dt=.1;p.source_epoch=10.;p.forecast_epoch=10.;
@@ -35,5 +35,10 @@ int main(){
   auto near_finish=out.sample(&p,40.02,current,false,.8,0.);
   assert(near_finish.continuous_speed>0.&&near_finish.continuous_speed<.1);
   assert(near_finish.speed==0.); // finish reserve must suppress the motor floor
+  out.reset(1.,.45,50.);current[3]=1.;current[5]=.45;
+  auto unavailable_budget=out.sample(nullptr,50.02,current,false,.8);
+  assert(unavailable_budget.continuous_acceleration<0.);
+  assert(unavailable_budget.continuous_speed<1.); // recovery cannot freeze at an infeasible lateral load
+  assert(out.braking_budget().available&&!out.braking_budget().feasible);
   std::cout<<"bounded command sampler passed\n";
 }

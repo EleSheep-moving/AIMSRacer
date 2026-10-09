@@ -12,6 +12,9 @@ target_include_directories(mpcc_rt_core PUBLIC
   $<INSTALL_INTERFACE:include>)
 target_compile_options(mpcc_rt_core PRIVATE -Wall -Wextra -Wpedantic)
 target_link_libraries(mpcc_rt_core PUBLIC yaml-cpp OpenSSL::Crypto ${CMAKE_DL_LIBS})
+add_executable(replay_requests tools/replay_requests.cpp)
+target_link_libraries(replay_requests mpcc_rt_core)
+install(TARGETS replay_requests DESTINATION lib/${PROJECT_NAME})
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/node.cpp")
   find_package(rclcpp REQUIRED)
