@@ -3,6 +3,12 @@
 Date: 2026-10-09. Branch: `feat/mpcc-acados-runtime`. Implementation commit:
 `dffe343` (report/documentation commits follow). Base: `8e4f6b2`.
 
+> Follow-up audit: **runtime behavior acceptance is reopened**. The held-output
+> execution certificate is missing, and recorded `complete_s` excludes result
+> delivery mutex wait. The 3-run numbers below remain archived measurements,
+> but do not establish full execution equivalence or the complete delivery
+> deadline. See [whole-chain audit](2026-10-09-mpcc-native-contract-audit.md).
+
 ## Scope and architecture
 
 Retained the AIMSRacer rear-axle kinematic bicycle model, six physical states
@@ -18,7 +24,7 @@ native C++ ROS 2 runtime. NPU reference is `npu-ius-lab/Roboracer_China_2026`,
 Pinned acados 0.5.5 to `59d93e17d2985fdd73fc58b8a83ed8f83a024171`.
 
 Default delivery: N10, dt=0.1 s, 20 Hz latest-only solving, 50 Hz publication,
-50 ms complete request deadline, 20 ms forecast lead, 0.8 s TTL measured from
+50 ms configured request budget (delivery accounting gap noted below), 20 ms forecast lead, 0.8 s TTL measured from
 the original odometry stamp. The launch still defaults to `implementation:=legacy`;
 new runtime defaults to shadow output. Existing physical worktrees were preserved.
 
@@ -89,7 +95,9 @@ This tests timing and synthetic tracking; it does not test actual vehicle dynami
 or prove field localization/tracking.
 
 Every submission, worker outcome, activation/rejection and publication including
-zero is accounted for. Timing includes failures. Qualification requires complete
+zero is accounted for. Recorded computation timing includes failed outcomes. The
+original harness applies the timing thresholds below to its pre-delivery metric,
+which does not qualify the complete-delivery target. Its checks require complete
 log accounting, >=99% request/publication coverage, continuous estimation load,
 no source changes, P95 request<=40 ms, P99<=50 ms, deadline/failure fraction<=0.1%,
 no three consecutive failures, publication P99<=30 ms and max<=60 ms.
@@ -128,11 +136,12 @@ no three consecutive failures, publication P99<=30 ms and max<=60 ms.
 All three use the identical saved 33.47 m route geometry, 1.0 m/s target,
 strict profile and independent synthetic feedback under genuine estimation load.
 Times below are milliseconds; lateral errors are synthetic, not field measurements.
-Here "Qualified" means timing/log/load qualification plus the harness absolute
-synthetic tracking check. The plan's relative tracking gate against a successful
+Here the original harness result means its recorded timing/log/load checks
+plus the harness absolute synthetic tracking check. Recorded timing excludes
+result delivery mutex wait, and executed-envelope equivalence was not checked. The plan's relative tracking gate against a successful
 same-condition legacy run remains **unestablished** on this route.
 
-| Run (180 s) | Requests | Request P95 | P99 | Max | Contour P95 (cm) | Laps | Worker fail / takeover reject / late | Qualified |
+| Run (180 s) | Requests | Request P95 | P99 | Max | Contour P95 (cm) | Laps | Worker fail / takeover reject / late | Original harness result |
 |---|---:|---:|---:|---:|---:|---:|---|---|
 | 1 | 3594 | 1.023 | 1.188 | 1.897 | 1.64 | 5.275 | 0 / 0 / 0 | PASS |
 | 2 | 3595 | 1.022 | 1.171 | 3.607 | 1.59 | 5.292 | 0 / 0 / 0 | PASS |
@@ -147,9 +156,12 @@ same-condition legacy run remains **unestablished** on this route.
 Preparation includes seed propagation, warm-start transport, frozen stage
 parameters and initial solver setup; it is not a pure geometry timing.
 
-Complete request timing covers submission through worker result, including native
-solve and candidate checks. It excludes the configured forecast lead and waiting
-for publication: request-to-first-publication P95 is about **39 ms**, not 1 ms.
+The recorded `complete_s` covers submission through the worker's pre-delivery
+timestamp, including solve and candidate checks; it excludes reacquiring the
+state mutex and installing the pending result. It must be called reported
+worker computation time, not complete request delivery latency.
+Request-to-first-publication P95 is about **39 ms**, including the forecast
+lead/publication scheduling and delivery wait for plans actually published.
 Every run has zero dropped log rows and zero public actuator publishers.
 Run 2 has one valid result left unactivated at test shutdown; this is not a rejection.
 
@@ -183,7 +195,7 @@ estimation load, prebuilt IPOPT/JIT cache and input/output contracts.
 |---|---|---:|---|---|---|---|
 | IPOPT legacy | 20 Hz / 50 ms | 1.000 s | 10 / 0 | 10 / 10 | 71.299 / 79.972 | Stopped: all requests late, recovery requires reenable |
 | IPOPT legacy | 5 Hz / 250 ms | 1.001 s | 5 / 1 | 4 / 0 | 76.043 / 80.027 | Stopped: executed schedule fails physical/recovery bounds |
-| Native acados | 20 Hz / 50 ms | 3 x 180 s | 10784 / 10783 | 0 / 0 | 1.022-1.043 / 3.607 | Qualified, all three complete |
+| Native acados | 20 Hz / 50 ms | 3 x 180 s | 10784 / 10783 | 0 / 0 | 1.022-1.043 / 3.607 | Original harness PASS, all runs complete |
 
 Legacy was scheduled for 30/60 s respectively but the acceptance harness stops
 when nominal RUNNING is lost. Every request is included, including all failures;
@@ -219,7 +231,7 @@ qualified comparison.
 
 First-publication distributions below include only plans actually published
 (724 for the lead20 ms case), not all submitted requests. Pending/rejected
-results remain in the separate request/disposition counts; complete request
+results remain in the separate request/disposition counts; reported pre-delivery computation
 timing includes all returned outcomes.
 
 Each is **one 60 s exploration**, 40 Hz requests / 25 ms budget, unchanged
@@ -299,6 +311,9 @@ no limit was weakened to hide a failure. Reports are JSON files separate from
 native error stdout. Empty feasibility intervals/nonfinite metrics are null.
 
 ## Artifacts, launch and rollback
+
+The new runtime should remain in shadow while the follow-up audit blockers are
+resolved and revalidated. Loading a production bundle is not field release.
 
 Read [package instructions](../../src/aims_mpcc_rt/README.md) for offline export,
 target compilation, selected runtime and rollback. Important NX locations:

@@ -7,9 +7,13 @@ and steering acceleration constraints. It uses generated acados SQP-RTI,
 Gauss-Newton and partial-condensing HPIPM through C++.
 
 Defaults: N=10, dt=0.1 s, 20 Hz latest-only solver, 50 Hz command output,
-50 ms complete request budget, 20 ms forecast lead, 0.8 s original-source TTL.
+50 ms requested budget (current accounting excludes delivery mutex wait), 20 ms forecast lead, 0.8 s original-source TTL.
 The launch defaults to the legacy controller. The new runtime defaults to
 shadow outputs; hardware driving acceptance is a separate step.
+
+> Whole-chain audit found execution-validation and delivery-deadline gaps.
+> Keep this prototype in shadow until they are resolved and revalidated.
+> See [audit](../../docs/reports/2026-10-09-mpcc-native-contract-audit.md).
 
 ## Offline bundle and build
 
@@ -96,7 +100,8 @@ prefix, so it needs its own validation. A feasible original sequence stays
 unchanged. If the new prefix makes it infeasible, a bounded endpoint/acceleration
 transport may form an alternate candidate, with the same full nonlinear
 certificate. It neither skips unexecuted controls nor adds optimizer passes or
-extends source TTL. True envelope violations remain rejected. Its cost is included in the complete
+extends source TTL. Macro-candidate envelope violations remain rejected;
+prospective held-output coverage has the gap described in the audit. Its cost is included in the complete
 publisher callback. This is measured independently of the native optimizer.
 The strict vehicle profile is supported; experimental soft-envelope profiles
 are refused at ROS startup until their independent recovery comparator is

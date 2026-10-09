@@ -10,10 +10,10 @@ Goal: retain the rear-axle kinematic model and system contracts while reducing c
 - [x] Export a portable solver bundle from the existing acados OCP: pin acados 0.5.5, publish configuration/reference fingerprints, model/constraint C functions and a small C ABI. Compile independently on x86/ARM; require matching artifacts at startup. No runtime generation.
 - [x] Build `src/aims_mpcc_rt`: rear-axle state `[x,y,yaw,speed,progress,steering]`, controls `[acceleration,steering_command,progress_speed]`, three auxiliary previous-control states. Preserve existing RK4 transitions, objective scales, limits and tau=0.08.
 - [x] Preserve the exact periodic quintic path; prepare stage geometry outside the solver. Shift warm starts by actual elapsed time with interpolation, not a minimum whole-stage shift. Generate one consistent nonlinear candidate and validate it once. One RTI pass, one optional corrective pass within the 50 ms request budget.
-- [x] Separate latest-only 20 Hz solving and 50 Hz command publication. Use forwarded `/ackermann_cmd` history to forecast source/takeover states. Keep original source epoch and 0.8 s TTL. Discard late replies. Continue valid old plans after isolated failure; decelerate after expiry.
-- [x] Preserve odometry, TF, localization identity/health, RC authority, enable service, drive and diagnostics contracts. Support `implementation:=legacy|acados_cpp`, default legacy, and isolated shadow outputs/services. Preserve localization protocol-v1 epoch/sequence/freshness rules. Prevent dual drive owners.
-- [x] Audit gate ownership/cost; preserve first-round constraint semantics and `enforce_corridor=false`; merge duplicate rollouts/checks. Keep finite/status/nonlinear feasibility and takeover continuity checks. Record each rejection and timing.
-- [x] Desktop model/cost equivalence and independent closed-loop 0.5/1.0 m/s checks. Cover startup, braking, reversal, wrap, map changes, stale input, clock reset, manual takeover, failure/late replies and artifact mismatch. Reproduce historical failures without extending near-finish repair scope.
+- [ ] Separate latest-only 20 Hz solving and 50 Hz command publication. Use forwarded `/ackermann_cmd` history to forecast source/takeover states. Keep original source epoch and 0.8 s TTL. Discard late replies. Continue valid old plans after isolated failure; decelerate after expiry.
+- [ ] Preserve odometry, TF, localization identity/health, RC authority, enable service, drive and diagnostics contracts. Support `implementation:=legacy|acados_cpp`, default legacy, and isolated shadow outputs/services. Preserve localization protocol-v1 epoch/sequence/freshness rules. Prevent dual drive owners.
+- [ ] Audit gate ownership/cost; preserve first-round constraint semantics and `enforce_corridor=false`; merge duplicate rollouts/checks. Keep finite/status/nonlinear feasibility and takeover continuity checks. Record each rejection and timing.
+- [ ] Desktop model/cost equivalence and independent closed-loop 0.5/1.0 m/s checks. Cover startup, braking, reversal, wrap, map changes, stale input, clock reset, manual takeover, failure/late replies and artifact mismatch. Reproduce historical failures without extending near-finish repair scope.
 - [x] Local commit/push; isolated NX pull/build. Run map-matched replay with FAST-LIO2+EKF+NDT genuinely registering, shadow controller only. Three runs >=180 s each, all attempts included. Compare matched legacy/new conditions; record power/temperature/clocks/threads/versions.
 - [x] Evaluate 40 Hz and 20x0.05 / 25x0.05 only after the baseline passes. Integrator steps <=20 ms independent of publisher period; dt-scaled objective equivalence. Default delivery stays 20 Hz, 10x0.1.
 - [x] Deliver source, builds, tests, manifests, timing report and launch/rollback instructions. Do not claim field qualification from simulated or replay evidence. Physical driving is a later operator test.
@@ -66,12 +66,14 @@ Release pure contract tests explicitly retain assertions via -UNDEBUG.
 
 ## Delivery status
 
-Implementation tasks and evaluation are complete; source and isolated ARM build
+Initial implementation and performance measurement are complete, but whole-runtime
+behavior acceptance is reopened after the follow-up audit. Source and isolated ARM build
 are retained on `feat/mpcc-acados-runtime`. See
 [verification report](../../reports/2026-10-09-mpcc-acados-runtime.md).
 
 - Default N10/.1/20 Hz: all three 180 s genuine joint-load timing and absolute
-  synthetic tracking runs pass, with zero failures/rejections/deadlines.
+  synthetic tracking runs pass, with zero reported candidate failures/rejections and pre-delivery deadline misses;
+  full delivery/execution acceptance remains open.
 - The relative tracking criterion versus a completed same-condition legacy run
   remains unestablished: legacy does not finish the recorded-route NX comparison.
 - Optional 40 Hz/2 ms lead N10 and N25/.05 pass one 60 s exploration each;
@@ -80,3 +82,12 @@ are retained on `feat/mpcc-acados-runtime`. See
   not repair initial infeasibility or guarantee convergence in two RTI passes.
 - Physical closed-loop field acceptance remains pending; new runtime is opt-in
   and shadow by default. Existing physical worktrees and references are preserved.
+
+### Acceptance reopened after whole-chain audit
+
+[Audit report](../../reports/2026-10-09-mpcc-native-contract-audit.md) identifies
+missing held-output validation, delivery mutex time excluded from deadline,
+clock/epoch recovery gaps, pending starvation and conditional corridor omissions.
+The baseline 3-run archived measurements are retained; they do not establish
+full execution equivalence or complete delivery deadlines. Physical driving
+release is held; use shadow while defects are repaired and independently checked.
