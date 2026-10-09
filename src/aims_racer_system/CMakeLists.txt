@@ -82,6 +82,7 @@ if(BUILD_TESTING)
   ament_add_pytest_test(gyro_bias tests/test_gyro_bias.py)
   ament_add_pytest_test(nav_map_argument tests/test_nav_map_argument.py)
   ament_add_pytest_test(localization_policy tests/test_localization_policy.py)
+  ament_add_pytest_test(replay_sensor_qos tests/test_replay_sensor_qos.py)
   ament_add_pytest_test(monitor_health_delivery tests/test_monitor_health_delivery.py)
   ament_add_pytest_test(monitor_alignment_delivery tests/test_monitor_alignment_delivery.py
     ENV "MONITOR_TEST_EXECUTABLE=$<TARGET_FILE:localization_monitor>"

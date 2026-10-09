@@ -1,0 +1,7 @@
+# Replay fixture only. Preserve raw IMU propagation history across DDS pauses.
+# Other topics retain rosbag's recorded reliability/durability adaptation.
+/livox/imu:
+  history: keep_last
+  depth: 4096
+  reliability: reliable
+  durability: volatile

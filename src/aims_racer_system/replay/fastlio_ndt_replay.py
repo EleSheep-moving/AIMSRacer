@@ -36,6 +36,21 @@ def quantiles(values):
                 p95=float(np.percentile(values,95)),max=float(max(values))) if values else dict(count=0)
 
 
+def artifact_hashes(source, installed):
+    installed_hash = hashlib.sha256(installed.read_bytes()).hexdigest()
+    source_hash = hashlib.sha256(source.read_bytes()).hexdigest() if source.exists() else None
+    if source_hash is not None and source_hash != installed_hash:
+        raise ValueError('installed artifact differs from source; rebuild overlay: ' + str(source))
+    return source_hash, installed_hash
+
+
+def playback_command(bag, discovery_delay, qos_profile):
+    return ['ros2', 'bag', 'play', str(bag), '--delay', str(discovery_delay),
+            '--clock', '200', '--rate', '1.0',
+            '--qos-profile-overrides-path', str(qos_profile), '--topics',
+            '/livox/lidar', '/livox/imu', '/rear_axle/wheel_odom']
+
+
 def children(pid):
     relation={}
     for entry in Path('/proc').iterdir():
@@ -61,6 +76,8 @@ def main():
     parser.add_argument('--use-initializer-cli',action='store_true',help='exercise the installed map/base_link initialization CLI')
     parser.add_argument('--max-seconds',type=float)
     parser.add_argument('--discovery-delay',type=float,default=5.,help='DDS discovery time before sensor publication, seconds')
+    parser.add_argument('--qos-profile-overrides-path',type=Path,
+                        help='explicit rosbag writer QoS fixture; defaults to installed replay_sensor_qos.yaml')
     args=parser.parse_args()
     if not np.isfinite(args.discovery_delay) or args.discovery_delay<0:
         parser.error('--discovery-delay must be finite and nonnegative')
@@ -72,18 +89,26 @@ def main():
         fcntl.flock(replay_lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     except BlockingIOError:
         parser.error('another replay owns this ROS domain; wait for its complete shutdown')
-    installed_hashes={}
+    installed_hashes={};source_hashes={}
     source_root=Path(__file__).resolve().parents[1]
     for relative in ('scripts/activate_ndt.py','scripts/relocalize_known_map.py',
                      'scripts/localization_policy.py','scripts/localization_map_io.py',
-                     'params/ndt_fastlio.yaml','params/localization_monitor.yaml',
+                     'params/ndt_fastlio.yaml','params/localization_monitor.yaml','params/replay_sensor_qos.yaml',
                      'launch/known_map_localization.launch.py'):
         source=source_root/relative
         installed=(Path(get_package_prefix('aims_racer_system'))/'lib/aims_racer_system'/Path(relative).name
                    if relative.startswith('scripts/') else Path(get_package_share_directory('aims_racer_system'))/relative)
-        installed_hashes[relative]=hashlib.sha256(installed.read_bytes()).hexdigest()
-        if source.exists() and hashlib.sha256(source.read_bytes()).hexdigest()!=installed_hashes[relative]:
-            parser.error('installed artifact differs from source; rebuild overlay: '+relative)
+        try:
+            source_hashes[relative],installed_hashes[relative]=artifact_hashes(source,installed)
+        except (OSError,ValueError) as error:
+            parser.error(str(error))
+    qos_profile=(args.qos_profile_overrides_path or
+                 Path(get_package_share_directory('aims_racer_system'))/'params/replay_sensor_qos.yaml').resolve()
+    try:
+        qos_profile_hash=hashlib.sha256(qos_profile.read_bytes()).hexdigest()
+    except OSError as error:
+        parser.error('cannot read replay QoS profile: '+str(error))
+    player_command=playback_command(args.bag,args.discovery_delay,qos_profile)
     monitor_binary=Path(get_package_prefix('aims_racer_system'))/'lib/aims_racer_system/localization_monitor'
     if not monitor_binary.is_file() or not os.access(monitor_binary, os.X_OK):
         parser.error('native localization monitor missing; rebuild overlay')
@@ -173,8 +198,7 @@ def main():
             if stack.poll() is not None:
                 raise RuntimeError('replay launch exited; inspect stack.log')
             executor.spin_once(timeout_sec=.05)
-        playback=spawn(['ros2','bag','play',str(args.bag),'--delay',str(args.discovery_delay),'--clock','200','--rate','1.0','--topics',
-            '/livox/lidar','/livox/imu','/rear_axle/wheel_odom'],'bag')
+        playback=spawn(player_command,'bag')
         deadline=time.monotonic()+(args.max_seconds if args.max_seconds is not None else (end-start)*1e-9+args.discovery_delay+25.)
         while time.monotonic()<deadline and playback.poll() is None:
             if stack.poll() is not None:
@@ -205,7 +229,9 @@ def main():
             if item.get('event')=='tf':
                 authorities.setdefault(item['frame_id']+'/'+item['child_frame_id'],set()).add(item['publisher_gid'])
         accepted=[e for e in events if e['values'].get('anchor_committed')=='true']
-        result=dict(installed_artifact_sha256=installed_hashes,bag=str(args.bag),map=str(args.map),map_sha256=hashlib.sha256(args.map.read_bytes()).hexdigest() if args.map else None,
+        result=dict(installed_artifact_sha256=installed_hashes,source_artifact_sha256=source_hashes,
+            replay_qos_path=str(qos_profile),replay_qos_sha256=qos_profile_hash,playback_command=player_command,
+            bag=str(args.bag),map=str(args.map),map_sha256=hashlib.sha256(args.map.read_bytes()).hexdigest() if args.map else None,
             expected_raw_counts=expected_raw_counts,full_bag_playback=playback.poll()==0,
             intentionally_partial=args.max_seconds is not None,discovery_delay_sec=args.discovery_delay,
             seed=seed,seed_sent_ns=seed_sent,counts=dict(counts),tf_authorities={edge:len(gids) for edge,gids in authorities.items()},
