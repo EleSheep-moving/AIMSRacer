@@ -22,6 +22,7 @@ struct Config {
   double steering_acceleration_scale{};
   double steer_acceleration{}, accel_limit{}, brake_limit{}, jerk_limit{}, steering_tau{};
   double understeer_coefficient{}, envelope_accel{}, envelope_brake{}, lateral_accel_limit{};
+  double acados_envelope_margin{}, optimization_envelope_margin{};
   double recovery_jerk_limit{}, envelope_recovery_time{}, envelope_slack_limit{};
   bool enforce_corridor{}, envelope_soft_enabled{}, recovery_jerk_enabled{};
   int horizon{};
@@ -79,9 +80,11 @@ struct Plan {
   double dt{}, source_epoch{}, forecast_epoch{}, solve_time_s{}, native_time_s{};
   double preparation_time_s{}, validation_time_s{};
   double max_violation{}, cost{};
+  double original_max_violation{};
+  std::map<std::string,double> original_constraint_violations;
   double native_cost{}, raw_optimizer_cost{};
   double reanchor_time_s{};
-  bool prefix_transported{};
+  bool prefix_transported{}, envelope_transported{};
   Alignment map_alignment{};
   Applied initial_applied{};
   std::vector<double> speed_targets;

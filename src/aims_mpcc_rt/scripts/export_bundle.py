@@ -120,7 +120,7 @@ def export(config_path, reference_dir, output, horizon=10, dt=.1, source_only=Fa
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source_root / name, destination)
         source_hashes[name] = digest(destination)
-    manifest = dict(schema_version=1, command_profile=cfg.command_profile,
+    manifest = dict(schema_version=1, command_profile=cfg.command_profile, stage_zero_envelope_bounds=1,
                     constraint_groups=solver._groups, capsule_abi_version=1, backend='acados_sqp_rti_hpipm', acados_commit=dependencies['acados_source'],
                     generation_dependencies=dependencies,
                     generation_sources={name:digest(output/name) for name in ('export_bundle.py','build_bundle.py')},
@@ -201,6 +201,12 @@ void aims_rt_initial(void *c,const double *x) {
     aims_runtime_acados_get_nlp_in(c),aims_runtime_acados_get_nlp_out(c),0,"lbx",(void*)x);
   ocp_nlp_constraints_model_set(aims_runtime_acados_get_nlp_config(c),aims_runtime_acados_get_nlp_dims(c),
     aims_runtime_acados_get_nlp_in(c),aims_runtime_acados_get_nlp_out(c),0,"ubx",(void*)x);
+}
+void aims_rt_input_bounds(void *c,int stage,const double *lower,const double *upper) {
+  ocp_nlp_constraints_model_set(aims_runtime_acados_get_nlp_config(c),aims_runtime_acados_get_nlp_dims(c),
+    aims_runtime_acados_get_nlp_in(c),aims_runtime_acados_get_nlp_out(c),stage,"lbu",(void*)lower);
+  ocp_nlp_constraints_model_set(aims_runtime_acados_get_nlp_config(c),aims_runtime_acados_get_nlp_dims(c),
+    aims_runtime_acados_get_nlp_in(c),aims_runtime_acados_get_nlp_out(c),stage,"ubu",(void*)upper);
 }
 int aims_rt_parameters(void *c,int stage,double *p) {return aims_runtime_acados_update_params(c,stage,p,10);}
 int aims_rt_solve(void *c) {return aims_runtime_acados_solve(c);}

@@ -47,6 +47,14 @@ double utilization(const State &s,double acceleration,const Config &c) {
   auto ay=s[3]*s[3]*std::tan(s[5])/(c.wheelbase*(1.+c.understeer_coefficient*s[3]*s[3]));
   return std::pow(acceleration/axis,2)+std::pow(ay/c.lateral_accel_limit,2);
 }
+std::optional<std::array<double,2>> exact_initial_acceleration_bounds(const State &state,const Config &cfg){
+  const double lateral=utilization(state,0.,cfg);
+  const double remaining=1.-std::max(cfg.acados_envelope_margin,cfg.optimization_envelope_margin)-lateral;
+  if(!std::isfinite(remaining)||remaining<0.)return std::nullopt;
+  const double capacity=std::sqrt(remaining);
+  return std::array<double,2>{-std::min(cfg.brake_limit,cfg.envelope_brake*capacity),
+                             std::min(cfg.accel_limit,cfg.envelope_accel*capacity)};
+}
 InternalState internal(const State &s,const Applied &a) {
   InternalState x{};std::copy(s.begin(),s.end(),x.begin());std::copy(a.begin(),a.end(),x.begin()+6);return x;
 }
@@ -61,7 +69,8 @@ struct Bundle::Impl {
   int nu{},nh{},nh_e{},sample_count{};void *library{};
   void *(*create)(){};void (*free)(void*){};int (*reset)(void*){};
   void (*set)(void*,int,const char*,const double*){};
-  void (*initial)(void*,const double*){};int (*parameters)(void*,int,double*){};
+  void (*initial)(void*,const double*){};
+  void (*input_bounds)(void*,int,const double*,const double*){};int (*parameters)(void*,int,double*){};
   int (*solve)(void*){};void (*get)(void*,int,const char*,double*){};
   double (*cost)(void*){};
   int (*eval)(int,const double*,const double*,const double*,double*){};
@@ -118,7 +127,7 @@ Bundle Bundle::load(const std::string &directory,const std::string &config_path,
   FIELD(wheelbase);FIELD(rear_offset);FIELD(half_width);FIELD(cruise_speed);FIELD(max_speed);
   FIELD(minimum_drive_speed);FIELD(steer_limit);FIELD(steer_rate);FIELD(steer_acceleration);
   FIELD(accel_limit);FIELD(brake_limit);FIELD(jerk_limit);FIELD(steering_tau);FIELD(understeer_coefficient);
-  FIELD(lateral_accel_limit);FIELD(recovery_jerk_limit);FIELD(envelope_recovery_time);FIELD(envelope_slack_limit);
+  FIELD(lateral_accel_limit);FIELD(acados_envelope_margin);FIELD(optimization_envelope_margin);FIELD(recovery_jerk_limit);FIELD(envelope_recovery_time);FIELD(envelope_slack_limit);
 #undef FIELD
   c.steering_acceleration_scale=data["steering_acceleration_scale"]&&!data["steering_acceleration_scale"].IsNull()?
     data["steering_acceleration_scale"].as<double>():c.steer_acceleration;
@@ -168,7 +177,21 @@ Bundle Bundle::load(const std::string &directory,const std::string &config_path,
   SYMBOL(set,"aims_rt_set");SYMBOL(initial,"aims_rt_initial");SYMBOL(parameters,"aims_rt_parameters");
   SYMBOL(solve,"aims_rt_solve");SYMBOL(get,"aims_rt_get");SYMBOL(eval,"aims_rt_eval");
   SYMBOL(cost,"aims_rt_cost");
+  if(manifest["stage_zero_envelope_bounds"]&&manifest["stage_zero_envelope_bounds"].as<int>()==1){
+    SYMBOL(input_bounds,"aims_rt_input_bounds");
+  }else if(c.command_profile=="rate_bounded_v2"){
+    throw std::runtime_error("v2 bundle must be regenerated with exact stage-zero envelope bounds");
+  }
 #undef SYMBOL
+  if(i.input_bounds){
+    Dl_info provider{};
+    if(!dladdr(reinterpret_cast<void*>(i.input_bounds),&provider)||!provider.dli_fname)
+      throw std::runtime_error("cannot identify stage-zero bounds provider");
+    auto supplied=std::filesystem::canonical(provider.dli_fname);
+    auto expected=std::filesystem::canonical(root/"libaims_mpcc_bundle.so");
+    if(supplied!=expected)throw std::runtime_error("stage-zero bounds setter provider mismatch");
+    verify(supplied,native["libraries"]["libaims_mpcc_bundle.so"]);
+  }
   // dlopen may otherwise reuse a library with the same SONAME from a prior
   // bundle or LD_LIBRARY_PATH. Verify the files that actually supply symbols.
   const std::array<std::pair<const char*,const char*>,3> dependencies{{
@@ -347,6 +370,16 @@ Plan Core::solve(State initial,const Applied &applied,const Alignment &alignment
     parameters.push_back(p);native.parameters(capsule_,k,p.data());native.set(capsule_,k,"x",seed[k].data());
     if(k<cfg.horizon)native.set(capsule_,k,"u",inputs[k].data());
   }
+  if(native.input_bounds&&!cfg.envelope_soft_enabled){
+    // This is the retained immutable stage-zero ellipse solved exactly for a.
+    // Its existing optimization reserve is preserved; subsequent nonlinear
+    // rows and the independent physical certificate remain authoritative.
+    auto bounds=exact_initial_acceleration_bounds(initial,cfg);
+    if(!bounds){plan.reason="immutable initial state outside optimization envelope";plan.solve_time_s=duration(started);return plan;}
+    auto lower=native.input_lower,upper=native.input_upper;
+    lower[0]=(*bounds)[0];upper[0]=(*bounds)[1];
+    native.input_bounds(capsule_,0,lower.data(),upper.data());
+  }
   native.initial(capsule_,x0.data());
   plan.preparation_time_s=duration(started);
   // Each candidate is propagated exactly once through the generated nonlinear
@@ -459,7 +492,8 @@ Plan Core::validate_candidate(const State &initial,const Applied &applied,const 
 }
 Plan Core::reanchor(const Plan &source,State actual,const Applied &applied,double epoch,
                     const std::optional<Alignment> &current_alignment) const {
-  auto started=Clock::now();Plan plan=source;plan.success=false;plan.reanchor_time_s=0.;plan.prefix_transported=false;
+  auto started=Clock::now();Plan plan=source;plan.success=false;plan.reanchor_time_s=0.;plan.prefix_transported=false;plan.envelope_transported=false;
+  plan.original_max_violation=0.;plan.original_constraint_violations.clear();
   const auto &cfg=config();const auto &ref=reference();Alignment alignment=current_alignment.value_or(source.map_alignment);
   if(!source.success||source.status!=0||source.controls.size()!=size_t(cfg.horizon)||
      source.states.empty()||source.dt!=cfg.dt||source.artifact_fingerprint!=bundle_.fingerprint()) {
@@ -490,6 +524,7 @@ Plan Core::reanchor(const Plan &source,State actual,const Applied &applied,doubl
   plan.forecast_epoch=epoch;
   plan=validate_candidate(actual,applied,alignment,controls,parameters,std::move(plan));
   if(!plan.success) {
+    plan.original_max_violation=plan.max_violation;plan.original_constraint_violations=plan.constraint_violations;
     // The original endpoints were optimized relative to the forecast applied
     // prefix. A delayed old output can change the first rate and, consequently,
     // the second interval's rate change. Try transporting that endpoint
@@ -520,14 +555,50 @@ Plan Core::reanchor(const Plan &source,State actual,const Applied &applied,doubl
         rate=std::clamp((std::clamp(u[1]+ds,-cfg.steer_limit,cfg.steer_limit)-endpoint)/cfg.dt,lower,upper);
         endpoint+=rate*cfg.dt;u[1]=endpoint;
       }
-      if(!continuation)plan.reason+="; prefix transport has no bounded steering continuation";
+      bool envelope_adjusted=false;
+      if(continuation&&v2){
+        // This is a distinct, bounded alternate candidate, never acceptance of
+        // the original failed controls. Reduce acceleration magnitudes using
+        // each interval's complete generated lateral samples, and reevaluate
+        // before propagating. At most three evaluations per stage are allowed;
+        // reduced braking can increase lateral demand, so no analytic clipping
+        // result is trusted without its new exact nonlinear certificate.
+        InternalState transported_state=internal(actual,applied);
+        for(size_t k=0;k<transported.size()&&continuation;++k){
+          auto &u=transported[k];bool stage_valid=false;
+          for(int attempt=0;attempt<3;++attempt){
+            auto result=bundle_.evaluate(5,transported_state,u,parameters[k]);
+            double lateral_max=0.;bool finite_samples=true;
+            for(int j=0;j<bundle_.impl_->sample_count;++j){
+              State sample{};std::copy_n(result.begin()+10+bundle_.impl_->nh+6*j,6,sample.begin());
+              if(!finite(sample)){finite_samples=false;break;}
+              lateral_max=std::max(lateral_max,utilization(sample,0.,cfg));
+            }
+            if(!finite_samples||!std::isfinite(lateral_max))break;
+            const double axis=u[0]>=0.?cfg.envelope_accel:cfg.envelope_brake;
+            if(lateral_max+std::pow(u[0]/axis,2)<=1.+1e-9){
+              std::copy_n(result.begin(),9,transported_state.begin());stage_valid=finite(transported_state);break;
+            }
+            // A positive acceleration can create future lateral overload.
+            // Zero is the furthest reduction allowed by this repair policy.
+            if(lateral_max>1.&&u[0]<=0.)break;
+            const double capacity=std::sqrt(std::max(0.,1.-lateral_max));
+            const double reduced=std::clamp(u[0],-std::min(cfg.brake_limit,cfg.envelope_brake*capacity),
+                                           std::min(cfg.accel_limit,cfg.envelope_accel*capacity));
+            if(reduced==u[0])break;
+            u[0]=reduced;envelope_adjusted=true;
+          }
+          continuation=stage_valid;
+        }
+      }
+      if(!continuation)plan.reason+=v2?"; prefix transport has no bounded envelope continuation":"; prefix transport has no bounded steering continuation";
       else {
         // Progress controls are unchanged, so the refreshed geometric stage
         // parameters also apply to this distinct nonlinear candidate.
         auto candidate=validate_candidate(actual,applied,alignment,transported,parameters,plan);
         if(candidate.success) {
-          plan=std::move(candidate);plan.prefix_transported=true;
-          plan.reason="accepted with bounded prefix transport";
+          plan=std::move(candidate);plan.prefix_transported=true;plan.envelope_transported=envelope_adjusted;
+          plan.reason=envelope_adjusted?"accepted with bounded envelope prefix transport":"accepted with bounded prefix transport";
         } else {
           // Keep the original failed certificate and its maximum violation.
           // An alternate candidate never hides why the original was rejected.

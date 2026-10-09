@@ -30,6 +30,25 @@ int main(int argc,char** argv){
     require(certificate.max_utilization>1.,"counterexample must expose physical utilization");
   }
   require(sampler.continuous_speed()==before,"certificate mutated live output sampler");
+  if(c.command_profile=="rate_bounded_v2"){
+    // A later binding cap must not convert a safe, certified continuation into
+    // full braking when only a conservative future proxy is infeasible.
+    State moving{r.x,r.y,r.yaw,1.05,0.,.3};
+    Plan cap_plan=source;cap_plan.source_epoch=.92;cap_plan.forecast_epoch=.92;
+    cap_plan.initial_applied={0.,.25,0.};
+    cap_plan.controls.assign(c.horizon,Control{0.,.15,1.05});cap_plan.controls[0][1]=.35;
+    OutputSampler cap_sampler(c);cap_sampler.reset(1.05,.33,.98);
+    auto nominal=certify_execution(cap_plan,cap_sampler,moving,Alignment{},c,bundle.reference(),1.,.8);
+    auto capped=certify_execution(cap_plan,cap_sampler,moving,Alignment{},c,bundle.reference(),1.,.8,.9);
+    require(nominal.success&&capped.success,"later finish cap violated a safe certified continuation");
+    auto first=cap_sampler.sample(&cap_plan,1.,moving,false,.8,.9);
+    require(cap_sampler.braking_budget().current_feasible&&!cap_sampler.braking_budget().feasible&&
+      std::abs(first.continuous_acceleration)<1e-10,"infeasible future proxy must not bypass current-state limits");
+    cap_plan.controls[0][1]=.4;cap_sampler.reset(1.05,.33,.98);
+    require(!certify_execution(cap_plan,cap_sampler,moving,Alignment{},c,bundle.reference(),1.,.8).success&&
+      !certify_execution(cap_plan,cap_sampler,moving,Alignment{},c,bundle.reference(),1.,.8,.9).success,
+      "genuinely unsafe held steering must remain rejected with and without a cap");
+  }
   auto safe=source;safe.controls.assign(c.horizon,Control{0.,0.,.2});safe.initial_applied={0.,0.,0.};
   State safe_initial{r.x,r.y,r.yaw,.2,0.,0.};OutputSampler safe_sampler(c);safe_sampler.reset(.2,0.,now-.02);
   safe.states.assign(c.horizon+1,safe_initial);safe.forecast_epoch=now;

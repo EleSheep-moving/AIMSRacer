@@ -32,8 +32,48 @@ int main(int argc,char **argv) {
   catch(const std::runtime_error&){rejected_nan=true;}
   check(rejected_nan,"numerical oracle must reject NaN");
   if(argc==2&&std::string(argv[1])=="--oracle-only")return 0;
-  check(argc==2||argc==3,"bundle argument required");
+  check(argc==2||argc==3||argc==4,"bundle argument required");
   const auto b=Bundle::load(argv[1]);
+  if(argc==4&&std::string(argv[2])=="--stage-zero-fixture"){
+    auto rows=YAML::LoadFile(argv[3]);Core replay(b);
+    for(auto row:rows){
+      if(row["core_reset"].as<bool>())replay.reset();
+      State state{};Applied applied{};Alignment alignment{};
+      for(int j=0;j<6;++j)state[j]=row["initial"][j].as<double>();
+      for(int j=0;j<3;++j){applied[j]=row["applied"][j].as<double>();alignment[j]=row["alignment"][j].as<double>();}
+      std::vector<double> targets;for(auto v:row["targets"])targets.push_back(v.as<double>());
+      auto result=replay.solve(state,applied,alignment,row["elapsed"].as<double>(),row["core_budget_s"].as<double>(),true,
+        row["source_epoch"].as<double>(),row["forecast_epoch"].as<double>(),targets,true);
+      if(!result.success)std::cerr<<"seq="<<row["sequence"].as<int>()<<" max_violation="<<result.max_violation<<"\n";
+      check(result.success,"initially feasible zero-acceleration warm prefix must satisfy exact stage-zero ellipse");
+      check(result.native_passes<=2,"exact stage-zero bounds cannot add RTI passes");
+    }
+    std::cout<<"PASS: ordered stage-zero ellipse regression within two RTI passes\n";return 0;
+  }
+  if(argc==4&&std::string(argv[2])=="--reanchor-envelope-fixture"){
+    auto rows=YAML::LoadFile(argv[3]);Core replay(b);
+    for(auto row:rows){
+      State original{},actual{};Applied prefix{},actual_prefix{};Alignment alignment{};
+      for(int j=0;j<6;++j){original[j]=row["source_state"][j].as<double>();actual[j]=row["actual_state"][j].as<double>();}
+      for(int j=0;j<3;++j){prefix[j]=row["source_applied"][j].as<double>();actual_prefix[j]=row["actual_applied"][j].as<double>();alignment[j]=row["alignment"][j].as<double>();}
+      Plan source;source.success=true;source.status=0;source.dt=b.config().dt;source.artifact_fingerprint=b.fingerprint();
+      source.source_epoch=row["source_epoch"].as<double>();source.forecast_epoch=row["original_forecast_epoch"].as<double>();
+      source.initial_applied=prefix;source.states.push_back(original);
+      for(auto u:row["controls"])source.controls.push_back({u[0].as<double>(),u[1].as<double>(),u[2].as<double>()});
+      auto certified=replay.reanchor(source,original,prefix,source.forecast_epoch,alignment);
+      check(certified.success,"recorded source envelope certificate must be feasible");
+      auto anchored=replay.reanchor(certified,actual,actual_prefix,row["now"].as<double>(),alignment);
+      check(anchored.success,"small coherent takeover drift must obtain a newly certified bounded envelope transport");
+      check(anchored.controls!=certified.controls&&anchored.prefix_transported,"envelope repair must report distinct candidate controls");
+      near(anchored.original_max_violation,row["anchored_violation"].as<double>(),1e-12,"original physical violation remains inspectable");
+      check(anchored.max_violation<1e-4,"transport candidate retains physical certificate tolerance");
+      near(anchored.source_epoch,source.source_epoch,0.,"transport cannot renew source TTL");
+      auto impossible=actual;impossible[3]=b.config().max_speed;impossible[5]=b.config().steer_limit;
+      auto rejected=replay.reanchor(certified,impossible,actual_prefix,row["now"].as<double>(),alignment);
+      check(!rejected.success,"unfixable actual lateral load cannot be accepted by envelope transport");
+    }
+    std::cout<<"PASS: distinct horizon envelope transport preserves original counterexample and rejects unfixable state\n";return 0;
+  }
   auto fixtures=YAML::LoadFile(std::string(argv[1])+"/parity.json");
   for(auto row:fixtures["reference"]) {
     check(bool(row["speed"]),"frozen SpeedPlanner parity fixtures missing");

@@ -99,5 +99,34 @@ int main(){
   selected.reset(.4,.1,120.);bool fault=false;
   try{selected.sample(nullptr,120.06,State{},true,.8);}catch(const std::runtime_error&){fault=true;}
   assert(fault); // never discard elapsed time through an unreported dt clamp
+  // An initially feasible command can approach the speed cap with delayed
+  // feedback. Override braking must budget the actual/predicted command speed,
+  // not only the stale lower measurement, and retain the physical ellipse.
+  c.minimum_drive_speed=0.;OutputSampler capped(c);capped.reset(1.05,.3,130.);
+  p.source_epoch=130.;p.forecast_epoch=130.02;p.initial_applied={0.,.3,0.};
+  p.controls.assign(10,Control{0.,.3,1.05});
+  State actual{};actual[3]=1.05;actual[5]=.3;State delayed=actual;delayed[3]=1.;
+  auto budgeted=capped.sample(&p,130.02,delayed,false,.8,.9);
+  const double lateral=actual[3]*actual[3]*std::tan(actual[5])/c.wheelbase;
+  assert(lateral*lateral<1.); // the original hold is initially safe
+  const double utilization=std::pow(budgeted.continuous_acceleration/c.envelope_brake,2)+lateral*lateral;
+  assert(utilization<=1.+1e-10);
+  assert(budgeted.continuous_acceleration<0.&&capped.braking_budget().feasible);
+  // A higher internal target is a conservative proxy, not proof that the
+  // current physical decision state is already outside the lateral envelope.
+  capped.reset(1.15,.3,140.);p.source_epoch=140.;p.forecast_epoch=140.02;
+  auto proxy=capped.sample(&p,140.02,actual,false,.8,.9);
+  const double proxy_utilization=std::pow(proxy.continuous_acceleration/c.envelope_brake,2)+lateral*lateral;
+  assert(proxy_utilization<=1.+1e-10);
+  assert(proxy.continuous_acceleration<0.&&capped.braking_budget().feasible);
+  // A 50 ms held-target proxy can be infeasible even though the certified
+  // next nominal 20 ms packet and subsequent unwind are physically feasible.
+  capped.reset(1.05,.33,150.);p.source_epoch=p.forecast_epoch=149.94;
+  p.initial_applied={0.,.25,0.};p.controls.assign(10,Control{0.,.15,1.05});p.controls[0]={0.,.35,1.05};
+  auto conservative=capped.sample(&p,150.02,actual,false,.8,.9);
+  const double conservative_utilization=std::pow(conservative.continuous_acceleration/c.envelope_brake,2)+lateral*lateral;
+  assert(conservative_utilization<=1.+1e-10);
+  assert(!capped.braking_budget().feasible&&capped.braking_budget().current_feasible);
+  assert(conservative.continuous_acceleration==0.); // zero conservative capacity, never unrestricted braking
   std::cout<<"bounded command sampler passed\n";
 }

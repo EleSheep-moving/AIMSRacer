@@ -56,7 +56,7 @@ struct Pending {Plan plan;Applied applied{};HistoryCommand prefix{};std::uint64_
 class RuntimeNode final:public rclcpp::Node {
 #ifdef AIMS_MPCC_RT_TEST_ACCESS
   friend struct RuntimeClockProbe;
-  std::atomic<bool> test_callback_entered_{false},test_compute_complete_{false};
+  std::atomic<bool> test_callback_entered_{false},test_compute_complete_{false},test_block_worker_{false},test_worker_blocked_{false};
 #endif
  public:
   RuntimeNode():Node("aims_mpcc_rt"){
@@ -204,7 +204,7 @@ class RuntimeNode final:public rclcpp::Node {
     snapshot_={};history_->clear();recent_.clear();health_.reset();identity_.clear();
     progress_ready_=false;start_progress_=unwrapped_progress_=last_progress_=0.;
     mode_=false;mode_received_=-1.;started_=last_publish_=0.;stationary_since_=-1.;recovery_good_=0;
-    last_={};last_output_={};sampler_->reset(0.,0.,now);last_ros_now_=ros;
+    last_={};last_output_={};last_decision_state_={};last_decision_cap_=0.;sampler_->reset(0.,0.,now);last_ros_now_=ros;
   }
   void observe_clock_locked(double ros,double now){
     if(std::isfinite(last_ros_now_)&&ros<last_ros_now_-.001)reset_clock_locked(ros,now);
@@ -325,6 +325,15 @@ class RuntimeNode final:public rclcpp::Node {
           }
           core_budget=std::max(.000001,budget_-(steady()-submitted));
           if(capture_requests){log_request_snapshot(candidate,initial,snapshot.alignment,elapsed,targets,core_budget,reset_core,true,"");request_captured=true;}
+#ifdef AIMS_MPCC_RT_TEST_ACCESS
+          if(test_block_worker_.load()){
+            test_worker_blocked_.store(true);
+            // Model a native call that cannot be preempted by thread shutdown.
+            // Only the process supervisor can bound termination in this test.
+            while(test_block_worker_.load())std::this_thread::sleep_for(std::chrono::milliseconds(2));
+            test_worker_blocked_.store(false);
+          }
+#endif
           candidate.plan=core.solve(initial,candidate.applied,snapshot.alignment,elapsed,
              core_budget,true,snapshot.source,forecast,targets);
         }catch(const std::exception& e){candidate.plan.reason=e.what();candidate.plan.source_epoch=snapshot.source;
@@ -360,7 +369,7 @@ class RuntimeNode final:public rclcpp::Node {
       }
     }catch(const std::exception& e){std::lock_guard<std::mutex> lock(mutex_);worker_busy_=false;solver_ready_=false;fault_locked(std::string("Solver unavailable: ")+e.what());}
   }
-  bool activate_locked(double now){
+  bool activate_locked(double now,const State& observed,double speed_cap){
     if(!pending_||now<pending_->plan.forecast_epoch)return false;
     auto next=pending_;pending_.reset();
     const double begin=steady();
@@ -373,7 +382,6 @@ class RuntimeNode final:public rclcpp::Node {
     if(stopping_||!enabled_)return reject("Plan takeover authority cancelled");
     if(now-next->plan.source_epoch>ttl_)return reject("Plan takeover source TTL expired");
     if(!fresh_locked(now)||!localization_locked(now))return reject("Plan takeover input expired");
-    auto observed=history_->predict(snapshot_.state,snapshot_.source,now,now);
     // Until this callback, the new plan has never owned the actuator. Compare
     // the forecast with real old-plan commands, not unexecuted new controls.
     State expected=history_->predict(next->plan.states.front(),next->plan.forecast_epoch,now,now);
@@ -393,7 +401,7 @@ class RuntimeNode final:public rclcpp::Node {
     if(capture_takeover){
       capture<<std::setprecision(17)<<"{\"sequence\":"<<next->sequence
         <<",\"original_forecast_epoch\":"<<next->plan.forecast_epoch<<",\"now\":"<<now
-        <<",\"source_epoch\":"<<next->plan.source_epoch<<",\"original_violation\":"<<next->plan.max_violation;
+        <<",\"source_epoch\":"<<next->plan.source_epoch<<",\"speed_cap\":"<<speed_cap<<",\"original_violation\":"<<next->plan.max_violation;
       auto array=[&](const auto& values){capture<<'[';bool first=true;for(auto v:values){if(!first)capture<<',';first=false;capture<<v;}capture<<']';};
       capture<<",\"source_state\":";array(next->plan.states.front());
       capture<<",\"source_applied\":";array(next->plan.initial_applied);
@@ -410,7 +418,7 @@ class RuntimeNode final:public rclcpp::Node {
         <<",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\""<<escaped<<"\"\n";queue_log(row.str());
     }
     if(!next->plan.success)return reject("Takeover candidate infeasible: "+next->plan.reason);
-    auto execution=certify_execution(next->plan,*sampler_,next->plan.states.front(),snapshot_.alignment,cfg_,bundle_.reference(),now,ttl_);
+    auto execution=certify_execution(next->plan,*sampler_,next->plan.states.front(),snapshot_.alignment,cfg_,bundle_.reference(),now,ttl_,speed_cap);
     last_certificate_=execution.duration_s;
     if(!execution.success)return reject("Executed trace infeasible: "+execution.reason);
     if(phase_=="RECOVERING"){
@@ -419,7 +427,7 @@ class RuntimeNode final:public rclcpp::Node {
     }
     next->applied=applied;active_=next;
     sampler_->set_previous_endpoint(applied[1]);++activated_;if(next->plan.prefix_transported)++transported_;phase_="RUNNING";reason_.clear();
-    log_activation(*next,begin,true,next->plan.prefix_transported?"bounded prefix transport":"");return true;
+    log_activation(*next,begin,true,next->plan.prefix_transported?next->plan.reason:"");return true;
     }catch(const std::exception& e){return reject(std::string("Plan takeover exception: ")+e.what());}
   }
   double stop_reserve()const{
@@ -453,22 +461,27 @@ class RuntimeNode final:public rclcpp::Node {
         if(enabled_&&count_publishers(pub_->get_topic_name())>1)fault_locked("Another command publisher appeared");
         if(enabled_&&last_publish_>0&&decision-last_publish_>.1)fault_locked("Command scheduling discontinuity");
         if(enabled_){
-          auto mapped=map_point(snapshot_.state,snapshot_.alignment);
-          double progress=bundle_.reference().project(mapped[0],mapped[1]);
-          if(!footprint_locked(mapped,progress))throw std::runtime_error("measured footprint outside corridor");
-          if(activate_locked(decision))visualization=active_;
+          auto measured_map=map_point(snapshot_.state,snapshot_.alignment);
+          if(!footprint_locked(measured_map,bundle_.reference().project(measured_map[0],measured_map[1])))
+            throw std::runtime_error("measured footprint outside corridor");
+          auto decision_state=history_->predict(snapshot_.state,snapshot_.source,decision,decision);
+          auto mapped=map_point(decision_state,snapshot_.alignment);
+          double progress=bundle_.reference().project(mapped[0],mapped[1]);decision_state[4]=progress;
+          if(!footprint_locked(mapped,progress))throw std::runtime_error("decision footprint outside corridor");
           if(progress_ready_)unwrapped_progress_+=std::remainder(progress-last_progress_,bundle_.reference().length());
           last_progress_=progress;
           double remaining=start_progress_+bundle_.reference().length()-unwrapped_progress_;
           double cap=repeat_laps_?cfg_.max_speed:finish_cap(remaining);
-          command=sampler_->sample(active_?&active_->plan:nullptr,decision,snapshot_.state,stopping_,ttl_,cap);
+          last_decision_state_=decision_state;last_decision_cap_=cap;
+          if(activate_locked(decision,decision_state,cap))visualization=active_;
+          command=sampler_->sample(active_?&active_->plan:nullptr,decision,decision_state,stopping_,ttl_,cap);
           if(command.expired&&decision-started_>=ttl_){
             if(phase_!="RECOVERING")recovery_good_=0;
             phase_="RECOVERING";reason_="Plan expired";
           }
           if(stopping_)phase_="STOPPING";
           bool finish=!repeat_laps_&&std::abs(remaining)<=std::max(.2,stop_reserve()+.05);
-          if((finish||stopping_||phase_=="RECOVERING")&&command.continuous_speed<1e-6&&snapshot_.state[3]<.05){
+          if((finish||stopping_||phase_=="RECOVERING")&&command.continuous_speed<1e-6&&decision_state[3]<.05){
             if(stationary_since_<0)stationary_since_=decision;
             if(decision-stationary_since_>=.5){enabled_=false;generation_++;cancel_pending_locked("stationary stop");active_.reset();
               reason_=finish?"One lap complete":phase_=="RECOVERING"?"Recovery stopped; re-enable required":"Stopped";
@@ -508,9 +521,10 @@ class RuntimeNode final:public rclcpp::Node {
       auto value=[&](const std::string& key,const auto& v){diagnostic_msgs::msg::KeyValue kv;kv.key=key;kv.value=std::isfinite(static_cast<double>(v))?std::to_string(v):"null";status.values.push_back(kv);};
       auto text=[&](const std::string& key,const std::string& v){diagnostic_msgs::msg::KeyValue kv;kv.key=key;kv.value=json_string(v);status.values.push_back(kv);};
       text("status",phase_);text("reason",reason_);text("backend","acados_cpp");
+      text("execution_certificate_scope","activation at current speed cap; later dynamic caps use per-hold physical budget; ideal acceleration and steering lag");
       diagnostic_msgs::msg::KeyValue ready;ready.key="worker_ready";ready.value=solver_ready_?"true":"false";status.values.push_back(ready);
       const double now=steady();
-      value("authority",mode_);value("authority_age_s",now-mode_received_);
+      value("enabled",enabled_);value("stopping",stopping_);value("authority",mode_);value("authority_age_s",now-mode_received_);
       value("source_age_s",snapshot_.present?now-snapshot_.source:std::numeric_limits<double>::quiet_NaN());
       value("receipt_age_s",snapshot_.present?now-snapshot_.received:std::numeric_limits<double>::quiet_NaN());
       value("applied_age_s",now-history_->newest());
@@ -525,10 +539,14 @@ class RuntimeNode final:public rclcpp::Node {
       value("fault_steady_s",fault_steady_);value("compute_s",last_compute_);value("delivery_wait_s",last_delivery_wait_);
       value("execution_certificate_s",last_certificate_);value("activation_s",last_activation_);value("worker_busy",worker_busy_);
       value("worker_elapsed_s",worker_busy_?now-worker_submitted_:0.);
+#ifdef AIMS_MPCC_RT_TEST_ACCESS
+      value("test_worker_blocked",test_worker_blocked_.load());
+#endif
       value("skipped_pending_slots",skipped_pending_slots_);value("delivered_accepted",delivered_accepted_);value("generation_cancelled",cancelled_);value("pending_cancelled",pending_cancelled_);
       value("pending_sequence",pending_?pending_->sequence:0);value("horizon",cfg_.horizon);value("dt",cfg_.dt);value("solve_period",1./frequency_);value("plan_ttl",ttl_);
       value("progress",unwrapped_progress_);value("speed_command",last_output_.speed);
       value("model_speed_command",last_output_.continuous_speed);value("steering_command",last_output_.steering);
+      value("decision_speed",last_decision_state_[3]);value("decision_steering",last_decision_state_[5]);value("decision_speed_cap",last_decision_cap_);
       value("requested_acceleration",last_output_.requested_acceleration);value("emitted_acceleration",last_output_.acceleration);
       value("requested_steering_rate",last_output_.requested_steering_rate);value("emitted_steering_rate",last_output_.steering_rate);
       value("acceleration_limited",last_output_.acceleration_limited);value("steering_rate_limited",last_output_.steering_rate_limited);
@@ -537,6 +555,8 @@ class RuntimeNode final:public rclcpp::Node {
       value("requests",requests_);value("failed",failed_);value("rejected",rejected_);value("late",late_);
       value("activated",activated_);value("prefix_transport_activations",transported_);value("handover_rejected",handover_rejected_);value("complete_s",last_complete_);
       value("observation_age_s",last_observation_age_);value("native_status",last_.plan.status);
+      value("active_envelope_transported",active_&&active_->plan.envelope_transported);
+      value("active_original_max_violation",active_?active_->plan.original_max_violation:0.);
       value("geometry_refreshes",last_.plan.geometry_refreshes);value("geometry_refresh_time_s",last_.plan.geometry_refresh_time_s);
       value("max_geometry_progress_shift",last_.plan.max_geometry_progress_shift);value("acados_rti_steps",cfg_.acados_rti_steps);value("native_passes",last_.plan.native_passes);value("max_violation",last_.plan.max_violation);
       value("log_dropped",log_dropped_.load());
@@ -544,6 +564,8 @@ class RuntimeNode final:public rclcpp::Node {
       budget<<std::boolalpha<<"{\"available\":"<<b.available<<",\"feasible\":"<<b.feasible
         <<",\"lateral_utilization_bound\":";
       if(std::isfinite(b.lateral_utilization))budget<<b.lateral_utilization;else budget<<"null";
+      budget<<",\"current_feasible\":"<<b.current_feasible<<",\"current_lateral_utilization\":";
+      if(std::isfinite(b.current_lateral_utilization))budget<<b.current_lateral_utilization;else budget<<"null";
       budget<<",\"accel_capacity\":"<<b.accel_capacity<<",\"brake_capacity\":"<<b.brake_capacity<<'}';
       diagnostic_msgs::msg::KeyValue kv;kv.key="braking_budget";kv.value=budget.str();status.values.push_back(kv);}
     message.status.push_back(status);status_pub_->publish(message);
@@ -608,6 +630,12 @@ class RuntimeNode final:public rclcpp::Node {
   }
   void log_activation(const Pending& p,double begin,bool accepted,std::string reason){
     last_activation_=steady()-begin;
+    if(p.plan.prefix_transported||p.plan.original_max_violation>0.){
+      std::ostringstream provenance;provenance<<std::setprecision(17)<<"; envelope_transported="<<p.plan.envelope_transported
+        <<"; original_max_violation="<<p.plan.original_max_violation;
+      for(const auto& entry:p.plan.original_constraint_violations)provenance<<"; original_"<<entry.first<<'='<<entry.second;
+      reason+=provenance.str();
+    }
     std::replace(reason.begin(),reason.end(),',',';');std::replace(reason.begin(),reason.end(),'\n',' ');
     std::ostringstream line;line<<std::setprecision(17)<<"activation,"<<steady()<<','<<p.sequence<<','
       <<p.plan.source_epoch<<','<<p.plan.forecast_epoch<<','<<p.submitted<<','<<steady()-begin
@@ -626,6 +654,7 @@ std::lock_guard<std::mutex> lock(log_mutex_);
     std::deque<std::string> batch;batch.swap(log_queue_);lock.unlock();for(const auto& line:batch)log_<<line;log_.flush();lock.lock();}}
   Bundle bundle_;Config cfg_;std::unique_ptr<AppliedHistory> history_;std::unique_ptr<OutputSampler> sampler_;
   std::unique_ptr<Core> activation_validator_;
+  State last_decision_state_{};double last_decision_cap_=0.;
   Snapshot snapshot_;LocalizationHealth health_;std::string identity_,phase_="READY",reason_;
   bool enabled_=false,stopping_=false,shutdown_=false,solver_ready_=false,simulation_=false,shadow_=true,repeat_laps_=false,progress_ready_=false;
   double last_ros_now_=std::numeric_limits<double>::quiet_NaN(),fault_steady_=0.,last_compute_=0.,last_delivery_wait_=0.,last_certificate_=0.,last_activation_=0.,worker_submitted_=0.;bool worker_busy_=false;

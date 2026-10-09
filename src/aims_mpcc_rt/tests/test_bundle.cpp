@@ -8,6 +8,8 @@
 #include <openssl/sha.h>
 #include <iomanip>
 #include <sstream>
+#include <cstdlib>
+#include <vector>
 using aims_mpcc_rt::Bundle;
 namespace fs=std::filesystem;
 std::string file_sha(const fs::path &path) {
@@ -20,6 +22,20 @@ std::string file_sha(const fs::path &path) {
 template<class F> void rejected(F f,const char *message) {
   bool threw=false;try {f();}catch(const std::exception&){threw=true;}
   if(!threw)throw std::runtime_error(message);
+}
+template<class F> void rejected_with(F f,const std::string& expected) {
+  try{f();}catch(const std::exception& error){
+    if(std::string(error.what()).find(expected)!=std::string::npos)return;
+    throw std::runtime_error("wrong artifact rejection: "+std::string(error.what()));
+  }
+  throw std::runtime_error("artifact should reject: "+expected);
+}
+std::string shell_quote(const std::string& value){
+  std::string answer="'";for(char c:value)answer+=c=='\''?"'\\''":std::string(1,c);return answer+"'";
+}
+void run(const std::vector<std::string>& args){
+  std::string command;for(const auto& arg:args)command+=shell_quote(arg)+" ";
+  if(std::system(command.c_str())!=0)throw std::runtime_error("artifact provider fixture build failed");
 }
 int main(int argc,char **argv) {
   if(argc!=2)throw std::runtime_error("bundle argument required");
@@ -46,6 +62,45 @@ int main(int argc,char **argv) {
   }  // Unload the copied library before subsequent corruption tests overwrite it.
   fs::copy_file(root/"manifest.json",copy/"manifest.json",fs::copy_options::overwrite_existing);
   fs::copy_file(root/"native_manifest.json",copy/"native_manifest.json",fs::copy_options::overwrite_existing);
+  if(manifest["command_profile"]&&manifest["command_profile"].as<std::string>()=="rate_bounded_v2"){
+    auto missing_marker=YAML::LoadFile((copy/"manifest.json").string());missing_marker.remove("stage_zero_envelope_bounds");
+    {std::ofstream changed(copy/"manifest.json");changed<<YAML::Dump(missing_marker);}
+    auto missing_native=YAML::LoadFile((copy/"native_manifest.json").string());
+    missing_native["source_manifest_sha256"]=file_sha(copy/"manifest.json");
+    {std::ofstream changed(copy/"native_manifest.json");changed<<YAML::Dump(missing_native);}
+    rejected_with([&]{Bundle::load(copy.string());},"regenerated with exact stage-zero");
+    fs::copy_file(root/"manifest.json",copy/"manifest.json",fs::copy_options::overwrite_existing);
+    fs::copy_file(root/"native_manifest.json",copy/"native_manifest.json",fs::copy_options::overwrite_existing);
+    auto original_native=YAML::LoadFile((root/"native_manifest.json").string());fs::path install;
+    for(auto entry:original_native["dependencies"]){
+      fs::path dependency=entry.first.as<std::string>();
+      if(dependency.filename()=="libacados.so")install=dependency.parent_path().parent_path();
+    }
+    if(install.empty())throw std::runtime_error("native dependency location unavailable for provider regression");
+    std::ifstream input(root/"bridge.c");std::ostringstream bytes;bytes<<input.rdbuf();std::string bridge=bytes.str();
+    auto begin=bridge.find("void aims_rt_input_bounds(");auto end=bridge.find("int aims_rt_parameters(",begin);
+    if(begin==std::string::npos||end==std::string::npos)throw std::runtime_error("exported input bounds bridge unavailable");
+    bridge.erase(begin,end-begin);
+    {std::ofstream source(copy/"bridge_missing.c");source<<bridge;}
+    auto command=std::vector<std::string>{"gcc","-shared","-fPIC","-O2",(copy/"bridge_missing.c").string(),
+      (copy/"model_eval.c").string(),"-I"+(install/"include").string(),"-I"+(install/"include/acados").string(),
+      "-I"+(install/"include/blasfeo/include").string(),"-I"+(install/"include/hpipm/include").string(),
+      "-L"+(copy/"generated").string(),"-L"+(install/"lib").string(),"-lacados_ocp_solver_aims_runtime",
+      "-lacados","-lhpipm","-lblasfeo","-lm","-Wl,--disable-new-dtags,-rpath,$ORIGIN/generated:"+(install/"lib").string(),
+      "-o",(copy/"libaims_mpcc_bundle.so").string()};
+    run(command);
+    auto certify_wrapper=[&]{auto n=original_native;n["libraries"]["libaims_mpcc_bundle.so"]=file_sha(copy/"libaims_mpcc_bundle.so");
+      std::ofstream changed(copy/"native_manifest.json");changed<<YAML::Dump(n);};
+    certify_wrapper();
+    rejected_with([&]{Bundle::load(copy.string());},"missing capsule ABI symbol: aims_rt_input_bounds");
+    {std::ofstream source(copy/"foreign_setter.c");source<<"void aims_rt_input_bounds(void*c,int stage,const double*l,const double*u){}\n";}
+    run({"gcc","-shared","-fPIC",(copy/"foreign_setter.c").string(),"-o",(copy/"libforeign_setter.so").string()});
+    command.insert(command.begin()+2,{"-Wl,--no-as-needed",(copy/"libforeign_setter.so").string(),"-Wl,--as-needed"});
+    run(command);certify_wrapper();
+    rejected_with([&]{Bundle::load(copy.string());},"stage-zero bounds setter provider mismatch");
+    fs::copy_file(root/"libaims_mpcc_bundle.so",copy/"libaims_mpcc_bundle.so",fs::copy_options::overwrite_existing);
+    fs::copy_file(root/"native_manifest.json",copy/"native_manifest.json",fs::copy_options::overwrite_existing);
+  }
   auto profile_manifest=YAML::LoadFile((copy/"manifest.json").string());
   profile_manifest["command_profile"]=manifest["command_profile"]&&manifest["command_profile"].as<std::string>()=="rate_bounded_v2"?
     "legacy_bounded_v1":"rate_bounded_v2";

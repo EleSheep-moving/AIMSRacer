@@ -64,6 +64,81 @@ struct RuntimeClockProbe {
       node.forwarded(d);node.odometry(odom(node));}
     if(!node.snapshot_.present||node.snapshot_.ros_source>101.||node.enabled_)throw std::runtime_error("fresh reset clock did not recover without old watermark");
   }
+  static void stall(RuntimeNode& node){
+    const char* domain=std::getenv("ROS_DOMAIN_ID");
+    if(!domain||std::stoi(domain)<200)throw std::runtime_error("stall fixture requires a private ROS domain >=200");
+    rclcpp::executors::SingleThreadedExecutor executor;executor.add_node(node.get_node_base_interface());
+    auto odom_pub=node.create_publisher<nav_msgs::msg::Odometry>("/odometry/filtered",rclcpp::SensorDataQoS());
+    auto applied_pub=node.create_publisher<Drive>("/ackermann_cmd",10);
+    auto authority_pub=node.create_publisher<std_msgs::msg::Bool>("/control/autonomy_speed_enabled",10);
+    bool ready_seen=false;
+    auto startup_status=node.create_subscription<diagnostic_msgs::msg::DiagnosticArray>("/mpcc_rt_shadow/mpcc/status",10,
+      [&](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr message){
+        for(const auto& status:message->status){bool ready=false,disabled=false;
+          for(const auto& value:status.values){if(value.key=="status")ready=value.value=="\"READY\"";
+            if(value.key=="enabled")disabled=std::stod(value.value)==0.;}
+          if(ready&&disabled)ready_seen=true;}});
+    Drive actual;auto drive_sub=node.create_subscription<Drive>("/mpcc_rt_shadow/drive",10,
+      [&](Drive::ConstSharedPtr command){actual=*command;});
+    auto r=node.bundle_.reference().at(0.);State plant{r.x,r.y,r.yaw,0.,0.,0.};
+    {std::lock_guard<std::mutex> lock(node.mutex_);node.history_->record(steady()-.05,0.,0.,0.,0.);}
+    double last=steady(),startup=last,armed_at=0.;bool enabled=false,armed=false;
+    while(rclcpp::ok()){
+      const double now=steady(),dt=std::min(.05,std::max(0.,now-last));last=now;
+      const double acceleration=std::clamp((double(actual.drive.speed)-plant[3])/std::max(dt,1e-6),-node.cfg_.brake_limit,node.cfg_.accel_limit);
+      const double middle_speed=std::max(0.,plant[3]+acceleration*dt/2.);
+      const double middle_delta=actual.drive.steering_angle+(plant[5]-actual.drive.steering_angle)*std::exp(-dt/(2*node.cfg_.steering_tau));
+      const double yaw_rate=middle_speed*std::tan(middle_delta)/(node.cfg_.wheelbase*(1+node.cfg_.understeer_coefficient*middle_speed*middle_speed));
+      plant[0]+=dt*middle_speed*std::cos(plant[2]+yaw_rate*dt/2.);plant[1]+=dt*middle_speed*std::sin(plant[2]+yaw_rate*dt/2.);
+      plant[2]+=yaw_rate*dt;plant[3]=std::max(0.,plant[3]+acceleration*dt);
+      plant[5]=actual.drive.steering_angle+(plant[5]-actual.drive.steering_angle)*std::exp(-dt/node.cfg_.steering_tau);
+      auto m=odom(node);m.pose.pose.position.x=plant[0]+node.cfg_.rear_offset*std::cos(plant[2]);
+      m.pose.pose.position.y=plant[1]+node.cfg_.rear_offset*std::sin(plant[2]);m.pose.pose.orientation.z=std::sin(plant[2]/2.);
+      m.pose.pose.orientation.w=std::cos(plant[2]/2.);m.twist.twist.linear.x=plant[3];
+      actual.header.stamp=node.get_clock()->now();actual.drive.jerk=0.;applied_pub->publish(actual);
+      std_msgs::msg::Bool authority;authority.data=true;authority_pub->publish(authority);odom_pub->publish(m);
+      executor.spin_some();
+      if(!enabled&&ready_seen&&steady()-startup>=.25)enabled=enable(node);
+      if(!enabled&&steady()-startup>3.)throw std::runtime_error("stall fixture never enabled fresh stationary controller after disabled READY");
+      if(enabled&&!armed){std::lock_guard<std::mutex> lock(node.mutex_);
+        if(node.activated_>0&&node.last_output_.speed>0.){node.test_block_worker_.store(true);armed=true;armed_at=steady();
+          std::cout<<"TEST_WORKER_STALL_ARMED "<<std::setprecision(17)<<armed_at<<std::endl;}}
+      if(!armed&&steady()-startup>4.)throw std::runtime_error("stall fixture never obtained positive activated output");
+      if(armed&&steady()-armed_at>.3&&!node.test_worker_blocked_.load())
+        throw std::runtime_error("worker stall injection did not hold a solve request");
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    executor.remove_node(node.get_node_base_interface());
+  }
+  static void cap(RuntimeNode& node){
+    if(node.cfg_.command_profile!="rate_bounded_v2")throw std::runtime_error("v2 bundle required for cap regression");
+    const double t=steady();const auto r=node.bundle_.reference().at(0.);
+    {std::lock_guard<std::mutex> lock(node.mutex_);
+      node.repeat_laps_=false;node.history_->clear();
+      node.history_->record(t-2.,.3,1.05,0.,0.);node.history_->record(t-.001,.3,1.05,0.,0.);
+      State measured{r.x,r.y,r.yaw,1.,0.,.3};
+      node.snapshot_={measured,{0.,.3,0.},{},t-.095,0.,t,true};node.mode_=true;node.mode_received_=t;
+      node.enabled_=true;node.phase_="RUNNING";node.started_=t;node.progress_ready_=true;
+      const auto predicted=node.history_->predict(measured,t-.095,t,t);
+      auto mapped=node.map_point(predicted,{});const double theta=node.bundle_.reference().project(mapped[0],mapped[1]);
+      const double remaining=.9*node.ttl_+.9*.9/(2*node.cfg_.brake_limit);
+      node.start_progress_=remaining-node.bundle_.reference().length()+theta;node.last_progress_=node.unwrapped_progress_=0.;
+      auto plan=std::make_shared<Pending>();plan->generation=node.generation_;plan->sequence=42;
+      plan->plan.success=true;plan->plan.dt=node.cfg_.dt;plan->plan.source_epoch=t-.095;plan->plan.forecast_epoch=t-.02;
+      plan->plan.initial_applied={0.,.3,0.};plan->plan.controls.assign(node.cfg_.horizon,Control{0.,.3,1.05});
+      node.active_=plan;node.sampler_->reset(1.05,.3,t-.02);node.sampler_->set_previous_endpoint(.3);
+    }
+    node.publish_command();
+    std::lock_guard<std::mutex> lock(node.mutex_);
+    if(node.phase_!="RUNNING")throw std::runtime_error("initially safe capped execution faulted: "+node.reason_);
+    const auto actual=node.history_->predict(node.snapshot_.state,node.snapshot_.source,node.last_publish_,node.last_publish_);
+    const auto projected=node.map_point(actual,{});const double actual_progress=node.bundle_.reference().project(projected[0],projected[1]);
+    if(std::abs(std::remainder(node.last_progress_-actual_progress,node.bundle_.reference().length()))>.01)
+      throw std::runtime_error("finish/output decision used stale source state instead of actual-history prediction");
+    const double lateral=actual[3]*actual[3]*std::tan(actual[5])/(node.cfg_.wheelbase*(1.+node.cfg_.understeer_coefficient*actual[3]*actual[3]));
+    const double E=std::pow(node.last_output_.continuous_acceleration/node.cfg_.envelope_brake,2)+std::pow(lateral/node.cfg_.lateral_accel_limit,2);
+    if(node.last_output_.continuous_acceleration>=0.||E>1.0001)throw std::runtime_error("finish cap violated retained envelope from initially safe decision state");
+  }
   static void capture(RuntimeNode& node){
     // Use the actual worker and logger, then inspect the opt-in CSV records.
     run(node);std::size_t snapshots=0,submissions=0,validations=0;
@@ -137,11 +212,16 @@ int main(int argc,char** argv){
     "-p","simulation:=true","-p","repeat_laps:=true","-p","handover_delay:=0.1"};
   if(argc>2&&std::string(argv[2])=="capture"){
     setenv("AIMS_MPCC_CAPTURE_REQUEST","1",1);args.insert(args.end(),{"-p","log_directory:=/tmp/aims-runtime-request-capture"});}
+  if(argc>2&&std::string(argv[2])=="stall")args.insert(args.end(),{"-p",std::string("log_directory:=")+(argc>3?argv[3]:"/tmp/aims-runtime-worker-stall"),
+    "-r","/ackermann_cmd:=/mpcc_worker_stall/ackermann_cmd","-r","/odometry/filtered:=/mpcc_worker_stall/odometry",
+    "-r","/control/autonomy_speed_enabled:=/mpcc_worker_stall/autonomy_speed_enabled"});
   std::vector<char*> raw;for(auto& s:args)raw.push_back(s.data());rclcpp::init(raw.size(),raw.data());
   const bool mesh=argc>2&&std::string(argv[2])=="mesh";
   int result=0;try{auto node=std::make_shared<aims_mpcc_rt::RuntimeNode>();
     if(mesh)throw std::runtime_error("unqualified v2 50 ms mesh started a controller");if(argc>2&&std::string(argv[2])=="delivery")aims_mpcc_rt::RuntimeClockProbe::delivery(*node);
     else if(argc>2&&std::string(argv[2])=="epoch")aims_mpcc_rt::RuntimeClockProbe::epoch(*node);
+    else if(argc>2&&std::string(argv[2])=="stall")aims_mpcc_rt::RuntimeClockProbe::stall(*node);
+    else if(argc>2&&std::string(argv[2])=="cap")aims_mpcc_rt::RuntimeClockProbe::cap(*node);
     else if(argc>2&&std::string(argv[2])=="capture")aims_mpcc_rt::RuntimeClockProbe::capture(*node);
     else if(argc>2&&std::string(argv[2])=="fault")aims_mpcc_rt::RuntimeClockProbe::fault(*node);
     else if(argc>2&&std::string(argv[2])=="clock")aims_mpcc_rt::RuntimeClockProbe::clock(*node);

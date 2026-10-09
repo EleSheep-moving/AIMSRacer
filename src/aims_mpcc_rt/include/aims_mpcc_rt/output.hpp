@@ -13,7 +13,8 @@ struct OutputCommand {
   double requested_acceleration{},requested_steering_rate{},commanded_target_steering{};
   bool acceleration_limited{},steering_rate_limited{};
 };
-struct BrakingBudget {bool available{},feasible{};double lateral_utilization{},accel_capacity{},brake_capacity{};};
+struct BrakingBudget {bool available{},feasible{};double lateral_utilization{},accel_capacity{},brake_capacity{};
+  bool current_feasible{};double current_lateral_utilization{};};
 // Bounded command integration is distinct from physical vehicle speed. The
 // minimum motor setpoint does not become a discontinuous OCP speed state.
 class OutputSampler {
@@ -117,6 +118,7 @@ class OutputSampler {
         const double fraction=std::clamp((phase-k*plan->dt)/plan->dt,0.,1.);
         target_steering=previous+(endpoint-previous)*fraction;
       }
+      const double previous_command_angle=steering_;
       requested_rate=(target_steering-steering_)/elapsed;
       rate_=std::clamp((std::clamp(target_steering,-cfg_.steer_limit,cfg_.steer_limit)-steering_)/elapsed,
                        -cfg_.steer_rate,cfg_.steer_rate);
@@ -139,19 +141,44 @@ class OutputSampler {
         requested_integral+=desired_a*h;
         if(!stopping&&speed_cap<speed_)desired_a=(std::max(0.,speed_cap)-speed_)/h;
         if(!stopping&&(!valid||speed_cap<speed_)){
-          double speed=std::max({std::abs(measured[3]),std::abs(measured[3]-cfg_.brake_limit*.02),
-                                 std::abs(measured[3]+cfg_.accel_limit*.02)});
-          double angle=std::max(std::abs(measured[5]),std::abs(steering_));
+          // Runtime supplies the decision-epoch physical prediction. The
+          // internal command speed can exceed delayed feedback, so include
+          // both across the supported 50 ms hold bound.
+          const double bounded_a=std::clamp(desired_a,-cfg_.brake_limit,cfg_.accel_limit);
+          double speed=std::max({std::abs(measured[3]),std::abs(speed_),
+            std::max(0.,measured[3]+bounded_a*.05),std::max(0.,speed_+bounded_a*.05)});
+          double angle=std::max({std::abs(measured[5]),std::abs(previous_command_angle),std::abs(steering_)});
           budget_.available=std::isfinite(speed)&&std::isfinite(angle)&&cfg_.steering_tau>=.001&&
             cfg_.understeer_coefficient>=0.&&cfg_.wheelbase>0.&&angle<std::acos(-1.)/2;
           if(budget_.available){
             double lateral=speed*speed*std::tan(angle)/(cfg_.wheelbase*(1+cfg_.understeer_coefficient*speed*speed));
             budget_.lateral_utilization=std::pow(lateral/cfg_.lateral_accel_limit,2);
+            if(budget_.lateral_utilization>1.){
+              // An infeasible command-speed/angle proxy must not disable the
+              // actual physical state's braking budget. Use its bounded held
+              // lag trajectory, with a full supported 50 ms speed preview.
+              const double physical_speed=std::max(std::abs(measured[3]),std::max(0.,measured[3]+bounded_a*.05));
+              const double held_delta=steering_+(measured[5]-steering_)*std::exp(-.05/cfg_.steering_tau);
+              const double physical_angle=std::max(std::abs(measured[5]),std::abs(held_delta));
+              const double physical_lateral=physical_speed*physical_speed*std::tan(physical_angle)/
+                (cfg_.wheelbase*(1+cfg_.understeer_coefficient*physical_speed*physical_speed));
+              budget_.lateral_utilization=std::pow(physical_lateral/cfg_.lateral_accel_limit,2);
+            }
             double capacity=std::sqrt(std::max(0.,1-budget_.lateral_utilization));
             budget_.accel_capacity=std::min(cfg_.accel_limit,cfg_.envelope_accel*capacity);
             budget_.brake_capacity=std::min(cfg_.brake_limit,cfg_.envelope_brake*capacity);
             budget_.feasible=budget_.lateral_utilization<=1.;
-            if(budget_.feasible)desired_a=std::clamp(desired_a,-budget_.brake_capacity,budget_.accel_capacity);
+            const double current_lateral=measured[3]*measured[3]*std::tan(measured[5])/
+              (cfg_.wheelbase*(1+cfg_.understeer_coefficient*measured[3]*measured[3]));
+            budget_.current_lateral_utilization=std::pow(current_lateral/cfg_.lateral_accel_limit,2);
+            budget_.current_feasible=std::isfinite(budget_.current_lateral_utilization)&&budget_.current_lateral_utilization<=1.;
+            // A conservative future hold can be infeasible while the current
+            // physical state is safe. Keep its zero capacity in that case;
+            // do not turn a failed proxy into unrestricted full braking.
+            // The nominal prospective executed certificate checks the actual
+            // upcoming 20 ms hold and following planned unwind independently.
+            if(budget_.feasible||budget_.current_feasible)
+              desired_a=std::clamp(desired_a,-budget_.brake_capacity,budget_.accel_capacity);
           }
         }
         speed_=std::clamp(speed_+std::clamp(desired_a,-cfg_.brake_limit,cfg_.accel_limit)*h,0.,cfg_.max_speed);
