@@ -43,11 +43,15 @@ def timing_pass(timing, frequency, budget):
     count=timing.get('requests',0)
     complete=timing.get('complete',{});pub=timing.get('publish_gap',{})
     failures=timing.get('failures',count)+timing.get('handover_rejected',0)
+    skipped=timing.get('skipped_pending_slots',0)
+    scheduled=timing.get('eligible_slots',count+skipped)
     return bool(count and complete.get('p95') is not None and
         complete['p95']<=.8*budget and complete['p99']<=budget and
         timing.get('late',count)/count<=.001 and failures/count<=.001 and
+        timing.get('inflight',timing.get('unfinished',0))==0 and timing.get('accounted',count)==count and
         timing.get('max_consecutive_failures',count)<3 and timing.get('log_integrity_pass',False) and
-        timing.get('measurement_s',0)>0 and count>=.99*frequency*timing['measurement_s']-1 and
+        scheduled==count+skipped and timing.get('measurement_s',0)>0 and
+        scheduled>=.99*frequency*timing['measurement_s']-1 and
         timing.get('publications',0)>=.99*50*timing['measurement_s']-1 and
         pub.get('p99') is not None and pub['p99']<=.03 and pub['max']<=.06)
 

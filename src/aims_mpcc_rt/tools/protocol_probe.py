@@ -13,6 +13,7 @@ from pathlib import Path
 import signal
 import subprocess
 import time
+import sys
 
 import rclpy
 from rclpy.node import Node
@@ -182,6 +183,9 @@ def run(args):
                '-p', 'artifact_directory:=' + str(bundle), '-p', 'simulation:=true',
                '-p', 'shadow:=' + ('true' if args.scenario == 'shadow' else 'false'),
                '-p', 'repeat_laps:=true', '-p', 'log_directory:=' + str(out / 'controller'), *remaps]
+    command=[sys.executable,str(Path(__file__).with_name('runtime_supervisor.py')),
+             '--status-topic',PREFIX+'/mpcc/status','--report',str(out/'supervisor.json'),
+             '--restart-limit','1' if args.scenario=='watchdog' else '0','--',*command]
     rclpy.init(args=[])
     probe = Probe(bundle)
     binary = Path(get_package_prefix('aims_mpcc_rt')) / 'lib/aims_mpcc_rt/mpcc_rt_node'
@@ -214,7 +218,7 @@ def run(args):
               and probe.status.get('status') == 'RUNNING', 6.),
               command_speed=probe.target.drive.speed, status=probe.status)
 
-    def fault(name, inject, expected, maximum=.2):
+    def fault(name, inject, expected, maximum=.1):
         begin = time.monotonic()
         check(name + '_positive_before_injection', bool(probe.commands)
               and probe.commands[-1][1] > 0. and begin - probe.commands[-1][0] <= .1
@@ -222,16 +226,16 @@ def run(args):
               command_speed=probe.target.drive.speed, status=probe.status)
         inject()
         observed = probe.spin_until(lambda: probe.status.get('status') == 'FAULT'
-                                   and probe.commands[-1][0] >= begin and probe.commands[-1][1] == 0., maximum)
-        fault_times = [event['time'] for event in probe.events if event['time'] >= begin
+                                   and probe.commands[-1][0] >= begin and probe.commands[-1][1] == 0., maximum+.2)
+        fault_times = [event['status'].get('fault_steady_s',event['time']) for event in probe.events if event['time'] >= begin
                        and event['status'].get('status') == 'FAULT']
         fault_latency = min(fault_times) - begin if fault_times else None
         zero_times = [t for t, speed, _, _ in probe.commands if t >= begin and speed == 0.]
         latency = min(zero_times) - begin if zero_times else None
         check(name + '_fault_detection_within_bound', observed and fault_latency is not None
-              and fault_latency <= maximum and expected.lower() in probe.status.get('reason', '').lower(),
+              and 0. <= fault_latency <= maximum and expected.lower() in probe.status.get('reason', '').lower(),
               status=probe.status, fault_detection_latency_s=fault_latency, maximum_s=maximum)
-        check(name + '_positive_to_zero_within_bound', latency is not None and latency <= maximum,
+        check(name + '_positive_to_zero_within_bound', latency is not None and 0. <= latency <= maximum,
               zero_command_latency_s=latency, maximum_s=maximum)
         probe.settle(.3)
         stopped_commands = [row for row in probe.commands if row[0] >= min(zero_times)]
@@ -299,6 +303,32 @@ def run(args):
                   and probe.count_publishers(PREFIX + '/drive') == 1
                   and probe.count_publishers('/mpcc_rt_shadow/drive') == 0,
                   status=probe.status, prefixed_drive_publishers=probe.count_publishers(PREFIX + '/drive'))
+        elif args.scenario == 'watchdog':
+            # Freeze the entire disposable ROS child group while disabled. This
+            # measures a process stall, not blocking inside a native solver call.
+            supervisor_file=out/'supervisor.json'
+            check('disabled_before_process_stall', probe.status.get('status') in ('WAITING','READY')
+                  and all(row[1]==0. for row in probe.commands),status=probe.status)
+            initial=json.loads(supervisor_file.read_text())
+            child_pid=next(event['pid'] for event in initial['events'] if event['event']=='started')
+            begin=time.monotonic();os.killpg(child_pid,signal.SIGSTOP)
+            def restarted():
+                report=json.loads(supervisor_file.read_text())
+                return report['restarts']==1 and sum(e['event']=='started' for e in report['events'])==2
+            check('whole_process_stall_bounded_restart',probe.spin_until(restarted,2.))
+            lifecycle=json.loads(supervisor_file.read_text())
+            stopped=next(e for e in lifecycle['events'] if e['event']=='stopped')
+            check('stopped_group_killed_within_bound', stopped['reason']=='status_stalled'
+                  and stopped['signals']==['SIGTERM','SIGKILL'] and stopped['time']-begin<1.2,
+                  lifecycle=stopped,scope='whole process SIGSTOP while disabled; no native-call stall injected')
+            restart_time=max(e['time'] for e in lifecycle['events'] if e['event']=='started')
+            check('restart_returns_disabled',probe.spin_until(lambda: any(e['time']>restart_time
+                  and e['status'].get('worker_ready') is True and e['status'].get('status') in ('WAITING','READY')
+                  for e in probe.events),10.))
+            probe.settle(.3)
+            check('restart_never_auto_enables',all(row[1]==0. for row in probe.commands)
+                  and probe.status.get('status') in ('WAITING','READY'),status=probe.status)
+            report['process_stall_scope']='whole process SIGSTOP, disabled synthetic domain; native-call wedging not exercised'
         elif args.scenario == 'freshness':
             activate()
             begin = time.monotonic()
@@ -367,5 +397,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bundle', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--scenario', choices=['health', 'odometry', 'ownership', 'shadow', 'freshness'], required=True)
+    parser.add_argument('--scenario', choices=['health', 'odometry', 'ownership', 'shadow', 'freshness', 'watchdog'], required=True)
     raise SystemExit(run(parser.parse_args()))
