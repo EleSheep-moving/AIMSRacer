@@ -52,6 +52,10 @@ struct Snapshot {
 struct Pending {Plan plan;Applied applied{};HistoryCommand prefix{};std::uint64_t generation{},sequence{};double submitted{};};
 
 class RuntimeNode final:public rclcpp::Node {
+#ifdef AIMS_MPCC_RT_TEST_ACCESS
+  friend struct RuntimeClockProbe;
+  std::atomic<bool> test_callback_entered_{false};
+#endif
  public:
   RuntimeNode():Node("aims_mpcc_rt"){
     auto artifact=declare_parameter<std::string>("artifact_directory","");
@@ -208,7 +212,7 @@ class RuntimeNode final:public rclcpp::Node {
     double now=steady();std::lock_guard<std::mutex> lock(mutex_);
     try{
       double accel=0.,rate=0.;
-      for(auto it=recent_.rbegin();it!=recent_.rend();++it)if(now-it->first<=.1&&
+      for(auto it=recent_.rbegin();it!=recent_.rend();++it)if(now>=it->first&&now-it->first<=.1&&
          std::abs(it->second.speed-m.drive.speed)<1e-6&&std::abs(it->second.steering-m.drive.steering_angle)<1e-6){
         accel=it->second.acceleration;rate=it->second.steering_rate;break;}
       history_->record(now,std::clamp(double(m.drive.steering_angle),-cfg_.steer_limit,cfg_.steer_limit),m.drive.speed,accel,rate);
@@ -291,15 +295,37 @@ class RuntimeNode final:public rclcpp::Node {
        std::abs(actual.steering-next->prefix.steering)>std::acos(-1.)/9){
       return reject("Plan takeover command mismatch");}
     auto applied=history_->at(now).second;
+    // Opt-in forensic snapshots: record the exact immutable request and actual
+    // prefix used for takeover. Formatting stays off in ordinary operation.
+    static const bool capture_takeover=std::getenv("AIMS_MPCC_CAPTURE_TAKEOVER")!=nullptr;
+    std::ostringstream capture;
+    if(capture_takeover){
+      capture<<std::setprecision(17)<<"{\"sequence\":"<<next->sequence
+        <<",\"original_forecast_epoch\":"<<next->plan.forecast_epoch<<",\"now\":"<<now
+        <<",\"source_epoch\":"<<next->plan.source_epoch<<",\"original_violation\":"<<next->plan.max_violation;
+      auto array=[&](const auto& values){capture<<'[';bool first=true;for(auto v:values){if(!first)capture<<',';first=false;capture<<v;}capture<<']';};
+      capture<<",\"source_state\":";array(next->plan.states.front());
+      capture<<",\"source_applied\":";array(next->plan.initial_applied);
+      capture<<",\"actual_state\":";array(observed);capture<<",\"actual_applied\":";array(applied);
+      capture<<",\"alignment\":";array(snapshot_.alignment);capture<<",\"controls\":[";
+      bool first=true;for(const auto& u:next->plan.controls){if(!first)capture<<',';first=false;array(u);}capture<<']';
+    }
     next->plan=activation_validator_->reanchor(next->plan,observed,applied,now,snapshot_.alignment);
+    if(capture_takeover){
+      capture<<",\"anchored_violation\":";if(std::isfinite(next->plan.max_violation))capture<<next->plan.max_violation;else capture<<"null";
+      capture<<",\"accepted\":"<<(next->plan.success?"true":"false")<<'}';
+      std::string escaped;for(char ch:capture.str()){if(ch=='"')escaped+='"';escaped+=ch;}
+      std::ostringstream row;row<<std::setprecision(17)<<"takeover_snapshot,"<<now<<','<<next->sequence
+        <<",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\""<<escaped<<"\"\n";queue_log(row.str());
+    }
     if(!next->plan.success)return reject("Takeover candidate infeasible: "+next->plan.reason);
     if(phase_=="RECOVERING"){
       if(observed[3]<.05){recovery_good_=0;return reject("Recovery stopped; re-enable required");}
       if(++recovery_good_<2)return reject("Recovery awaits a second usable candidate",false);
     }
     next->applied=applied;active_=next;
-    sampler_->set_previous_endpoint(applied[1]);++activated_;phase_="RUNNING";reason_.clear();
-    log_activation(*next,begin,true,"");return true;
+    sampler_->set_previous_endpoint(applied[1]);++activated_;if(next->plan.prefix_transported)++transported_;phase_="RUNNING";reason_.clear();
+    log_activation(*next,begin,true,next->plan.prefix_transported?"bounded prefix transport":"");return true;
   }
   double stop_reserve()const{
     return cfg_.minimum_drive_speed*(cfg_.brake_limit/cfg_.jerk_limit+ttl_)+
@@ -312,31 +338,42 @@ class RuntimeNode final:public rclcpp::Node {
   }
   void publish_command(){
     double begin=steady();OutputCommand command;std::shared_ptr<Pending> visualization;
+#ifdef AIMS_MPCC_RT_TEST_ACCESS
+    test_callback_entered_.store(true);
+#endif
     std::uint64_t seq=0;double source=0.,forecast=0.;
     {
       std::lock_guard<std::mutex> lock(mutex_);
+      // Receive callbacks may have updated timestamps while this callback waited.
+      // Sample the decision epoch after owning the same state mutex.
+      const double decision=steady();
       try{
-        if(enabled_&&(!fresh_locked(begin)||!localization_locked(begin)))fault_locked("State, authority or localization expired");
+        if(enabled_&&!fresh_locked(decision)){
+          std::ostringstream reason;reason<<std::setprecision(9)<<"Input freshness expired: source_age="<<decision-snapshot_.source
+            <<" receipt_age="<<decision-snapshot_.received<<" authority_age="<<decision-mode_received_
+            <<" applied_age="<<decision-history_->newest();fault_locked(reason.str());
+        }
+        if(enabled_&&!localization_locked(decision))fault_locked("Localization freshness expired");
         if(enabled_&&count_publishers(pub_->get_topic_name())>1)fault_locked("Another command publisher appeared");
-        if(enabled_&&last_publish_>0&&begin-last_publish_>.1)fault_locked("Command scheduling discontinuity");
+        if(enabled_&&last_publish_>0&&decision-last_publish_>.1)fault_locked("Command scheduling discontinuity");
         if(enabled_){
-          if(activate_locked(begin))visualization=active_;
+          if(activate_locked(decision))visualization=active_;
           auto mapped=map_point(snapshot_.state,snapshot_.alignment);
           double progress=bundle_.reference().project(mapped[0],mapped[1]);
           if(progress_ready_)unwrapped_progress_+=std::remainder(progress-last_progress_,bundle_.reference().length());
           last_progress_=progress;
           double remaining=start_progress_+bundle_.reference().length()-unwrapped_progress_;
           double cap=repeat_laps_?cfg_.max_speed:finish_cap(remaining);
-          command=sampler_->sample(active_?&active_->plan:nullptr,begin,snapshot_.state,stopping_,ttl_,cap);
-          if(command.expired&&begin-started_>=ttl_){
+          command=sampler_->sample(active_?&active_->plan:nullptr,decision,snapshot_.state,stopping_,ttl_,cap);
+          if(command.expired&&decision-started_>=ttl_){
             if(phase_!="RECOVERING")recovery_good_=0;
             phase_="RECOVERING";reason_="Plan expired";
           }
           if(stopping_)phase_="STOPPING";
           bool finish=!repeat_laps_&&std::abs(remaining)<=std::max(.2,stop_reserve()+.05);
           if((finish||stopping_||phase_=="RECOVERING")&&command.continuous_speed<1e-6&&snapshot_.state[3]<.05){
-            if(stationary_since_<0)stationary_since_=begin;
-            if(begin-stationary_since_>=.5){enabled_=false;generation_++;pending_.reset();active_.reset();
+            if(stationary_since_<0)stationary_since_=decision;
+            if(decision-stationary_since_>=.5){enabled_=false;generation_++;pending_.reset();active_.reset();
               reason_=finish?"One lap complete":phase_=="RECOVERING"?"Recovery stopped; re-enable required":"Stopped";
               phase_=finish?"COMPLETE":"READY";}
           }else stationary_since_=-1.;
@@ -345,7 +382,7 @@ class RuntimeNode final:public rclcpp::Node {
           }
           if(active_){seq=active_->sequence;source=active_->plan.source_epoch;forecast=active_->plan.forecast_epoch;}
         }else command.steering=last_output_.steering;
-        last_output_=command;recent_.push_back({begin,command});if(recent_.size()>16)recent_.pop_front();
+        last_output_=command;recent_.push_back({decision,command});if(recent_.size()>16)recent_.pop_front();
       }catch(const std::exception& e){fault_locked(e.what());command={};command.steering=last_output_.steering;}
     }
     Drive message;message.header.stamp=get_clock()->now();message.header.frame_id="base_link";
@@ -362,7 +399,7 @@ class RuntimeNode final:public rclcpp::Node {
     diagnostic_msgs::msg::DiagnosticArray message;message.header.stamp=get_clock()->now();
     diagnostic_msgs::msg::DiagnosticStatus status;status.name="aims_mpcc";
     {std::lock_guard<std::mutex> lock(mutex_);status.message=reason_.empty()?phase_:reason_;status.level=phase_=="FAULT"?2:0;
-      auto value=[&](const std::string& key,const auto& v){diagnostic_msgs::msg::KeyValue kv;kv.key=key;kv.value=std::to_string(v);status.values.push_back(kv);};
+      auto value=[&](const std::string& key,const auto& v){diagnostic_msgs::msg::KeyValue kv;kv.key=key;kv.value=std::isfinite(static_cast<double>(v))?std::to_string(v):"null";status.values.push_back(kv);};
       auto text=[&](const std::string& key,const std::string& v){diagnostic_msgs::msg::KeyValue kv;kv.key=key;kv.value=json_string(v);status.values.push_back(kv);};
       text("status",phase_);text("reason",reason_);text("backend","acados_cpp");
       diagnostic_msgs::msg::KeyValue ready;ready.key="worker_ready";ready.value=solver_ready_?"true":"false";status.values.push_back(ready);
@@ -372,7 +409,7 @@ class RuntimeNode final:public rclcpp::Node {
       value("speed",snapshot_.state[3]);value("solve_time",last_.plan.solve_time_s);
       value("deadline_misses",late_);value("solve_sequence",last_.sequence);
       value("requests",requests_);value("failed",failed_);value("rejected",rejected_);value("late",late_);
-      value("activated",activated_);value("handover_rejected",handover_rejected_);value("complete_s",last_complete_);
+      value("activated",activated_);value("prefix_transport_activations",transported_);value("handover_rejected",handover_rejected_);value("complete_s",last_complete_);
       value("observation_age_s",last_observation_age_);value("native_status",last_.plan.status);
       value("native_passes",last_.plan.native_passes);value("max_violation",last_.plan.max_violation);
       value("log_dropped",log_dropped_.load());
@@ -425,7 +462,7 @@ class RuntimeNode final:public rclcpp::Node {
   bool enabled_=false,stopping_=false,shutdown_=false,solver_ready_=false,simulation_=false,shadow_=true,repeat_laps_=false,progress_ready_=false;
   double frequency_=20.,ttl_=.8,budget_=.05,lead_=.02,mode_received_=-1.,started_=0.,last_publish_=0.;
   double start_progress_=0.,unwrapped_progress_=0.,last_progress_=0.,last_complete_=0.,last_observation_age_=0.,stationary_since_=-1.;bool mode_=false;
-  std::uint64_t generation_=0,requests_=0,failed_=0,rejected_=0,late_=0,activated_=0,handover_rejected_=0;
+  std::uint64_t generation_=0,requests_=0,failed_=0,rejected_=0,late_=0,activated_=0,handover_rejected_=0,transported_=0;
   std::shared_ptr<Pending> active_,pending_;Pending last_;OutputCommand last_output_;
   std::deque<std::pair<double,OutputCommand>> recent_;
   std::mutex mutex_;std::condition_variable cv_;std::thread worker_;

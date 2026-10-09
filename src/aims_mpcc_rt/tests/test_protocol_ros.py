@@ -11,7 +11,7 @@ import subprocess
 import pytest
 
 
-@pytest.mark.parametrize('scenario', ['health', 'odometry', 'ownership', 'shadow'])
+@pytest.mark.parametrize('scenario', ['health', 'odometry', 'ownership', 'shadow', 'freshness'])
 def test_isolated_ros_protocol(scenario):
     bundle = os.environ.get('AIMS_MPCC_PROTOCOL_BUNDLE')
     if not bundle:

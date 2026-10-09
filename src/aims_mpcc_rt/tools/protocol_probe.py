@@ -55,6 +55,8 @@ class Probe(Node):
         self.events = []
         self.last = time.monotonic()
         self.last_odom_ns = 0
+        self.last_odom = None
+        self.fresh_input_updates = 0
         latch = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.odom = self.create_publisher(Odometry, PREFIX + '/odometry/filtered', 10)
         self.mode = self.create_publisher(Bool, PREFIX + '/control/autonomy_speed_enabled', 10)
@@ -115,6 +117,7 @@ class Probe(Node):
             odom.pose.pose.orientation.w = 0.
         odom.twist.twist.linear.x = -.2 if self.odom_fault == 'reverse' else self.speed
         self.odom.publish(odom)
+        self.last_odom = odom
         self.mode.publish(Bool(data=self.autonomy))
         forwarded = self.target if self.autonomy else Drive()
         self.ack.publish(forwarded)
@@ -131,6 +134,20 @@ class Probe(Node):
         status = DiagnosticStatus(name='aims_racer_system/localization',
                                   values=[KeyValue(key=k, value=v) for k, v in values.items()])
         self.health.publish(DiagnosticArray(status=[status]))
+
+    def refresh_inputs(self):
+        """Stress receive/output concurrency with unchanged valid authority.
+
+        Keep the plant and localization protocol at their normal rates. Only
+        republish its latest valid pose with its original source timestamp and
+        duplicate the same authority; neither input withdraws authorization.
+        """
+        if self.last_odom is None:
+            return
+        self.odom.publish(self.last_odom)
+        for _ in range(8):
+            self.mode.publish(Bool(data=self.autonomy))
+        self.fresh_input_updates += 1
 
     def spin_until(self, predicate, timeout=5.):
         deadline = time.monotonic() + timeout
@@ -282,6 +299,47 @@ def run(args):
                   and probe.count_publishers(PREFIX + '/drive') == 1
                   and probe.count_publishers('/mpcc_rt_shadow/drive') == 0,
                   status=probe.status, prefixed_drive_publishers=probe.count_publishers(PREFIX + '/drive'))
+        elif args.scenario == 'freshness':
+            activate()
+            begin = time.monotonic()
+            baseline = dict(probe.status)
+            command_start, event_start = len(probe.commands), len(probe.events)
+            stress_timer = probe.create_timer(.001, probe.refresh_inputs)
+            try:
+                probe.settle(6.)
+            finally:
+                probe.destroy_timer(stress_timer)
+            duration = time.monotonic() - begin
+            commands = probe.commands[command_start:]
+            events = probe.events[event_start:]
+            statuses = [event['status'] for event in events]
+            positive_duration = (commands[-1][0] - commands[0][0]) if commands else 0.
+            gaps = [after[0] - before[0] for before, after in zip(commands, commands[1:])]
+            faults = [event for event in events if event['status'].get('status') != 'RUNNING']
+            report['freshness_stress'] = dict(
+                duration_s=duration, input_updates=probe.fresh_input_updates,
+                input_update_hz=probe.fresh_input_updates / duration,
+                authority_publish_hz=8 * probe.fresh_input_updates / duration,
+                command_samples=len(commands), status_samples=len(events),
+                positive_command_duration_s=positive_duration,
+                maximum_command_gap_s=max(gaps, default=0.),
+                baseline_status=baseline, nonrunning_events=faults)
+            check('high_rate_valid_receive_updates', probe.fresh_input_updates / duration >= 250.,
+                  duration_s=duration, input_updates=probe.fresh_input_updates,
+                  input_update_hz=probe.fresh_input_updates / duration)
+            check('sustained_positive_running_for_five_seconds', positive_duration >= 5.
+                  and len(commands) >= 200 and all(row[1] > 0. for row in commands)
+                  and max(gaps, default=math.inf) <= .1 and len(statuses) >= 25
+                  and not faults and probe.status.get('status') == 'RUNNING',
+                  positive_command_duration_s=positive_duration,
+                  command_samples=len(commands), status_samples=len(statuses),
+                  maximum_command_gap_s=max(gaps, default=0.),
+                  nonrunning_events=faults[:1])
+            counters = ('failed', 'rejected')
+            degraded = [event for event in events if event['status'].get('native_status') != 0
+                        or any(event['status'].get(key) != baseline.get(key) for key in counters)]
+            check('no_source_or_protocol_degradation', not degraded,
+                  counters=list(counters), degraded_events=degraded[:1])
         final_counts = {topic: probe.count_publishers(topic) for topic in DRIVING_TOPICS}
         check('final_unprefixed_driving_publishers_zero', not any(final_counts.values()), counts=final_counts)
         report['overall_pass'] = True
@@ -309,5 +367,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bundle', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--scenario', choices=['health', 'odometry', 'ownership', 'shadow'], required=True)
+    parser.add_argument('--scenario', choices=['health', 'odometry', 'ownership', 'shadow', 'freshness'], required=True)
     raise SystemExit(run(parser.parse_args()))
