@@ -85,6 +85,13 @@ are retained on `feat/mpcc-acados-runtime`. See
 
 ### Acceptance reopened after whole-chain audit
 
+The subsequent [runtime contract repair plan](2026-10-09-mpcc-runtime-contract-repair.md)
+incorporates the user's choice to remove the two additional higher-order hard
+limits and defines the four blocking repairs and renewed qualification. Its
+selected command profile supersedes this plan's earlier blanket preservation
+of jerk and steering-command acceleration constraints; historical results remain
+baseline evidence.
+
 [Audit report](../../reports/2026-10-09-mpcc-native-contract-audit.md) identifies
 missing held-output validation, delivery mutex time excluded from deadline,
 clock/epoch recovery gaps, pending starvation and conditional corridor omissions.
