@@ -118,9 +118,54 @@ def test_independent_plant_motor_floor_acceleration_violation_is_reported():
     assert metrics['violation_samples']==1 and metrics['samples']==2
 
 
+def test_loaded_provenance_includes_the_actual_estimator_executables():
+    tools=module('nx_joint_load')
+    loaded=set(tools.installed_executables(True))
+    assert {('fastlio2','lio_node'),('robot_localization','ekf_node'),
+            ('lidar_localization_ros2','lidar_localization_node'),
+            ('aims_racer_system','localization_monitor')}<=loaded
+    assert ('fastlio2','lio_node') not in tools.installed_executables(False)
+
+
 def test_operator_stop_waits_for_terminal_ready_after_stationary_confirmation():
     assess=module('acceptance').operator_stop_pass
     values=dict(positive_before=True,injected_s=1.,phase='READY',reason='Stopped',speed=.01,target_speed=0.)
     assert assess(**values)
     assert not assess(**{**values,'phase':'STOPPING'})
     assert not assess(**{**values,'speed':.06})
+
+
+def test_protocol_lifecycle_requires_fresh_positive_output_and_new_activations():
+    assess=module('protocol_probe').lifecycle_pass
+    commands=[(1.+i*.02,.5,0.,0.) for i in range(301)]
+    statuses=[dict(status='RUNNING',activated=1+i,failed=0,rejected=0) for i in range(61)]
+    baseline=dict(activated=1,failed=0,rejected=0)
+    assert assess(commands,statuses,baseline,7.,6.)
+    assert not assess(commands,[{**s,'activated':1} for s in statuses],baseline,7.,6.)
+    assert not assess(commands,[{**s,'status':'RECOVERING'} for s in statuses],baseline,7.,6.)
+    assert not assess(commands[:-30],statuses,baseline,7.,6.)
+
+
+def test_probe_uses_real_map_identity_and_complete_atomic_anchor_record():
+    tool=module('protocol_probe')
+    path=SimpleNamespace(frame_id='map',metadata={'map_sha256':'c'*64})
+    assert tool.map_identity(path)=='c'*64
+    record=tool.atomic_health_record(epoch='epoch1',health_sequence=9,anchor_sequence=3,
+        anchor_ns=1234,map_hash=tool.map_identity(path),kind='ready')
+    assert record['alignment_epoch']==record['epoch']=='epoch1'
+    assert record['alignment_anchor_sequence']==record['anchor_sequence']=='3'
+    assert record['alignment_stamp_ns']==record['last_anchor_stamp_ns']=='1234'
+    assert record['map_sha256']=='c'*64 and record['alignment_valid']=='true'
+    assert [record['map_odom_'+key] for key in ('x','y','z','qx','qy','qz','qw')]==['0','0','0','0','0','0','1']
+    duplicate=tool.atomic_health_record(epoch='epoch1',health_sequence=10,anchor_sequence=3,
+        anchor_ns=1234,map_hash='c'*64,kind='ready')
+    assert {k:v for k,v in record.items() if k!='health_sequence'}=={k:v for k,v in duplicate.items() if k!='health_sequence'}
+    with pytest.raises(ValueError,match='map'):tool.map_identity(SimpleNamespace(frame_id='map',metadata={}))
+
+
+def test_probe_publishes_base_link_pose_with_rear_axle_offset():
+    tool=module('protocol_probe')
+    import math
+    x,y=tool.base_link_position(2.,3.,.7,.22)
+    assert x-.22*math.cos(.7)==pytest.approx(2.)
+    assert y-.22*math.sin(.7)==pytest.approx(3.)

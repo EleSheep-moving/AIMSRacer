@@ -27,17 +27,24 @@ def test_cpp_monitor_publishes_accepted_alignment_and_clears_epoch_and_rewind(tm
     rclpy.init()
     node = rclpy.create_node('monitor_alignment_test')
     delivered = []
-    node.create_subscription(DiagnosticArray, '/localization/status',
-                             lambda msg: delivered.append({v.key: v.value for v in msg.status[0].values}), 10)
+    status_stamps = []
+
+    def receive(message):
+        delivered.append({v.key: v.value for v in message.status[0].values})
+        status_stamps.append(message.header.stamp.sec * 1_000_000_000 + message.header.stamp.nanosec)
+
+    node.create_subscription(DiagnosticArray, '/localization/status', receive, 10)
     anchor_pub = node.create_publisher(DiagnosticArray, '/localization/anchor_status',
         QoSProfile(depth=100, durability=DurabilityPolicy.TRANSIENT_LOCAL))
     odom_pub = node.create_publisher(Odometry, '/odometry/filtered', 10)
     cloud_pub = node.create_publisher(PointCloud2, '/fastlio2/body_cloud', 10)
     clock_pub = node.create_publisher(Clock, '/clock', 10)
 
-    def spin_until(predicate):
+    def spin_until(predicate, publish=None):
         deadline = time.monotonic() + 5
         while time.monotonic() < deadline:
+            if publish is not None:
+                publish()
             rclpy.spin_once(node, timeout_sec=.02)
             if predicate():
                 return
@@ -47,14 +54,25 @@ def test_cpp_monitor_publishes_accepted_alignment_and_clears_epoch_and_rewind(tm
 
     def inputs(second):
         clock = Clock(); clock.clock.sec = second
-        clock_pub.publish(clock)
-        for _ in range(8):
-            rclpy.spin_once(node, timeout_sec=.01)
+        # Reader discovery alone does not prove that the node processed its
+        # first /clock. Wait for its own stamped status before input/anchor data.
+        spin_until(lambda: status_stamps and status_stamps[-1] == second * 1_000_000_000,
+                   lambda: clock_pub.publish(clock))
+        before = int(delivered[-1].get('ekf_callback_count', '0'))
         odom = Odometry(); odom.header.stamp.sec = second
         odom.header.frame_id = 'odom'; odom.child_frame_id = 'base_link'
         odom.pose.pose.orientation.w = 1.
         cloud = PointCloud2(); cloud.header.stamp.sec = second; cloud.header.frame_id = 'livox_frame'
-        odom_pub.publish(odom); cloud_pub.publish(cloud)
+
+        def publish_inputs():
+            odom_pub.publish(odom); cloud_pub.publish(cloud)
+
+        # Volatile sensor packets may drop around discovery on the NX. Repeat
+        # this stage's qualified inputs until actual monitor callbacks accept
+        # both; unchanged source stamps still cannot refresh its watchdog.
+        spin_until(lambda: int(delivered[-1].get('ekf_callback_count', '0')) > before
+                   and float(delivered[-1].get('ekf_age_sec', 'inf')) == 0.
+                   and float(delivered[-1].get('body_cloud_age_sec', 'inf')) == 0., publish_inputs)
 
     def anchor(epoch, sequence, second, committed=True, **extra):
         fields = dict(protocol_version='1', epoch=epoch, event_sequence=str(sequence),

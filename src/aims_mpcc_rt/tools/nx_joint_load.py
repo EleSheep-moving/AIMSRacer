@@ -20,7 +20,17 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def snapshot(root, bundle, inputs=()):
+def installed_executables(include_estimators=False):
+    binaries=[('aims_mpcc_rt','mpcc_rt_node'),('ackermann_mux','joystick_control_v2'),
+              ('vesc_ackermann','ackermann_to_vesc_node')]
+    if include_estimators:
+        binaries += [('fastlio2','lio_node'),('robot_localization','ekf_node'),
+                     ('lidar_localization_ros2','lidar_localization_node'),
+                     ('aims_racer_system','localization_monitor')]
+    return binaries
+
+
+def snapshot(root, bundle, inputs=(), include_estimators=False):
     files=list((root/'src/controller/aims_mpcc').rglob('*.py'))
     files+=list((root/'src/aims_mpcc_rt').rglob('*.cpp'))+list((root/'src/aims_mpcc_rt').rglob('*.hpp'))
     files+=list((root/'src/aims_mpcc_rt/tools').glob('*.py'))
@@ -33,7 +43,7 @@ def snapshot(root, bundle, inputs=()):
         if directory is not None and directory.is_dir():
             files += [p for p in directory.rglob('*') if p.is_file() and p.suffix in ('.so','.json','.c','.h')]
     from ament_index_python.packages import get_package_prefix
-    for package, executable in [('aims_mpcc_rt','mpcc_rt_node'),('ackermann_mux','joystick_control_v2'),('vesc_ackermann','ackermann_to_vesc_node')]:
+    for package, executable in installed_executables(include_estimators):
         files.append(Path(get_package_prefix(package))/'lib'/package/executable)
     return {str(p):digest(p) for p in sorted(set(files))}
 
@@ -68,7 +78,8 @@ def run(args):
     env['OMP_NUM_THREADS']='1';env['OPENBLAS_NUM_THREADS']='1'
     evidence=dict(arguments={k:str(v) if isinstance(v,Path) else v for k,v in vars(args).items()},
         source_commit=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip(),
-        source_before=snapshot(root,bundle,[args.vesc,args.replay_runner,args.seed,args.legacy_artifact]),environment={k:env.get(k) for k in (
+        source_before=snapshot(root,bundle,[args.vesc,args.replay_runner,args.seed,args.legacy_artifact,args.map,
+          args.bag/'metadata.yaml' if args.bag else None],include_estimators=args.shared),environment={k:env.get(k) for k in (
           'ROS_DOMAIN_ID','ROS_LOCALHOST_ONLY','OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','ACADOS_SOURCE_DIR','LD_LIBRARY_PATH')},
         scope='synthetic closed loop and estimation CPU load; excludes physical driving qualification')
     hardware={}
@@ -136,7 +147,8 @@ def run(args):
         try:cleanup(processes)
         except Exception as error:evidence['cleanup_error']=repr(error)
         for handle in handles:handle.close()
-        evidence['source_after']=snapshot(root,bundle,[args.vesc,args.replay_runner,args.seed,args.legacy_artifact])
+        evidence['source_after']=snapshot(root,bundle,[args.vesc,args.replay_runner,args.seed,args.legacy_artifact,args.map,
+          args.bag/'metadata.yaml' if args.bag else None],include_estimators=args.shared)
         evidence['source_changed']=evidence['source_before']!=evidence['source_after']
         report=evidence.get('controller_report',{})
         evidence['timing_pass']=timing_pass(report.get('timing',{}),args.frequency,args.budget)
