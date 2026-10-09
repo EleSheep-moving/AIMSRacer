@@ -412,7 +412,7 @@ Plan Core::validate_candidate(const State &initial,const Applied &applied,const 
 }
 Plan Core::reanchor(const Plan &source,State actual,const Applied &applied,double epoch,
                     const std::optional<Alignment> &current_alignment) const {
-  auto started=Clock::now();Plan plan=source;plan.success=false;plan.reanchor_time_s=0.;
+  auto started=Clock::now();Plan plan=source;plan.success=false;plan.reanchor_time_s=0.;plan.prefix_transported=false;
   const auto &cfg=config();const auto &ref=reference();Alignment alignment=current_alignment.value_or(source.map_alignment);
   if(!source.success||source.status!=0||source.controls.size()!=size_t(cfg.horizon)||
      source.states.empty()||source.dt!=cfg.dt||source.artifact_fingerprint!=bundle_.fingerprint()) {
@@ -442,6 +442,52 @@ Plan Core::reanchor(const Plan &source,State actual,const Applied &applied,doubl
   }
   plan.forecast_epoch=epoch;
   plan=validate_candidate(actual,applied,alignment,controls,parameters,std::move(plan));
+  if(!plan.success) {
+    // The original endpoints were optimized relative to the forecast applied
+    // prefix. A delayed old output can change the first rate and, consequently,
+    // the second interval's rate change. Try transporting that endpoint
+    // schedule only for a small, physically bounded change of prefix. The
+    // extra slot accounts for one held 50 Hz output command at the forecast.
+    const double delay=epoch-source.forecast_epoch,span=delay+.02;
+    const double da=applied[0]-source.initial_applied[0];
+    const double ds=applied[1]-source.initial_applied[1];
+    const double dr=applied[2]-source.initial_applied[2];
+    bool eligible=std::isfinite(delay)&&delay>=0.&&delay<=.05&&finite(source.initial_applied)&&
+      std::abs(da)<=cfg.jerk_limit*span&&std::abs(ds)<=cfg.steer_rate*span&&
+      std::abs(dr)<=cfg.steer_acceleration*span;
+    for(const auto &u:controls)eligible=eligible&&finite(u);
+    if(!eligible)plan.reason+="; prefix transport ineligible";
+    else {
+      auto transported=controls;
+      double endpoint=applied[1],rate=applied[2];bool continuation=true;
+      for(auto &u:transported) {
+        u[0]=std::clamp(u[0]+da,-cfg.brake_limit,cfg.accel_limit);
+        double left=cfg.steer_limit+endpoint,right=cfg.steer_limit-endpoint;
+        double lower=std::max({-cfg.steer_rate,rate-cfg.steer_acceleration*cfg.dt,
+                              -left/cfg.dt,-stopping_rate(left,cfg.steer_acceleration,cfg.dt)});
+        double upper=std::min({cfg.steer_rate,rate+cfg.steer_acceleration*cfg.dt,
+                              right/cfg.dt,stopping_rate(right,cfg.steer_acceleration,cfg.dt)});
+        if(lower>upper+1e-12){continuation=false;break;}
+        if(lower>upper)lower=upper;
+        rate=std::clamp((std::clamp(u[1]+ds,-cfg.steer_limit,cfg.steer_limit)-endpoint)/cfg.dt,lower,upper);
+        endpoint+=rate*cfg.dt;u[1]=endpoint;
+      }
+      if(!continuation)plan.reason+="; prefix transport has no bounded steering continuation";
+      else {
+        // Progress controls are unchanged, so the refreshed geometric stage
+        // parameters also apply to this distinct nonlinear candidate.
+        auto candidate=validate_candidate(actual,applied,alignment,transported,parameters,plan);
+        if(candidate.success) {
+          plan=std::move(candidate);plan.prefix_transported=true;
+          plan.reason="accepted with bounded prefix transport";
+        } else {
+          // Keep the original failed certificate and its maximum violation.
+          // An alternate candidate never hides why the original was rejected.
+          plan.reason+="; prefix transport rejected: "+candidate.reason;
+        }
+      }
+    }
+  }
   plan.reanchor_time_s=duration(started);
   return plan;
 }

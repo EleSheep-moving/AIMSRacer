@@ -75,6 +75,7 @@ struct Plan {
   double max_violation{}, cost{};
   double native_cost{}, raw_optimizer_cost{};
   double reanchor_time_s{};
+  bool prefix_transported{};
   Alignment map_alignment{};
   Applied initial_applied{};
   std::vector<double> speed_targets;
