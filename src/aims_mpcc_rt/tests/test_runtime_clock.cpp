@@ -9,6 +9,12 @@ namespace aims_mpcc_rt {
 struct RuntimeClockProbe {
   static void run(RuntimeNode& node) {
     std::unique_lock<std::mutex> lock(node.mutex_);
+    const double epoch=steady();
+    node.snapshot_.present=true;node.snapshot_.source=epoch-.05;node.snapshot_.received=epoch;
+    node.mode_=true;node.mode_received_=epoch;
+    node.history_->clear();node.history_->record(epoch,0.,0.,0.,0.);
+    if(node.fresh_locked(epoch))throw std::runtime_error("history beginning after measurement incorrectly authorized state");
+
     std::thread publisher([&]{node.publish_command();});
     const auto deadline=Steady::now()+std::chrono::seconds(2);
     while(!node.test_callback_entered_.load()&&Steady::now()<deadline)std::this_thread::yield();

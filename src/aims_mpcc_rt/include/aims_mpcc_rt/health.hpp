@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath>
+#include <array>
 #include <cstdint>
 #include <limits>
 #include <map>
@@ -13,6 +14,11 @@ namespace aims_mpcc_rt {
 class LocalizationHealth {
  public:
   using Values = std::map<std::string,std::string>;
+  void reset(){*this=LocalizationHealth{};}
+  std::int64_t anchor_sequence()const{return sequence_;}
+  std::int64_t anchor_stamp_ns()const{return stamp_ns_;}
+  bool qualified()const{return qualified_;}
+  const std::array<double,3>& alignment()const{return alignment_;}
   bool observe(const Values& v, std::int64_t ros_now_ns, double steady_now) {
     bool changed=false;
     try {
@@ -28,13 +34,32 @@ class LocalizationHealth {
       if(!epoch_.empty()&&epoch!=epoch_) {retired_.insert(epoch_);changed=true;}
       if(epoch!=epoch_) {
         epoch_=epoch;sequence_=health_sequence_=loss_sequence_=-1;
-        stamp_ns_=-1;anchor_received_=nan();
+        stamp_ns_=-1;anchor_received_=nan();qualified_=false;committed_=false;ready_=false;
       }
       if(hs<=health_sequence_) return changed;
       health_sequence_=hs;
       if(as<sequence_) return changed;
       if(as==sequence_&&stamp_ns_>=0&&stamp!=stamp_ns_)
         throw std::invalid_argument("anchor changed without sequence");
+      std::array<double,7> transform{};bool qualified=false;
+      auto valid=v.find("alignment_valid");
+      if(valid!=v.end()&&valid->second=="true"){
+        if(v.at("alignment_epoch")!=epoch||integer(v.at("alignment_anchor_sequence"))!=as||
+           integer(v.at("alignment_stamp_ns"))!=stamp)throw std::invalid_argument("alignment identity");
+        const char* fields[]={"x","y","z","qx","qy","qz","qw"};
+        for(int i=0;i<7;++i){auto text=v.at(std::string("map_odom_")+fields[i]);std::size_t end=0;
+          transform[i]=std::stod(text,&end);
+          if(end!=text.size()||!std::isfinite(transform[i]))throw std::invalid_argument("alignment finite");}
+        double norm=0.;for(int i=3;i<7;++i)norm+=transform[i]*transform[i];
+        if(std::abs(std::sqrt(norm)-1.)>.01)throw std::invalid_argument("alignment quaternion");
+        if(as==sequence_&&committed_&&transform!=transform_)throw std::invalid_argument("alignment changed without sequence");
+        qualified=true;
+      }
+      if(as>sequence_)committed_=false;
+      qualified_=qualified;
+      if(qualified){committed_=true;transform_=transform;auto qx=transform[3],qy=transform[4],qz=transform[5],qw=transform[6];
+        const double norm=std::sqrt(qx*qx+qy*qy+qz*qz+qw*qw);qx/=norm;qy/=norm;qz/=norm;qw/=norm;
+        alignment_={transform[0],transform[1],std::atan2(2*(qw*qz+qx*qy),1-2*(qy*qy+qz*qz))};}
       if(as>sequence_)
         anchor_received_=steady_now-std::max(0.,(ros_now_ns-stamp)*1e-9);
       sequence_=as;stamp_ns_=stamp;received_=steady_now;
@@ -42,7 +67,7 @@ class LocalizationHealth {
       ready_=ready=="true"&&as>loss_sequence_;
       auto it=v.find("state");reason_=it==v.end()?"Localization not ready":it->second;
     } catch(const std::exception&) {
-      ready_=false;reason_="Malformed localization health";
+      ready_=false;qualified_=false;reason_="Malformed localization health";
     }
     return changed;
   }
@@ -68,6 +93,7 @@ class LocalizationHealth {
   std::set<std::string> retired_;
   std::int64_t sequence_=-1,health_sequence_=-1,loss_sequence_=-1,stamp_ns_=-1;
   double received_=nan(),anchor_received_=nan();
-  bool ready_=false;
+  bool ready_=false,qualified_=false,committed_=false;
+  std::array<double,7> transform_{};std::array<double,3> alignment_{};
 };
 }  // namespace aims_mpcc_rt

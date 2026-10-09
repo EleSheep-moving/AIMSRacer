@@ -34,6 +34,7 @@ class AppliedHistory {
     for(auto it=records_.rbegin();it!=records_.rend();++it)if(it->time<=now)return it->command;
     throw std::invalid_argument("actual input history does not cover measurement epoch");
   }
+  bool covers(double now)const{return std::isfinite(now)&&!records_.empty()&&records_.front().time<=now;}
   double newest()const{return records_.empty()?-1.:records_.back().time;}
   State predict(State x,double begin,double end,double known_until,
       std::function<HistoryCommand(double,const State&)> future={},HistoryCommand* final_command=nullptr)const{

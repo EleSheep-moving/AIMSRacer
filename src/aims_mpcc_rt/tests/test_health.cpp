@@ -33,5 +33,24 @@ int main() {
   health.observe(record("b",4,2,1700000000),1700000000,10.7);
   assert(health.usable(1700000000,10.7));
   assert(!health.usable(2800000000,11.8));  // anchor cannot be timestamp-renewed
+  LocalizationHealth qualified;
+  auto payload=record("qualified",1,1,1000000000);
+  payload["alignment_valid"]="true";payload["alignment_epoch"]="qualified";
+  payload["alignment_anchor_sequence"]="1";payload["alignment_stamp_ns"]="1000000000";
+  for(auto key:{"x","y","z","qx","qy","qz"})payload[std::string("map_odom_")+key]="0";
+  payload["map_odom_qw"]="1";
+  qualified.observe(payload,1000000000,10.);
+  payload["health_sequence"]="2";payload["map_odom_x"]="1";
+  qualified.observe(payload,1000000000,10.1);
+  assert(!qualified.usable(1000000000,10.1)); // same identity cannot carry changed transform
+  qualified.observe({},1000000000,10.2); // malformed heartbeat invalidates availability, not committed identity
+  payload["health_sequence"]="3";payload["map_odom_x"]="2";
+  qualified.observe(payload,1000000000,10.3);
+  assert(!qualified.usable(1000000000,10.3)); // malformed packet cannot permit replacing the committed transform
+  auto rotated=payload;rotated["epoch"]=rotated["alignment_epoch"]="rotation";
+  rotated["map_odom_qz"]=rotated["map_odom_qw"]=std::to_string(std::sqrt(.5)*1.005);
+  LocalizationHealth rotation;rotation.observe(rotated,1000000000,10.);
+  assert(rotation.qualified());
+  assert(std::abs(rotation.alignment()[2]-std::acos(-1.)/2)<1e-12); // accepted near-unit quaternions must be normalized
   std::cout<<"localization protocol lifecycle passed\n";
 }
