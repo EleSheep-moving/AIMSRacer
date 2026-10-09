@@ -98,7 +98,7 @@ def run(args):
         command=[sys.executable,str(root/'src/aims_mpcc_rt/tools/acceptance.py'),
             '--bundle',str(bundle),'--vesc',str(args.vesc),'--output',str(out/'controller'),
             '--seconds',str(args.seconds),'--frequency',str(args.frequency),'--budget',str(args.budget),
-            '--implementation',args.implementation,'--backend',args.backend]
+            '--implementation',args.implementation,'--backend',args.backend,'--handover-delay',str(args.handover_delay)]
         if args.legacy_artifact:command+=['--legacy-artifact',str(args.legacy_artifact)]
         evidence['controller_command']=command
         evidence['started']=time.monotonic();controller=spawn(command,'controller',env)
@@ -149,14 +149,15 @@ if __name__=='__main__':
     for name in ('root','bundle','output','vesc'):p.add_argument('--'+name,type=Path,required=True)
     p.add_argument('--seconds',type=float,default=180.);p.add_argument('--frequency',type=float,default=20.)
     p.add_argument('--budget',type=float,default=.05);p.add_argument('--domain',type=int,default=224)
+    p.add_argument('--handover-delay',type=float,default=.02)
     p.add_argument('--implementation',choices=['acados_cpp','legacy'],default='acados_cpp')
     p.add_argument('--backend',choices=['ipopt','qp','acados'],default='ipopt')
     p.add_argument('--legacy-artifact',type=Path)
     p.add_argument('--shared',action='store_true')
     for name in ('replay-runner','bag','map','seed'):p.add_argument('--'+name,type=Path)
     args=p.parse_args()
-    if not 0<args.seconds<=300. or not 0<args.frequency<=50. or not 0<args.budget:
-        p.error('seconds must be in (0,300], frequency in (0,50], positive budget')
+    if not 0<args.seconds<=300. or not 0<args.frequency<=50. or not 0<args.budget or not 0<args.handover_delay<=.1:
+        p.error('seconds must be in (0,300], frequency in (0,50], positive budget, handover-delay in (0,.1]')
     if args.shared and any(getattr(args,k) is None for k in ('replay_runner','bag','map','seed')):
         p.error('shared requires replay-runner, bag, map and seed')
     raise SystemExit(run(args))

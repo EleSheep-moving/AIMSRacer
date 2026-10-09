@@ -38,7 +38,7 @@ def run(args):
         init_args+=['-p',f'path_directory:={bundle}/input_reference','-p',f'vehicle_config:={bundle}/input_config.yaml',
           '-p','simulation:=true','-p',f'backend:={args.backend}','-p',f'solve_frequency:={args.frequency}',
           '-p',f'horizon:={artifact["horizon"]}',
-          '-p',f'solver_timeout:={args.budget}','-p','handover_delay:=0.02','-p','plan_ttl:=0.8',
+          '-p',f'solver_timeout:={args.budget}','-p',f'handover_delay:={args.handover_delay}','-p','plan_ttl:=0.8',
           '-p',f'log_directory:={out}/controller']
         if args.legacy_artifact:init_args+=['-p',f'artifact_directory:={args.legacy_artifact}']
     rclpy.init(args=init_args)
@@ -59,7 +59,7 @@ def run(args):
       '-p',f'path_directory:={bundle}/input_reference','-p','simulation:=true',
       '-p','shadow:=false','-p',f'repeat_laps:={str(args.repeat_laps).lower()}',
       '-p',f'solve_frequency:={args.frequency}',
-      '-p',f'solver_timeout:={args.budget}','-p',f'log_directory:={out}/controller',*remaps]
+      '-p',f'solver_timeout:={args.budget}','-p',f'handover_delay:={args.handover_delay}','-p',f'log_directory:={out}/controller',*remaps]
     legacy=None;callbacks=[];publications=[];activations={};replies={};attempts={}
     if args.implementation=='acados_cpp':commands.append(('controller',command))
     processes=[];handles=[];samples=[];started=None;injected=None;measurement_end=None
@@ -287,6 +287,7 @@ if __name__=='__main__':
     parser.add_argument('--bundle',required=True);parser.add_argument('--vesc',required=True)
     parser.add_argument('--output',required=True);parser.add_argument('--seconds',type=float,default=30.)
     parser.add_argument('--frequency',type=float,default=20.);parser.add_argument('--budget',type=float,default=.05)
+    parser.add_argument('--handover-delay',type=float,default=.02,help='forecast lead; default preserves the delivered 20 ms profile')
     parser.add_argument('--prefix',default='/mpcc_rt_shadow');parser.add_argument('--speed-tau',type=float,default=.2)
     parser.add_argument('--steer-tau',type=float,default=.15);parser.add_argument('--odom-delay',type=float,default=0.)
     parser.add_argument('--scenario',choices=['nominal','authority','odometry','clock','disable'],default='nominal')
