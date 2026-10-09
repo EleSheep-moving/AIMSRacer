@@ -5,6 +5,7 @@ The selector echo and lagged bicycle plant are synthetic. No RC selector, VESC,
 NDT estimator, physical map, or hardware is exercised by this probe.
 """
 import argparse
+import copy
 import hashlib
 import json
 import math
@@ -57,6 +58,15 @@ def base_link_position(x,y,yaw,rear_offset):
     return x+rear_offset*math.cos(yaw),y+rear_offset*math.sin(yaw)
 
 
+def source_timeout_s(steady_now,ros_now_ns,last_good_ns):
+    return steady_now+(last_good_ns-ros_now_ns)*1e-9+.1
+
+
+def reason_matches(reason,expected):
+    options=(expected,) if isinstance(expected,str) else expected
+    return any(value.lower() in reason.lower() for value in options)
+
+
 class Probe(Node):
     def __init__(self, bundle):
         super().__init__('mpcc_protocol_probe')
@@ -80,7 +90,7 @@ class Probe(Node):
         self.commands = []
         self.events = []
         self.last = time.monotonic()
-        self.last_odom_ns = 0
+        self.last_odom_ns = self.last_good_odom_ns = 0
         self.last_odom = None
         self.fresh_input_updates = 0
         latch = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
@@ -133,6 +143,7 @@ class Probe(Node):
         if self.odom_fault == 'backwards': stamp = self.last_odom_ns - 1_000_000
         odom.header.stamp.sec, odom.header.stamp.nanosec = divmod(stamp, 10**9)
         self.last_odom_ns = stamp
+        if self.odom_fault is None:self.last_good_odom_ns=stamp
         odom.pose.pose.position.x,odom.pose.pose.position.y=base_link_position(
             self.x,self.y,self.yaw,self.config.rear_offset)
         if self.odom_fault != 'quaternion':
@@ -257,23 +268,25 @@ def run(args):
               and probe.status.get('status') == 'RUNNING', 6.),
               command_speed=probe.target.drive.speed, status=probe.status)
 
-    def fault(name, inject, expected, maximum=.1):
+    def fault(name, inject, expected, maximum=.1,actionable_s=None):
         begin = time.monotonic()
+        actionable_s=begin if actionable_s is None else actionable_s
         check(name + '_positive_before_injection', bool(probe.commands)
               and probe.commands[-1][1] > 0. and begin - probe.commands[-1][0] <= .1
               and probe.status.get('status') == 'RUNNING',
               command_speed=probe.target.drive.speed, status=probe.status)
         inject()
         observed = probe.spin_until(lambda: probe.status.get('status') == 'FAULT'
-                                   and probe.commands[-1][0] >= begin and probe.commands[-1][1] == 0., maximum+.2)
+                                   and probe.commands[-1][0] >= begin and probe.commands[-1][1] == 0., max(0.,actionable_s-begin)+maximum+.2)
         fault_times = [event['status'].get('fault_steady_s',event['time']) for event in probe.events if event['time'] >= begin
                        and event['status'].get('status') == 'FAULT']
-        fault_latency = min(fault_times) - begin if fault_times else None
+        fault_latency = min(fault_times) - actionable_s if fault_times else None
         zero_times = [t for t, speed, _, _ in probe.commands if t >= begin and speed == 0.]
-        latency = min(zero_times) - begin if zero_times else None
+        latency = min(zero_times) - actionable_s if zero_times else None
         check(name + '_fault_detection_within_bound', observed and fault_latency is not None
-              and 0. <= fault_latency <= maximum and expected.lower() in probe.status.get('reason', '').lower(),
-              status=probe.status, fault_detection_latency_s=fault_latency, maximum_s=maximum)
+              and 0. <= fault_latency <= maximum and reason_matches(probe.status.get('reason',''),expected),
+              status=probe.status, fault_detection_latency_s=fault_latency, maximum_s=maximum,
+              injected_s=begin,actionability_s=actionable_s)
         check(name + '_positive_to_zero_within_bound', latency is not None and 0. <= latency <= maximum,
               zero_command_latency_s=latency, maximum_s=maximum)
         probe.settle(.3)
@@ -308,11 +321,28 @@ def run(args):
             probe.hold_anchor = False; probe.anchor_ns = 0; probe.settle(); activate()
             fault('active_map_identity_mismatch_faults', lambda: setattr(probe,'map_hash',('0' if probe.expected_map_hash[0]!='0' else '1')+probe.expected_map_hash[1:]), 'map identity')
         elif args.scenario == 'odometry':
+            activate()
+            before=len(probe.commands);event_start=len(probe.events)
+            delayed=copy.deepcopy(probe.last_odom)
+            stamp=delayed.header.stamp.sec*10**9+delayed.header.stamp.nanosec-40_000_000
+            delayed.header.stamp.sec,delayed.header.stamp.nanosec=divmod(stamp,10**9)
+            # A pose jump in this old packet would fault if it were adopted.
+            delayed.pose.pose.position.x+=100.
+            probe.odom.publish(delayed);probe.settle(.3)
+            check('single_reordered_source_packet_ignored',probe.commands[before:]
+                  and all(row[1]>0. for row in probe.commands[before:])
+                  and all(e['status'].get('status')=='RUNNING' for e in probe.events[event_start:]),
+                  source_reorder_ns=40_000_000,discarded_packet_position_offset_m=100.,status=probe.status)
+            reply=probe.enable(False)
+            check('stop_between_reorder_and_fault_cases',reply['success'] and probe.spin_until(
+                  lambda:probe.status.get('status')=='READY' and probe.speed<.03,6.),status=probe.status)
             for defect, reason in [('stale', 'odometry'), ('future', 'odometry'),
-                                   ('backwards', 'backwards'), ('quaternion', 'quaternion'),
+                                   ('backwards', ('stale or future odometry','Input freshness expired')), ('quaternion', 'quaternion'),
                                    ('reverse', 'reverse'), ('nonunit_quaternion', 'quaternion')]:
                 activate()
-                fault(defect + '_odometry_faults', lambda d=defect: setattr(probe, 'odom_fault', d), reason)
+                actionable_s=source_timeout_s(time.monotonic(),probe.get_clock().now().nanoseconds,
+                    probe.last_good_odom_ns) if defect=='backwards' else None
+                fault(defect + '_odometry_faults', lambda d=defect: setattr(probe, 'odom_fault', d), reason,actionable_s=actionable_s)
                 probe.odom_fault = None; probe.settle(.25)
         elif args.scenario == 'ownership':
             activate()

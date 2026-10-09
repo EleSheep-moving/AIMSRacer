@@ -169,3 +169,10 @@ def test_probe_publishes_base_link_pose_with_rear_axle_offset():
     x,y=tool.base_link_position(2.,3.,.7,.22)
     assert x-.22*math.cos(.7)==pytest.approx(2.)
     assert y-.22*math.sin(.7)==pytest.approx(3.)
+
+
+def test_reordered_source_stream_uses_last_good_source_timeout_actionability():
+    tool=module('protocol_probe')
+    assert tool.source_timeout_s(10.,2_000_000_000,1_990_000_000)==pytest.approx(10.09)
+    assert tool.reason_matches('Input freshness expired',('freshness','odometry'))
+    assert not tool.reason_matches('Localization freshness expired',('stale or future odometry','Input freshness expired'))
