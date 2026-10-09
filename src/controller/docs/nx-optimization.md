@@ -20,10 +20,16 @@ Raw measurements live outside Git at
 `aimsracer-data/experiments/mpcc-nx-optimization/` on desktop and NX. Failed
 experiments are retained alongside passing ones.
 
-Latest source result: `e123c27`, 709 desktop tests pass; both complete
-replay-backed NX node repeats fail. The historical worker matrix below does
-not qualify later QP/path changes. Execution-check cost and activation epoch
-consistency remain open; no backend is promoted or field-qualified.
+Latest verified source: `37bcccb`, **807 tests pass on desktop and NX**.
+The complete replay-backed NX synthetic lap passes geometry/speed acceptance:
+central speed median 1.00 m/s and maximum cross-track error 7.16 mm.
+**Complete timing remains unqualified**: request-to-activation P95 87.37 ms;
+active callback P95 31.07 ms. The historical worker matrix below does not
+qualify current source. Bounded matrix-allocation and cache-path patches are
+verified; a further external projection-elision prototype is retained without
+production integration because accepted-plan benefit is not established.
+No backend is promoted or field-qualified; activation epoch consistency and
+physical actuator identification remain open.
 
 ## Implemented control and solver contracts
 
@@ -563,6 +569,380 @@ has valid estimator-load coverage: 168 native updates, maximum gap 0.317 s,
 normal replay drain, unchanged source/cache, zero original driving publishers.
 Exact replay and causal limits are retained in `forensic-summary.json` and
 `forensic-report.md` under that run directory.
+
+### Separate numerical accuracy and linearization investigations
+
+The external `qp-accuracy-proof/` study uses frozen `e123c27` source, recorded
+initial states/applied prefixes/reference speeds/full seeds, and x86 OSQP1.0.4.
+Its 6,210 runs compare 1e-7/1e-6/1e-5 under unchanged matrix and nonlinear
+checks. Fresh and sequential workspaces start from paired identical matrices,
+primal seeds and zero duals; original NX internal rho/scaling history was not
+logged, so this is not an exact replay of that native workspace.
+At 1e-6 no previously accepted corpus candidate is lost, but sequential native
+P95 remains 15.18 versus 15.16 ms. At 1e-5 it drops to 10.09 ms, while sequence77
+loses acceptance in all three repeats: matrix violation 1.4945e-4 exceeds the
+unchanged 1e-4 limit. Default solver tolerances remain unchanged. These are
+native-core desktop timings, not full request or NX activation timings.
+
+All 61 captured solved-but-rejected cases fail the future nonlinear combined
+envelope at every tested tolerance. Speed freezing accounts for at least
+99.9956% of their peak squared-lateral underestimate. In the worst, sequence167,
+the seed speed is 0.273 m/s while the reconstructed candidate reaches 0.967 m/s;
+surrogate utilization is 0.954 versus physical 1.195. Steering state differs by
+only 1.4e-8 rad. All 61 reuse a braking seed from a successful zero-reference
+solve when the new references request cruise speed. Reference-aware future
+seed refresh is therefore a specific external experiment; the measured initial
+state and actually applied prefix must remain unchanged. This finding does not
+prove one seed change resolves all controller failures.
+Artifacts: `report.json`, `captured-default-failure-attribution.json`,
+`model-failure-analysis.json` under `qp-accuracy-proof/`.
+
+The separate `qp-seed-refresh-proof/` experiment runs 338 fixed requests,
+three repeats and three seed branches at unchanged 1e-7 tolerances. Refreshing
+only longitudinal future seed dynamics clears all 61 known nonlinear envelope
+failures; 60 become accepted and sequence24 remains rejected at the native
+iteration limit. Initial state, applied prefix and old steering endpoints are
+unchanged. Across the full corpus acceptance changes 768 to 966 of 1,014.
+However, previously accepted non-trigger sequences59/241 become status7 in all
+three repeats despite identical per-request matrices, bounds, objective and
+initial primal/zero dual. Preceding workspace histories differ; original
+internal rho trajectories are absent, so that difference is not established
+as the sole cause. Native-core P95 stays approximately 15.2 ms and preparation
+P95 increases about 1.1 ms. This is a useful diagnosis and a candidate future
+policy, not regression acceptance or promotion. At that historical stage the product seed policy remained unchanged;
+the subsequent QP-only implementation and full-node check are recorded below.
+
+### Exact native projection proof before integration
+
+An external C projector reproduces the original coarse first argmin, periodic
+PPoly evaluation and bounded scalar minimizer, retaining the original return
+policy. Desktop 27,744 queries and ARM 7,495 queries (including recorded inputs,
+seams, knots and coarse ties) show zero bit mismatches in progress, polynomial,
+modulo, coarse selection and optimizer traces. On ARM, paired complete
+`validate_execution` checks have identical full results and unchanged live
+supervisor state. Two projection-heavy cases change P95 from 45.24/45.38 ms
+to 17.44/17.54 ms (five pairs each, idle microbenchmark). Source and the loaded
+independent-rollout kernel hashes are unchanged. This does not qualify a whole
+ROS callback, shared-load node or 20 Hz output.
+
+The external prototype copies fixed geometry for its proof. Production must
+instead read the current PPoly tables and existing coarse tables on each
+dispatch, preserve method/version/representation fallbacks, and prepare the
+library offline. In-place coefficient mutation demonstrates why a cached
+geometry snapshot is incorrect. At that prototype stage, production-wrapper verification and a fresh NX
+node repeat remained necessary; both are recorded below. Evidence is in `native-projector-proof/`.
+
+### Guarded production projector integration
+
+Commits `04d8cb4` and `00ac73c` integrate the exact C projector through
+`ReferencePath.project_theta`. The runtime passes the live PPoly coefficients
+and knots plus existing coarse tables on each call. Unsupported versions,
+representations and overridden methods retain Python projection. Missing
+artifacts also retain Python; invalid eligible artifacts raise an error.
+`prepare_solver` prepares the library explicitly before runtime. A loaded
+artifact replacement requires restart, because `dlopen` can reuse an old mapped
+library under the same pathname. No runtime compilation or hot reload occurs.
+SciPy and NumPy redistribution notices are installed with the package.
+
+Independent spec and quality reviews approve frozen `00ac73c`. The complete
+fresh desktop suite passes **758 tests** (63 existing acados deprecation
+warnings, 66.25 s). The exact production-wrapper proof has zero bit mismatches
+on all 27,744 queries and all 19 fields of three frozen complete execution
+gates, with unchanged live supervisor state. Desktop gate P95 changes from
+14.42 to 7.96 ms and 15.06 to 7.84 ms on the two projection-heavy cases (five
+balanced pairs each). These are standalone microbenchmarks.
+
+On NX, the isolated package build succeeds in 4.90 s (one setuptools git-file
+listing warning), followed by **758 passing tests**, 63 existing warnings,
+172.68 s. The production wrapper is native-eligible and bit equal on all
+27,744 queries. All 19 fields of the three execution checks are equal; source
+and the loaded independent-rollout library are unchanged before/after.
+The projection-heavy RUNNING case has Python/native P95 39.13/20.01 ms.
+The recovery case has median 40.94/19.56 ms but native P95 33.13 ms due to one
+36.50 ms observation among five pairs. This small idle microbenchmark does not
+qualify full-node scheduling, output frequency or shared-load timing.
+Evidence: `projector-nx-verification-00ac73c/`, including source fingerprints,
+complete per-case samples and command/build/test logs. Fresh full-node load
+acceptance is the remaining integration gate.
+Artifacts: `full-00ac73c-desktop.log`, `native-projector-proof/PRODUCTION.md`,
+`production-manifest.json` and `production-proof.json`.
+
+### Fresh full-node shared-load run at `00ac73c`
+
+`ros-shadow-qp-shared-00ac73c-01/` uses the same private synthetic 1 m/s route,
+20 Hz planning, 50 Hz nominal proposals and known-map raw-bag replay load. The
+controller now reaches COMPLETE: finish error 0.0344 m, final speed 0.00118 m/s,
+cross-track RMS/max 0.00602/0.00972 m. Geometry passes, but **overall
+qualification still FAILS**: independent plant central speed median is
+0.7262 m/s versus the unchanged >=0.8 m/s criterion. This is one synthetic
+lap, not physical vehicle tracking.
+
+365 worker results are produced, 364 received. Of the received results, 316
+have accepted worker validation: 311 activate, five are rejected during
+handover. 48 fail in the worker: 41 native-solved candidates violate the
+nonlinear future envelope despite QP matrix residual <=5.83e-16; seven reach
+the native iteration limit, including six physically feasible candidates that
+remain ineligible under unchanged policy. One final result is unreceived.
+
+The accepted-only request-to-activation-completion P95 improves from the first
+e123 run's 152.12 ms to **109.27 ms**. All received request-to-reply P95 is
+80.21 ms. Execution-validation P95 is 24.99 ms. Active complete callback
+P95/P99/max is **34.70/37.56/66.11 ms**: 213/1 callbacks exceed 20/50 ms,
+maximum consecutive count one. Active proposal-gap P95 is 48.97 ms. These
+values still miss the complete-request and nominal-output timing goals; the
+idle projector proof and historical worker-only matrix do not qualify them.
+
+The five exact activation replays distinguish gates: sequence17 fails executed
+envelope (peak 1.000465); sequences57/105/157 fail the rebased envelope
+(1.00786/1.01543/1.02548) before execution checking; sequence350 fails the
+executed ideal-acceleration speed lower bound (-0.00015437 m/s), while internal
+and wire targets remain nonnegative. For 350 the smoother uses 16.941 ms but
+nominal physical hold uses 20 ms. This is a separate scheduling/model mismatch;
+it does not establish actual backwards motion or justify clamping model state.
+Raw checks pass in all five and reprojection makes no changes.
+
+All 41 solved-but-nonlinear-rejected requests follow an accepted all-zero speed
+reference followed by a new 1 m/s reference while reusing its braking seed.
+For sequence20 the retained warm speed falls from 0.362 to 0.154 m/s over the
+horizon, although the new reference is 1 m/s; physical terminal utilization is
+1.08913. Once the early recovery cluster ends around lap 5.1 m, subsequent
+central controller samples have median 0.992 m/s. This is a chronology/correlation,
+not an isolated attribution of the full speed deficit. The next bounded
+implementation is a QP-only reference-aware longitudinal seed refresh,
+preserving shifted steering and the actual measured/applied prefix, with the
+common default seed behavior unchanged.
+
+Estimator load covers the full 26.872 s controller process: 267 native updates,
+maximum gap 0.374 s, with normal replay exit 0 and no replay errors. Source and
+native artifacts remain unchanged during measurement; all six original driving
+publisher counts are zero. Forensics, exact snapshots/replay and analysis are
+stored with that run. No backend is promoted by this result.
+
+### QP reference transition fix and fresh NX check at `858dcc3`
+
+The QP backend now refreshes only its longitudinal warm seed when the previous
+successful speed-reference vector was exactly all zero, the cache is unexpired,
+and the new first reference equals a positive configured cruise speed. Shifted
+steering, measured initial state, actually applied controls, native settings,
+physical thresholds and other backends' default seed arithmetic are preserved.
+Successful reference history stays coupled to the successful controls cache;
+failed requests retain that history and its naturally accumulated age.
+Per-request diagnostics record whether the narrow refresh trigger fired.
+The actual run exercises it exactly twice, at sequences 23 and 31 after
+successful all-zero-reference predecessors; both refreshed solves pass.
+
+Independent spec and quality reviews approve the change. Fresh desktop and
+isolated NX suites each pass **773 tests**, with 63 existing warnings. The NX
+package build also succeeds. Evidence: `full-858dcc3-desktop.log` and
+`controller-nx-verification-858dcc3/`.
+
+`ros-shadow-qp-shared-858dcc3-01/` passes the existing **synthetic** geometry and
+speed criteria: COMPLETE, central physical speed median **1.0000 m/s**, maximum
+cross-track error **0.00711 m**, finish error **0.03438 m**. The preceding
+`00ac73c` run's central median was 0.7262 m/s. This is one synthetic feedback
+lap under actual estimator replay CPU load, rather than physical car tracking
+or a replay-derived vehicle trajectory.
+
+321 results are produced, 320 received, and 316 activated. The three received
+worker failures reach the native iteration limit; there are no received
+worker-validation rejections. One successful received plan is rejected by the
+executed-schedule envelope check. One successful final result is unreceived.
+Observed recovery entries fall from 21 to two and recovery time from 3.851 s
+to 0.460 s; both latest episodes finish before the central speed window.
+The existing status policy remains in force; physically feasible native
+iteration-limit candidates are not forced through it.
+
+Across all produced solves, preparation P50/P95 is 12.98/16.26 ms,
+optimizer 1.74/9.12 ms, and diagnostics 5.87/6.98 ms. These worker phase
+measurements include failed requests and differ from the complete node clocks.
+
+The current `worker_queue` field measures worker-start minus tick-entry
+`submitted_at`, not the time spent in a transport queue. Its latest P50/P95
+is 29.90/34.82 ms. `Node.tick` performs receipt, handover validation, proposal
+publication and request preparation before `AsyncSolver.submit`, while retaining
+the tick-entry source epoch. Therefore this field includes parent callback work.
+Result-delivery P50/P95 is 6.24/18.97 ms. Relabeling the epoch or renewing TTL
+would conceal the delay and invalidate the assumed held-command prefix; it is
+not an accepted timing repair.
+
+Timing remains open: all received request-to-reply P95 is **80.02 ms**;
+accepted-only request-to-activation-completion P95 is **107.57 ms**;
+execution-validation P95 is **24.37 ms**. Active complete callback
+P95/P99/max is **34.37/36.50/73.82 ms**, with 196 callbacks over 20 ms and one
+over 50 ms (maximum consecutive count one). Active proposal-gap P95 is
+48.90 ms. The synthetic PASS explicitly excludes backend timing and hardware
+qualification. It does not meet the plan's complete-request timing target.
+
+The full 22.969 s controller process has valid estimator load coverage:
+228 native updates, maximum gap 0.292 s. Replay finishes normally with no
+errors and 1,317 accepted map updates over its longer intentionally partial bag
+window. Source and native cache fingerprints remain unchanged during the
+measurement. No original driving publisher is enabled. Complete manifests,
+all-rejection snapshots, callback/publication timelines and independent
+accounting are stored with the run.
+
+### Remaining preparation cost: measured attribution
+
+`qp-prep-profile-proof/` profiles frozen `858dcc3` on desktop using captured
+request 172 from the earlier full-node run and a genuine locally generated
+successful warm cache. All 80 measured calls are accepted. This reproduces a
+normal preparation path; the original native workspace history is unavailable.
+Unprofiled preparation median/P95 is 3.466/3.586 ms, including assembly
+1.879/1.988 ms. Profiled constraint construction accounts for 46% of assembly:
+458 numeric rows and 458 sparsity rows are freshly built, then copied into
+whole tables each request. The known NumPy allocation payload is at least
+605 KB per assembly. These are desktop attribution measurements, not NX
+latency estimates.
+
+The next bounded optimization preallocates fresh numeric tables and reuses
+constructor sparsity metadata only for a matching layout, preserving all five
+QP arrays and scalar accumulation order. Mutable numeric configuration remains
+live; unsupported layouts retain the original path. Exact differential tests,
+independent review and fresh ARM timing are required before any speedup claim.
+
+### Repeated execution work and cache-path optimization
+
+`execution-gate-profile-proof/` restores actual sequence 201 and profiles the
+complete native execution gate. All 19 result fields remain exactly equal to
+Python projection and every repeated native call; the live supervisor is
+unchanged. The gate makes 51 model rollouts and 51 physical-progress projections.
+The default-root desktop profile's median/P95 is 9.060/9.163 ms; cumulative
+profile times include Python profiling overhead and cannot estimate ARM latency.
+
+Commit `333a7ce` removes eager default-home evaluation when a rollout directory
+is configured and memoizes only immutable destination path construction. Every
+call still reads live directory/environment selection, source stat and machine;
+source digest and library-loading behavior remain unchanged. Explicit, empty,
+relative, pathlike and changed roots retain their established precedence.
+Focused RED/GREEN verification passes 19 tests (nine new destination tests).
+
+A separate 20-pair complete-gate comparison explicitly configures both rollout
+and projector directories as NX does. Its baseline median/P95 is 7.993/8.142 ms
+and optimized median/P95 6.682/6.821 ms, with identical 19 fields and unchanged
+live supervisor. Rollout default-home calls fall from 51 to zero. Both branches
+reuse the same frozen C source, digest and prepared binaries. The earlier
+9.060 ms default-root profile is not mixed into this comparison. These are
+isolated desktop measurements; the later combined ARM verification is recorded
+below.
+Artifacts: `kernelpath-paired-report.json`, the paired harness and kernelpath
+RED/GREEN logs under that proof directory.
+
+### Exact dense QP assembly allocation patch
+
+The revised assembler stages the known-size initial/dynamics prefix, evaluates
+body offsets at the original point after geometry/dynamics, then allocates a
+fresh full numeric A table for a matching constructor layout. Immutable
+constructor sparsity templates replace per-row mask rebuilding; public masks
+remain fresh copies. Missing or changed templates/layouts retain the original
+construction path. Native sparsity remains bound to constructor layout: this
+fallback preserves direct/debug assembly behavior, and a live layout change
+still requires solver reconstruction. P/q accumulation and dictionary/constraint
+row order are unchanged. Bound lists retain their original append/`np.asarray` behavior:
+review caught a real direct/debug long-double bound counterexample in an earlier
+preallocated-bound draft, and a RED/GREEN regression now preserves it exactly.
+
+The final focused suite passes 108 tests. All five QP arrays and both masks are
+bit equal on 338 fixed recorded cases, without claiming reconstruction of the
+original native workspace history. Balanced standalone desktop assembly pairs
+at N=10/15/20 change medians from 1.862/2.693/3.516 to 1.104/1.560/2.024 ms.
+Both branches use the same `333a7ce` rollout/path code; this isolates assembly
+allocation rather than mixing the cache-path benefit into the baseline.
+
+A separate 20-pair genuine local successful-cache comparison changes preparation
+median/P95 from 3.464/3.524 to 2.666/2.702 ms, and complete backend median/P95
+from 7.394/7.441 to 6.579/6.654 ms. All 40 requests are status 1 and accepted;
+OCP arrays, initial state and seed match exactly per pair. The reused native
+workspace is not restored between branches: tiny output differences remain
+(maximum control 6.66e-16, state 2.22e-16). Therefore native controls/states are
+not claimed bit equal. Options, physical checks and model are unchanged.
+Evidence: `qp-assembly-allocation-proof/report.json`, `source-manifest.json`,
+source snapshot and complete raw paired samples. These measurements qualify
+neither ARM timing nor full-node output behavior; combined verification follows.
+
+### Combined verification at `37bcccb`
+
+The QP assembly patch and `333a7ce` cache-path optimization both pass independent
+spec and quality reviews. Complete desktop and NX suites each pass **807 tests**
+with 63 existing acados warnings (67.09 and 171.09 s respectively). The isolated
+NX package build succeeds. Evidence: `full-37bcccb-desktop.log` and
+`controller-nx-verification-37bcccb/`. The implementation commit is
+`37bcccb7653529743dbbc7651bd6663f8ba3f1a7`. Source-level equivalence, focused
+microtiming and full regression are separate from the complete replay-backed
+node repeat recorded next. The earlier synthetic lap belongs to `858dcc3`;
+the fresh repeat has its own source fingerprint and artifacts.
+
+### Fresh combined NX node repeat at `37bcccb`
+
+`ros-shadow-qp-shared-37bcccb-01/` again passes the unchanged synthetic route
+and speed criteria under known-map raw-bag estimation load. COMPLETE, central
+physical speed median 1.0000 m/s, maximum cross-track error 0.00716 m and finish
+error 0.03369 m. This is a synthetic feedback lap; no physical driving
+publisher is enabled.
+
+All 331 produced worker results are received. 330 are worker validated: 329
+activate and sequence 18 is rejected by the executed-envelope check. Sequence
+28 is physically feasible in the diagnostic, but reaches the native iteration
+limit and remains ineligible. No received worker physical-validation rejection
+or native error occurs. Existing status and physical thresholds remain in force.
+
+Compared with `858dcc3`, active complete callback P95 changes from 34.37 to
+**31.07 ms**; execution-validation P95 24.37 to **20.94 ms**; all received
+request-to-reply P95 80.02 to **60.29 ms**; accepted-only request-to-activation
+completion P95 107.57 to **87.37 ms**. Recorded solve P95 is **25.31 ms**.
+Active proposal-gap P95/P99/max is 45.29/47.02/78.09 ms. The active callback
+P99/max is 32.36/64.11 ms, with 188 over 20 ms and one over 50 ms (maximum
+consecutive count one). These single-run whole-node comparisons include
+scheduling/history variation; paired desktop measurements isolate the code
+changes. Whole-node timing goals remain open.
+
+Full 22.822 s process load coverage records 227 native updates, maximum gap
+0.257 s, with 1,317 accepted map updates over the longer replay. Replay exits
+normally with no errors. Source and native fingerprints remain unchanged.
+The raw replay events, summary, frontend trace and TF audit are copied beside
+the controller artifacts so load coverage can be independently recomputed;
+synthetic qualification excludes timing and hardware. No backend is promoted.
+
+Independent final accounting records one 0.137586 s recovery episode and one
+stopped-reference-to-cruise seed refresh (sequence 21 after successful zero-ref
+sequence 20). Sequence 18's executed peak E is 1.000278519; it remains rejected
+without relaxing the physical envelope. Sequence 28 reaches 4,000 iterations
+with native status 7 and remains ineligible despite feasible diagnostics.
+
+The full-process replay window contains 227 committed anchors as well as the
+227 native timing events. Both this run and `858dcc3` contain one 200.115 ms
+native source-stamp gap. Receipt coverage stays below the recorded 1 s limit,
+but this does not establish gap-free 10 Hz input or identify the gap's cause.
+Each required TF edge has one recorded authority. The raw replay summaries
+match their manifests, and all produced-request and accepted-proposal windows
+are bracketed by native estimator activity.
+
+Worker preparation P95 changes from 16.26 to 11.42 ms. Current backend time
+exceeds 50 ms on 2/331 requests (0.604%, maximum consecutive count two), above
+the 0.1% target. Complete worker computation P95/P99 is 27.58/41.94 ms.
+Consequently even the worker-only acceptance is incomplete; the longer
+request/activation and callback times are separate remaining failures.
+`deadline_misses=0` does not establish these measured timing criteria.
+The final independent report is
+`ros-shadow-qp-shared-37bcccb-01/forensic-report.md`, with exact recomputed
+counts, phase distributions and source hashes in `forensic-summary.json`.
+
+### External projection-elision feasibility, not integrated
+
+`projection-only-schedule-proof/` freezes source `37bcccb` and compares ten
+captured activation contexts against production and the original slow schedule.
+Native and Python fallback comparisons each preserve their original physical
+arrays, commands, numerical gate fields and verdicts exactly. The prototype
+keeps full physical rollout, conditionally omits intermediate progress
+projections, and retains the existing finish certificate and slow fallback.
+
+Four captured budget schedules improve desktop schedule medians from about
+7.5 to 3.0 ms, but all four candidates fail rebasing and cannot activate.
+Accepted-plan or ARM callback benefit is therefore unproved. Conservative
+dispatch/configuration guards add about 0.75 ms to budget-free traces, and
+arbitrary mid-frame mutation is outside this bounded proof. No product source
+change, new kernel or NX job was made from this prototype. A later
+implementation needs accepted-budget context evidence and a sound guard with
+measured benefit; this report is not a timing or field qualification.
 
 ## Model and field boundaries
 

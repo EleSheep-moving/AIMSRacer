@@ -56,16 +56,33 @@ Implementation commits and reports append evidence below. Any unmet test/field g
   requests, six failures and 12 >50 ms requests. Shared P95 23.905–24.133 ms
   meets the worker target; limited-stress P95 25.712–27.109 ms exceeds it.
   All six replay-backed load windows qualify. This historical matrix does not
-  qualify the later QP/path source changes. Final-node NX ROS remains a separate
-  failed gate. Frozen `e123c27` passes 709 desktop tests; its first complete
-  shadow stops 0.293 m before the goal. Execution-check P95 is 47.14 ms and
-  request-to-activation-completion P95 is 152.12 ms (249 accepted activations).
-  The subsequent all-rejection run fails on odometry freshness after an
-  85.998 ms callback. Exact replay identifies
-  output-smoothing steering mismatch in the first rejection; later causes need
-  complete snapshots. The all-rejection capture is complete; its sequence25
-  fails the rebase gate before execution validation. Exact native projection
-  performance proof is in progress. Timing/physical thresholds remain unchanged.
+  qualify the later QP/path source changes.
+- Exact native path projection is integrated with guarded live geometry and
+  offline preparation. All 27,744 production-wrapper queries and all 19 fields
+  of three execution checks are bit equal on desktop and ARM. Unsupported
+  representations retain the Python path; artifact replacement requires restart.
+- `858dcc3` repairs a narrowly triggered QP stopped-reference-to-cruise warm
+  seed. `333a7ce` preserves live cache selection while removing eager home
+  lookup; `37bcccb` preallocates dense QP rows with exact masks/bounds and
+  layout fallback. All pass independent spec and quality reviews. 338 captured
+  QP arrays/masks and production execution certificates remain exact.
+- Latest `37bcccb` complete desktop/NX suites each pass 807 tests and the NX
+  package builds. The shared-load synthetic lap passes unchanged geometry/speed
+  criteria: central median 1.0000 m/s, cross-track max 0.00716 m, finish error
+  0.03369 m. Full-process load is valid, source/native artifacts stay unchanged
+  and no original driving publisher is enabled. Raw replay events are retained.
+- Complete timing remains unqualified: request-to-reply P95 60.29 ms,
+  accepted-only request-to-activation P95 87.37 ms and active callback
+  P95 31.07 ms. One native iteration-limit failure and one executed-schedule
+  rejection remain. Fresh long performance matrix, final output scheduling,
+  held-out model/weight tests and physical laps remain open. Backend >50 ms
+  rate is 2/331 (0.604%), exceeding the 0.1% target. Independent forensic
+  accounting and full raw replay coverage are retained with the run.
+- External projection-elision feasibility preserves ten captured schedules
+  and gate verdicts in both native and Python fallback comparisons. Four
+  desktop budget schedules improve, but all fail rebasing; accepted-plan and
+  ARM benefit remain unproved and budget-free guard overhead regresses.
+  The prototype is not integrated into product source.
 - The car is now in a different venue. Map-matched bag replay supplies estimator
   load; no vehicle driving publisher is started. Supervised laps remain pending.
 - No backend has been promoted to the default or selected as passing.
