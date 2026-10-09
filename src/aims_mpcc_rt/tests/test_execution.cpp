@@ -85,5 +85,16 @@ int main(int argc,char** argv){
     std::numeric_limits<double>::infinity(),{.03});
   require(crossed.success&&std::abs(crossed.final_state[4]-.15)<1e-10,
     "virtual progress integration crossed stage with wrong virtual-speed control");
+  if(c.command_profile=="rate_bounded_v2"){
+    Plan boundary=safe;boundary.success=true;boundary.source_epoch=20.;boundary.forecast_epoch=20.12;
+    boundary.controls.assign(c.horizon,Control{0.,.178,.5});boundary.initial_applied={0.,.178,0.};
+    State physical{r.x,r.y,r.yaw,.5,0.,.178};OutputSampler live(c);live.reset(.5,.178,20.7799);
+    auto covered=certify_execution(boundary,live,physical,Alignment{},c,bundle.reference(),20.7999,.8);
+    require(covered.success&&covered.checks>=2,"valid packet crossing original-source TTL must certify recovery braking");
+    require(covered.max_utilization<=1.+1e-4,"TTL boundary retains the strict physical ellipse");
+    auto unsafe=physical;unsafe[3]=c.max_speed;unsafe[5]=c.steer_limit;
+    require(!certify_execution(boundary,live,unsafe,Alignment{},c,bundle.reference(),20.7999,.8).success,
+      "TTL recovery budget must not admit a genuinely infeasible physical prefix");
+  }
   std::cout<<"independent executed trace certificate passed; counterexample utilization="<<certificate.max_utilization<<'\n';
 }

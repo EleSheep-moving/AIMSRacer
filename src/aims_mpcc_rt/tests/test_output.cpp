@@ -132,5 +132,14 @@ int main(){
   assert(conservative_utilization<=1.+1e-10);
   assert(!capped.braking_budget().feasible&&capped.braking_budget().current_feasible);
   assert(conservative.continuous_acceleration==0.); // zero conservative capacity, never unrestricted braking
+  // Original-source TTL cuts the upcoming packet. It is valid at the
+  // publication epoch, but the inner recovery segment still needs a budget.
+  capped.reset(.5,.178,200.7799);p.source_epoch=200.;p.forecast_epoch=200.12;
+  p.initial_applied={0.,.178,0.};p.controls.assign(10,Control{0.,.178,.5});
+  State ttl_actual{};ttl_actual[3]=.5;ttl_actual[5]=.178;
+  auto boundary=capped.sample(&p,200.7999,ttl_actual,false,.8);
+  const double ttl_lateral=ttl_actual[3]*ttl_actual[3]*std::tan(ttl_actual[5])/c.wheelbase;
+  assert(!boundary.expired&&boundary.continuous_acceleration<0.);
+  assert(std::pow(boundary.continuous_acceleration/c.envelope_brake,2)+ttl_lateral*ttl_lateral<=1.+1e-10);
   std::cout<<"bounded command sampler passed\n";
 }

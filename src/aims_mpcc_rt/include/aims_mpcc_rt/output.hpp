@@ -129,7 +129,8 @@ class OutputSampler {
         plan->forecast_epoch+plan->controls.size()*plan->dt):now;
       for(double t=now;t<until-1e-12;){
         double end=until,desired_a=-speed_/(until-t);
-        if(valid&&!stopping&&t<coverage-1e-12){
+        const bool planned_interval=valid&&!stopping&&t<coverage-1e-12;
+        if(planned_interval){
           const double phase=std::max(0.,t-plan->forecast_epoch);
           const size_t k=std::min(plan->controls.size()-1,size_t(std::floor((phase+1e-10)/plan->dt)));
           end=std::min({end,coverage,plan->forecast_epoch+(k+1)*plan->dt});
@@ -140,7 +141,10 @@ class OutputSampler {
         if(h<=1e-12)throw std::runtime_error("output stage boundary made no progress");
         requested_integral+=desired_a*h;
         if(!stopping&&speed_cap<speed_)desired_a=(std::max(0.,speed_cap)-speed_)/h;
-        if(!stopping&&(!valid||speed_cap<speed_)){
+        // Source TTL or horizon coverage can end inside an otherwise valid
+        // publication packet. Its recovery portion needs the same physical
+        // budget as a packet that was already expired at publication.
+        if(!stopping&&(!planned_interval||speed_cap<speed_)){
           // Runtime supplies the decision-epoch physical prediction. The
           // internal command speed can exceed delayed feedback, so include
           // both across the supported 50 ms hold bound.
