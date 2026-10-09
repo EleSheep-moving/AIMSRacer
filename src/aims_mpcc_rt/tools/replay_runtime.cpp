@@ -26,7 +26,7 @@ int main(int argc,char** argv){
     if(row["preparation_complete"]&&!row["preparation_complete"].as<bool>())continue;
     State state=array<6>(row["initial"]);Applied applied=array<3>(row["applied"]);Alignment alignment=array<3>(row["alignment"]);
     std::vector<double> targets;for(auto value:row["targets"])targets.push_back(value.as<double>());
-    auto result=core.solve(state,applied,alignment,row["elapsed"].as<double>(),row["core_budget"].as<double>(),true,
+    auto result=core.solve(state,applied,alignment,row["elapsed"].as<double>(),row["core_budget_s"].as<double>(),true,
       row["source_epoch"].as<double>(),row["forecast_epoch"].as<double>(),targets,refresh);
     if(!first)out<<",\n";first=false;
     out<<"{\"sequence\":"<<row["sequence"].as<unsigned long long>()<<",\"success\":"<<(result.success?"true":"false")
@@ -34,7 +34,11 @@ int main(int argc,char** argv){
        <<",\"geometry_refreshes\":"<<result.geometry_refreshes<<",\"geometry_shift\":"<<number(result.max_geometry_progress_shift)
        <<",\"solve_s\":"<<number(result.solve_time_s)<<",\"reason\":"<<quote(result.reason)<<",\"constraint_violations\":{";
     bool first_group=true;for(auto item:result.constraint_violations){if(!first_group)out<<',';first_group=false;
-      out<<quote(item.first)<<':'<<number(item.second);}out<<"}}";
+      out<<quote(item.first)<<':'<<number(item.second);}out<<"},\"states\":[";
+    bool first_state=true;for(auto state:result.states){if(!first_state)out<<',';first_state=false;out<<'[';
+      for(std::size_t j=0;j<state.size();++j){if(j)out<<',';out<<number(state[j]);}out<<']';}out<<"],\"controls\":[";
+    bool first_control=true;for(auto control:result.controls){if(!first_control)out<<',';first_control=false;out<<'[';
+      for(std::size_t j=0;j<control.size();++j){if(j)out<<',';out<<number(control[j]);}out<<']';}out<<"]}";
   }
   out<<"\n]\n";
 }

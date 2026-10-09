@@ -96,7 +96,11 @@ class AcadosSolver(NumericalBackend):
             with tempfile.TemporaryDirectory(prefix='aims-acados-loader-') as directory:
                 verified_json=Path(directory)/'ocp.json'
                 verified_json.write_bytes(self._verified_json_bytes)
-                self._native=AcadosOcpSolver(ocp,json_file=str(verified_json),generate=False,build=False,verbose=False)
+                # SDK 0.5.5 can rewrite generate/build=True after its own reuse
+                # comparison. Our verified hashes/routes are authoritative;
+                # forbid that automatic online generation/rebuild branch.
+                self._native=AcadosOcpSolver(ocp,json_file=str(verified_json),generate=False,build=False,
+                    check_reuse_possible=False,verbose=False)
         except OSError as exc:
             raise RuntimeError('Cannot load prepared acados artifact; check ACADOS_SOURCE_DIR and LD_LIBRARY_PATH for acados/HPIPM/BLASFEO libraries') from exc
 
