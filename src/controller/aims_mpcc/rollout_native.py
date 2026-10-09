@@ -19,11 +19,19 @@ def _source_digest(source,mtime_ns,ctime_ns,size,machine):
     return hashlib.sha256(Path(source).read_bytes()+machine.encode()).hexdigest()
 
 
+@lru_cache(maxsize=8)
+def _kernel_destination(root,digest):
+    return Path(root)/f'rollout-{digest}.so'
+
+
 def kernel_path(directory=None):
     stat=_KERNEL_SOURCE.stat()
     digest=_source_digest(str(_KERNEL_SOURCE),stat.st_mtime_ns,stat.st_ctime_ns,stat.st_size,platform.machine())
-    root=Path(directory or os.environ.get('AIMS_MPCC_ROLLOUT_DIR',Path.home()/'.cache'/'aims_mpcc'/'rollout'))
-    return root/f'rollout-{digest}.so'
+    root=directory or os.environ.get('AIMS_MPCC_ROLLOUT_DIR')
+    if root is None:root=Path.home()/'.cache'/'aims_mpcc'/'rollout'
+    # Only immutable path construction is cached. Root selection and the live
+    # source/machine fingerprint above remain sensitive on every call.
+    return _kernel_destination(os.fspath(root),digest)
 
 
 def prepare_kernel(directory=None):
