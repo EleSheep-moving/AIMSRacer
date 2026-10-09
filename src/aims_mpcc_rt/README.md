@@ -2,18 +2,20 @@
 
 This package retains the current rear-axle kinematic model, six physical states,
 three controls, steering time constant, exact periodic quintic reference and
-vehicle configuration. Three auxiliary previous-control states implement jerk
-and steering acceleration constraints. It uses generated acados SQP-RTI,
+vehicle configuration. Three auxiliary previous-control states retain command
+history and cost bookkeeping. `rate_bounded_v2` removes additional hard jerk
+and steering-command acceleration limits; `legacy_bounded_v1` retains them. It uses generated acados SQP-RTI,
 Gauss-Newton and partial-condensing HPIPM through C++.
 
-Defaults: N=10, dt=0.1 s, 20 Hz latest-only solver, 50 Hz command output,
-50 ms requested budget (current accounting excludes delivery mutex wait), 20 ms forecast lead, 0.8 s original-source TTL.
+Defaults: N=10, dt=0.1 s, 20 Hz request cap with one owned pending plan, 50 Hz command output,
+50 ms requested budget including result delivery mutex wait, 20 ms forecast lead, 0.8 s original-source TTL.
 The launch defaults to the legacy controller. The new runtime defaults to
 shadow outputs; hardware driving acceptance is a separate step.
 
-> Whole-chain audit found execution-validation and delivery-deadline gaps.
-> Keep this prototype in shadow until they are resolved and revalidated.
-> See [audit](../../docs/reports/2026-10-09-mpcc-native-contract-audit.md).
+> The audit repairs pass desktop tracking and NX software timing/load
+> qualification. The independent motor-response criterion remains open;
+> shadow remains the default and physical closed-loop release is held.
+> See [repair validation](../../docs/reports/2026-10-09-mpcc-runtime-repair-validation.md).
 
 ## Offline bundle and build
 
@@ -26,7 +28,7 @@ checkout and LD_LIBRARY_PATH to its installed lib directory.
 ```bash
 export PYTHONPATH="$PWD/src/controller:$PYTHONPATH"
 python3 src/aims_mpcc_rt/scripts/export_bundle.py \
-  --config src/controller/config/vehicle.yaml \
+  --config src/controller/config/native_rate_bounded.yaml \
   --reference /absolute/path/to/reference --output /absolute/path/to/bundle
 source /opt/ros/humble/setup.bash
 colcon build --packages-select aims_mpcc aims_mpcc_rt \
@@ -53,7 +55,10 @@ The optional `--horizon 20 --dt .05` and `--horizon 25 --dt .05` exports
 use RK4 steps of 20 + 20 + 10 ms per stage. The default 100 ms stage retains
 five 20 ms steps. Stage costs scale by dt/0.1; terminal cost retains its
 original weight. These are evaluation profiles; the default remains N10/0.1.
-The existing Python backend retains its original dt validation.
+The v2 runtime rejects 50 ms prediction stages because their 20/20/10 ms
+stage-local holds do not match the global 20 ms output schedule. Export does
+not establish runtime qualification. The Python backend retains its original
+dt validation.
 
 ## Select and roll back
 
@@ -77,7 +82,9 @@ Physical driving validation uses `shadow:=false` under operator control; the
 current evidence does not establish physical closed-loop acceptance. It requires
 a measured, verified vehicle profile and a verified closed reference.
 Start from a stationary vehicle within 30 degrees of the reference heading,
-with matching map hash, fresh protocol-v1 trusted anchor and sole drive owner.
+with matching map hash, fresh protocol-v1 trusted anchor carrying the same
+qualified transform/epoch/sequence/stamp, and sole drive owner. Deploy the
+updated C++ localization monitor with this runtime.
 Enable via `/mpcc/enable`. Stop/withdraw authority before switching runtimes.
 Rollback selects `implementation:=legacy`; its existing backend, frequency and
 deadline arguments remain unchanged. The launch selects exactly one runtime.
@@ -92,7 +99,7 @@ deadline arguments remain unchanged. The launch selects exactly one runtime.
 | status/finite/OCP constraints and true quintic footprint | solver candidate, once per RTI | reject nonlinear infeasible candidates |
 | old-history continuity and reanchored candidate | activation | account for lateness without executing skipped new controls |
 | source TTL, sole publisher, RC selection | output callback | preserve command ownership and original information age |
-| bounded acceleration/jerk/steering rate | command sampler | preserve existing actuator command semantics |
+| acceleration/braking, steering rate and physical envelope | command sampler/certificate | v2 preserves these bounds without extra hard jerk/angular acceleration |
 | stop/recovery/finish | output supervisor | bounded stopping; stationary recovery requires explicit reenable |
 
 Reanchoring constructs a distinct candidate from the actual state and applied
@@ -100,9 +107,11 @@ prefix, so it needs its own validation. A feasible original sequence stays
 unchanged. If the new prefix makes it infeasible, a bounded endpoint/acceleration
 transport may form an alternate candidate, with the same full nonlinear
 certificate. It neither skips unexecuted controls nor adds optimizer passes or
-extends source TTL. Macro-candidate envelope violations remain rejected;
-prospective held-output coverage has the gap described in the audit. Its cost is included in the complete
-publisher callback. This is measured independently of the native optimizer.
+extends source TTL. Both nonlinear macro and prospective actual held-output certificates must
+pass. The activation certificate uses the decision-time physical prediction
+and current finish cap; later changing caps use a per-hold physical budget.
+This does not certify unidentified motor response or all future disturbances.
+Certificate cost is included in the complete publisher callback. This is measured independently of the native optimizer.
 The strict vehicle profile is supported; experimental soft-envelope profiles
 are refused at ROS startup until their independent recovery comparator is
 ported. They remain available through the legacy implementation.
@@ -110,6 +119,17 @@ ported. They remain available through the legacy implementation.
 `runtime.csv` records every worker disposition, activation acceptance/reason,
 reanchor time and every publication, including zero output. Logger I/O runs
 on a bounded asynchronous queue; dropped entries are reported in diagnostics.
+`compute_s`, `delivery_wait_s` and `delivery_s` distinguish worker work from
+result visibility. Pending ownership skips are recorded separately from solver
+failures. A source TTL never renews on a newer solver result.
+
+The launch uses `runtime_supervisor.py` for bounded process shutdown/restart
+when the native worker is unavailable. A restart remains disabled and needs
+explicit reenable. Startup status carries the child's per-spawn nonce, persistent
+disabled-birth witness and count of successful explicit enable requests, so
+late DDS discovery does not mistake a legitimate RUNNING status for automatic
+startup. Previous-process status cannot refresh the new child. It does not
+interrupt a running acados C++ call in place.
 
 ## Validation commands
 
@@ -153,10 +173,13 @@ solver stdout is separate from the JSON output file.
 
 A state with initial minimum utilization above one is already infeasible under
 the strict acceleration envelope. Faster optimization cannot authorize it.
-Recovery follows the legacy bounded braking semantics: clip to the nominal
-lateral budget only when that budget is feasible. Otherwise retain bounded
-deceleration rather than clipping braking to zero. STOPPING uses the existing
-hard acceleration/jerk limits. Recovery requests target zero speed; stationary
+V2 recovery checks the current physical state separately from its conservative
+hold proxy. When the current state is feasible, it clips braking to the hold
+budget, including zero capacity; this also applies when source TTL or horizon
+ends inside an upcoming publication packet. An already infeasible state retains
+bounded deceleration and remains uncertified. STOPPING retains acceleration/braking bounds; only v1 retains command jerk.
+An initially infeasible state cannot be made retrospectively certified by
+a fallback stop. Recovery requests target zero speed; stationary
 recovery requires explicit reenable.
 
 See [implementation and validation report](../../docs/reports/2026-10-09-mpcc-acados-runtime.md)
@@ -168,3 +191,8 @@ source/actual state, applied prefixes and controls as JSON in `takeover_snapshot
 CSV rows. It is disabled by default and uses the same bounded asynchronous logger.
 The output decision clock is sampled after acquiring state ownership; callback
 entry is retained separately for full callback timing.
+
+Exact ordered warm-start replay is available through `replay_runtime`: pass
+a bundle, recorded ordered request JSON and an output JSON path. Optional
+`frozen`/`refresh` selects second-pass geometry policy. Forensic request capture
+is opt-in (`AIMS_MPCC_CAPTURE_REQUEST=1`) and excluded from timing qualification.

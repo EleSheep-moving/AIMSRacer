@@ -201,3 +201,23 @@ other `/drive` publishers stopped during an MPCC run. Evaluate with RC manual
 selection until the localization fault checks and the vehicle checklist pass.
 Historical ICP or stationary replay measurements from the earlier localizer
 workflow do not validate this NDT branch.
+
+
+## Native runtime repair compatibility
+
+The native `rate_bounded_v2` runtime requires the updated C++ localization
+monitor. A ready status also carries `alignment_valid`, `alignment_epoch`,
+`alignment_anchor_sequence`, `alignment_stamp_ns` and the accepted
+`map_odom_*` transform. Their identity must match the health anchor and map.
+Generic `/tf` freshness cannot replace this provenance. A retired epoch clears
+state and command history, and a new enable requires qualified replacement
+state/history.
+
+The native repair branch retains the kinematic rear-axle model and objective
+weights while removing only the extra hard jerk and steering-command
+acceleration limits. Original artifacts default to `legacy_bounded_v1`.
+Generate a new offline bundle for v2; do not reinterpret an old v1 artifact.
+Use `implementation:=legacy` with its original v1 config/artifact for rollback.
+See [runtime README](../../src/aims_mpcc_rt/README.md) for build, shadow launch
+and artifact compatibility, and [repair validation](../reports/2026-10-09-mpcc-runtime-repair-validation.md)
+for the final version's release status.
