@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>aims_mpcc_rt</name>
+  <version>0.1.0</version>
+  <description>Native acados MPCC core and bounded ROS 2 runtime.</description>
+  <maintainer email="maintainer@example.com">AIMSRacer maintainers</maintainer>
+  <license>BSD-3-Clause</license>
+  <license>Apache-2.0</license>
+  <license>LGPL-3.0-only</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>yaml-cpp</depend>
+  <depend>openssl</depend>
+  <depend>rclcpp</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>ackermann_msgs</depend>
+  <depend>diagnostic_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <exec_depend>aims_mpcc</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

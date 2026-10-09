@@ -31,3 +31,9 @@ Tracking: new contour P95 <= old*1.1+0.01 m and heading P95 <= old*1.1+0.5 degre
 NPU reference: `npu-ius-lab/Roboracer_China_2026`, `real-car-original`, commit `6c5012b9cd310c8fca5281c408298ffb5d4b3885`. acados: v0.5.5 commit `59d93e17d2985fdd73fc58b8a83ed8f83a024171`. NPU stock core smoke timings are not complete matched own-car latency evidence. Foreign residual/tire parameters are not imported.
 
 Existing own-car vehicle profile and reference bundle remain authoritative. Data: NX session `2026-10-09/000919-b-1mps-a0p6-j2/bag`, map `20260928_010503/map.pcd`, saved seed from the previous optimization experiment.
+
+## Implementation findings and adjustments
+
+- Existing Python acados applies native stage scaling dt, unlike the legacy IPOPT stage sum. Export explicitly uses stage scaling dt/0.1 and terminal scaling 1, preserving the baseline objective at dt=0.1 and the physical-time weighting when dt changes.
+- A plan arriving after its forecast cannot certify unexecuted new-plan controls as actual command history. Compare the forecast advanced through real old-plan history against observation, then construct and validate a reanchored candidate with the unchanged, not-yet-executed controls and actual applied prefix. Original source TTL remains unchanged. This distinct candidate requires validation; the native C++ activation cost is included in the complete publisher callback measurement. If that cost violates the output timing criterion, it must move to an independent activation worker without weakening acceptance semantics.
+- Strict envelope is the first production profile. Experimental soft-recovery profiles remain available in the legacy implementation and fail C++ node startup until their independent recovery comparator is implemented; they must not be silently accepted under only the optimizer slack certificate.
