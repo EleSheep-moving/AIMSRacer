@@ -218,6 +218,10 @@ weights while removing only the extra hard jerk and steering-command
 acceleration limits. Original artifacts default to `legacy_bounded_v1`.
 Generate a new offline bundle for v2; do not reinterpret an old v1 artifact.
 Use `implementation:=legacy` with its original v1 config/artifact for rollback.
-See [runtime README](../../src/aims_mpcc_rt/README.md) for build, shadow launch
+The native controller uses the standard `/drive`, `/mpcc/status` and
+`/mpcc/enable` interfaces without a shadow switch. Startup/restart is disabled;
+the operator enables only after stationary checks. Offline tests isolate their
+transport using explicit ROS topic/service remaps.
+See [runtime README](../../src/aims_mpcc_rt/README.md) for build and launch
 and artifact compatibility, and [repair validation](../reports/2026-10-09-mpcc-runtime-repair-validation.md)
 for the final version's release status.

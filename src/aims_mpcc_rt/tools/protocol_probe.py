@@ -223,12 +223,8 @@ def run(args):
     if args.scenario=='health' and ReferencePath.load(bundle/'input_reference').frame_id!='map':
         raise ValueError('health scenario requires a map reference; odom reference cannot test localization authorization')
     remaps = topic_remap_arguments(PREFIX)
-    if args.scenario == 'shadow':
-        remaps += [a for topic in ('/drive', '/mpcc/status', '/mpcc/reference', '/mpcc/prediction', '/mpcc/enable')
-                   for a in ('-r', '/mpcc_rt_shadow' + topic + ':=' + PREFIX + topic)]
     command = ['ros2', 'run', 'aims_mpcc_rt', 'mpcc_rt_node', '--ros-args',
                '-p', 'artifact_directory:=' + str(bundle), '-p', 'simulation:=true',
-               '-p', 'shadow:=' + ('true' if args.scenario == 'shadow' else 'false'),
                '-p', 'repeat_laps:=true','-p',f'solve_frequency:={args.frequency}',
                '-p',f'handover_delay:={args.handover_delay}','-p',f'solver_timeout:={args.budget}',
                '-p', 'log_directory:=' + str(out / 'controller'), *remaps]
@@ -366,9 +362,9 @@ def run(args):
             commands = [(t, s, a) for t, s, a, _ in probe.commands if t >= begin]
             check('disable_deceleration_bound', commands and -.1 > min(a for _, _, a in commands) >= -probe.config.brake_limit - .01,
                   minimum_acceleration=min(a for _, _, a in commands), brake_limit=probe.config.brake_limit)
-        elif args.scenario == 'shadow':
+        elif args.scenario == 'isolation':
             activate(); probe.settle(.3)
-            check('shadow_service_status_and_output_isolated', probe.status.get('backend') == 'acados_cpp'
+            check('remapped_service_status_and_output_isolated', probe.status.get('backend') == 'acados_cpp'
                   and probe.count_publishers(PREFIX + '/drive') == 1
                   and probe.count_publishers('/mpcc_rt_shadow/drive') == 0,
                   status=probe.status, prefixed_drive_publishers=probe.count_publishers(PREFIX + '/drive'))
@@ -478,7 +474,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bundle', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--scenario', choices=['health', 'odometry', 'ownership', 'shadow', 'freshness', 'watchdog', 'lifecycle'], required=True)
+    parser.add_argument('--scenario', choices=['health', 'odometry', 'ownership', 'isolation', 'freshness', 'watchdog', 'lifecycle'], required=True)
     parser.add_argument('--frequency',type=float,default=20.)
     parser.add_argument('--handover-delay',type=float,default=.02)
     parser.add_argument('--budget',type=float,default=.05)

@@ -2,7 +2,7 @@
 
 Date: 2026-10-09. Branch: `feat/mpcc-acados-runtime`.
 Controller source: `297fd22847741c177a6c794f7721e28d8f9de646` (startup discovery follow-up). Final replay-fixture source: `4f8488be916c0caa4499d0090f8beef1bb5163bc`; controller source/binary is unchanged by the fixture repair. Matched first-round source: `84f61c95f342aa8cb637bcd974a654c8c2144128`; control mathematics and bundles are unchanged by the follow-up.
-Status: implementation, desktop tracking comparison and NX software timing/load qualification complete. The independent physical-response criterion remains unmet; physical closed-loop release remains held.
+Status at the 2026-10-09 measurement freeze: implementation, desktop tracking comparison and NX software timing/load qualification complete; the independent physical-response criterion remains unmet. On 2026-10-10 the operator deferred longitudinal response identification and authorized preparing locked-car checks and supervised low-speed field trials. The unmet synthetic criterion remains recorded; it is not a runtime gate or a prerequisite for those trials. No physical driving acceptance has been established.
 
 ## What changed
 
@@ -145,7 +145,7 @@ The reference retains its chord-distance spline parameter. Wrap/off-path/nearby 
 
 The prospective certificate assumes the declared held output schedule and ideal longitudinal model. It does not prove every future jitter sequence, changing cap, traction disturbance or actual motor acceleration. The native v2 50 ms stage mesh is explicitly rejected because stage-local 20/20/10 ms holds do not match the global 20 ms schedule.
 
-Software timing/load results are recorded; retain shadow as the default while the physical-response criterion remains open. Passing synthetic timing/tracking permits planning a supervised low-speed vehicle trial; it does not establish racing acceptance. Longitudinal response and field tracking remain separate work.
+Software timing/load results are recorded. Following the operator's 2026-10-10 direction, vehicle startup uses standard interfaces with explicit enable; the shadow mode is removed. Longitudinal response identification is deferred to the planned acceleration-control interface work. Start with locked-car checks and a supervised 0.5 m/s field trial. Passing synthetic timing/tracking does not establish racing acceptance. Historical measurements above retain their original source/binary provenance; they are not measurements of the interface-removal revision.
 
 ## Launch / rollback
 
@@ -158,7 +158,7 @@ source /home/aims/AIMSRacer/install/setup.bash
 source /home/aims/AIMSRacer-fastlio-ndt/log/fastlio-ndt/install/ndt_omp_ros2/share/ndt_omp_ros2/package.bash
 source /home/aims/AIMSRacer-fastlio-ndt/log/fastlio-ndt/install/lidar_localization_ros2/share/lidar_localization_ros2/package.bash
 source /home/aims/aimsracer-data/experiments/mpcc-acados-runtime/repair-final-20261009/ros-install/local_setup.bash
-ros2 launch aims_mpcc mpcc.launch.py implementation:=acados_cpp shadow:=true \
+ros2 launch aims_mpcc mpcc.launch.py implementation:=acados_cpp \
   cpp_solve_frequency:=20.0 vehicle_config:=/absolute/path/to/matching-v2.yaml \
   path_directory:=/absolute/path/to/verified-reference \
   artifact_directory:=/absolute/path/to/matching-arm-bundle \

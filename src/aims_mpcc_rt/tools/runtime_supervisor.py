@@ -160,7 +160,7 @@ def run(args):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--status-topic',default='/mpcc_rt_shadow/mpcc/status')
+    parser.add_argument('--status-topic',default='/mpcc/status')
     parser.add_argument('--stall-timeout',type=float,default=.5)
     parser.add_argument('--status-timeout',type=float,default=.5)
     parser.add_argument('--startup-timeout',type=float,default=15.)

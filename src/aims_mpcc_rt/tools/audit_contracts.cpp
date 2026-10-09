@@ -1,5 +1,5 @@
 // Offline audit probe. Compile the actual callbacks using their existing test
-// access; no executor spins and all publications retain the shadow namespace.
+// access; no executor spins and all publications use explicit test topic remaps.
 // Exit 0 means the listed counterexamples reproduced, not runtime acceptance.
 #define AIMS_MPCC_RT_TEST_ACCESS
 #define main audit_runtime_entry_unused
@@ -115,7 +115,9 @@ static std::string execution_scope(const Bundle& b){
 }
 int main(int argc,char** argv){
   if(argc!=3)throw std::invalid_argument("synthetic runtime bundle and measured sampler bundle required");
-  std::vector<std::string> args{"audit","--ros-args","-p",std::string("artifact_directory:=")+argv[1],"-p","simulation:=true","-p","repeat_laps:=true","-p","shadow:=true","-p","solve_frequency:=10.0"};
+  std::vector<std::string> args{"audit","--ros-args","-p",std::string("artifact_directory:=")+argv[1],"-p","simulation:=true","-p","repeat_laps:=true","-p","solve_frequency:=10.0"};
+  for(const std::string topic:{"/drive","/mpcc/status","/mpcc/reference","/mpcc/prediction","/mpcc/enable"})
+    args.insert(args.end(),{"-r",topic+":=/mpcc_rt_test"+topic});
   std::vector<char*> raw;for(auto& s:args)raw.push_back(s.data());rclcpp::init(raw.size(),raw.data());
   try{
     auto node=std::make_shared<aims_mpcc_rt::RuntimeNode>();

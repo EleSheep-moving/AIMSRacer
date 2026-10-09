@@ -9,12 +9,15 @@ Gauss-Newton and partial-condensing HPIPM through C++.
 
 Defaults: N=10, dt=0.1 s, 20 Hz request cap with one owned pending plan, 50 Hz command output,
 50 ms requested budget including result delivery mutex wait, 20 ms forecast lead, 0.8 s original-source TTL.
-The launch defaults to the legacy controller. The new runtime defaults to
-shadow outputs; hardware driving acceptance is a separate step.
+The launch defaults to the legacy controller. Select `implementation:=acados_cpp`
+for the native runtime, which uses the standard command/status/service names
+and starts disabled. Hardware driving acceptance is a separate step.
 
 > The audit repairs pass desktop tracking and NX software timing/load
-> qualification. The independent motor-response criterion remains open;
-> shadow remains the default and physical closed-loop release is held.
+> qualification. On 2026-10-10 the operator deferred longitudinal response
+> identification and selected locked-car checks followed by supervised low-speed
+> trials. Synthetic motor-response violations remain recorded observations;
+> they are not a runtime stop gate or a prerequisite for those trials.
 > See [repair validation](../../docs/reports/2026-10-09-mpcc-runtime-repair-validation.md).
 
 ## Offline bundle and build
@@ -64,22 +67,23 @@ dt validation.
 
 ```bash
 ros2 launch aims_mpcc mpcc.launch.py implementation:=acados_cpp \
-  shadow:=true cpp_solve_frequency:=20.0 \
+  cpp_solve_frequency:=20.0 \
   path_directory:=/absolute/path/to/reference \
   vehicle_config:=/absolute/path/to/vehicle.yaml \
   artifact_directory:=/absolute/path/to/bundle \
   log_directory:=/absolute/path/to/new-log-directory
 ```
 
-Shadow mode still consumes real `/odometry/filtered`, forwarded
-`/ackermann_cmd`, RC authority and map localization health. It publishes only
-`/mpcc_rt_shadow/drive`, status/reference/prediction and its enable service.
-The isolated acceptance harness additionally remaps **all** input/output
-topics and uses synthetic feedback. A shadow controller must not run beside
-an enabled real controller in an acceptance domain.
+The native runtime consumes `/odometry/filtered`, forwarded `/ackermann_cmd`,
+RC authority and map localization health. It publishes `/drive`, `/mpcc/status`,
+`/mpcc/reference` and `/mpcc/prediction`, with `/mpcc/enable` as its service.
+There is no shadow mode or parameter. Startup and supervised restarts remain
+disabled; an explicit successful enable is required before driving.
+The isolated acceptance harness uses explicit ROS remaps for **all** input/output
+topics and synthetic feedback, independently of vehicle runtime behavior.
 
-Physical driving validation uses `shadow:=false` under operator control; the
-current evidence does not establish physical closed-loop acceptance. It requires
+Physical driving validation is under operator control; the current evidence
+does not establish physical closed-loop acceptance. It requires
 a measured, verified vehicle profile and a verified closed reference.
 Start from a stationary vehicle within 30 degrees of the reference heading,
 with matching map hash, fresh protocol-v1 trusted anchor carrying the same

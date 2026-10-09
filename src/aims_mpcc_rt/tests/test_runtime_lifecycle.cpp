@@ -24,6 +24,11 @@ struct RuntimeClockProbe {
     auto res=std::make_shared<std_srvs::srv::SetBool::Response>();node.enable_request(req,res);return res->success;
   }
   static void startup(RuntimeNode& node,bool initial_only=false){
+    if(node.has_parameter("shadow"))throw std::runtime_error("removed shadow mode remains declared");
+    if(std::string(node.pub_->get_topic_name())!="/mpcc_rt_test/drive"||
+       std::string(node.status_pub_->get_topic_name())!="/mpcc_rt_test/mpcc/status"||
+       std::string(node.enable_->get_service_name())!="/mpcc_rt_test/mpcc/enable")
+      throw std::runtime_error("standard command interfaces did not honor explicit ROS remaps");
     auto observer=std::make_shared<rclcpp::Node>("startup_witness_observer");
     std::map<std::string,std::string> fields;
     auto sub=observer->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(node.status_pub_->get_topic_name(),10,
@@ -138,13 +143,13 @@ struct RuntimeClockProbe {
     auto applied_pub=node.create_publisher<Drive>("/ackermann_cmd",10);
     auto authority_pub=node.create_publisher<std_msgs::msg::Bool>("/control/autonomy_speed_enabled",10);
     bool ready_seen=false;
-    auto startup_status=node.create_subscription<diagnostic_msgs::msg::DiagnosticArray>("/mpcc_rt_shadow/mpcc/status",10,
+    auto startup_status=node.create_subscription<diagnostic_msgs::msg::DiagnosticArray>("/mpcc/status",10,
       [&](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr message){
         for(const auto& status:message->status){bool ready=false,disabled=false;
           for(const auto& value:status.values){if(value.key=="status")ready=value.value=="\"READY\"";
             if(value.key=="enabled")disabled=std::stod(value.value)==0.;}
           if(ready&&disabled)ready_seen=true;}});
-    Drive actual;auto drive_sub=node.create_subscription<Drive>("/mpcc_rt_shadow/drive",10,
+    Drive actual;auto drive_sub=node.create_subscription<Drive>("/drive",10,
       [&](Drive::ConstSharedPtr command){actual=*command;});
     auto r=node.bundle_.reference().at(0.);State plant{r.x,r.y,r.yaw,0.,0.,0.};
     {std::lock_guard<std::mutex> lock(node.mutex_);node.history_->record(steady()-.05,0.,0.,0.,0.);}
@@ -278,6 +283,9 @@ int main(int argc,char** argv){
   if(startup)setenv("AIMS_MPCC_RT_SUPERVISOR_INSTANCE","startup-first-instance",1);
   std::vector<std::string> args{"lifecycle_test","--ros-args","-p",std::string("artifact_directory:=")+argv[1],
     "-p","simulation:=true","-p","repeat_laps:=true","-p","handover_delay:=0.1"};
+  // Test transport is isolated by explicit ROS remaps, independent of runtime modes.
+  for(const std::string topic:{"/drive","/mpcc/status","/mpcc/reference","/mpcc/prediction","/mpcc/enable"})
+    args.insert(args.end(),{"-r",topic+":=/mpcc_rt_test"+topic});
   if(argc>2&&std::string(argv[2])=="capture"){
     setenv("AIMS_MPCC_CAPTURE_REQUEST","1",1);args.insert(args.end(),{"-p","log_directory:=/tmp/aims-runtime-request-capture"});}
   if(argc>2&&std::string(argv[2])=="stall")args.insert(args.end(),{"-p",std::string("log_directory:=")+(argc>3?argv[3]:"/tmp/aims-runtime-worker-stall"),

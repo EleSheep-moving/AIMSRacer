@@ -59,7 +59,7 @@ def run(args):
     command=['ros2','run','aims_mpcc_rt','mpcc_rt_node','--ros-args',
       '-p',f'artifact_directory:={bundle}','-p',f'vehicle_config:={bundle}/input_config.yaml',
       '-p',f'path_directory:={bundle}/input_reference','-p','simulation:=true',
-      '-p','shadow:=false','-p',f'repeat_laps:={str(args.repeat_laps).lower()}',
+      '-p',f'repeat_laps:={str(args.repeat_laps).lower()}',
       '-p',f'solve_frequency:={args.frequency}','-p',f'horizon:={artifact["horizon"]}',
       '-p',f'plan_ttl:={.8*artifact["horizon"]*artifact["dt"]}',
       '-p',f'solver_timeout:={args.budget}','-p',f'handover_delay:={args.handover_delay}','-p',f'log_directory:={out}/controller',*remaps]
@@ -402,7 +402,7 @@ if __name__=='__main__':
     parser.add_argument('--output',required=True);parser.add_argument('--seconds',type=float,default=30.)
     parser.add_argument('--frequency',type=float,default=20.);parser.add_argument('--budget',type=float,default=.05)
     parser.add_argument('--handover-delay',type=float,default=.02,help='forecast lead; default preserves the delivered 20 ms profile')
-    parser.add_argument('--prefix',default='/mpcc_rt_shadow');parser.add_argument('--speed-tau',type=float,default=.2)
+    parser.add_argument('--prefix',default='/mpcc_rt_test');parser.add_argument('--speed-tau',type=float,default=.2)
     parser.add_argument('--steer-tau',type=float,default=.15);parser.add_argument('--odom-delay',type=float,default=0.)
     parser.add_argument('--scenario',choices=['nominal','authority','odometry','clock','disable'],default='nominal')
     parser.add_argument('--inject-after',type=float,default=4.)

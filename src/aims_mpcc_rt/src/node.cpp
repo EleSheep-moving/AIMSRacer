@@ -76,7 +76,6 @@ class RuntimeNode final:public rclcpp::Node {
     simulation_=declare_parameter<bool>("simulation",false);
     if(!simulation_&&cfg_.profile!="measured")throw std::invalid_argument("synthetic vehicle profile requires simulation:=true");
     if(!simulation_&&!bundle_.reference().recording_verified())throw std::invalid_argument("drive requires a closed reference with matching recorded vehicle geometry");
-    shadow_=declare_parameter<bool>("shadow",true);
     repeat_laps_=declare_parameter<bool>("repeat_laps",false);
     frequency_=declare_parameter<double>("solve_frequency",20.);
     ttl_=declare_parameter<double>("plan_ttl",.8*cfg_.horizon*cfg_.dt);
@@ -92,11 +91,10 @@ class RuntimeNode final:public rclcpp::Node {
       throw std::invalid_argument("invalid timing parameters");
     if(ttl_<=1./frequency_+std::max(budget_,lead_)+.02||ttl_>cfg_.horizon*cfg_.dt+lead_)
       throw std::invalid_argument("plan_ttl must cover scheduling and fit inside the prediction horizon");
-    const std::string prefix=shadow_?"/mpcc_rt_shadow":"";
-    pub_=create_publisher<Drive>(prefix+"/drive",10);
-    status_pub_=create_publisher<diagnostic_msgs::msg::DiagnosticArray>(prefix+"/mpcc/status",10);
-    reference_pub_=create_publisher<nav_msgs::msg::Path>(prefix+"/mpcc/reference",rclcpp::QoS(1).transient_local());
-    prediction_pub_=create_publisher<nav_msgs::msg::Path>(prefix+"/mpcc/prediction",10);
+    pub_=create_publisher<Drive>("/drive",10);
+    status_pub_=create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/mpcc/status",10);
+    reference_pub_=create_publisher<nav_msgs::msg::Path>("/mpcc/reference",rclcpp::QoS(1).transient_local());
+    prediction_pub_=create_publisher<nav_msgs::msg::Path>("/mpcc/prediction",10);
     receive_group_=create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     output_group_=create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     rclcpp::SubscriptionOptions options;options.callback_group=receive_group_;
@@ -120,7 +118,7 @@ class RuntimeNode final:public rclcpp::Node {
             ++count;for(const auto& kv:s.values)v[kv.key]=kv.value;}
           if(count!=1)v.clear();accept_health(v);},options);
     }
-    enable_=create_service<std_srvs::srv::SetBool>(prefix+"/mpcc/enable",
+    enable_=create_service<std_srvs::srv::SetBool>("/mpcc/enable",
       [this](const std_srvs::srv::SetBool::Request::SharedPtr request,std_srvs::srv::SetBool::Response::SharedPtr response){
         enable_request(request,response);},rmw_qos_profile_services_default,receive_group_);
     output_timer_=create_wall_timer(std::chrono::milliseconds(20),[this]{publish_command();},output_group_);
@@ -145,7 +143,7 @@ class RuntimeNode final:public rclcpp::Node {
     if(const char* instance=std::getenv("AIMS_MPCC_RT_SUPERVISOR_INSTANCE"))startup_instance_=instance;
     startup_disabled_=!enabled_&&!stopping_&&last_output_.speed==0.&&sampler_->continuous_speed()==0.;
     worker_=std::thread([this]{solve_loop();});
-    RCLCPP_INFO(get_logger(),"acados runtime ready: %.1f Hz solve, 50 Hz output, shadow=%s",frequency_,shadow_?"true":"false");
+    RCLCPP_INFO(get_logger(),"acados runtime ready: %.1f Hz solve, 50 Hz output, starts disabled; explicit enable required",frequency_);
   }
   ~RuntimeNode()override{
     {std::lock_guard<std::mutex> lock(mutex_);shutdown_=true;}cv_.notify_all();
@@ -675,7 +673,7 @@ std::lock_guard<std::mutex> lock(log_mutex_);
   std::unique_ptr<Core> activation_validator_;
   State last_decision_state_{};double last_decision_cap_=0.;
   Snapshot snapshot_;LocalizationHealth health_;std::string identity_,phase_="READY",reason_;
-  bool enabled_=false,stopping_=false,shutdown_=false,solver_ready_=false,simulation_=false,shadow_=true,repeat_laps_=false,progress_ready_=false;
+  bool enabled_=false,stopping_=false,shutdown_=false,solver_ready_=false,simulation_=false,repeat_laps_=false,progress_ready_=false;
   std::string startup_instance_;bool startup_disabled_=false;std::uint64_t explicit_enable_count_=0;
   double last_ros_now_=std::numeric_limits<double>::quiet_NaN(),fault_steady_=0.,last_compute_=0.,last_delivery_wait_=0.,last_certificate_=0.,last_activation_=0.,worker_submitted_=0.;bool worker_busy_=false;
   double frequency_=20.,ttl_=.8,budget_=.05,lead_=.02,mode_received_=-1.,started_=0.,last_publish_=0.;

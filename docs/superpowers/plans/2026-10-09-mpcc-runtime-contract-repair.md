@@ -149,7 +149,7 @@ accepted = candidate_valid AND same_generation AND enabled
 
 ## Task 8: Independent desktop closed-loop and output comparison
 
-**Outcome:** tracking/sensitivity and relative comparison PASS. The unchecked physical-response criterion below was measured and remains unmet (419/104030 plant samples above the bound). No weights were tuned to hide that result; the validation report records the boundary.
+**Outcome:** tracking/sensitivity and relative comparison PASS. The unchecked physical-response criterion below was measured and remains unmet (419/104030 plant samples above the bound). No weights were tuned to hide that result; the validation report records the boundary. On 2026-10-10 the operator deferred longitudinal identification to future acceleration-control work; this synthetic criterion no longer blocks supervised low-speed trials and remains an observation.
 
 **Files:** `src/aims_mpcc_rt/tools/acceptance.py`, `tools/protocol_probe.py`, new `tools/compare_output_profiles.py`; new report `docs/reports/2026-10-09-mpcc-runtime-repair-validation.md`.
 
@@ -179,7 +179,7 @@ Bundle-dependent CTest entries must be configured with `-DAIMS_MPCC_RT_TEST_BUND
 - [x] Repeat three 180 s baseline N10/.1/20 Hz runs with 50 ms budget, 20 ms lead and 0.8 s original-source TTL. Include complete delivered requests, failures and cutoff accounting. Target delivery P95 <=40 ms, P99 <=50 ms, deadline misses <=0.1%; output interval P99 <=30 ms, max <=60 ms; no unbounded request backlog, no three consecutive unexplained candidate failures. Conditional published-plan latency is reported separately.
 - [x] Repeat the 100 ms-lead scheduling counterexample on NX for 30 s. Run both 0.5 and 1.0 m/s numerical route profiles. Optional 40 Hz or shorter mesh is considered only after default-contract qualification and does not replace default evidence.
 - [x] Record actual CPU load, thermal/clocks/power mode, process versions and NDT accepted updates. Synthetic stress alone cannot substitute for estimator joint load.
-- [x] Publish the repaired four-case evidence table, changed constraint semantics, remaining limitations, launch/rollback commands and exact tested bundle names. Keep the current runtime in shadow until these checks pass. Field readiness then means eligible for a supervised low-speed closed-loop trial, not established racing performance.
+- [x] Publish the repaired four-case evidence table, changed constraint semantics, remaining limitations, launch/rollback commands and exact tested bundle names. Per the 2026-10-10 operator direction, remove the vehicle shadow mode and use locked-car checks plus explicit enable for supervised low-speed trials. Offline tests retain explicit topic/service remaps. Field readiness means eligible for a supervised low-speed closed-loop trial, not established racing performance.
 
 ## Completion accounting
 

@@ -39,7 +39,7 @@ def run(args):
         relay.publish(message)
     subscription=probe.create_subscription(DiagnosticArray,PREFIX+'/mpcc/status',forward,10)
     native=['ros2','run','aims_mpcc_rt','mpcc_rt_node','--ros-args',
-        '-p','artifact_directory:='+str(bundle),'-p','simulation:=true','-p','shadow:=false',
+        '-p','artifact_directory:='+str(bundle),'-p','simulation:=true',
         '-p','repeat_laps:=true','-p','log_directory:='+str(out/'controller'),
         *topic_remap_arguments(PREFIX)]
     command=[sys.executable,str(args.supervisor),'--status-topic',relay_topic,

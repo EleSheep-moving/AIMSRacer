@@ -41,6 +41,8 @@ int main(int argc,char** argv) {
   if(argc!=2)throw std::invalid_argument("synthetic bundle argument required");
   std::vector<std::string> args{"clock_test","--ros-args","-p",std::string("artifact_directory:=")+argv[1],
     "-p","simulation:=true","-p","repeat_laps:=true"};
+  for(const std::string topic:{"/drive","/mpcc/status","/mpcc/reference","/mpcc/prediction","/mpcc/enable"})
+    args.insert(args.end(),{"-r",topic+":=/mpcc_rt_test"+topic});
   std::vector<char*> raw;for(auto& s:args)raw.push_back(s.data());
   rclcpp::init(raw.size(),raw.data());
   int result=0;

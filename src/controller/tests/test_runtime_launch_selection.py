@@ -31,12 +31,12 @@ def test_default_keeps_legacy_and_cpp_is_an_exclusive_selection():
     assert not any(n.condition.evaluate(context) for n in nodes)
 
 
-def test_cpp_defaults_have_distinct_solve_rate_and_shadow_control():
+def test_cpp_defaults_have_distinct_solve_rate_and_standard_control_interface():
     options={a.name:a for a in description().entities if isinstance(a,DeclareLaunchArgument)}
     context=LaunchContext()
     assert 'cpp_solve_frequency' in options
     assert ''.join(s.perform(context) for s in options['cpp_solve_frequency'].default_value)=='20.0'
-    assert ''.join(s.perform(context) for s in options['shadow'].default_value)=='true'
+    assert 'shadow' not in options
 
 
 def profile(context, key):
@@ -75,9 +75,8 @@ def test_native_command_launch_prefix_runs_process_supervisor():
     nodes=[a for a in description().entities if isinstance(a,Node)]
     native=next(n for n in nodes if n.condition.evaluate(context))
     # Exercise the actual process action's prefix substitutions.
-    context.launch_configurations['shadow']='true'
     text=''.join(s.perform(context) for s in native.process_description._Executable__prefix)
-    assert 'runtime_supervisor.py' in text and '--status-topic /mpcc_rt_shadow/mpcc/status' in text
+    assert 'runtime_supervisor.py' in text and '--status-topic /mpcc/status' in text
 
 
 def test_launch_passes_resolved_profile_to_native_node(tmp_path):
@@ -85,10 +84,11 @@ def test_launch_passes_resolved_profile_to_native_node(tmp_path):
     context=LaunchContext()
     context.launch_configurations.update(implementation='acados_cpp',artifact_directory=str(tmp_path),
         horizon='',plan_ttl='',solver_timeout='.07',path_directory='/reference',vehicle_config='/config.yaml',
-        odom_topic='/test/odom',log_directory='',simulation='true',shadow='true',cpp_solve_frequency='20.',
+        odom_topic='/test/odom',log_directory='',simulation='true',cpp_solve_frequency='20.',
         handover_delay='.02')
     native=next(n for n in description().entities if isinstance(n,Node) and n.condition.evaluate(context))
     parameters=evaluate_parameters(context,native._Node__parameters)[0]
     assert parameters['horizon']==5
     assert parameters['plan_ttl']==pytest.approx(.8)
     assert parameters['solver_timeout']==.07
+    assert 'shadow' not in parameters

@@ -71,8 +71,8 @@ def run(args):
     def status(message):
         for item in message.status:
             if item.name=='aims_mpcc':events.append(dict(time=time.monotonic(),status={kv.key:json.loads(kv.value) for kv in item.values}))
-    node.create_subscription(AckermannDriveStamped,'/mpcc_rt_shadow/drive',drive,10)
-    node.create_subscription(DiagnosticArray,'/mpcc_rt_shadow/mpcc/status',status,10)
+    node.create_subscription(AckermannDriveStamped,'/mpcc_rt_test/drive',drive,10)
+    node.create_subscription(DiagnosticArray,'/mpcc_rt_test/mpcc/status',status,10)
     command=[str(args.executable.resolve()),str(args.bundle.resolve()),'stall',str(out/'controller')]
     report=dict(scope=__doc__,command=command,domain=os.environ['ROS_DOMAIN_ID'],
         binary_sha256=hashlib.sha256(args.executable.read_bytes()).hexdigest(),
