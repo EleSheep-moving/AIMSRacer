@@ -38,6 +38,9 @@ if(BUILD_TESTING)
   foreach(name health output history)
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_${name}.cpp")
       add_executable(test_${name} tests/test_${name}.cpp)
+      # These pure contract tests use assert(), including state-changing calls.
+      # Keep their checks active in the production Release test build.
+      target_compile_options(test_${name} PRIVATE -UNDEBUG)
       target_include_directories(test_${name} PRIVATE include)
       add_test(NAME test_${name} COMMAND test_${name})
     endif()
