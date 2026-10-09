@@ -72,6 +72,10 @@ if(BUILD_TESTING)
   target_link_libraries(rear_axle_force_test PRIVATE rear_axle_imu)
   target_compile_options(rear_axle_force_test PRIVATE -UNDEBUG -Wall -Wextra -Wpedantic)
   add_test(NAME rear_axle_force COMMAND rear_axle_force_test)
+  add_executable(localization_alignment_test tests/test_localization_alignment.cpp)
+  target_link_libraries(localization_alignment_test PRIVATE localization_health)
+  target_compile_options(localization_alignment_test PRIVATE -UNDEBUG -Wall -Wextra -Wpedantic)
+  add_test(NAME localization_alignment COMMAND localization_alignment_test)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(rear_axle_contract tests/test_rear_axle_contract.py
     ENV "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/test_logs")
@@ -79,6 +83,9 @@ if(BUILD_TESTING)
   ament_add_pytest_test(nav_map_argument tests/test_nav_map_argument.py)
   ament_add_pytest_test(localization_policy tests/test_localization_policy.py)
   ament_add_pytest_test(monitor_health_delivery tests/test_monitor_health_delivery.py)
+  ament_add_pytest_test(monitor_alignment_delivery tests/test_monitor_alignment_delivery.py
+    ENV "MONITOR_TEST_EXECUTABLE=$<TARGET_FILE:localization_monitor>"
+        "ROS_DOMAIN_ID=177" "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/alignment_test_logs")
 endif()
 
 ament_package()

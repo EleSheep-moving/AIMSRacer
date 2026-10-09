@@ -1,4 +1,5 @@
 #include "aims_racer_system/localization_health.hpp"
+#include "aims_racer_system/localization_alignment.hpp"
 #include "aims_racer_system/localization_quality.hpp"
 
 #include <algorithm>
@@ -111,6 +112,7 @@ private:
       history_.clear();
       inputs_.clear();
       packets_.clear();
+      alignment_.clear();
       cloud_.reset();
       ++generation_;
       quality_.reset();
@@ -170,10 +172,15 @@ private:
       const bool accepted = health_.observe(values, stamp_ns(message.header.stamp), now, monotonic_now());
       if (health_.epoch() != previous_epoch) {
         packets_.clear();
+        alignment_.clear();
         ++generation_;
         quality_.reset();
         last_quality_stamp_.reset();
         quality_error_ = "waiting_for_scan_and_mount";
+      }
+      if (!alignment_.observe(values, accepted, health_.epoch(), health_.stamp_ns())) {
+        health_.invalidate("invalid_alignment_snapshot");
+        quality_error_ = "missing_or_invalid_commit_snapshot";
       }
       if (accepted && values.at("anchor_committed") == "true") {
         try {
@@ -250,6 +257,12 @@ private:
       present = present && age >= 0 && age <= item.second && wall_age >= 0 && wall_age <= item.second;
     }
     auto values = health_.evaluate(now, mono, present);
+    const auto alignment_fields = alignment_.fields(values);
+    values.insert(alignment_fields.begin(), alignment_fields.end());
+    if (values.at("alignment_valid") != "true") {
+      values["ready"] = "false";
+      values["state"] = "lost";
+    }
     const bool valid = values.at("ready") == "true";
     if (health_.epoch() != publish_epoch_) {
       publish_epoch_ = health_.epoch();
@@ -297,6 +310,7 @@ private:
   MapQuality map_;
   double ekf_max_age_, cloud_max_age_;
   AnchorHealth health_;
+  CommittedAlignment alignment_;
   std::map<std::string, Input> inputs_;
   PoseHistory history_;
   MapOdomPackets packets_;
