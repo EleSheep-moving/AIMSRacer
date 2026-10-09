@@ -33,6 +33,11 @@ class QPSolver(NumericalBackend):
         initial[2]=path.at(0.)['yaw']; initial[3]=config.cruise_speed
         seed=self.seed(initial,np.zeros(3),np.full(self.n+1,config.cruise_speed))
         P,q,A,l,u=self._assemble(initial,np.zeros(3),np.full(self.n+1,config.cruise_speed),np.zeros(3),seed)
+        self._fixed_assembly_layout=self._last_assembly_layout
+        self._fixed_p_structure=self._p_structure.copy()
+        self._fixed_a_structure=self._a_structure.copy()
+        self._fixed_p_structure.flags.writeable=False
+        self._fixed_a_structure.flags.writeable=False
         self._p_pattern=sparse.csc_matrix(np.triu(self._p_structure.astype(float)))
         self._a_pattern=sparse.csc_matrix(self._a_structure.astype(float))
         self._p_columns=np.repeat(np.arange(self.dimension),np.diff(self._p_pattern.indptr))
@@ -112,12 +117,33 @@ class QPSolver(NumericalBackend):
 
     def _assemble(self,initial,applied,refs,alignment,seed):
         cfg=self.config;D=self.dimension;P=np.eye(D)*1e-10;q=np.zeros(D)
-        rows=[];structures=[];low=[];high=[];P_structure=np.eye(D,dtype=bool)
+        cached_layout=getattr(self,'_fixed_assembly_layout',None)
+        p_template=getattr(self,'_fixed_p_structure',None)
+        a_template=getattr(self,'_fixed_a_structure',None)
+        prefix_count=4+4*self.n
+        fixed=(type(cached_layout) is tuple and len(cached_layout)==6 and
+               cached_layout[:2]==(self.n,D) and
+               type(p_template) is np.ndarray and type(a_template) is np.ndarray and
+               p_template.shape==(D,D) and a_template.shape==(cached_layout[-1],D) and
+               len(a_template)>=prefix_count and p_template.dtype==bool and a_template.dtype==bool and
+               not p_template.flags.writeable and not a_template.flags.writeable)
+        low=[];high=[]
+        if fixed:
+            # Offsets are evaluated after geometry/dynamics, as before. Stage
+            # this known-size prefix until the full layout can be checked.
+            A=np.zeros((prefix_count,D))
+        else:
+            rows=[];structures=[];P_structure=np.eye(D,dtype=bool)
+        row_index=0
         def constraint(values,lo,hi):
-            row=np.zeros(D)
+            nonlocal row_index
+            row=A[row_index] if fixed else np.zeros(D)
             for i,v in values.items():row[i]+=v
-            structure=np.zeros(D,dtype=bool);structure[list(values)]=True
-            rows.append(row);structures.append(structure);low.append(lo);high.append(hi)
+            if not fixed:
+                structure=np.zeros(D,dtype=bool);structure[list(values)]=True
+                rows.append(row);structures.append(structure)
+            low.append(lo);high.append(hi)
+            row_index+=1
         def cost(values,target,weight):
             # Each objective term involves at most three variables. Preserve
             # its accumulation order while updating only those active entries.
@@ -125,7 +151,7 @@ class QPSolver(NumericalBackend):
                 q[i]-=2*weight*target*vi
                 for j,vj in values.items():
                     P[i,j]+=2*weight*(vi*vj)
-                    P_structure[i,j]=True
+                    if not fixed:P_structure[i,j]=True
         state=lambda k,j:4*k+j
         control=lambda k,j:4*(self.n+1)+2*k+j
         geometries=self.geometries(seed[0][:,4],alignment)
@@ -143,6 +169,18 @@ class QPSolver(NumericalBackend):
                 constraint(equation,offset,offset)
             constraint({state(k+1,3):1.,state(k,3):-1.,control(k,0):-self.dt},0.,0.)
         offsets=cfg.longitudinal_offsets() if cfg.enforce_corridor else ()
+        count=prefix_count+(2+len(offsets))*(self.n+1)+(5+2*len(ELLIPSE_FACETS))*self.n
+        layout=(self.n,D,bool(cfg.enforce_corridor),len(offsets),len(ELLIPSE_FACETS),count)
+        if fixed:
+            if cached_layout==layout:
+                complete=np.zeros((count,D));complete[:prefix_count]=A;A=complete
+            else:
+                # The prefix stencil depends only on n/D; suffix masks must
+                # follow the original construction for this changed layout.
+                rows=[row.copy() for row in A]
+                structures=[row.copy() for row in a_template[:prefix_count]]
+                P_structure=np.eye(D,dtype=bool)
+                fixed=False
         for k in range(self.n+1):
             terminal=cfg.terminal_weight if k==self.n else 1.
             cost({state(k,0):1.},0.,terminal*cfg.contour_weight/cfg.contour_scale**2)
@@ -188,6 +226,14 @@ class QPSolver(NumericalBackend):
                 slope=factor/(np.cos(d)**2);offset=factor*np.tan(d)-slope*d
                 for a,b in ELLIPSE_FACETS:
                     constraint({accel:a/accel_axis,state(node,2):b*slope},-np.inf,envelope_radius-b*offset)
+        if row_index!=count:raise ValueError('QP assembly constraint row count changed')
+        self._last_assembly_layout=layout
+        if fixed:
+            # Preserve fresh public structure arrays, even if a caller changed
+            # the preceding call's masks. Constructor templates stay separate.
+            self._p_structure=self._fixed_p_structure.copy()
+            self._a_structure=self._fixed_a_structure.copy()
+            return P,q,A,np.asarray(low),np.asarray(high)
         self._p_structure=P_structure;self._a_structure=np.asarray(structures)
         return P,q,np.asarray(rows),np.asarray(low),np.asarray(high)
 
