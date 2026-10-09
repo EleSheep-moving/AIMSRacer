@@ -951,9 +951,12 @@ Existing steering evidence includes a combined 0.08 s response fit and an
 earlier equivalent command-to-yaw fit of about 48 ms dead time plus 20–27 ms
 response. The user previously chose the combined model; these measurements do
 not separately identify physical servo motion. Existing longitudinal evidence
-includes about 40 ms delay plus 0.16 s speed-loop response in the 2026-09-28
-speed-mode data. These parameters were already supplied; a new full
-identification campaign is not a prerequisite for a low-speed MPC baseline.
+includes first reported wheel motion after 40–53 ms and eight isolated
+speed-mode steps reaching half of the wheel-speed change in 0.16–0.40 s.
+These are response observations, not a uniquely identified motor dead time and
+first-order constant. Later diagnostic delay/tau fits vary with the input
+window. The existing evidence is sufficient for an initial low-speed baseline;
+a new full identification campaign is not a prerequisite.
 The present optimizer still approximates longitudinal motion by ideal
 acceleration. Its acceleration/braking capabilities and broader speed-dependent
 prediction accuracy remain unverified. Existing 200/400 ms prediction audits
@@ -1011,6 +1014,23 @@ ROS 2 adaptation, matched tracking, current NX joint-load performance nor
 field readiness. No default backend changes. Detailed commands, manifests,
 old actuator evidence and logs live outside Git under
 `aimsracer-data/experiments/npu-mpcc-adaptation/`.
+
+Fresh follow-up at the same original-source commit again passes 33 selected
+tests and completes the stock Python lap (250 ticks, zero failures). Two NX
+C++ single-call solver checks report 3.76910 and 3.91189 ms. Tracked source
+hashes match the original trial; generated files are archived outside the
+source checkout. Evidence: `followup-manifest.json`, `followup-stock-run.log`
+and `followup-nx-smoke.log` in that experiment directory. These retain the same
+solver-only/author-vehicle scope, without a ROS 2 port or joint-load claim.
+
+The 50 Hz output timer predates this optimization. Its 20 ms period is an
+engineering target separate from solve frequency, not a requirement that
+every optimization finish in 20 ms. Expensive work in the shared parent
+callback can delay publication while the last command remains held. A single
+callback above 20 ms is not automatically a control failure; actual command
+gaps and prediction/execution consistency determine the effect. NPU's selected
+runtime has separate solve/publication timers and three spinner threads;
+their ARM output behavior still requires measurement after adaptation.
 
 ### Current feature rollback
 

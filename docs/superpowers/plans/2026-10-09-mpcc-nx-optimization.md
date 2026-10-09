@@ -98,9 +98,11 @@ Implementation commits and reports append evidence below. Any unmet test/field g
   and execution structure. Keep the existing localization/vehicle interfaces;
   live tuning and MAP/PP remain excluded. Original-source tests and ROS 2/NX
   adaptation are separate qualification stages.
-- Reuse the existing speed-mode actuator evidence first: longitudinal fit
-  about 40 ms delay plus 0.16 s response, and steering combined response about
-  0.08 s. The earlier 2026-09-27 calibration also records an equivalent
+- Reuse the existing speed-mode actuator evidence first: first reported wheel
+  motion after 40–53 ms and eight isolated command steps reaching half of the
+  wheel-speed change in 0.16–0.40 s. These are response observations, not a
+  separately fitted 40 ms dead time plus 0.16 s motor constant. Steering combined
+  response is about 0.08 s. The 2026-09-27 calibration also records an equivalent
   steering fit of about 48 ms delay plus 20–27 ms response; the user previously
   chose the combined 80 ms model. These are regional fits, not a requirement
   for a new full identification campaign before a low-speed MPC baseline.
