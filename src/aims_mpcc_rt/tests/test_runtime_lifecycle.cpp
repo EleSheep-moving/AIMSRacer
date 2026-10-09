@@ -23,6 +23,37 @@ struct RuntimeClockProbe {
     auto req=std::make_shared<std_srvs::srv::SetBool::Request>();req->data=true;
     auto res=std::make_shared<std_srvs::srv::SetBool::Response>();node.enable_request(req,res);return res->success;
   }
+  static void startup(RuntimeNode& node,bool initial_only=false){
+    auto observer=std::make_shared<rclcpp::Node>("startup_witness_observer");
+    std::map<std::string,std::string> fields;
+    auto sub=observer->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(node.status_pub_->get_topic_name(),10,
+      [&](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr message){for(const auto& s:message->status)
+        if(s.name=="aims_mpcc"){fields.clear();for(const auto& kv:s.values)fields[kv.key]=kv.value;}});
+    rclcpp::executors::SingleThreadedExecutor executor;executor.add_node(observer);
+    auto status=[&](unsigned count){
+      fields.clear();const double deadline=steady()+2.;
+      while(fields.empty()&&steady()<deadline){node.publish_status();executor.spin_some();std::this_thread::sleep_for(std::chrono::milliseconds(2));}
+      auto require=[&](const std::string& key,const std::string& expected){auto found=fields.find(key);
+        if(found==fields.end()||found->second!=expected)throw std::runtime_error("startup status "+key+" missing or incorrect");};
+      require("startup_instance",json_string(std::getenv("AIMS_MPCC_RT_SUPERVISOR_INSTANCE")));
+      require("startup_disabled","true");require("explicit_enable_count",std::to_string(count));
+    };
+    status(0);
+    if(node.enabled_||node.last_output_.speed!=0.)throw std::runtime_error("fresh process did not start disabled with zero output");
+    if(initial_only)return;
+    if(enable(node))throw std::runtime_error("enable unexpectedly succeeded without fresh inputs");status(0);
+    const double deadline=steady()+2.;while(steady()<deadline){bool ready=false;
+      {std::lock_guard<std::mutex> lock(node.mutex_);ready=node.solver_ready_;}if(ready)break;std::this_thread::yield();}
+    auto fresh=[&]{Drive stopped;node.forwarded(stopped);node.odometry(odom(node));
+      std::lock_guard<std::mutex> lock(node.mutex_);node.mode_=true;node.mode_received_=steady();};
+    fresh();if(!enable(node))throw std::runtime_error("valid explicit enable failed");status(1);
+    {std::lock_guard<std::mutex> lock(node.mutex_);node.snapshot_.state[3]=.2;}
+    if(enable(node))throw std::runtime_error("moving vehicle enable unexpectedly succeeded");status(1);
+    auto stop=std::make_shared<std_srvs::srv::SetBool::Request>();stop->data=false;
+    auto response=std::make_shared<std_srvs::srv::SetBool::Response>();node.enable_request(stop,response);
+    if(!response->success)throw std::runtime_error("operator stop rejected");status(1);
+    fresh();if(!enable(node))throw std::runtime_error("second valid explicit enable failed");status(2);
+  }
   static void epoch(RuntimeNode& node){
     auto ns=node.get_clock()->now().nanoseconds();auto previous=health("old",ns);previous["map_sha256"]=node.bundle_.reference().map_sha256();node.accept_health(previous);
     {std::lock_guard<std::mutex> lock(node.mutex_);node.identity_=node.bundle_.reference().map_sha256();}
@@ -243,6 +274,8 @@ struct RuntimeClockProbe {
 }
 int main(int argc,char** argv){
   if(argc<2)throw std::invalid_argument("bundle argument required");
+  const bool startup=argc>2&&std::string(argv[2])=="startup";
+  if(startup)setenv("AIMS_MPCC_RT_SUPERVISOR_INSTANCE","startup-first-instance",1);
   std::vector<std::string> args{"lifecycle_test","--ros-args","-p",std::string("artifact_directory:=")+argv[1],
     "-p","simulation:=true","-p","repeat_laps:=true","-p","handover_delay:=0.1"};
   if(argc>2&&std::string(argv[2])=="capture"){
@@ -254,6 +287,9 @@ int main(int argc,char** argv){
   const bool mesh=argc>2&&std::string(argv[2])=="mesh";
   int result=0;try{auto node=std::make_shared<aims_mpcc_rt::RuntimeNode>();
     if(mesh)throw std::runtime_error("unqualified v2 50 ms mesh started a controller");if(argc>2&&std::string(argv[2])=="delivery")aims_mpcc_rt::RuntimeClockProbe::delivery(*node);
+    else if(startup){aims_mpcc_rt::RuntimeClockProbe::startup(*node);node.reset();
+      setenv("AIMS_MPCC_RT_SUPERVISOR_INSTANCE","startup-restarted-instance",1);
+      node=std::make_shared<aims_mpcc_rt::RuntimeNode>();aims_mpcc_rt::RuntimeClockProbe::startup(*node,true);}
     else if(argc>2&&std::string(argv[2])=="epoch")aims_mpcc_rt::RuntimeClockProbe::epoch(*node);
     else if(argc>2&&std::string(argv[2])=="anchor_order")aims_mpcc_rt::RuntimeClockProbe::anchor_order(*node);
     else if(argc>2&&std::string(argv[2])=="stall")aims_mpcc_rt::RuntimeClockProbe::stall(*node);

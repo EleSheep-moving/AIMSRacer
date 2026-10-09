@@ -115,7 +115,8 @@ if(BUILD_TESTING)
       add_test(NAME test_runtime_reset COMMAND test_runtime_lifecycle "${AIMS_MPCC_RT_TEST_BUNDLE}" clock)
       add_test(NAME test_runtime_fault COMMAND test_runtime_lifecycle "${AIMS_MPCC_RT_TEST_BUNDLE}" fault)
       add_test(NAME test_runtime_capture COMMAND test_runtime_lifecycle "${AIMS_MPCC_RT_TEST_BUNDLE}" capture)
-      set_tests_properties(test_runtime_lifecycle test_runtime_delivery test_runtime_epoch test_runtime_reset test_runtime_fault test_runtime_capture
+      add_test(NAME test_runtime_startup COMMAND test_runtime_lifecycle "${AIMS_MPCC_RT_TEST_BUNDLE}" startup)
+      set_tests_properties(test_runtime_lifecycle test_runtime_delivery test_runtime_epoch test_runtime_reset test_runtime_fault test_runtime_capture test_runtime_startup
         PROPERTIES ENVIRONMENT "ROS_DOMAIN_ID=230;ROS_LOCALHOST_ONLY=1")
     endif()
   endif()

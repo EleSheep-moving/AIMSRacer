@@ -140,6 +140,10 @@ class RuntimeNode final:public rclcpp::Node {
       log_<<"event,steady_s,sequence,source_epoch,forecast_epoch,submitted,complete_s,core_s,native_s,preparation_s,validation_s,accepted,status,passes,violation,observation_age_s,publish_gap_s,speed,steering,reason,compute_s,delivery_wait_s,delivery_s,disposition,requested_acceleration,emitted_acceleration,requested_steering_rate,emitted_steering_rate,limiter_active\n";
       logger_=std::thread([this]{log_loop();});
     }
+    // Process-lifetime provenance, captured before any executor callback can
+    // accept an explicit enable. Later status may first be discovered RUNNING.
+    if(const char* instance=std::getenv("AIMS_MPCC_RT_SUPERVISOR_INSTANCE"))startup_instance_=instance;
+    startup_disabled_=!enabled_&&!stopping_&&last_output_.speed==0.&&sampler_->continuous_speed()==0.;
     worker_=std::thread([this]{solve_loop();});
     RCLCPP_INFO(get_logger(),"acados runtime ready: %.1f Hz solve, 50 Hz output, shadow=%s",frequency_,shadow_?"true":"false");
   }
@@ -176,6 +180,7 @@ class RuntimeNode final:public rclcpp::Node {
             started_=now;stationary_since_=-1.;recovery_good_=0;active_.reset();cancel_pending_locked("enable generation changed");sampler_->reset(0.,snapshot_.applied[1],now);
           }else if(enabled_){stopping_=true;phase_="STOPPING";reason_="Operator stop requested";generation_++;cancel_pending_locked("operator stop");}
           response->success=true;response->message=phase_;
+          if(request->data)++explicit_enable_count_;
         }catch(const std::exception& e){response->success=false;response->message=e.what();}
         cv_.notify_all();  }
   static State map_point(State x,const Alignment& a){
@@ -534,6 +539,9 @@ class RuntimeNode final:public rclcpp::Node {
       text("status",phase_);text("reason",reason_);text("backend","acados_cpp");
       text("execution_certificate_scope","activation at current speed cap; later dynamic caps use per-hold physical budget; ideal acceleration and steering lag");
       diagnostic_msgs::msg::KeyValue ready;ready.key="worker_ready";ready.value=solver_ready_?"true":"false";status.values.push_back(ready);
+      text("startup_instance",startup_instance_);
+      diagnostic_msgs::msg::KeyValue startup;startup.key="startup_disabled";startup.value=startup_disabled_?"true":"false";status.values.push_back(startup);
+      value("explicit_enable_count",explicit_enable_count_);
       const double now=steady();
       value("enabled",enabled_);value("stopping",stopping_);value("authority",mode_);value("authority_age_s",now-mode_received_);
       value("source_age_s",snapshot_.present?now-snapshot_.source:std::numeric_limits<double>::quiet_NaN());
@@ -668,6 +676,7 @@ std::lock_guard<std::mutex> lock(log_mutex_);
   State last_decision_state_{};double last_decision_cap_=0.;
   Snapshot snapshot_;LocalizationHealth health_;std::string identity_,phase_="READY",reason_;
   bool enabled_=false,stopping_=false,shutdown_=false,solver_ready_=false,simulation_=false,shadow_=true,repeat_laps_=false,progress_ready_=false;
+  std::string startup_instance_;bool startup_disabled_=false;std::uint64_t explicit_enable_count_=0;
   double last_ros_now_=std::numeric_limits<double>::quiet_NaN(),fault_steady_=0.,last_compute_=0.,last_delivery_wait_=0.,last_certificate_=0.,last_activation_=0.,worker_submitted_=0.;bool worker_busy_=false;
   double frequency_=20.,ttl_=.8,budget_=.05,lead_=.02,mode_received_=-1.,started_=0.,last_publish_=0.;
   double start_progress_=0.,unwrapped_progress_=0.,last_progress_=0.,last_complete_=0.,last_observation_age_=0.,stationary_since_=-1.;bool mode_=false;

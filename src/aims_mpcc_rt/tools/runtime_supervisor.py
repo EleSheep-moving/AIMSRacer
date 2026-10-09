@@ -11,23 +11,33 @@ import math
 import os
 from pathlib import Path
 import signal
+import secrets
 import subprocess
 import time
 
 
 class StallMonitor:
-    def __init__(self, *, started, stall_timeout=.5, status_timeout=.5, startup_timeout=15.):
+    def __init__(self, *, started, stall_timeout=.5, status_timeout=.5, startup_timeout=15.,expected_instance=None):
         self.started=started
         self.stall_timeout=stall_timeout
         self.status_timeout=status_timeout
         self.startup_timeout=startup_timeout
+        self.expected_instance=expected_instance
         self.last_status=None
         self.reason=None
 
     def observe(self, values, now):
         if self.reason:return self.reason
-        if self.last_status is None and (values.get('status') not in ('WAITING','READY','FAULT')
-                or values.get('speed_command',0.)!=0.):
+        # DDS discovery can miss every disabled sample. Persisted birth and
+        # accepted enable witnesses prove startup independently of receipt order.
+        # A fresh nonce also prevents a previous process from proving this birth.
+        if self.expected_instance is not None and values.get('startup_instance')!=self.expected_instance:
+            return None
+        count=values.get('explicit_enable_count')
+        disabled=values.get('startup_disabled')
+        active=(values.get('status') not in ('WAITING','READY','FAULT')
+                or values.get('enabled',0)!=0 or values.get('speed_command',0.)!=0.)
+        if not isinstance(disabled,(bool,int)) or disabled!=1 or type(count) is not int or count<0 or (active and count==0):
             self.reason='startup_not_disabled'
         elif 'worker_busy' not in values or 'worker_elapsed_s' not in values:
             self.reason='worker_status_missing'
@@ -105,7 +115,13 @@ def run(args):
             if status.name=='aims_mpcc' and monitor is not None:
                 try:values={kv.key:json.loads(kv.value) for kv in status.values}
                 except (ValueError,TypeError):monitor.reason='malformed_worker_status';return
+                first=monitor.last_status is None
                 reason=monitor.observe(values,time.monotonic())
+                if first and not reason and monitor.last_status is not None:
+                    events.append(dict(event='startup_verified',time=monitor.last_status,
+                        startup_instance=values['startup_instance'],startup_disabled=values['startup_disabled'],
+                        explicit_enable_count=values['explicit_enable_count'],first_status=values.get('status')))
+                    save()
                 if reason:events.append(dict(event='watchdog',time=time.monotonic(),reason=reason))
     subscription=node.create_subscription(DiagnosticArray,args.status_topic,observe,10)
     try:
@@ -114,10 +130,13 @@ def run(args):
             # a new monitor. No enable service or command publisher exists here.
             monitor=None
             for _ in range(5):rclpy.spin_once(node,timeout_sec=0.)
-            child=subprocess.Popen(args.command,start_new_session=True)
+            instance=secrets.token_hex(16)
+            child=subprocess.Popen(args.command,start_new_session=True,
+                                   env={**os.environ,'AIMS_MPCC_RT_SUPERVISOR_INSTANCE':instance})
             monitor=StallMonitor(started=time.monotonic(),stall_timeout=args.stall_timeout,
-                                 status_timeout=args.status_timeout,startup_timeout=args.startup_timeout)
-            events.append(dict(event='started',time=monitor.started,pid=child.pid,restart=restarts))
+                                 status_timeout=args.status_timeout,startup_timeout=args.startup_timeout,
+                                 expected_instance=instance)
+            events.append(dict(event='started',time=monitor.started,pid=child.pid,restart=restarts,startup_instance=instance))
             print(json.dumps(events[-1]),flush=True);save()
             reason=None
             while not shutdown and child.poll() is None:
