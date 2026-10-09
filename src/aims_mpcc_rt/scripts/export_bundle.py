@@ -120,7 +120,8 @@ def export(config_path, reference_dir, output, horizon=10, dt=.1, source_only=Fa
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source_root / name, destination)
         source_hashes[name] = digest(destination)
-    manifest = dict(schema_version=1, capsule_abi_version=1, backend='acados_sqp_rti_hpipm', acados_commit=dependencies['acados_source'],
+    manifest = dict(schema_version=1, command_profile=cfg.command_profile,
+                    constraint_groups=solver._groups, capsule_abi_version=1, backend='acados_sqp_rti_hpipm', acados_commit=dependencies['acados_source'],
                     generation_dependencies=dependencies,
                     generation_sources={name:digest(output/name) for name in ('export_bundle.py','build_bundle.py')},
                     horizon=int(horizon), dt=float(dt), nx=9, nu=int(u.numel()), np=10,
@@ -154,7 +155,7 @@ def export(config_path, reference_dir, output, horizon=10, dt=.1, source_only=Fa
                   +cfg.steering_weight*((control[1]-feedforward)/cfg.steering_scale)**2
                   +(10/30)*(control[0]/cfg.acceleration_scale)**2
                   +cfg.steering_rate_weight*(rate/cfg.steer_rate)**2
-                  +cfg.steering_acceleration_weight*((rate-state[8])/(cfg.steer_acceleration*dt))**2)
+                  +cfg.steering_acceleration_weight*((rate-state[8])/(cfg.steering_rate_change_scale()*dt))**2)
         if cfg.envelope_soft_enabled:analytic+=cfg.envelope_slack_weight*control[3]**2
         fixtures.append(dict(state=state.tolist(), control=control.tolist(), parameters=parameters.tolist(),
                              samples=np.asarray(ca.Function('fixture_samples',[x,u],[ca.horzcat(*samples)])(state,control)).T.tolist(),

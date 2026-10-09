@@ -4,11 +4,13 @@
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
+#include <limits>
+#include <iomanip>
 
 using namespace aims_mpcc_rt;
 void check(bool value, const char *message) {if(!value) throw std::runtime_error(message);}
 void near(double a,double b,double tolerance,const char *message) {
-  if(std::abs(a-b)>tolerance) {std::cerr<<a<<" != "<<b<<"\n";throw std::runtime_error(message);}
+  if(!std::isfinite(a)||!std::isfinite(b)||std::abs(a-b)>tolerance) {std::cerr<<a<<" != "<<b<<"\n";throw std::runtime_error(message);}
 }
 State independent_plant(State x,const Control &u,double previous,double span,const Config &cfg) {
   // Independent 2 ms midpoint integrator with 10% slower steering lag.
@@ -25,6 +27,11 @@ State independent_plant(State x,const Control &u,double previous,double span,con
   return x;
 }
 int main(int argc,char **argv) {
+  bool rejected_nan=false;
+  try {near(std::numeric_limits<double>::quiet_NaN(),0.,1e-9,"NaN oracle");}
+  catch(const std::runtime_error&){rejected_nan=true;}
+  check(rejected_nan,"numerical oracle must reject NaN");
+  if(argc==2&&std::string(argv[1])=="--oracle-only")return 0;
   check(argc==2||argc==3,"bundle argument required");
   const auto b=Bundle::load(argv[1]);
   auto fixtures=YAML::LoadFile(std::string(argv[1])+"/parity.json");
@@ -89,7 +96,9 @@ int main(int argc,char **argv) {
   check(rounded_prefix.reason!="applied steering has no bounded continuation", "roundoff steering interval canonicalized before clamp");
   core.reset();
   auto impossible=core.solve(stopped,{10.,0.,0.}, {},.05);
-  check(!impossible.success&&impossible.native_passes==0,"impossible applied acceleration rejected before optimizer");
+  if(b.config().command_profile=="legacy_bounded_v1")
+    check(!impossible.success&&impossible.native_passes==0,"impossible applied acceleration rejected before optimizer");
+  else check(impossible.native_passes>0,"v2 seed does not constrain the removed acceleration prefix jerk");
   core.reset();
   auto stationary=core.solve(stopped,{}, {},.05,.05,false,0.,0.,std::vector<double>(b.config().horizon+1,0.));
   check(stationary.success,"zero speed targets candidate feasible");
@@ -101,10 +110,16 @@ int main(int argc,char **argv) {
   std::vector<double> timings;double sum_error=0.,peak_error=0.,progress=0.,last_theta=0.;int passes=0;
   int count=int(std::ceil((b.reference().length()/b.config().cruise_speed+5.)/execution_step));
   for(int i=0;i<count;++i) {
-    auto plan=core.solve(initial,applied,{},execution_step,.05);
+    auto plan=core.solve(initial,applied,{},execution_step,.05,true);
+    if(!plan.success){
+      std::cerr<<std::setprecision(17)<<"cycle="<<i<<" status="<<plan.status<<" passes="<<plan.native_passes
+        <<" violation="<<plan.max_violation<<" reason="<<plan.reason<<"\nstate:";
+      for(double v:initial)std::cerr<<" "<<v;
+      std::cerr<<"\nprefix:";for(double v:applied)std::cerr<<" "<<v;std::cerr<<"\n";
+    }
     check(plan.success,"synthetic circle candidate rejected");
     near(plan.native_cost,plan.raw_optimizer_cost,1e-7,"actual native objective scaling parity");
-    check(plan.native_passes<=2,"RTI pass limit");
+    check(plan.native_passes<=b.config().acados_rti_steps,"declared RTI pass maximum");
     check(plan.max_violation<1e-4,"nonlinear candidate feasible");
     auto u=plan.controls.front();
     double previous_endpoint=applied[1];

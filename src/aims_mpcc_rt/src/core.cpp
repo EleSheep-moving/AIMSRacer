@@ -99,18 +99,34 @@ Bundle Bundle::load(const std::string &directory,const std::string &config_path,
   i.sample_count=manifest["candidate_sample_count"].as<int>();
   auto data=YAML::LoadFile((root/"config.json").string());auto &c=i.cfg;
   c.profile=data["profile"].as<std::string>();
+  c.command_profile=data["command_profile"]?data["command_profile"].as<std::string>():"legacy_bounded_v1";
+  std::string exported_profile=manifest["command_profile"]?manifest["command_profile"].as<std::string>():"legacy_bounded_v1";
+  if((c.command_profile!="legacy_bounded_v1"&&c.command_profile!="rate_bounded_v2")||
+     c.command_profile!=exported_profile)throw std::runtime_error("artifact command profile mismatch");
+  if(c.command_profile=="rate_bounded_v2"){
+    if(!manifest["constraint_groups"])throw std::runtime_error("v2 constraint provenance missing");
+    for(auto group:manifest["constraint_groups"])
+      if(group.as<std::string>()=="jerk"||group.as<std::string>()=="steering_acceleration")
+        throw std::runtime_error("v2 bundle retains removed hard constraint");
+  }
 #define FIELD(name) c.name=data[#name].as<double>()
   FIELD(wheelbase);FIELD(rear_offset);FIELD(half_width);FIELD(cruise_speed);FIELD(max_speed);
   FIELD(minimum_drive_speed);FIELD(steer_limit);FIELD(steer_rate);FIELD(steer_acceleration);
   FIELD(accel_limit);FIELD(brake_limit);FIELD(jerk_limit);FIELD(steering_tau);FIELD(understeer_coefficient);
   FIELD(lateral_accel_limit);FIELD(recovery_jerk_limit);FIELD(envelope_recovery_time);FIELD(envelope_slack_limit);
 #undef FIELD
+  c.steering_acceleration_scale=data["steering_acceleration_scale"]&&!data["steering_acceleration_scale"].IsNull()?
+    data["steering_acceleration_scale"].as<double>():c.steer_acceleration;
+  if(!std::isfinite(c.steering_acceleration_scale)||c.steering_acceleration_scale<=0.)
+    throw std::runtime_error("invalid steering rate change objective scale");
   c.front_extent=data["front_extent"].IsNull()?c.rear_offset+data["half_length"].as<double>():data["front_extent"].as<double>();
   c.rear_extent=data["rear_extent"].IsNull()?data["half_length"].as<double>()-c.rear_offset:data["rear_extent"].as<double>();
   c.envelope_accel=data["longitudinal_envelope_accel"].IsNull()?c.accel_limit:data["longitudinal_envelope_accel"].as<double>();
   c.envelope_brake=data["longitudinal_envelope_brake"].IsNull()?c.brake_limit:data["longitudinal_envelope_brake"].as<double>();
   c.enforce_corridor=data["enforce_corridor"].as<bool>();c.envelope_soft_enabled=data["envelope_soft_enabled"].as<bool>();
   c.recovery_jerk_enabled=data["recovery_jerk_enabled"].as<bool>();
+  c.acados_rti_steps=data["acados_rti_steps"]?data["acados_rti_steps"].as<int>():1;
+  if(c.acados_rti_steps!=1&&c.acados_rti_steps!=2)throw std::runtime_error("native RTI maximum must be one or two");
   c.horizon=manifest["horizon"].as<int>();c.dt=manifest["dt"].as<double>();
   bool hundred_ms=std::abs(c.dt-.1)<1e-12,fifty_ms=std::abs(c.dt-.05)<1e-12;
   // Old 100 ms bundles may describe a near-multiple duration while their
@@ -283,8 +299,9 @@ Plan Core::solve(State initial,const Applied &applied,const Alignment &alignment
   }
   if(previous_.success)previous_elapsed_+=elapsed;
   auto x0=internal(initial,applied);std::vector<InternalState> seed{x0};std::vector<std::vector<double>> inputs;
+  const bool v2=cfg.command_profile=="rate_bounded_v2";
   double jerk=cfg.jerk_limit;
-  if(cfg.envelope_soft_enabled&&cfg.recovery_jerk_enabled) {
+  if(!v2&&cfg.envelope_soft_enabled&&cfg.recovery_jerk_enabled) {
     double lo=std::max(-cfg.brake_limit,applied[0]-cfg.jerk_limit*cfg.dt);
     double hi=std::min(cfg.accel_limit,applied[0]+cfg.jerk_limit*cfg.dt);
     if(lo<=hi&&utilization(initial,std::clamp(0.,lo,hi),cfg)>1.+1e-8)jerk=cfg.recovery_jerk_limit;
@@ -296,15 +313,15 @@ Plan Core::solve(State initial,const Applied &applied,const Alignment &alignment
       auto shifted=interpolate(previous_.controls,cfg.dt,previous_elapsed_+k*cfg.dt);a=shifted[0];steer=shifted[1];
     }
     double bound=k*cfg.dt<cfg.envelope_recovery_time-1e-10?jerk:cfg.jerk_limit;
-    double acceleration_lower=std::max(-cfg.brake_limit,x[6]-bound*cfg.dt);
-    double acceleration_upper=std::min(cfg.accel_limit,x[6]+bound*cfg.dt);
+    double acceleration_lower=v2?-cfg.brake_limit:std::max(-cfg.brake_limit,x[6]-bound*cfg.dt);
+    double acceleration_upper=v2?cfg.accel_limit:std::min(cfg.accel_limit,x[6]+bound*cfg.dt);
     if(acceleration_lower>acceleration_upper) {
       plan.reason="applied acceleration has no bounded continuation";plan.solve_time_s=duration(started);return plan;
     }
     a=std::clamp(a,acceleration_lower,acceleration_upper);
     double left=cfg.steer_limit+x[7],right=cfg.steer_limit-x[7];
-    double lower=std::max({-cfg.steer_rate,x[8]-cfg.steer_acceleration*cfg.dt,-left/cfg.dt,-stopping_rate(left,cfg.steer_acceleration,cfg.dt)});
-    double upper=std::min({cfg.steer_rate,x[8]+cfg.steer_acceleration*cfg.dt,right/cfg.dt,stopping_rate(right,cfg.steer_acceleration,cfg.dt)});
+    double lower=v2?std::max(-cfg.steer_rate,-left/cfg.dt):std::max({-cfg.steer_rate,x[8]-cfg.steer_acceleration*cfg.dt,-left/cfg.dt,-stopping_rate(left,cfg.steer_acceleration,cfg.dt)});
+    double upper=v2?std::min(cfg.steer_rate,right/cfg.dt):std::min({cfg.steer_rate,x[8]+cfg.steer_acceleration*cfg.dt,right/cfg.dt,stopping_rate(right,cfg.steer_acceleration,cfg.dt)});
     if(lower>upper+1e-12){plan.reason="applied steering has no bounded continuation";plan.solve_time_s=duration(started);return plan;}
     // Roundoff can invert a zero-width rate interval by a few ulps. Keep the
     // hard endpoint bound, collapsing only inversions within the tolerance
@@ -329,7 +346,7 @@ Plan Core::solve(State initial,const Applied &applied,const Alignment &alignment
   plan.preparation_time_s=duration(started);
   // Each candidate is propagated exactly once through the generated nonlinear
   // model; validation consumes the resulting samples and unchanged controls.
-  for(int pass=0;pass<(second?2:1);++pass) {
+  for(int pass=0;pass<(second?cfg.acados_rti_steps:1);++pass) {
     if(duration(started)>=budget){plan.reason="solve budget exhausted before RTI";break;}
     auto optimized=Clock::now();plan.status=native.solve(capsule_);
     double pass_native_duration=duration(optimized);plan.native_time_s+=pass_native_duration;++plan.native_passes;
@@ -452,9 +469,10 @@ Plan Core::reanchor(const Plan &source,State actual,const Applied &applied,doubl
     const double da=applied[0]-source.initial_applied[0];
     const double ds=applied[1]-source.initial_applied[1];
     const double dr=applied[2]-source.initial_applied[2];
+    const bool v2=cfg.command_profile=="rate_bounded_v2";
     bool eligible=std::isfinite(delay)&&delay>=0.&&delay<=.05&&finite(source.initial_applied)&&
-      std::abs(da)<=cfg.jerk_limit*span&&std::abs(ds)<=cfg.steer_rate*span&&
-      std::abs(dr)<=cfg.steer_acceleration*span;
+      std::abs(ds)<=cfg.steer_rate*span&&
+      (v2||(std::abs(da)<=cfg.jerk_limit*span&&std::abs(dr)<=cfg.steer_acceleration*span));
     for(const auto &u:controls)eligible=eligible&&finite(u);
     if(!eligible)plan.reason+="; prefix transport ineligible";
     else {
@@ -463,9 +481,9 @@ Plan Core::reanchor(const Plan &source,State actual,const Applied &applied,doubl
       for(auto &u:transported) {
         u[0]=std::clamp(u[0]+da,-cfg.brake_limit,cfg.accel_limit);
         double left=cfg.steer_limit+endpoint,right=cfg.steer_limit-endpoint;
-        double lower=std::max({-cfg.steer_rate,rate-cfg.steer_acceleration*cfg.dt,
+        double lower=v2?std::max(-cfg.steer_rate,-left/cfg.dt):std::max({-cfg.steer_rate,rate-cfg.steer_acceleration*cfg.dt,
                               -left/cfg.dt,-stopping_rate(left,cfg.steer_acceleration,cfg.dt)});
-        double upper=std::min({cfg.steer_rate,rate+cfg.steer_acceleration*cfg.dt,
+        double upper=v2?std::min(cfg.steer_rate,right/cfg.dt):std::min({cfg.steer_rate,rate+cfg.steer_acceleration*cfg.dt,
                               right/cfg.dt,stopping_rate(right,cfg.steer_acceleration,cfg.dt)});
         if(lower>upper+1e-12){continuation=false;break;}
         if(lower>upper)lower=upper;

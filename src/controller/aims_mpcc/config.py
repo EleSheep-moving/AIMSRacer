@@ -8,6 +8,7 @@ REVERSE_SPEED_TOLERANCE = .05
 @dataclass
 class VehicleConfig:
     profile: str = 'measured'
+    command_profile: str = 'legacy_bounded_v1'
     wheelbase: float = .36
     rear_offset: float | None = None
     half_length: float | None = None
@@ -22,6 +23,9 @@ class VehicleConfig:
     steer_limit: float = .4
     steer_rate: float = .5
     steer_acceleration: float = 2.
+    # Objective normalization only for rate_bounded_v2, never a hard limit.
+    # None inherits the previous normalization to preserve existing costs.
+    steering_acceleration_scale: float | None = None
     accel_limit: float = .5
     brake_limit: float = .5
     jerk_limit: float = 1.
@@ -71,14 +75,16 @@ class VehicleConfig:
         for name in boolean_fields:
             if type(getattr(self, name)) is not bool:
                 raise ValueError(f'{name} must be a boolean')
+        if self.command_profile not in ('legacy_bounded_v1', 'rate_bounded_v2'):
+            raise ValueError('command_profile must be legacy_bounded_v1 or rate_bounded_v2')
         if self.profile not in ('measured', 'synthetic'):
             raise ValueError('profile must be measured or synthetic')
         if self.profile == 'synthetic' and not allow_synthetic:
             raise ValueError('synthetic geometry is permitted only in simulation')
         optional = {'rear_offset', 'half_length', 'front_extent', 'rear_extent', 'half_width',
-                    'longitudinal_envelope_accel', 'longitudinal_envelope_brake'}
+                    'longitudinal_envelope_accel', 'longitudinal_envelope_brake', 'steering_acceleration_scale'}
         for field in fields(self):
-            if field.name in boolean_fields | {'profile'}: continue
+            if field.name in boolean_fields | {'profile', 'command_profile'}: continue
             value = getattr(self, field.name)
             if value is None and field.name in optional: continue
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
@@ -108,6 +114,15 @@ class VehicleConfig:
                     (self.half_length is None and not asymmetric)):
                 raise ValueError('verified rear_offset and body geometry required')
         return self
+
+    def require_legacy_command_profile(self):
+        if self.command_profile != 'legacy_bounded_v1':
+            raise ValueError('rate_bounded_v2 requires the native acados runtime; legacy runtime is incompatible')
+
+    def steering_rate_change_scale(self):
+        if self.command_profile == 'legacy_bounded_v1' or self.steering_acceleration_scale is None:
+            return self.steer_acceleration
+        return self.steering_acceleration_scale
 
     def envelope_halfaxes(self):
         return (self.accel_limit if self.longitudinal_envelope_accel is None else self.longitudinal_envelope_accel,

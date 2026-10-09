@@ -34,6 +34,18 @@ int main(int argc,char **argv) {
   require(!core.reanchor(previously_transported,actual,old_prefix,10.05).prefix_transported,"each reanchor reports transport in this invocation only");
   auto mismatched=original;mismatched.artifact_fingerprint="wrong_bundle";
   require(!core.reanchor(mismatched,actual,old_prefix,10.05).success,"different solver artifact cannot reanchor this plan");
+  if(bundle.config().command_profile=="rate_bounded_v2"){
+    auto free_prefix=core.reanchor(original,actual,Applied{.5,.005,5.},10.05);
+    require(free_prefix.success&&!free_prefix.prefix_transported,"removed jerk/angular-acceleration limits cannot reject unchanged feasible controls");
+    require(free_prefix.controls==original.controls,"v2 tries unchanged controls first");
+    auto retained_rate=core.reanchor(original,actual,Applied{0.,.4,0.},10.10);
+    require(!retained_rate.success,"retained steering rate rejects excessive endpoint ramp");
+    auto unsafe=actual;unsafe[3]=bundle.config().max_speed;unsafe[5]=bundle.config().steer_limit;
+    auto envelope=core.reanchor(original,unsafe,Applied{.5,.005,5.},10.05);
+    require(!envelope.success&&envelope.max_violation>1e-4,"v2 retains strict physical operating ellipse");
+    std::cout<<"PASS: v2 unchanged reanchor ignores removed higher-order bounds and retains steering-rate/envelope checks\n";
+    return 0;
+  }
   auto jerk=core.reanchor(original,actual,Applied{.3,.005,0.},10.05);
   require(!jerk.success,"violated first acceleration jerk rejects unchanged controls");
   require(jerk.controls==original.controls,"rejected jerk candidate controls are not clipped");

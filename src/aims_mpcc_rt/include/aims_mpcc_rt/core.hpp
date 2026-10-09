@@ -15,13 +15,16 @@ using Parameters = std::array<double, 10>;
 
 struct Config {
   std::string profile;
+  std::string command_profile{"legacy_bounded_v1"};
   double wheelbase{}, rear_offset{}, half_width{}, front_extent{}, rear_extent{};
   double cruise_speed{}, max_speed{}, minimum_drive_speed{}, steer_limit{}, steer_rate{};
+  double steering_acceleration_scale{};
   double steer_acceleration{}, accel_limit{}, brake_limit{}, jerk_limit{}, steering_tau{};
   double understeer_coefficient{}, envelope_accel{}, envelope_brake{}, lateral_accel_limit{};
   double recovery_jerk_limit{}, envelope_recovery_time{}, envelope_slack_limit{};
   bool enforce_corridor{}, envelope_soft_enabled{}, recovery_jerk_enabled{};
   int horizon{};
+  int acados_rti_steps{1};
   double dt{};
 };
 

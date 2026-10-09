@@ -46,6 +46,16 @@ int main(int argc,char **argv) {
   }  // Unload the copied library before subsequent corruption tests overwrite it.
   fs::copy_file(root/"manifest.json",copy/"manifest.json",fs::copy_options::overwrite_existing);
   fs::copy_file(root/"native_manifest.json",copy/"native_manifest.json",fs::copy_options::overwrite_existing);
+  auto profile_manifest=YAML::LoadFile((copy/"manifest.json").string());
+  profile_manifest["command_profile"]=manifest["command_profile"]&&manifest["command_profile"].as<std::string>()=="rate_bounded_v2"?
+    "legacy_bounded_v1":"rate_bounded_v2";
+  {std::ofstream changed(copy/"manifest.json");changed<<YAML::Dump(profile_manifest);}
+  auto profile_native=YAML::LoadFile((copy/"native_manifest.json").string());
+  profile_native["source_manifest_sha256"]=file_sha(copy/"manifest.json");
+  {std::ofstream changed(copy/"native_manifest.json");changed<<YAML::Dump(profile_native);}
+  rejected([&]{Bundle::load(copy.string());},"bundle profile disagrees with frozen configuration must fail startup");
+  fs::copy_file(root/"manifest.json",copy/"manifest.json",fs::copy_options::overwrite_existing);
+  fs::copy_file(root/"native_manifest.json",copy/"native_manifest.json",fs::copy_options::overwrite_existing);
   auto native=YAML::LoadFile((copy/"native_manifest.json").string());
   native["machine"]="incorrect_target";
   {std::ofstream changed(copy/"native_manifest.json");changed<<YAML::Dump(native);}

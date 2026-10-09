@@ -63,7 +63,8 @@ class NumericalBackend:
             shift=min(self.n,max(1,round(self.previous_elapsed/self.dt)))
             shifted=np.vstack((self.previous['controls'][shift:],np.repeat(self.previous['controls'][-1:],shift,axis=0)))
         states=[initial];controls=[];acceleration,steering,rate=applied
-        limits=jerk_limits(initial,applied,self.config,self.dt,self.n)
+        v2=self.config.command_profile=='rate_bounded_v2'
+        limits=None if v2 else jerk_limits(initial,applied,self.config,self.dt,self.n)
         for k in range(self.n):
             x=states[-1];tangent=self.path.curve.numpy(x[4],1)
             tangent_norm=np.linalg.norm(tangent)
@@ -76,14 +77,18 @@ class NumericalBackend:
                 desired_accel,desired_steer=shifted[k,:2]
                 if refresh_longitudinal:
                     desired_accel=(refs[k+1]-x[3])/self.dt
-            acceleration=float(np.clip(desired_accel,max(-self.config.brake_limit,acceleration-limits[k]*self.dt),
-                                        min(self.config.accel_limit,acceleration+limits[k]*self.dt)))
+            lo=-self.config.brake_limit if v2 else max(-self.config.brake_limit,acceleration-limits[k]*self.dt)
+            hi=self.config.accel_limit if v2 else min(self.config.accel_limit,acceleration+limits[k]*self.dt)
+            acceleration=float(np.clip(desired_accel,lo,hi))
             desired_rate=(np.clip(desired_steer,-self.config.steer_limit,self.config.steer_limit)-steering)/self.dt
             room_left=self.config.steer_limit+steering;room_right=self.config.steer_limit-steering
-            rate_lower=max(-self.config.steer_rate,rate-self.config.steer_acceleration*self.dt,
+            rate_lower=0. if v2 else max(-self.config.steer_rate,rate-self.config.steer_acceleration*self.dt,
                 -room_left/self.dt,-_angular_stopping_rate(room_left,self.config.steer_acceleration,self.dt))
-            rate_upper=min(self.config.steer_rate,rate+self.config.steer_acceleration*self.dt,
+            rate_upper=0. if v2 else min(self.config.steer_rate,rate+self.config.steer_acceleration*self.dt,
                 room_right/self.dt,_angular_stopping_rate(room_right,self.config.steer_acceleration,self.dt))
+            if v2:
+                rate_lower=max(-self.config.steer_rate,-room_left/self.dt)
+                rate_upper=min(self.config.steer_rate,room_right/self.dt)
             if rate_lower>rate_upper+1e-12:
                 raise ValueError(f'Applied steering prefix has no bounded angular continuation at interval {k}: '
                                  f'steering={steering:.6g}, rate={rate:.6g}')

@@ -62,6 +62,7 @@ def artifact_fingerprint(path,config,horizon,dt):
 class AcadosSolver(NumericalBackend):
     def __init__(self,path,config,horizon=10,dt=.1,prepare=False,artifact_directory=None):
         super().__init__(path,config,horizon,dt)
+        config.require_legacy_command_profile()
         fingerprint,payload=artifact_fingerprint(path,config,horizon,dt)
         root=Path(artifact_directory or os.environ.get('AIMS_MPCC_SOLVER_DIR',Path.home()/'.cache'/'aims_mpcc'/'solvers'))
         self.artifact_directory=root.expanduser().resolve()/'acados'/fingerprint
@@ -115,21 +116,27 @@ class AcadosSolver(NumericalBackend):
         except (ValueError,KeyError,OSError,TypeError,AttributeError):return False
 
     def _loader_metadata_matches(self,document):
-        # acados reads these fields from JSON even when passed an OCP object.
-        # The manifest digest alone cannot establish that its loader routes
-        # actually select the binary and dependencies we verified.
+        # Older SDKs place loader routes at the JSON root; pinned 0.5.5 places
+        # them under code_gen_options and loads from the supplied OCP object.
+        # Validate the generated metadata against the object routes we set,
+        # while retaining the binary and manifest hashes above.
         dims=document['dims'];options=document['solver_options']
+        routes=document.get('code_gen_options',document)
+        route_keys=('shared_lib_ext','code_export_directory','acados_lib_path','acados_include_path')
+        if any(key not in routes for key in route_keys):return False
+        if routes is not document and any(key in document and document[key]!=routes[key] for key in route_keys):
+            return False
         if self._expected_lib_path is None:return False
         library_directory=Path(self._expected_lib_path)
         sample_count=round(self.dt/.02)+1
         corner_probes=len({0,(sample_count+1)//2,sample_count-1})
-        nonlinear_rows=3+sample_count+(4*corner_probes if self.config.enforce_corridor else 0)+int(self.config.envelope_soft_enabled)
+        nonlinear_rows=(1 if self.config.command_profile=='rate_bounded_v2' else 3)+sample_count+(4*corner_probes if self.config.enforce_corridor else 0)+int(self.config.envelope_soft_enabled)
         return bool(
             document['name']==self.model_name and document['model']['name']==self.model_name and
-            document['problem_class']=='OCP' and document['shared_lib_ext']=='.so' and
-            Path(document['code_export_directory']).resolve()==self.shared_library.parent.resolve() and
-            Path(document['acados_lib_path']).resolve()==library_directory.resolve() and
-            Path(document['acados_include_path']).resolve()==(library_directory.parent/'include').resolve() and
+            document['problem_class']=='OCP' and routes['shared_lib_ext']=='.so' and
+            Path(routes['code_export_directory']).resolve()==self.shared_library.parent.resolve() and
+            Path(routes['acados_lib_path']).resolve()==library_directory.resolve() and
+            Path(routes['acados_include_path']).resolve()==(library_directory.parent/'include').resolve() and
             type(dims['N']) is int and dims['N']==self.n and dims['nx']==9 and dims['np']==10 and
             dims['nu']==(4 if self.config.envelope_soft_enabled else 3) and
             dims['nh_0']==nonlinear_rows and dims['nh']==nonlinear_rows and
@@ -167,7 +174,7 @@ class AcadosSolver(NumericalBackend):
             ca.sin(angle)/cfg.heading_scale,(1-ca.cos(angle))/cfg.heading_scale,
             (x[3]-p[6])/cfg.speed_scale,(u[2]-p[6])/cfg.speed_scale,
             (u[1]-ff)/cfg.steering_scale,u[0]/cfg.acceleration_scale,
-            rate/cfg.steer_rate,rate_change/(cfg.steer_acceleration*self.dt))
+            rate/cfg.steer_rate,rate_change/(cfg.steering_rate_change_scale()*self.dt))
         weights=[cfg.contour_weight,RATIOS['lag'],cfg.heading_weight,cfg.heading_weight,
                  cfg.speed_weight,RATIOS['progress'],cfg.steering_weight,RATIOS['accel'],cfg.steering_rate_weight,cfg.steering_acceleration_weight]
         if cfg.envelope_soft_enabled:
@@ -180,9 +187,11 @@ class AcadosSolver(NumericalBackend):
         ocp.cost.yref=np.zeros(len(weights));ocp.cost.yref_e=np.zeros(5)
         h=[];lo=[];hi=[];groups=[]
         def constraint(expr,lower,upper,group):h.append(expr);lo.append(lower);hi.append(upper);groups.append(group)
-        constraint((u[0]-x[6])/(p[7]*self.dt),-1.,1.,'jerk')
+        if cfg.command_profile=='legacy_bounded_v1':
+            constraint((u[0]-x[6])/(p[7]*self.dt),-1.,1.,'jerk')
         constraint(rate,-cfg.steer_rate,cfg.steer_rate,'steering_rate')
-        constraint(rate_change,-cfg.steer_acceleration*self.dt,cfg.steer_acceleration*self.dt,'steering_acceleration')
+        if cfg.command_profile=='legacy_bounded_v1':
+            constraint(rate_change,-cfg.steer_acceleration*self.dt,cfg.steer_acceleration*self.dt,'steering_acceleration')
         def corridor(value):
             if not cfg.enforce_corridor:return []
             front=ca.vertcat(ca.cos(value[2]),ca.sin(value[2]));left=ca.vertcat(-ca.sin(value[2]),ca.cos(value[2]))

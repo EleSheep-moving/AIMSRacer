@@ -75,6 +75,7 @@ class MPCCNode(Node):
         if self.plan_ttl>self.handover_delay+self.horizon*.1:
             raise ValueError('plan_ttl exceeds the available prediction horizon; increase horizon or reduce timing budgets')
         self.config=load_config(self.get_parameter('vehicle_config').value)
+        self.config.require_legacy_command_profile()
         self.config.validate(require_verified=True,allow_synthetic=self.get_parameter('simulation').value)
         self.path=ReferencePath.load(self.get_parameter('path_directory').value)
         self.path.validate_config(self.config,require_recording=not self.get_parameter('simulation').value)
