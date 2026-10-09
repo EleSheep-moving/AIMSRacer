@@ -28,8 +28,9 @@ active callback P95 31.07 ms. The historical worker matrix below does not
 qualify current source. Bounded matrix-allocation and cache-path patches are
 verified; a further external projection-elision prototype is retained without
 production integration because accepted-plan benefit is not established.
-No backend is promoted or field-qualified; activation epoch consistency and
-physical actuator identification remain open.
+No backend is promoted or field-qualified. In-motion output timing remains open;
+the user has deferred the captured finish-only seq350 mismatch from the current
+acceptance work. Reuse the existing actuator evidence for low-speed baselines.
 
 ## Implemented control and solver contracts
 
@@ -946,12 +947,18 @@ measured benefit; this report is not a timing or field qualification.
 
 ## Model and field boundaries
 
-Steering tau 0.08 s came from a previous lumped response fit. Separate servo
-transport delay is not measured. The longitudinal prediction is an ideal
-acceleration approximation; speed-mode PID delay and speed-dependent response
-are not identified. Adding an execution schedule gate does not validate these
-hardware assumptions. Identification and held-out prediction errors remain
-necessary before claiming higher-speed physical accuracy.
+Existing steering evidence includes a combined 0.08 s response fit and an
+earlier equivalent command-to-yaw fit of about 48 ms dead time plus 20–27 ms
+response. The user previously chose the combined model; these measurements do
+not separately identify physical servo motion. Existing longitudinal evidence
+includes about 40 ms delay plus 0.16 s speed-loop response in the 2026-09-28
+speed-mode data. These parameters were already supplied; a new full
+identification campaign is not a prerequisite for a low-speed MPC baseline.
+The present optimizer still approximates longitudinal motion by ideal
+acceleration. Its acceleration/braking capabilities and broader speed-dependent
+prediction accuracy remain unverified. Existing 200/400 ms prediction audits
+can guide whether extra actuator detail is useful. Preserve the measured
+operating region when interpreting any higher-speed claim.
 
 `96ea98b` repairs warm seed angular stopping feasibility. 56 of the original
 88 failed-request seeds violated steering acceleration due to endpoint clipping.
@@ -983,6 +990,29 @@ or final higher-speed profile has been selected. Real acceptance remains at leas
 three laps each at 0.5 and 1 m/s, followed by controlled higher-speed envelopes.
 
 ## Deployment and rollback
+
+### Original NPU replacement candidate investigation
+
+At the user's direction, an isolated original-source trial uses NPU's
+`real-car-original` commit `6c5012b9cd310c8fca5281c408298ffb5d4b3885` with
+matching acados 0.5.5. Selected desktop Python tests pass 33 cases. Original
+baseline and MPCC C++ solver smoke calls succeed on desktop and ARM64; NX
+reports single-call times 3.77805 and 4.13150 ms. No ROS node or estimator load
+is active in those calls. The stock Python nominal simulation completes one
+virtual-track lap with 250 solves / zero failures on the author's vehicle
+parameters. Its reported solve timing excludes preparation and final
+extraction/validation and cannot be equated to our full-request timing.
+
+The potential replacement is the integrated C++ model, OCP, predictor and
+command manager, with ROS 2/state/reference/vehicle-interface adaptation.
+The upstream dynamic vehicle parameters and learned residual are not
+validated on AIMSRacer. Source trials establish neither complete ROS build,
+ROS 2 adaptation, matched tracking, current NX joint-load performance nor
+field readiness. No default backend changes. Detailed commands, manifests,
+old actuator evidence and logs live outside Git under
+`aimsracer-data/experiments/npu-mpcc-adaptation/`.
+
+### Current feature rollback
 
 Keep the feature branch isolated until remaining gates pass. Build and cache
 preparation, launchability, simulation, replay and real-car acceptance are separate

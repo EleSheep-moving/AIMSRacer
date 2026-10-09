@@ -86,3 +86,28 @@ Implementation commits and reports append evidence below. Any unmet test/field g
 - The car is now in a different venue. Map-matched bag replay supplies estimator
   load; no vehicle driving publisher is started. Supervised laps remain pending.
 - No backend has been promoted to the default or selected as passing.
+
+### User-directed priorities after the current milestone
+
+- The captured seq350 finish-only scheduling/model mismatch is deferred from
+  the current acceptance work at the user's request. Preserve its reproduction
+  and stopping limitation; defer its repair. General in-motion output timing
+  remains an active concern.
+- Investigate and run the original NPU C++ dynamic MPCC as a complete
+  replacement candidate, including its model, constraints, command management
+  and execution structure. Keep the existing localization/vehicle interfaces;
+  live tuning and MAP/PP remain excluded. Original-source tests and ROS 2/NX
+  adaptation are separate qualification stages.
+- Reuse the existing speed-mode actuator evidence first: longitudinal fit
+  about 40 ms delay plus 0.16 s response, and steering combined response about
+  0.08 s. The earlier 2026-09-27 calibration also records an equivalent
+  steering fit of about 48 ms delay plus 20–27 ms response; the user previously
+  chose the combined 80 ms model. These are regional fits, not a requirement
+  for a new full identification campaign before a low-speed MPC baseline.
+- Original NPU source `6c5012b` now passes 33 selected desktop tests, baseline
+  and MPCC C++ solver smoke calls on desktop and NX, and one stock Python
+  simulation lap with 250 successful solves. NX reported single-call times
+  are 3.778/4.132 ms, with no estimator load or ROS node. The Python reported
+  timing excludes preparation and extraction. These trials do not qualify
+  ROS 2 integration, this vehicle's model or current joint-load timing.
+  Evidence is in `aimsracer-data/experiments/npu-mpcc-adaptation/`.
