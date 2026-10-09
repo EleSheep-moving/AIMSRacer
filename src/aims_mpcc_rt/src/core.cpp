@@ -57,6 +57,7 @@ struct Bundle::Impl {
   Config cfg;Reference reference;std::string fingerprint;
   std::vector<double> lower,upper,terminal_lower,terminal_upper,input_lower,input_upper;
   std::vector<double> cost_scaling;
+  std::vector<std::string> constraint_groups;
   int nu{},nh{},nh_e{},sample_count{};void *library{};
   void *(*create)(){};void (*free)(void*){};int (*reset)(void*){};
   void (*set)(void*,int,const char*,const double*){};
@@ -97,6 +98,10 @@ Bundle Bundle::load(const std::string &directory,const std::string &config_path,
   i.cost_scaling=values(manifest["cost_scaling"]);
   i.nu=manifest["nu"].as<int>();i.nh=manifest["nh"].as<int>();i.nh_e=manifest["nh_e"].as<int>();
   i.sample_count=manifest["candidate_sample_count"].as<int>();
+  if(manifest["constraint_groups"])for(auto group:manifest["constraint_groups"])
+    i.constraint_groups.push_back(group.as<std::string>());
+  else for(int row=0;row<i.nh;++row)i.constraint_groups.push_back("nonlinear_row_"+std::to_string(row));
+  if(i.constraint_groups.size()!=size_t(i.nh))throw std::runtime_error("constraint group count mismatch");
   auto data=YAML::LoadFile((root/"config.json").string());auto &c=i.cfg;
   c.profile=data["profile"].as<std::string>();
   c.command_profile=data["command_profile"]?data["command_profile"].as<std::string>():"legacy_bounded_v1";
@@ -277,7 +282,7 @@ State Core::transition(State x,const Control &u,double previous_endpoint,double 
 }
 
 Plan Core::solve(State initial,const Applied &applied,const Alignment &alignment,double elapsed,
-                 double budget,bool second,double source_epoch,double forecast_epoch,const std::vector<double> &targets) {
+                 double budget,bool second,double source_epoch,double forecast_epoch,const std::vector<double> &targets,bool refresh_second_geometry) {
   auto started=Clock::now();Plan plan;plan.dt=config().dt;plan.source_epoch=source_epoch;plan.forecast_epoch=forecast_epoch;
   plan.artifact_fingerprint=bundle_.fingerprint();plan.speed_targets=targets;plan.map_alignment=alignment;plan.initial_applied=applied;
   if(!finite(initial)||!finite(applied)||!finite(alignment)||!std::isfinite(elapsed)||elapsed<=0.||
@@ -353,13 +358,17 @@ Plan Core::solve(State initial,const Applied &applied,const Alignment &alignment
     auto validation_started=Clock::now();
     plan.raw_optimizer_cost=0.;plan.native_cost=native.cost(capsule_);
     std::vector<std::vector<double>> native_controls;
+    std::vector<InternalState> native_states;
     for(int k=0;k<cfg.horizon;++k) {
       std::vector<double> u(native.nu);native.get(capsule_,k,"u",u.data());
-      InternalState raw{};native.get(capsule_,k,"x",raw.data());
+      InternalState raw{};native.get(capsule_,k,"x",raw.data());native_states.push_back(raw);
+      plan.max_geometry_progress_shift=std::max(plan.max_geometry_progress_shift,std::abs(raw[4]-parameters[k][4]));
       plan.raw_optimizer_cost+=native.cost_scaling[k]*bundle_.evaluate(3,raw,u,parameters[k])[0];
       native_controls.push_back(std::move(u));
     }
     InternalState raw_terminal{};native.get(capsule_,cfg.horizon,"x",raw_terminal.data());
+    native_states.push_back(raw_terminal);
+    plan.max_geometry_progress_shift=std::max(plan.max_geometry_progress_shift,std::abs(raw_terminal[4]-parameters.back()[4]));
     std::vector<double> terminal_u(native.nu,0.);
     plan.raw_optimizer_cost+=native.cost_scaling.back()*bundle_.evaluate(4,raw_terminal,terminal_u,parameters.back())[0];
     plan=validate_candidate(initial,applied,alignment,native_controls,parameters,std::move(plan));
@@ -371,7 +380,26 @@ Plan Core::solve(State initial,const Applied &applied,const Alignment &alignment
     if(pass==0&&second&&budget-duration(started)<estimate) {
       plan.reason="remaining budget cannot cover estimated second RTI";break;
     }
-    // Optional second pass retains the native iterate and identical OCP.
+    if(pass==0&&second&&cfg.acados_rti_steps==2&&refresh_second_geometry){
+      // Geometry remains frozen WITHIN each RTI pass. A corrective pass uses
+      // the first native iterate's progress, retaining its states and controls.
+      // The same parameter vector is consumed by the second optimizer and
+      // final exact nonlinear candidate validation/objective evaluation.
+      auto refresh_started=Clock::now();
+      if(!std::all_of(native_states.begin(),native_states.end(),[](const auto& x){return finite(x);})){
+        plan.success=false;plan.reason="nonfinite native geometry iterate";break;
+      }
+      for(int k=0;k<=cfg.horizon;++k){
+        const double theta=k?native_states[k][4]:initial[4];
+        auto r=ref.at(theta);double dx=r.x-alignment[0],dy=r.y-alignment[1];
+        auto &p=parameters[k];
+        p[0]=cosine*dx+sine*dy;p[1]=-sine*dx+cosine*dy;
+        p[2]=r.yaw-alignment[2];p[3]=r.curvature;p[4]=theta;p[5]=r.tangent_norm;
+        native.parameters(capsule_,k,p.data());
+      }
+      native.initial(capsule_,x0.data()); // preserve the immutable measurement
+      ++plan.geometry_refreshes;plan.geometry_refresh_time_s+=duration(refresh_started);
+    }
   }
   plan.solve_time_s=duration(started);
   if(plan.success){previous_=plan;previous_elapsed_=0.;have_progress_=true;previous_theta_=initial[4];previous_yaw_=initial[2];}
@@ -384,24 +412,26 @@ Plan Core::validate_candidate(const State &initial,const Applied &applied,const 
   const auto &cfg=config();const auto &ref=reference();const auto &native=*bundle_.impl_;
   double cosine=std::cos(alignment[2]),sine=std::sin(alignment[2]);
   plan.map_alignment=alignment;plan.initial_applied=applied;
-  plan.states.clear();plan.controls.clear();plan.states.push_back(initial);plan.max_violation=0.;plan.cost=0.;InternalState x=internal(initial,applied);
+  plan.states.clear();plan.controls.clear();plan.states.push_back(initial);plan.max_violation=0.;plan.constraint_violations.clear();plan.cost=0.;InternalState x=internal(initial,applied);
   bool all_finite=true;
-  auto violation=[&](double value,double lower,double upper){
-    if(!std::isfinite(value)){all_finite=false;return;}
-    plan.max_violation=std::max({plan.max_violation,lower-value,value-upper});
+  auto violation=[&](double value,double lower,double upper,const std::string &group){
+    if(!std::isfinite(value)){all_finite=false;plan.constraint_violations[group]=std::numeric_limits<double>::infinity();return;}
+    const double error=std::max({0.,lower-value,value-upper});
+    plan.constraint_violations[group]=std::max(plan.constraint_violations[group],error);
+    plan.max_violation=std::max(plan.max_violation,error);
   };
   for(int k=0;k<cfg.horizon;++k) {
     const auto &u=controls[k];
     all_finite=all_finite&&finite(u);plan.controls.push_back({u[0],u[1],u[2]});
-    for(int j=0;j<native.nu;++j)violation(u[j],native.input_lower[j],native.input_upper[j]);
-    violation(x[3],0.,cfg.max_speed);violation(x[5],-cfg.steer_limit,cfg.steer_limit);
+    for(int j=0;j<native.nu;++j)violation(u[j],native.input_lower[j],native.input_upper[j],"input_bounds");
+    violation(x[3],0.,cfg.max_speed,"speed_bounds");violation(x[5],-cfg.steer_limit,cfg.steer_limit,"steering_bounds");
     auto candidate=bundle_.evaluate(5,x,u,parameters[k]);
-    for(int j=0;j<native.nh;++j)violation(candidate[9+j],native.lower[j],native.upper[j]);
+    for(int j=0;j<native.nh;++j)violation(candidate[9+j],native.lower[j],native.upper[j],native.constraint_groups[j]);
     plan.cost+=native.cost_scaling[k]*candidate[9+native.nh];
     for(int j=0;j<native.sample_count;++j) {
       State sample{};std::copy_n(candidate.begin()+10+native.nh+6*j,6,sample.begin());
       if(!finite(sample)){all_finite=false;continue;}
-      violation(sample[3],0.,cfg.max_speed);violation(sample[5],-cfg.steer_limit,cfg.steer_limit);
+      violation(sample[3],0.,cfg.max_speed,"speed_bounds");violation(sample[5],-cfg.steer_limit,cfg.steer_limit,"steering_bounds");
       if(cfg.enforce_corridor) {
         auto r=ref.at(sample[4]);double yaw=sample[2]+alignment[2];
         double px=cosine*sample[0]-sine*sample[1]+alignment[0];
@@ -409,7 +439,7 @@ Plan Core::validate_candidate(const State &initial,const Applied &applied,const 
         for(double along:{cfg.front_extent,-cfg.rear_extent})for(double across:{-cfg.half_width,cfg.half_width}) {
           double dx=px+along*std::cos(yaw)-across*std::sin(yaw)-r.x;
           double dy=py+along*std::sin(yaw)+across*std::cos(yaw)-r.y;
-          violation(-std::sin(r.yaw)*dx+std::cos(r.yaw)*dy,-ref.right_width(),ref.left_width());
+          violation(-std::sin(r.yaw)*dx+std::cos(r.yaw)*dy,-ref.right_width(),ref.left_width(),"corridor");
         }
       }
     }
@@ -418,8 +448,8 @@ Plan Core::validate_candidate(const State &initial,const Applied &applied,const 
   }
   std::vector<double> terminal_u(native.nu,0.);
   auto terminal=bundle_.evaluate(6,x,terminal_u,parameters.back());
-  for(int j=0;j<native.nh_e;++j)violation(terminal[j],native.terminal_lower[j],native.terminal_upper[j]);
-  violation(x[3],0.,cfg.max_speed);violation(x[5],-cfg.steer_limit,cfg.steer_limit);
+  for(int j=0;j<native.nh_e;++j)violation(terminal[j],native.terminal_lower[j],native.terminal_upper[j],j?"terminal_corridor":"terminal_operating_envelope");
+  violation(x[3],0.,cfg.max_speed,"speed_bounds");violation(x[5],-cfg.steer_limit,cfg.steer_limit,"steering_bounds");
   plan.cost+=native.cost_scaling.back()*terminal.back();
   all_finite=all_finite&&std::isfinite(plan.cost)&&std::isfinite(plan.native_cost)&&std::isfinite(plan.raw_optimizer_cost);
   if(!all_finite)plan.max_violation=std::numeric_limits<double>::infinity();

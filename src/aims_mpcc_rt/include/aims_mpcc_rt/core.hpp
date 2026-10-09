@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace aims_mpcc_rt {
 using State = std::array<double, 6>;
@@ -70,7 +71,9 @@ class Bundle {
 
 struct Plan {
   bool success{};
-  int status{-1}, native_passes{};
+  int status{-1}, native_passes{}, geometry_refreshes{};
+  double max_geometry_progress_shift{}, geometry_refresh_time_s{};
+  std::map<std::string,double> constraint_violations;
   std::vector<State> states;
   std::vector<Control> controls;
   double dt{}, source_epoch{}, forecast_epoch{}, solve_time_s{}, native_time_s{};
@@ -97,7 +100,7 @@ class Core {
   Plan solve(State initial, const Applied &, const Alignment &, double elapsed_s,
              double budget_s=.05, bool allow_second_rti=false,
              double source_epoch=0., double forecast_epoch=0.,
-             const std::vector<double> &speed_targets={});
+             const std::vector<double> &speed_targets={}, bool refresh_second_geometry=true);
   Plan reanchor(const Plan &, State actual, const Applied &actual_prefix, double actual_epoch,
                 const std::optional<Alignment> &current_alignment=std::nullopt) const;
   void reset();

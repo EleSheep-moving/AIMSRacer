@@ -104,23 +104,37 @@ int main(int argc,char **argv) {
   check(stationary.success,"zero speed targets candidate feasible");
   near(stationary.states.back()[3],0.,1e-4,"zero speed targets preserve standstill within solver feasibility tolerance");
   core.reset();
+  auto exhausted=core.solve(stopped,{}, {},.05,1e-12,true);
+  check(!exhausted.success&&exhausted.native_passes==0&&exhausted.geometry_refreshes==0,"fixed request budget prevents solver/geometry work after preparation");
+  core.reset();
   auto ref=b.reference().at(0.);
   State initial{ref.x,ref.y,ref.yaw,0.,0.,0.};Applied applied{};
   double execution_step=.5*b.config().dt;
+  const bool refresh_geometry=!(argc==3&&std::string(argv[2])=="--frozen-geometry");
+  int geometry_refreshes=0;double maximum_geometry_shift=0.;
   std::vector<double> timings;double sum_error=0.,peak_error=0.,progress=0.,last_theta=0.;int passes=0;
   int count=int(std::ceil((b.reference().length()/b.config().cruise_speed+5.)/execution_step));
   for(int i=0;i<count;++i) {
-    auto plan=core.solve(initial,applied,{},execution_step,.05,true);
+    auto plan=core.solve(initial,applied,{},execution_step,.05,true,0.,0.,{},refresh_geometry);
     if(!plan.success){
       std::cerr<<std::setprecision(17)<<"cycle="<<i<<" status="<<plan.status<<" passes="<<plan.native_passes
         <<" violation="<<plan.max_violation<<" reason="<<plan.reason<<"\nstate:";
       for(double v:initial)std::cerr<<" "<<v;
-      std::cerr<<"\nprefix:";for(double v:applied)std::cerr<<" "<<v;std::cerr<<"\n";
+      std::cerr<<"\nprefix:";for(double v:applied)std::cerr<<" "<<v;std::cerr<<"\nviolations:";
+      for(const auto &entry:plan.constraint_violations)std::cerr<<" "<<entry.first<<"="<<entry.second;
+      std::cerr<<"\n";
     }
     check(plan.success,"synthetic circle candidate rejected");
     near(plan.native_cost,plan.raw_optimizer_cost,1e-7,"actual native objective scaling parity");
     check(plan.native_passes<=b.config().acados_rti_steps,"declared RTI pass maximum");
+    if(refresh_geometry&&plan.native_passes==2)check(plan.geometry_refreshes==1,"corrective second RTI must refresh geometry once");
+    if(!refresh_geometry)check(plan.geometry_refreshes==0,"frozen comparison must not refresh geometry");
+    geometry_refreshes+=plan.geometry_refreshes;
+    maximum_geometry_shift=std::max(maximum_geometry_shift,plan.max_geometry_progress_shift);
     check(plan.max_violation<1e-4,"nonlinear candidate feasible");
+    check(std::isfinite(plan.max_geometry_progress_shift)&&plan.geometry_refresh_time_s>=0.,"finite geometry diagnostics");
+    check(plan.geometry_refresh_time_s<=plan.solve_time_s,"refresh is included in complete request budget");
+    for(const auto& entry:plan.constraint_violations)check(std::isfinite(entry.second)&&entry.second<=plan.max_violation,"named physical violation matches final candidate");
     auto u=plan.controls.front();
     double previous_endpoint=applied[1];
     // Execute half an OCP stage with the exact prefix steering endpoint.
@@ -141,6 +155,7 @@ int main(int argc,char **argv) {
   std::cout<<"PASS: exact quintic/model/cost/constraint parity, fractional warm shift, independent lagged plant\n"
            <<"N="<<b.config().horizon<<" dt="<<b.config().dt<<" execution_step="<<execution_step
            <<" cruise="<<b.config().cruise_speed<<" final_speed="<<initial[3]<<" rms_error="<<std::sqrt(sum_error/count)
+           <<" geometry_refreshes="<<geometry_refreshes<<" maximum_geometry_shift="<<maximum_geometry_shift
            <<" peak_error="<<peak_error<<" lap_progress="<<progress/b.reference().length()<<" RTI_passes="<<passes
            <<" p50_ms="<<timings[count/2]*1000<<" p95_ms="<<timings[int(count*.95)]*1000
            <<" max_ms="<<timings.back()*1000<<"\n";
