@@ -1,4 +1,6 @@
-# Experimental native solver backends
+# Historical experimental solver backend comparison
+
+> **Historical note:** This document describes earlier Python-runtime experiments. Current main uses the native acados/C++ controller. Defaults and interfaces below belong to those earlier branches. See the [current native runtime](../../aims_mpcc_rt/README.md) and [usage guide](usage.md).
 
 `ipopt` remains the default. Explicit `acados` and `qp` selections produce
 numerical candidates through the same `reset()` / `solve()` interface. Every

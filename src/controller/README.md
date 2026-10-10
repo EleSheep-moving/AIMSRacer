@@ -29,7 +29,8 @@ ros2 run aims_mpcc prepare_path "$HOME/aimsracer-data/lap.csv" \
 从 workspace 根目录构建整个主流程：
 
 ```bash
-colcon build --packages-up-to aims_racer_system aims_mpcc_rt \
+export MAKEFLAGS="-j2 -l2"
+colcon build --packages-up-to aims_racer_system aims_mpcc_rt --executor sequential \
   --cmake-args -DCMAKE_BUILD_TYPE=Release -DROS_EDITION=ROS2 -DDISTRO_ROS=humble
 ```
 

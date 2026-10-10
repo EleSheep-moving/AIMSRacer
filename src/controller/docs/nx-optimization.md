@@ -1,4 +1,6 @@
-# NX controller optimization: evidence and remaining gates
+# Historical NX controller optimization notes
+
+> **Historical note:** This document records the earlier Python/IPOPT optimization branch. Current main uses native acados/C++ control. See the [current runtime](../../aims_mpcc_rt/README.md), [field review](../../../docs/reports/2026-10-10-mpcc-field-review.md), and [documentation index](../../../docs/README.md).
 
 ## Scope and source identity
 
