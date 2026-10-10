@@ -7,6 +7,9 @@ in the [checklist](../operations/vehicle-checklist.md).
 
 | Report | Scope |
 | --- | --- |
+| [2026-10-10 field review and lap-time priorities](2026-10-10-mpcc-field-review.md) | Latest NX source audit, all field sessions, raw-bag completion checks, solver timing, speed-profile saturation and primary racing-source comparison |
+| [2026-10-10 speed boundaries and clock ordering](2026-10-10-mpcc-speed-gates.md) | Field interventions, speed overshoot rejection, clock fix and progressively faster configurations |
+| [2026-10-10 independent acceleration experiment](2026-10-10-mpcc-independent-acceleration.md) | Explicit v2 combined-envelope removal with retained actuator bounds |
 | [2026-09-20 engineering review](2026-09-20-engineering-review.md) | Synthetic estimator diagnostics and controller limitations |
 | [2026-09-21 frame check](2026-09-21-frame-check.md) | Stationary powered-vehicle frame/latency observations with the earlier local FAST-LIO modification |
 | [2026-09-28 vehicle response](2026-09-28-vehicle-response.md) | Bag-derived speed onset, steering command path, IMU yaw response and MPCC single-lag fit |
