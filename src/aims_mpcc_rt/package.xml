@@ -3,7 +3,7 @@
   <name>aims_mpcc_rt</name>
   <version>0.1.0</version>
   <description>Native acados MPCC core and bounded ROS 2 runtime.</description>
-  <maintainer email="maintainer@example.com">AIMSRacer maintainers</maintainer>
+  <maintainer email="ZhizhaoZhang@gmail.com">AIMSRacer maintainers</maintainer>
   <license>BSD-3-Clause</license>
   <license>Apache-2.0</license>
   <license>LGPL-3.0-only</license>
@@ -21,5 +21,6 @@
   <depend>tf2_ros</depend>
   <exec_depend>aims_mpcc</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
   <export><build_type>ament_cmake</build_type></export>
 </package>

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 
-spec=importlib.util.spec_from_file_location('evaluate_replay',Path(__file__).resolve().parents[1]/'replay/evaluate_replay.py')
+spec=importlib.util.spec_from_file_location('evaluate_replay',Path(__file__).resolve().parents[3]/'verification/localization/evaluate_replay.py')
 module=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 

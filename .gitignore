@@ -46,3 +46,10 @@ rosbag2_*/
 /docs/superpowers/plans/
 /scripts/
 /src/aims_racer_system/docker/
+
+# Pinned external sources prepared by tools/setup_dependencies.py
+/src/lidar_localization_ros2/
+/src/ndt_omp_ros2/
+/src/livox_ros_driver2/
+/src/serial/
+/dependencies/work/

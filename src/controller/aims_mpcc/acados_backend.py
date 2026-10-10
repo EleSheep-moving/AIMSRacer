@@ -2,7 +2,8 @@
 
 Nine internal states retain the previous acceleration, steering endpoint and
 steering ramp rate. Geometry is frozen from shifted progress at each request;
-physical motion always remains in odom. Preparation is exclusively offline.
+physical motion always remains in odom. This Python solver is retained only for
+offline model and numerical regression checks; ROS driving runs in aims_mpcc_rt.
 """
 from dataclasses import asdict
 import hashlib
@@ -19,7 +20,7 @@ import casadi as ca
 import numpy as np
 from .backend_models import NumericalBackend,interval_symbolic
 from .envelope import jerk_limits
-from .vendor.normalized_cost import RATIOS
+from .cost_constants import RATIOS
 
 
 def _dependency_versions():
@@ -36,8 +37,14 @@ def _dependency_versions():
     if source:
         try:versions['acados_source']=subprocess.check_output(['git','-C',source,'rev-parse','HEAD'],text=True,stderr=subprocess.DEVNULL).strip()
         except (subprocess.CalledProcessError,FileNotFoundError):versions['acados_source']='unknown'
-        libroot=Path(source)/'install-x86'/'lib'
-        if not libroot.exists():libroot=Path(source)/'lib'
+    install=os.environ.get('ACADOS_INSTALL_DIR')
+    libroot=None
+    if install:
+        libroot=Path(install)/'lib'
+    elif source:
+        candidates=(Path(source)/'install'/'lib',Path(source)/'install-x86'/'lib',Path(source)/'lib')
+        libroot=next((candidate for candidate in candidates if candidate.is_dir()),candidates[-1])
+    if libroot is not None:
         versions['acados_lib_path']=str(libroot.resolve())
         versions['libraries']={p.name:hashlib.sha256(p.read_bytes()).hexdigest()
                               for p in (libroot/'libacados.so',libroot/'libhpipm.so',libroot/'libblasfeo.so') if p.is_file()}
@@ -47,8 +54,8 @@ def _dependency_versions():
 def artifact_fingerprint(path,config,horizon,dt):
     root=Path(__file__).parent
     source_files=['acados_backend.py','backend_models.py','config.py','envelope.py','path.py',
-                  'rollout_native.py','kernels/rollout.c','solver_diagnostics.py',
-                  'vendor/track.py','vendor/global_kinematic_model.py','vendor/normalized_cost.py']
+                  'rollout_native.py','kernels/rollout.c','serialization.py',
+                  'vendor/track.py','cost_constants.py']
     payload=dict(schema_version=1,backend='acados_sqp_rti_hpipm',config=asdict(config),
         horizon=int(horizon),dt=float(dt),path=dict(points=path.points.tolist(),left_width=path.left_width,
         right_width=path.right_width,frame_id=path.frame_id,metadata=path.metadata),

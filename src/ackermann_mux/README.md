@@ -28,8 +28,7 @@ ros2 run ackermann_mux joystick_control_v2 --ros-args \
   -p channel_profile:=steering_ch1_throttle_ch3_aux_ch5_to_ch10
 ```
 
-The two V2 Python scripts have been removed. `joystick_control.py` and the
-`cmd_vel_to_ackermann_drive.py` adapter remain separate legacy utilities.
+Production installs only `joystick_control_v2`. The old mux and Python utilities are no longer built or installed; the unified vehicle launch owns startup.
 
 ## Arbitration and calibration safety
 

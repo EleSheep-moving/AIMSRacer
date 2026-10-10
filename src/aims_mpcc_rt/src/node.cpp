@@ -24,6 +24,7 @@
 #include <mutex>
 #include <sstream>
 #include <thread>
+#include <unistd.h>
 
 namespace aims_mpcc_rt {
 using Steady=std::chrono::steady_clock;
@@ -77,6 +78,11 @@ class RuntimeNode final:public rclcpp::Node {
     if(!simulation_&&cfg_.profile!="measured")throw std::invalid_argument("synthetic vehicle profile requires simulation:=true");
     if(!simulation_&&!bundle_.reference().recording_verified())throw std::invalid_argument("drive requires a closed reference with matching recorded vehicle geometry");
     repeat_laps_=declare_parameter<bool>("repeat_laps",false);
+    auto_start_pending_=declare_parameter<bool>("auto_start",false);
+    const double auto_start_timeout=declare_parameter<double>("auto_start_timeout",60.);
+    if(!std::isfinite(auto_start_timeout)||auto_start_timeout<=0.)
+      throw std::invalid_argument("auto_start_timeout must be finite and positive");
+    auto_start_deadline_=steady()+auto_start_timeout;
     frequency_=declare_parameter<double>("solve_frequency",20.);
     ttl_=declare_parameter<double>("plan_ttl",.8*cfg_.horizon*cfg_.dt);
     auto requested_horizon=declare_parameter<int>("horizon",cfg_.horizon);
@@ -111,6 +117,7 @@ class RuntimeNode final:public rclcpp::Node {
       listener_=std::make_shared<tf2_ros::TransformListener>(*tf_,this,false);
       identity_sub_=create_subscription<std_msgs::msg::String>("/localization/map_sha256",rclcpp::QoS(1).transient_local(),
         [this](std_msgs::msg::String::ConstSharedPtr m){std::lock_guard<std::mutex> lock(mutex_);identity_=m->data;
+          if(auto_start_pending_)record_auto_start_anchor_locked(steady());
           if(enabled_&&identity_!=bundle_.reference().map_sha256())fault_locked("Map identity mismatch");},options);
       health_sub_=create_subscription<diagnostic_msgs::msg::DiagnosticArray>("/localization/status",10,
         [this](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr m){LocalizationHealth::Values v;int count=0;
@@ -141,9 +148,12 @@ class RuntimeNode final:public rclcpp::Node {
     // Process-lifetime provenance, captured before any executor callback can
     // accept an explicit enable. Later status may first be discovered RUNNING.
     if(const char* instance=std::getenv("AIMS_MPCC_RT_SUPERVISOR_INSTANCE"))startup_instance_=instance;
+    if(startup_instance_.empty())startup_instance_="native-"+std::to_string(::getpid())+"-"+
+      std::to_string(Steady::now().time_since_epoch().count());
     startup_disabled_=!enabled_&&!stopping_&&last_output_.speed==0.&&sampler_->continuous_speed()==0.;
     worker_=std::thread([this]{solve_loop();});
-    RCLCPP_INFO(get_logger(),"acados runtime ready: %.1f Hz solve, 50 Hz output, starts disabled; explicit enable required",frequency_);
+    RCLCPP_INFO(get_logger(),"acados runtime ready: %.1f Hz solve, 50 Hz output, starts disabled; %s",frequency_,
+      auto_start_pending_?"one automatic startup pending":"explicit enable required");
   }
   ~RuntimeNode()override{
     {std::lock_guard<std::mutex> lock(mutex_);shutdown_=true;}cv_.notify_all();
@@ -158,24 +168,47 @@ class RuntimeNode final:public rclcpp::Node {
     if(logger_.joinable())logger_.join();
   }
  private:
+  // Existing manual-enable conditions and transition, also used by optional
+  // startup. The caller holds mutex_, serializing this with every explicit stop.
+  void start_locked(double now){
+    if(!solver_ready_)throw std::runtime_error("Solver not ready");
+    if(!fresh_locked(now))throw std::runtime_error("fresh state, selector authority and actual input history required");
+    if(!localization_locked(now))throw std::runtime_error(cfg_.command_profile=="rate_bounded_v2"&&!health_.qualified()&&bundle_.reference().frame_id()=="map"?
+      "Incompatible localization protocol: qualified alignment payload required":"matching map, anchor snapshot and fresh trusted localization required");
+    auto_start_anchor_seen_=true;
+    if(count_publishers(pub_->get_topic_name())!=1)throw std::runtime_error("controller must be sole command publisher");
+    if(std::abs(snapshot_.state[3])>.1)throw std::runtime_error("start requires stationary vehicle");
+    auto p=map_point(snapshot_.state,snapshot_.alignment);
+    double theta=bundle_.reference().project(p[0],p[1]);auto r=bundle_.reference().at(theta);
+    if(std::abs(wrap_angle(p[2]-r.yaw))>std::acos(-1.)/6)throw std::runtime_error("start heading outside 30 degrees");
+    if(!footprint_locked(p,theta))throw std::runtime_error("start footprint outside corridor");
+    enabled_=true;stopping_=false;phase_="RUNNING";reason_.clear();generation_++;
+    start_progress_=unwrapped_progress_=last_progress_=theta;progress_ready_=true;
+    started_=now;stationary_since_=-1.;recovery_good_=0;active_.reset();cancel_pending_locked("enable generation changed");sampler_->reset(0.,snapshot_.applied[1],now);
+    auto_start_pending_=false;
+  }
+  void cancel_auto_start_locked(const std::string& reason){
+    if(auto_start_pending_){auto_start_pending_=false;auto_start_reason_=reason;}
+  }
+  void try_auto_start_locked(double now){
+    if(!auto_start_pending_)return;
+    if(now>=auto_start_deadline_){cancel_auto_start_locked("Automatic startup wall timeout");return;}
+    try{start_locked(now);++auto_start_count_;auto_start_reason_="Automatic startup accepted";cv_.notify_all();}
+    catch(const std::exception& e){
+      const std::string reason=e.what();
+      if(reason=="Solver not ready"||reason=="fresh state, selector authority and actual input history required"||
+         reason=="matching map, anchor snapshot and fresh trusted localization required")auto_start_reason_=reason;
+      else cancel_auto_start_locked("Automatic startup refused: "+reason);
+    }
+  }
   void enable_request(const std_srvs::srv::SetBool::Request::SharedPtr request,
       const std_srvs::srv::SetBool::Response::SharedPtr response){
         std::lock_guard<std::mutex> lock(mutex_);const double now=steady();
+        if(!request->data){++stop_request_count_;cancel_auto_start_locked("Operator stop requested");}
         try{
           if(request->data){
-            if(!solver_ready_)throw std::runtime_error("Solver not ready");
-            if(!fresh_locked(now))throw std::runtime_error("fresh state, selector authority and actual input history required");
-            if(!localization_locked(now))throw std::runtime_error(cfg_.command_profile=="rate_bounded_v2"&&!health_.qualified()&&bundle_.reference().frame_id()=="map"?
-              "Incompatible localization protocol: qualified alignment payload required":"matching map, anchor snapshot and fresh trusted localization required");
-            if(count_publishers(pub_->get_topic_name())!=1)throw std::runtime_error("controller must be sole command publisher");
-            if(std::abs(snapshot_.state[3])>.1)throw std::runtime_error("start requires stationary vehicle");
-            auto p=map_point(snapshot_.state,snapshot_.alignment);
-            double theta=bundle_.reference().project(p[0],p[1]);auto r=bundle_.reference().at(theta);
-            if(std::abs(wrap_angle(p[2]-r.yaw))>std::acos(-1.)/6)throw std::runtime_error("start heading outside 30 degrees");
-            if(!footprint_locked(p,theta))throw std::runtime_error("start footprint outside corridor");
-            enabled_=true;stopping_=false;phase_="RUNNING";reason_.clear();generation_++;
-            start_progress_=unwrapped_progress_=last_progress_=theta;progress_ready_=true;
-            started_=now;stationary_since_=-1.;recovery_good_=0;active_.reset();cancel_pending_locked("enable generation changed");sampler_->reset(0.,snapshot_.applied[1],now);
+            start_locked(now);
+            if(auto_start_count_==0)auto_start_reason_="Explicit enable accepted";
           }else if(enabled_){stopping_=true;phase_="STOPPING";reason_="Operator stop requested";generation_++;cancel_pending_locked("operator stop");}
           response->success=true;response->message=phase_;
           if(request->data)++explicit_enable_count_;
@@ -195,10 +228,24 @@ class RuntimeNode final:public rclcpp::Node {
      snapshot_.epoch==health_.epoch()&&snapshot_.anchor_sequence==health_.anchor_sequence()&&
      snapshot_.anchor_stamp_ns==health_.anchor_stamp_ns()&&
      (cfg_.command_profile!="rate_bounded_v2"||health_.qualified()));}
+  void record_auto_start_anchor_locked(double now){
+    // Anchor provenance is independent of RC authority and worker readiness.
+    // Once a fresh trusted snapshot has existed, an epoch change is a fault,
+    // even if startup still waits for either of those other prerequisites.
+    if(auto_start_pending_&&!auto_start_anchor_seen_&&snapshot_.present&&history_->covers(snapshot_.source)&&
+       now>=snapshot_.source&&now-snapshot_.source<=.1&&now>=snapshot_.received&&now-snapshot_.received<=.1&&
+       now>=history_->newest()&&now-history_->newest()<=.1&&localization_locked(now))auto_start_anchor_seen_=true;
+  }
   void cancel_pending_locked(const std::string& reason){
     if(pending_){log_activation(*pending_,steady(),false,reason);++pending_cancelled_;pending_.reset();}
   }
-  void fault_locked(const std::string& reason){
+  void fault_locked(const std::string& reason,bool initial_localization_epoch=false){
+    // An initial relocalization may change the epoch before a fresh trusted
+    // anchor snapshot exists. Allow that one startup transition. Subsequent
+    // faults cancel startup using this call's reason, even if reason_ retains
+    // an earlier FAULT. Never revive pending startup after stop or acceptance.
+    if(!initial_localization_epoch||enabled_||explicit_enable_count_>0||auto_start_count_>0)
+      cancel_auto_start_locked("Native fault: "+reason);
     if(phase_!="FAULT"||enabled_){reason_=reason;fault_steady_=steady();}
     enabled_=false;stopping_=false;phase_="FAULT";generation_++;active_.reset();cancel_pending_locked(reason);
   }
@@ -216,6 +263,7 @@ class RuntimeNode final:public rclcpp::Node {
   void accept_health(const LocalizationHealth::Values& values){
     std::lock_guard<std::mutex> lock(mutex_);double now=steady();auto ros=get_clock()->now();
     observe_clock_locked(ros.seconds(),now);
+    record_auto_start_anchor_locked(now);
     auto map=values.find("map_sha256");
     if(bundle_.reference().frame_id()=="map"&&cfg_.command_profile=="rate_bounded_v2"&&
        (map==values.end()||map->second!=bundle_.reference().map_sha256())){
@@ -224,7 +272,11 @@ class RuntimeNode final:public rclcpp::Node {
       snapshot_={};fault_locked("Localization alignment map identity mismatch");return;
     }
     bool changed=health_.observe(values,ros.nanoseconds(),now);
-    if(changed){snapshot_={};fault_locked("Localization epoch changed; fresh anchor state and explicit re-enable required");}
+    if(changed){
+      const bool initial_epoch=auto_start_pending_&&!auto_start_anchor_seen_&&!auto_start_initial_epoch_fault_;
+      if(initial_epoch)auto_start_initial_epoch_fault_=true;
+      snapshot_={};fault_locked("Localization epoch changed; fresh anchor state and explicit re-enable required",initial_epoch);
+    }
     else {
       // Odom coordinates remain valid across a trusted anchor update within
       // one localization epoch. Adopt the atomic alignment record without
@@ -235,6 +287,7 @@ class RuntimeNode final:public rclcpp::Node {
         snapshot_.alignment=health_.alignment();snapshot_.anchor_sequence=health_.anchor_sequence();
         snapshot_.anchor_stamp_ns=health_.anchor_stamp_ns();
       }
+      record_auto_start_anchor_locked(now);
       if(enabled_&&(!health_.usable(ros.nanoseconds(),now)||
       (cfg_.command_profile=="rate_bounded_v2"&&!health_.qualified())))fault_locked("Trusted localization unavailable");
     }
@@ -286,6 +339,7 @@ class RuntimeNode final:public rclcpp::Node {
            std::abs(wrap_angle(x[2]-snapshot_.state[2]))>.5)throw std::runtime_error("localization discontinuity");}
       auto applied=history_->at(now-age);x[3]=std::max(0.,x[3]);x[5]=applied.first;
       snapshot_={x,applied.second,alignment,now-age,stamp,now,true,health_.epoch(),health_.anchor_sequence(),health_.anchor_stamp_ns()};
+      record_auto_start_anchor_locked(now);
     }catch(const std::exception& e){if(enabled_)fault_locked(e.what());}
   }
   void forwarded(const Drive& m){
@@ -472,6 +526,7 @@ class RuntimeNode final:public rclcpp::Node {
       // Sample the decision epoch after owning the same state mutex.
       const double decision=steady();
       observe_clock_locked(get_clock()->now().seconds(),decision);
+      try_auto_start_locked(decision);
       try{
         if(enabled_&&!fresh_locked(decision)){
           std::ostringstream reason;reason<<std::setprecision(9)<<"Input freshness expired: source_age="<<decision-snapshot_.source
@@ -549,6 +604,9 @@ class RuntimeNode final:public rclcpp::Node {
       text("startup_instance",startup_instance_);
       diagnostic_msgs::msg::KeyValue startup;startup.key="startup_disabled";startup.value=startup_disabled_?"true":"false";status.values.push_back(startup);
       value("explicit_enable_count",explicit_enable_count_);
+      value("stop_request_count",stop_request_count_);
+      value("auto_start_pending",auto_start_pending_);value("auto_start_count",auto_start_count_);
+      text("auto_start_reason",auto_start_reason_);
       const double now=steady();
       value("enabled",enabled_);value("stopping",stopping_);value("authority",mode_);value("authority_age_s",now-mode_received_);
       value("source_age_s",snapshot_.present?now-snapshot_.source:std::numeric_limits<double>::quiet_NaN());
@@ -684,7 +742,10 @@ std::lock_guard<std::mutex> lock(log_mutex_);
   State last_decision_state_{};double last_decision_cap_=0.;
   Snapshot snapshot_;LocalizationHealth health_;std::string identity_,phase_="READY",reason_;
   bool enabled_=false,stopping_=false,shutdown_=false,solver_ready_=false,simulation_=false,repeat_laps_=false,progress_ready_=false;
-  std::string startup_instance_;bool startup_disabled_=false;std::uint64_t explicit_enable_count_=0;
+  std::string startup_instance_;bool startup_disabled_=false;std::uint64_t explicit_enable_count_=0,stop_request_count_=0;
+  bool auto_start_pending_=false;double auto_start_deadline_=0.;std::uint64_t auto_start_count_=0;
+  bool auto_start_anchor_seen_=false,auto_start_initial_epoch_fault_=false;
+  std::string auto_start_reason_;
   double last_ros_now_=std::numeric_limits<double>::quiet_NaN(),fault_steady_=0.,last_compute_=0.,last_delivery_wait_=0.,last_certificate_=0.,last_activation_=0.,worker_submitted_=0.;bool worker_busy_=false;
   double frequency_=20.,ttl_=.8,budget_=.05,lead_=.02,mode_received_=-1.,started_=0.,last_publish_=0.;
   double start_progress_=0.,unwrapped_progress_=0.,last_progress_=0.,last_complete_=0.,last_observation_age_=0.,stationary_since_=-1.;bool mode_=false;

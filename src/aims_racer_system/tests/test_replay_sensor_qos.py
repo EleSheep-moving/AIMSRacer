@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location('sensor_replay', ROOT / 'replay/fastlio_ndt_replay.py')
+spec = importlib.util.spec_from_file_location('sensor_replay', ROOT.parents[1] / 'verification/localization/fastlio_ndt_replay.py')
 replay = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(replay)
 

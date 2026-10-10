@@ -1,227 +1,63 @@
-# FAST-LIO2 + NDT known-map localization for MPCC
+# 已知地图上的 native MPCC
 
-The driving graph uses FAST-LIO2 for local motion, rear axle conversion and the
-200 Hz EKF for `/odometry/filtered` (`odom` / `base_link`). NDT consumes
-`/fastlio2/body_cloud` (`livox_frame`), predicts from EKF TF at the scan stamp,
-and owns `map` → `odom`. The existing static `base_link` → `livox_frame` mount
-must describe the measured sensor extrinsic. NDT's 50 Hz TF publication holds
-the last committed correction; those timer publications are not new anchors.
+已知地图运行由 `race.launch.py` 一次启动车辆、NDT、定位 monitor 和 native MPCC。FAST-LIO2 提供连续本地运动，EKF 提供后轴状态，NDT 将这段本地运动锚定到保存地图。坐标与时间戳约定见[架构](../architecture.md)。
 
-## Prepare the map reference
+## 地图和 bundle
 
+当前示例地图：`~/maps/20260928_010503/map.pcd`。当前实跑 bundle 的部署目标：`~/aimsracer-data/bundles/field-v35-20261010`。它应完整包含 `input_reference/`、`input_config.yaml`、source manifest、native manifest、生成 C 和目标平台共享库。文件由部署过程复制；路径示例不意味着新机器已经具有这些数据。
 
-The [2026-09-28 recovery report](../reports/2026-09-28-map-reference.md) identifies
-the recorded loop and the map-frame candidate CSV. It is generated from the
-saved PGO `poses.txt` and the matching recorder CSV. Its sidecar JSON contains
-the exact `map.pcd` SHA-256 and spatial matching residuals. The generated CSV
-is local-only under `src/controller/recordings/`.
-The prepared reference bundle contains `path.csv` for the closed loop,
-`metadata.json` for frame/map/vehicle geometry, and `raw.csv` for provenance;
-it is not the point-cloud map itself.
+参考的 `metadata.json` 绑定原始 PCD SHA-256；bundle 绑定参考、配置和生成源码，native manifest 绑定目标平台和依赖库。地图内容、参考或配置变化后，按 [MPCC 使用](../../src/controller/docs/usage.md)离线准备新 bundle。保存地图与参考的历史关联证据见[地图参考报告](../reports/2026-09-28-map-reference.md)。 新参考使用 [tools/reference](../../tools/reference/README.md)的两个恢复脚本，再执行 prepare/export/build。
 
-The supplied vehicle model uses a 620 mm × 320 mm body: from the rear-axle
-`base_link`, 0.52 m forward, 0.10 m backward and 0.16 m to each side. The
-specified course is 1.0 m wide with the reference centered, so the configured
-corridor is 0.5 m on each side. These are supplied geometry assumptions; the
-saved point-cloud map does not independently establish the physical track edges.
-Check clearances on the car and track before moving under MPCC control.
+## 启动与初始化
+
+先按[启动指南](bringup.md) source 当前 workspace 和 acados 库，然后执行：
 
 ```bash
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc prepare_path \
-  src/controller/recordings/20260928-mapping-lap/closed_map.csv \
-  /data/reference-map-run1 --vehicle-config src/controller/config/vehicle.yaml \
-  --left-width 0.5 --right-width 0.5 \
-  --map-file /home/aims/maps/20260928_010503/map.pcd
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc prepare_solver \
-  /data/reference-map-run1 --vehicle-config src/controller/config/vehicle.yaml
+ros2 launch aims_racer_system race.launch.py \
+  map_file:="$HOME/maps/20260928_010503/map.pcd" \
+  artifact_directory:="$HOME/aimsracer-data/bundles/field-v35-20261010" \
+  record:=true
 ```
 
-`prepare_path` rejects the candidate if the configured geometry/corridor or
-curvature fails. It stores the map SHA-256 with the reference. Changing the
-saved map requires preparing the path and native solver for that map again.
-For this checkout, the generated bundle is
-`src/controller/recordings/20260928-mapping-lap/prepared_map_1m_rear10cm`.
-The stable local alias `src/controller/recordings/current` points to it; use
-that alias for `path_directory` so launch commands do not change when a new
-bundle is prepared. Switch the alias only after preparing the replacement.
-The solver normally uses its shared ccache directory under
-`${XDG_CACHE_HOME:-$HOME/.cache}/aims_mpcc/ccache`; it selects a matching
-compiled object by content, not by the reference directory's name.
-For this car, pass
-`path_directory:=/home/aims/AIMSRacer/src/controller/recordings/current`
-when launching MPCC. No cache environment variable is needed.
-The candidate's sampled maximum curvature is about 0.93 m⁻¹: at 1.0 m/s,
-the implied lateral acceleration is about 0.93 m/s², within the configured
-1.0 m/s² limit. At 1.2 m/s it would be about 1.33 m/s². This is a model-based
-speed choice, not a measured tire-grip limit.
-
-## Start and initialize localization
-
-Build the pinned NDT dependency and AIMSRacer workspace using the dependency
-bootstrap supplied with this branch, then source the resulting ROS 2 overlay:
+默认等待手动初始化与启用。初始化命令的位姿始终是 **base_link 在 map 中的 x y z roll pitch yaw**，角度单位为弧度；这里 base_link 是后轴中点。将下列数值替换为车辆实际摆放：
 
 ```bash
-source /opt/ros/humble/setup.bash
-python3 src/aims_racer_system/replay/setup_ndt_dependencies.py log/fastlio-ndt/deps
-MAKEFLAGS="-j2 -l2" colcon build --base-paths src log/fastlio-ndt/deps --executor sequential --symlink-install \
-  --packages-up-to aims_racer_system aims_mpcc
-source install/setup.bash
+ros2 run aims_racer_system relocalize_known_map.py \
+  "$HOME/maps/20260928_010503/map.pcd" --pose-frame base_link \
+  --x 0 --y 0 --z 0 --roll 0 --pitch 0 --yaw 0
 ```
 
-The bootstrap clones pinned dependencies and applies the recorded patches in
-`log/fastlio-ndt/deps`. Build in a ROS 2 Humble environment with the dependency
-build packages installed; source the resulting overlay in each terminal.
-The standalone wheel/IMU EKF and deskew pipeline are not needed for this graph.
-The commands below are repository launch commands. Execute all terminals in the
-same ROS domain and with the same clock choice.
+也可在 RViz 中把 fixed frame 设置为 `map`，用 2D Pose Estimate 发布 `/initialpose`，其箭头指向 base_link 的位置与方向。不要把 Livox 点云坐标或车头位置直接作为后轴初值。初始化工具等待新可信 epoch，并检查实际 map identity 与新定位状态；初始化完成后再检查地图中的车辆摆放。
 
-Start the existing vehicle graph (Livox, FAST-LIO2, VESC, EKF, static frames):
+启动时已知道初值，可直接传六个有限数值：
 
 ```bash
-ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
+ros2 launch aims_racer_system race.launch.py \
+  map_file:="$HOME/maps/20260928_010503/map.pcd" \
+  artifact_directory:="$HOME/aimsracer-data/bundles/field-v35-20261010" \
+  initial_pose:="0 0 0 0 0 0" record:=true
 ```
 
-Start the NDT add-on with an immutable saved PCD map. `map_file` is mandatory.
-The helper configures and activates the NDT lifecycle node automatically.
+省略 `initial_pose` 就等待后续工具或 RViz 输入；示例零初值仅适用于实际车辆在该地图位置。
 
-The default `ndt_fastlio.yaml` uses the full immutable PCD as a fixed NDT
-target. Online local-map cropping is disabled, following the pinned upstream
-Jetson preset. Lifecycle configure constructs the target and runs upstream's
-search-tree warm-up before activation; wait for `Registration target warm-up`
-and `NDT configured and active` in the startup log. Initialization still needs
-three fresh consistent scan matches. Map loading/warm-up is startup work and
-must not be interpreted as a recurring scan-time cost.
+## 启用、一次自动启动与停止
 
-The 0.5 m `viz_voxel_leaf_size` affects `/localizer/map_cloud` only. The
-registration target and independent consistency monitor use the original PCD;
-its SHA-256 does not change. Scan downsampling remains 0.2 m, NDT resolution
-1.0 m, scan maximum range 30 m and registration thread count two. A much larger
-map requires a separate memory/startup assessment before enabling a crop policy.
+定位 `ready=true`、状态和实际命令历史新鲜、车辆静止、RC 已选择自主 speed 模式、唯一 `/drive` 发布者，且启动方向在参考切线 30° 内时，手动启用：
 
 ```bash
-ros2 launch aims_racer_system known_map_localization.launch.py \
-  map_file:=/absolute/path/to/map.pcd use_sim_time:=false
+ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: true}'
 ```
 
-For replay, run the FAST-LIO2/EKF graph with simulated time and launch this add-on
-with `use_sim_time:=true`; the bag must supply `/clock`. Do not run another
-`map` → `odom` publisher in this graph. `map_tf_gate.py` belongs to the earlier
-localizer workflow and is not launched by the NDT add-on.
-
-Initialize with the pose of **base_link in map**. Angles are radians in
-roll/pitch/yaw order. The explicit frame flag prevents interpreting a Livox pose
-as a rear axle pose. Replace these values with a verified initial pose:
+加 `auto_start:=true` 后，native 节点等待上述同一组 enable 条件，成功后只启动一次。native `auto_start_timeout` 默认 60 s；等待期间的显式 stop 会取消该请求。超时/拒绝原因在 `/mpcc/status` 中可见。完成或故障后不自动重新启用，进程 fatal 后不自动重启。需要新一圈时，由操作员明确启用或重新启动。
 
 ```bash
-ros2 run aims_racer_system relocalize_known_map.py /absolute/path/to/map.pcd \
-  --pose-frame base_link --x 1.0 --y 2.0 --z 0.0 \
-  --roll 0.0 --pitch 0.0 --yaw 0.5 --timeout 60
+ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 ```
 
-For replay append `--ros-args -p use_sim_time:=true`. This command checks the
-map SHA-256, NDT lifecycle active state, and an `/initialpose` subscriber before
-publishing a single map/base_link pose. It returns success only after observing
-a new localization epoch and a fresh, ready tracking status. Initial candidates
-are validated by NDT; the first two consistent candidates do not commit a TF
-anchor. Initialization has no absolute correction magnitude gate. Once tracking,
-NDT's configured starting limits are fitness ≤ 1.5, translation correction ≤
-0.5 m and full rotation correction ≤ 10°. These are initial tuning values.
+默认 `repeat_laps=false`，走完从实际启用位置计起的一圈后停车。`repeat_laps:=true` 连续绕圈，操作员明确 stop 后结束；它不改变自动启动次数。现场停止依靠 RC/急停，停稳后再关闭 launch。
 
-Monitor the interfaces:
+## 定位的资格与限制
 
-```bash
-ros2 topic echo /localization/anchor_status
-ros2 topic echo /localization/status
-ros2 topic echo /localization/map_valid
-ros2 topic echo /localization/map_sha256
-```
+NDT 消费 `/fastlio2/body_cloud` 并使用 scan stamp 的 EKF TF 预测；它拥有 `map → odom`。50 Hz TF 可持有上次修正，不能据 TF 时间戳推断新的配准。monitor 通过 protocol-v1 anchor、epoch、sequence、map SHA 与源/接收新鲜度形成健康状态；native 控制器同时检查可信对齐载荷。单独 `map_valid` 或 fresh TF 不足以授权运动。
 
-The authoritative anchor diagnostic is `lidar_localization/anchor`, protocol
-version 1. `epoch` changes on NDT restart or reinitialization.
-`event_sequence` increases for every event, while `anchor_sequence` increases
-only for committed corrections. `anchor_committed=true` is the only event that
-refreshes trusted source time. Timer TF and diagnostic heartbeats cannot refresh
-it. A rejected scan retains a fresh trusted anchor in `hold`; `ready` and
-`map_valid` stay true during that short hold. After 1.0 s without a new trusted
-anchor, either in scan source time or monotonic receive time, health is `lost`
-and the controller must stop. Recovery requires three consecutive new committed
-anchors. Duplicate or out of order events cannot advance this count. A new
-epoch clears the old trust immediately. Clock rewind fails closed until NDT
-establishes a new epoch. EKF must be fresh within 0.1 s and body cloud within
-0.5 s, with monotonic watchdogs for both streams.
-
-The controller also permits a trusted anchor age of 1.0 s; its health-message
-heartbeat timeout remains 0.3 s. This hold window is separate from the native
-per-scan admission limit: a new NDT result must still have source age at most
-0.5 s when committed. Holding the correction does not increase registration
-throughput or renew its trusted source stamp. TF timer publication remains 50 Hz.
-
-The monitor publishes `aims_racer_system/localization` at 10 Hz with protocol,
-epoch, anchor sequence, state, ready, source age and source stamp.
-`health_sequence` increases on every health publication, including watchdog
-heartbeats without a new NDT event, and restarts at 1 on a new native epoch.
-Consumers reject old or duplicate health sequences within an epoch; an earlier
-ready heartbeat cannot overwrite a later loss heartbeat. The map SHA is
-transient local. `map_valid` is the same health decision. The heartbeat uses a
-steady timer so a paused simulated clock still expires the receive watchdog.
-
-Independent scan/map consistency values are diagnostics. A worker interpolates
-the EKF pose at the body cloud's source stamp, applies the static Livox mount and
-the last committed discrete map/odom snapshot, then measures nearest map point
-agreement. It never interpolates between map corrections and never changes
-localization readiness. BLAS threads are scoped to one for this monitor process.
-PCD diagnostics support ASCII and binary XYZ maps; compressed PCD must be
-converted before launch. RViz receives NDT's `initial_map` as
-`/localizer/map_cloud`, preserving the existing map display topic.
-
-Acceptance before vehicle driving requires runtime evidence from the built
-ROS image: verify the single TF owners, initial three-candidate commit behavior,
-source and receive watchdog expiry, three-commit recovery, epoch change handling,
-and the controller's resulting stop commands. Pure policy tests establish the
-state-machine contract; they do not establish closed-loop or vehicle safety.
-
-## Use the prepared reference with MPCC
-
-Start MPCC with `path_directory` set to the prepared bundle and verify its
-map hash matches `/localization/map_sha256`. The controller reads the structured
-protocol version 1 health from `/localization/status` before interpreting a
-map reference. A fresh `tracking` or `hold` status with `ready=true` permits
-map-reference use; unavailable, malformed or stale status stops map-reference
-control. Health received at monotonic time must remain fresh, so timer TF
-renewal cannot mask a localization outage. Check `/mpcc/status` and the actual
-applied command stream when exercising this gate.
-
-The EKF state and solver dynamics remain in `odom`. MPCC uses the current
-map/odom correction to compare motion against the fixed map reference.
-`/mpcc/reference` is in `map`, and `/mpcc/prediction` is in `odom`; RViz overlays
-them through TF. Open `src/aims_racer_system/rviz/mpcc_lio.rviz` with fixed frame
-`map`, check that stationary surfaces align and that base_link is at the
-verified physical pose, and ensure one publisher per dynamic TF edge. Keep
-other `/drive` publishers stopped during an MPCC run. Evaluate with RC manual
-selection until the localization fault checks and the vehicle checklist pass.
-Historical ICP or stationary replay measurements from the earlier localizer
-workflow do not validate this NDT branch.
-
-
-## Native runtime repair compatibility
-
-The native `rate_bounded_v2` runtime requires the updated C++ localization
-monitor. A ready status also carries `alignment_valid`, `alignment_epoch`,
-`alignment_anchor_sequence`, `alignment_stamp_ns` and the accepted
-`map_odom_*` transform. Their identity must match the health anchor and map.
-Generic `/tf` freshness cannot replace this provenance. A retired epoch clears
-state and command history, and a new enable requires qualified replacement
-state/history.
-
-The native repair branch retains the kinematic rear-axle model and objective
-weights while removing only the extra hard jerk and steering-command
-acceleration limits. Original artifacts default to `legacy_bounded_v1`.
-Generate a new offline bundle for v2; do not reinterpret an old v1 artifact.
-Use `implementation:=legacy` with its original v1 config/artifact for rollback.
-The native controller uses the standard `/drive`, `/mpcc/status` and
-`/mpcc/enable` interfaces without a shadow switch. Startup/restart is disabled;
-the operator enables only after stationary checks. Offline tests isolate their
-transport using explicit ROS topic/service remaps.
-See [runtime README](../../src/aims_mpcc_rt/README.md) for build and launch
-and artifact compatibility, and [repair validation](../reports/2026-10-09-mpcc-runtime-repair-validation.md)
-for the final version's release status.
+当前 `enforce_corridor=false`，参考文件左右各 0.5 m 是课程模型，不是从地图测量的真实边界；footprint OCP/启动边界检查关闭。曲率规划 ay=1 仍参与速度规划，组合加速度椭圆关闭不等于轮胎横向能力无限。已有实跑与未验证条件见[外场复盘](../reports/2026-10-10-mpcc-field-review.md)。

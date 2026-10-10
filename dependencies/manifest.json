@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "field_baseline": "5ad071cba4703f2a201312d0fba03ba1dbd6f4b0",
+  "ros_sources": {
+    "lidar_localization_ros2": {
+      "url": "https://github.com/rsasaki0109/lidar_localization_ros2.git",
+      "commit": "5f795a6cd886a20ade4175cb70bde630ac9ec785",
+      "patch": "ndt-trusted-anchor.patch",
+      "patch_sha256": "45ae5301e0fbfc4d9bf4f53c2f4c13850fc0e0ff037a786ffc1d36cad13e4a15"
+    },
+    "ndt_omp_ros2": {
+      "url": "https://github.com/rsasaki0109/ndt_omp_ros2.git",
+      "commit": "63bf15b965b71d3a53db1757abe8e31b6114372a",
+      "patch": "ndt-line-search.patch",
+      "patch_sha256": "58461a7c5f7508158bc4c02d823f5da83da9acae5e00bd7b7b52da95608838a6"
+    },
+    "livox_ros_driver2": {
+      "url": "https://github.com/Livox-SDK/livox_ros_driver2.git",
+      "commit": "4a1def929e5b59c7a8122d19fce6efba581ce9f7",
+      "prepare_ros2": true
+    },
+    "serial": {
+      "url": "https://github.com/RoverRobotics-forks/serial-ros2.git",
+      "commit": "ae46504ae7d4a199ea9bba0e73a6f083bf172f80"
+    }
+  },
+  "native_sources": {
+    "Livox-SDK2": {
+      "url": "https://github.com/Livox-SDK/Livox-SDK2.git",
+      "commit": "08f523c930b2f0ba1e98a6afaa8d7476bf479908"
+    },
+    "acados": {
+      "url": "https://github.com/acados/acados.git",
+      "commit": "59d93e17d2985fdd73fc58b8a83ed8f83a024171",
+      "submodules": {
+        "external/blasfeo": "d6251233923c9b475fe894fb729fb63ab693e301",
+        "external/hpipm": "e3a56c1caddd7f12d125d84f337b9a9e5c186271"
+      }
+    }
+  },
+  "existing_system_source_pins": {
+    "Sophus": {
+      "url": "https://github.com/strasdat/Sophus.git",
+      "commit": "de0f8d3d92bf776271e16de56d1803940ebccab9"
+    },
+    "CppLinuxSerial": {
+      "url": "https://github.com/gbmhunter/CppLinuxSerial.git",
+      "commit": "916ffd89182f3eef944303be2f625455b98b0113"
+    }
+  },
+  "acados_cmake": {
+    "aarch64": {"BLASFEO_TARGET": "ARMV8A_ARM_CORTEX_A57", "HPIPM_TARGET": "GENERIC"},
+    "x86_64": {"BLASFEO_TARGET": "GENERIC", "HPIPM_TARGET": "GENERIC"},
+    "common": {"ACADOS_WITH_OPENMP": "OFF", "CMAKE_BUILD_TYPE": "Release"}
+  }
+}

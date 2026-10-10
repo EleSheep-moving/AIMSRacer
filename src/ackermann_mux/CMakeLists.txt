@@ -35,13 +35,6 @@ set(
   # "crsf_receiver_msg"
 )
 
-add_executable(ackermann_mux
-  src/ackermann_mux.cpp
-  src/ackermann_mux_node.cpp
-  src/ackermann_mux_diagnostics.cpp
-)
-ament_target_dependencies(ackermann_mux ${DEPENDENCIES})
-
 add_library(joystick_selector STATIC src/joystick_selector.cpp)
 target_compile_features(joystick_selector PUBLIC cxx_std_17)
 target_include_directories(joystick_selector PUBLIC include)
@@ -51,24 +44,11 @@ ament_target_dependencies(joystick_control_v2
   rclcpp rcl_interfaces std_msgs ackermann_msgs crsf_receiver_msg)
 
 install(
-  TARGETS ackermann_mux joystick_control_v2
+  TARGETS joystick_control_v2
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
-
-# Pending to test ROS2 migration
-install(
-  PROGRAMS
-  scripts/joystick_control.py
-  scripts/cmd_vel_to_ackermann_drive.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-foreach(dir launch config)
-  install(DIRECTORY ${dir}/
-    DESTINATION share/${PROJECT_NAME}/${dir})
-endforeach()
 
 install(
   DIRECTORY include/

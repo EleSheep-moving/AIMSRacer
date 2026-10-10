@@ -39,7 +39,7 @@ def canonical_runtime_dt(dt):
     raise ValueError('isolated evaluation supports only 100 ms and 50 ms stages')
 
 
-def export(config_path, reference_dir, output, horizon=10, dt=.1, source_only=False):
+def export(config_path, reference_dir, output, horizon=15, dt=.1, source_only=False):
     from acados_template import AcadosOcpSolver
     cfg = load_config(config_path)
     dt=canonical_runtime_dt(dt)
@@ -112,8 +112,8 @@ def export(config_path, reference_dir, output, horizon=10, dt=.1, source_only=Fa
     shutil.copyfile(Path(__file__).with_name('build_bundle.py'), output / 'build_bundle.py')
     shutil.copyfile(__file__,output/'export_bundle.py')
     source_root = Path(sys.modules['aims_mpcc.acados_backend'].__file__).parent
-    source_files = ['acados_backend.py', 'backend_models.py', 'config.py', 'envelope.py', 'path.py',
-                    'vendor/track.py', 'vendor/normalized_cost.py', 'speed_planner.py']
+    source_files = sorted(str(p.relative_to(source_root)) for p in source_root.rglob('*')
+                          if p.is_file() and p.suffix in ('.py', '.c'))
     source_hashes = {}
     for name in source_files:
         destination = output / 'sources' / name
@@ -242,7 +242,7 @@ if __name__ == '__main__':
     parser.add_argument('--config', required=True)
     parser.add_argument('--reference', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--horizon', type=int, default=10)
+    parser.add_argument('--horizon', type=int, default=15)
     parser.add_argument('--dt', type=float, default=.1)
     parser.add_argument('--source-only', action='store_true')
     args = parser.parse_args()

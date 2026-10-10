@@ -1,83 +1,29 @@
-# Real-car deployment: remaining work
+# 车辆运行检查
 
-This branch is a low-speed MPCC prototype. Package tests and stationary checks
-do not establish moving-vehicle readiness or racing performance. The shipped
-`vehicle.yaml` now contains the supplied 620 mm × 320 mm footprint with the
-rear axle 100 mm ahead of the tail. This enables the geometry check but does not
-establish moving-vehicle readiness; the physical envelope and track must be checked.
-Current calibration is outside this implementation.
+本清单用于当前 native 实车流程。软件回归与实验验证放在 `verification/`；现场操作参考[启动](bringup.md)和[已知地图](known-map-mpcc.md)。
 
-## Prerequisites
+## 启动前
 
-Complete [installation](../installation.md), [bringup](bringup.md) and the
-[MPCC preparation steps](../../src/controller/docs/usage.md). The
-[architecture](../architecture.md) defines the current sensor topics, frame
-origins, TF ownership and control chain. Fresh EKF output alone does not prove
-that LIO is still updating.
+- 确认 RC/物理急停、供电、VESC 与 `/dev/ttyELRS`、`/dev/ttyVESC` 正常；核对 Livox 网络配置。
+- 核对地图 PCD、参考和目标平台 bundle 的身份；从同一 workspace 的 install 环境启动。
+- 确认 `base_link` 后轴位置、传感器安装、车体 footprint 与实际车辆相符。默认 footprint 为后轴前方 0.52 m、后方 0.10 m、左右各 0.16 m。
+- 确认预期行驶区域有物理余量。当前 `enforce_corridor=false`，文件中的左右各 0.5 m 不提供真实边界保护。
+- 只启动 vehicle、mapping、race 之一；已知地图 race 的 NDT 与建图 PGO 不共用 map TF 归属。
 
-## Before the first autonomous lap
+## 启用前
 
-- **Check geometry.** Rear-axle `base_link`, wheelbase 0.36 m, and LiDAR forward
-  offset approximately 0.30 m are the intended geometry. Sensor height,
-  orientation, lateral offset and inherited LIO extrinsics still need physical
-  checks. The supplied body model uses front/rear extents 0.52/0.10 m and
-  half-width 0.16 m from the rear axle. Check these against protruding hardware
-  and recheck any V3 camera extrinsics from this origin.
-- **Verify frames and signs with real data.** Straight motion should produce
-  positive body vx. A left turn should produce positive steering and yaw rate;
-  negative steering means right. Inspect pose and twist at the rear axle and
-  verify exactly one owner per TF edge during driving and mapping.
-- **Check wheel-speed scale and uncertainty.** The provisional ERPM gain is 3465
-  (4650 / the 2026-09-27 bag's straight-line LIO/wheel ratio 1.342), offset zero.
-  Compare `/rear_axle/wheel_odom` vx with independent ground displacement/time and
-  LIO during modest straight runs. Variance 0.04 (m/s)^2 is an assumed sigma of
-  0.2 m/s, not a measured calibration. Driven-wheel slip can bias it; a constant
-  covariance is not a slip estimator. Check measured telemetry rate/dropouts.
-- **Check steering and braking.** Steering limit is ±0.45 rad; configured command
-  rate limit is 2 rad/s. The 2026-09-27 bag suggests roughly 4.6 rad/s median
-  low-speed *effective* turn-angle response, inferred from yaw rate and speed,
-  not measured steering hardware capability. There is no steering-angle sensor;
-  the MPCC's 0.08 s steering time constant is a low-speed lumped response fit,
-  not a measured servo constant. Measure command response, speed-loop response
-  and stopping distance. Zero speed requests do
-  not establish an immediate stop or a specific braking force.
-- **Measure Orin timing and estimator delay.** Check actual LIO/IMU/VESC source
-  stamps, arrival delays, clock consistency, solve p95/p99 and deadline misses.
-  Default targets are 200 Hz EKF output, 5 Hz solving and 50 Hz commands; these are not
-  measured hardware rates. Run `prepare_solver` with the selected path and vehicle
-  configuration before startup; online workers require the cached native solver.
-  Warm-up must finish before READY. Delayed-LIO history replay is enabled after
-  an isolated bag replay; check the actual 200 Hz output rate, CPU load and
-  source-time pose error with the full vehicle stack running.
-- **Tie the reference to its localization frame.** An `odom` reference needs the
-  same uninterrupted localization session. A `map` reference needs the matching
-  saved PGO map, successful relocalization and a fresh `map -> odom` transform;
-  the [known-map procedure](known-map-mpcc.md) is still unverified on the moving
-  vehicle. The current model assumes a centered path in a 1.0 m-wide course;
-  check the actual minimum free widths and inspect the prepared path/footprint.
-  A hand-driven lap alone does not measure boundaries. Start
-  near the recorded start with matching heading.
-- **Check authority and fault response at low speed.** Keep Nav2 and other
-  `/drive` publishers stopped. Verify RC takeover, RC loss, stale commands,
-  explicit enable/disable and physical stop behavior. Use the measured vehicle
-  profile, `simulation:=false`, 1.0 m/s cruise and 1.5 m/s cap for initial work.
-  Record sensor inputs, fused odometry, forwarded commands and MPCC status.
+- RC 保持可立即接管；核对转向符号和 speed 模式单位。
+- 使用实际 **map/base_link** 初值初始化，观察地图、点云和车辆位姿是否一致。
+- 查看 `/localization/status` 中的 ready、map identity、epoch 和健康；查看 `/mpcc/status` 中 solver、状态新鲜度和自动启动原因。
+- 确保只有一个 `/drive` 发布者，实际命令由 RC 选择器转发至 `/ackermann_cmd`。
+- 车辆静止，方向在参考切线 30° 内。`auto_start=true` 会在条件满足后自主启用一次，操作员应在授权前完成现场检查。
+- 需要保留数据时使用 `record=true` 并确认新会话目录可写、有可用空间。
 
-Use the [recording guide](recording.md) for sensor and controller evidence.
+## 行驶、停止与记录
 
-## Known work before faster driving
+- 观察横向误差、速度跟踪、定位健康、候选/接管拒绝与人工干预。已有 bag 响应可以继续分析；完整纵向辨识按后续加速度接口计划进行。
+- 显式 `/mpcc/enable {data:false}` 会停车并取消未完成自动启动；紧急情况使用 RC/物理急停。
+- 单圈默认自动停车；连续圈 `repeat_laps=true` 由操作员 stop。COMPLETE 等待与运动时间分别记录。
+- 停稳并撤销权限后关闭 launch，检查 bag 元数据、`runtime.csv` 和配置快照。
 
-| Missing part | Practical consequence / next work |
-|---|---|
-| Full-stack delayed LIO validation | A 2 s EKF history substantially reduced yaw distortion in the incident-input replay; validate estimator rate, CPU cost and source-time pose error on the moving vehicle. It does not remove LIO delay. |
-| LIO build and cumulative delay | Rebuild the fork containing the corrected rotation Jacobian. The configured five-iteration cap remains unwired (effective default ten). Record raw scans, per-frame stages/iterations, queue depth and system load; the incident's roughly one-second backlog is not yet reproduced. See the [LIO/EKF findings](../reports/2026-10-04-lio-delay.md). |
-| Sensor-to-actuation prediction alignment | The bridge propagates the source-time state using actual forwarded command history and forecasts to scheduled takeover. The longitudinal response remains an acceleration-bounded approximation; validate physical response and handover errors on the moving vehicle. |
-| Manual-driving MPCC evaluation | Explicitly enabled MPCC calculates in manual mode and uses actual forwarded command history. Moving-lap prediction accuracy still needs validation. |
-| Identified actuator / dynamic model | Current kinematic model lacks tire-slip dynamics and an identified longitudinal speed-loop response. Validate held-out prediction error before raising limits. |
-| Known-map validation | Map-frame references, map-file identity checks and a relocalization add-on exist, but the full restart/moving-car workflow has not been validated. The upstream check latches after initial ICP success and does not report later ICP quality. |
-| Progress association and track boundaries | Global nearest projection and constant tangent-strip corridors need improvement for nearby track sections or complex boundaries. |
-
-See the [engineering review](../reports/2026-09-20-engineering-review.md) for evidence and
-scope. These are explicitly open deployment/research items, not claims resolved
-by passing the integration suite. This branch is not ready for 5 m/s vehicle
-operation solely because a synthetic 5 m/s estimator test passes.
+默认配置是 2026-10-10 v35 实跑参数：巡航 3.5、硬上限 4、加速/制动 1、规划 ay=1（单位 m/s 或 m/s²），N15/dt=.1/RTI2。规划峰值约 2.99、实测约 2.89 m/s。实跑证据适用于该车、地图和记录条件，后续变化按同轨重复数据评估。[复盘](../reports/2026-10-10-mpcc-field-review.md)给出完整限制。

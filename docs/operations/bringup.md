@@ -1,83 +1,69 @@
-# Vehicle bringup
+# 车辆启动
 
-Complete [installation](../installation.md) and configure the Livox network and
-serial devices first. Run commands from the workspace root. These launch files
-start hardware, including RC and VESC; keep the RC locked during startup checks.
-
-## Environment
-
-In bash:
+当前流程使用一个 workspace。先按[部署指南](../deployment/README.md)准备 ROS 和硬件，再在根目录准备固定源码与构建：
 
 ```bash
+git submodule update --init src/FASTLIO2_ROS2
+python3 tools/setup_dependencies.py --workspace .
+bash tools/setup_acados.sh --workspace . --jobs 2
 source /opt/ros/humble/setup.bash
-source "$HOME/livox_ws/install/setup.bash"
+colcon build --packages-up-to aims_racer_system aims_mpcc_rt \
+  --cmake-args -DCMAKE_BUILD_TYPE=Release -DROS_EDITION=ROS2 -DDISTRO_ROS=humble
 source install/setup.bash
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export LD_LIBRARY_PATH="$PWD/dependencies/work/acados/install/lib:${LD_LIBRARY_PATH:-}"
 ```
 
-Keep this bringup shell free of global `OPENBLAS_NUM_THREADS` and `OMP_NUM_THREADS` exports; scope them to the MPCC command instead.
+以后每个操作终端只需 source `/opt/ros/humble/setup.bash` 和当前根目录的 `install/setup.bash`，设置当前 acados `install/lib` 路径。zsh 使用对应 `setup.zsh`。同一车辆图的所有终端使用相同 `ROS_DOMAIN_ID` 与 DDS 配置。Livox Ethernet UDP 与 ROS DDS 是两条独立链路；网络和串口规则见[部署](../deployment/README.md)及 [rules](../../rules/README.md)。
 
-Use the corresponding `setup.zsh` files in zsh. The Livox underlay path may differ
-on another machine. Use system Python as described in the installation guide.
+## 选择一个入口
 
-The vehicle's DDS control graph should use loopback so Wi-Fi changes do not alter
-local discovery. Set `CYCLONEDDS_URI` to your verified local CycloneDDS XML. With
-an explicit `lo` interface in that XML, use `ROS_LOCALHOST_ONLY=0` to avoid duplicate
-loopback selection. That setting alone does not restrict DDS to loopback: the XML
-must do so. Participant capacity must cover the full launch; the historical test
-used `MaxAutoParticipantIndex=63`. Livox Ethernet UDP remains separate from DDS.
-See [network configuration](../installation.md#113-cyclonedds).
-
-## Choose one bringup
-
-| Mode | Launch file | Purpose |
+| 入口 | 内容 | 用途 |
 | --- | --- | --- |
-| V2 | `base_orin_livox_bringup_v2.launch.py` | LiDAR, rear-axle EKF, RC/VESC |
-| V3 | `base_orin_livox_bringup_v3.launch.py` | V2 plus ZED 2i perception |
-| V1 | `base_orin_livox_bringup.launch.py` | Legacy mux-based integration |
-
-For the current LiDAR/MPCC workflow:
+| `vehicle.launch.py` | MID360、FAST-LIO2、后轴适配、EKF、RC、VESC | 手动驾驶和传感器检查 |
+| `mapping.launch.py` | 车辆传感器、PGO、建图 TF、可选录包 | 手动驾驶建图 |
+| `race.launch.py` | vehicle、NDT、定位 monitor、native MPCC、可选录包 | 已知地图闭环单圈或连续圈 |
 
 ```bash
-ros2 launch aims_racer_system base_orin_livox_bringup_v2.launch.py
+ros2 launch aims_racer_system vehicle.launch.py
 ```
 
-Alternatively, for ZED perception, stop V2 and launch V3:
+建图使用以下独立入口；PGO 与已知地图 NDT 的 `map → odom` 归属不能同时启用：
 
 ```bash
-ros2 launch aims_racer_system base_orin_livox_bringup_v3.launch.py
+ros2 launch aims_racer_system mapping.launch.py record:=true
 ```
 
-V3 includes V2; do not run both independently. ZED uses `NEURAL_LIGHT` at 30 Hz.
-Camera positional tracking and its vehicle dynamic TF are disabled by default.
-V3 publishes an approximate static `base_link -> zed2i_camera_link` transform:
-the camera mounting point is assumed 3 cm ahead of `livox_frame`, with the same
-height and orientation. With the current Livox mounting estimate this is
-`[0.33, 0, 0.03]` metres. Refine all six coordinates after measuring the mount;
-override `zed_tf_*` or set `zed_publish_base_tf:=false` to omit this transform.
+建图完成并确认 PGO 已接收数据后，用保留的[地图保存工具](../../tools/save_map.sh)写新目录：
 
-## Verify and proceed
+```bash
+bash tools/save_map.sh "$HOME/maps/my-new-map"
+```
 
-Check the topics and single-parent TF tree against [architecture](../architecture.md).
-V2/V3 do not by themselves establish `map -> odom`. The default `odom` MPCC
-workflow uses the same live localization session for recording and driving. Upstream FAST-LIO must be
-launched with the documented TF isolation; keep submodules unmodified.
-For a saved PGO map and a map-frame MPCC reference, start the
-[known-map localization add-on](known-map-mpcc.md) beside one V2/V3 launch,
-then explicitly relocalize against the selected `map.pcd`.
+该脚本检查服务成功及 `map.pcd`、`poses.txt` 文件；参考恢复见 [tools/reference](../../tools/reference/README.md)。
 
-- For data collection, follow [recording](recording.md).
-- For autonomous control, complete the [vehicle checklist](vehicle-checklist.md)
-  and [MPCC usage](../../src/controller/docs/usage.md).
-- For calibration, use the [package guide](../../src/aims_racer_system/docs/calibration.en.md).
+已知地图运行：
 
-Keep Nav2 and other `/drive` producers stopped during MPCC operation. Mapping has
-a separate launch (`base_orin_livox_mapping_v2.launch.py`) and TF ownership; it is
-not an additional node to start alongside the V2 driving pipeline.
+```bash
+ros2 launch aims_racer_system race.launch.py \
+  map_file:="$HOME/maps/20260928_010503/map.pcd" \
+  artifact_directory:="$HOME/aimsracer-data/bundles/field-v35-20261010" \
+  record:=true
+```
 
-## Chassis reverse transition
+`race` 已包含车辆和定位，无需额外启动。它要求现有地图和完整 native bundle，默认 `auto_start=false`、`repeat_laps=false`、`record=false`。地图初始化、手动启用与一次自动启动见[已知地图指南](known-map-mpcc.md)，参数详见 [MPCC 使用](../../src/controller/docs/usage.md#在线启动参数)。
 
-Abruptly switching to reverse while the vehicle is moving forward has produced
-an initial vertical (Z-axis) shock of approximately 2 g on this chassis,
-which can disrupt FAST-LIO's IMU assumptions. Avoid relying on localization through
-that transition; check or reinitialize it before resuming autonomous operation.
+## 运行与停止
+
+启动时保持 RC 锁定，确认定位地图与实际摆放一致、车辆静止、转向方向正确。检查项目见[车辆检查](vehicle-checklist.md)。选定自主 speed 模式后，手动启用：
+
+```bash
+ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: true}'
+```
+
+停止及取消尚未发生的自动启动：
+
+```bash
+ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
+```
+
+现场紧急停止依靠 RC/物理急停；停稳并撤销权限后再 Ctrl-C。保存录包、runtime 和地图/bundle 身份，详见[录制](recording.md)。同一次运行只允许一个 `/drive` 发布者。

@@ -100,28 +100,6 @@ def test_finite_recovery_jerk_only_applies_to_initial_conflict():
     assert module.effective_jerk_limit(conflict, applied, c, .1) == 2.
 
 
-def test_soft_solver_omits_only_fixed_initial_envelope_and_bounds_future_slack():
-    envelope()
-    from aims_mpcc.path import ReferencePath
-    from aims_mpcc.solver import MPCCSolver
-    angles = np.arange(32)*2*math.pi/32
-    path = ReferencePath(np.c_[2*np.cos(angles),2*np.sin(angles)], 1.,1.)
-    c = config(envelope_soft_enabled=True, solver_max_iterations=100)
-    solver = MPCCSolver(path,c,horizon=10)
-    state = dict(x=2.,y=0.,yaw=math.pi/2,speed=.9185,steering=.4373)
-    previous = dict(acceleration=-.1761,steering=.4373,steering_rate=0.)
-    result = solver.solve(state,previous, [.5]*11)
-    assert result['success'], result['status']
-    assert 'envelope' in result['diagnostics']
-    d = result['diagnostics']['envelope']
-    assert d['initial_unavoidable_violation'] > .19
-    assert d['future_slack_max'] <= .5 + 1e-4
-    assert d['future_violation_duration_s'] <= .6 + 1e-6
-    assert not d['execution_authorized']
-    assert not any(b['group']=='acceleration_ellipse' and b['interval']==0 and b['substep']==0
-                   for b in solver.constraint_blocks)
-
-
 def test_strict_jerk_above_optional_recovery_default_remains_valid():
     assert config(jerk_limit=3.).validate().jerk_limit == 3.
 
@@ -193,42 +171,6 @@ def test_default_hard_profile_cannot_accept_soft_recovery_witness():
     result = module.evaluate_envelope(x,a,u,replace(c,envelope_soft_enabled=False))
     assert not result['recovery_bounds_satisfied']
     assert not result['recovery_acceptable']
-
-
-def test_hard_solver_uses_only_cheap_initial_diagnostic(monkeypatch):
-    from aims_mpcc.path import ReferencePath
-    from aims_mpcc import solver as solver_module
-    calls = []
-    def forbidden_rollout(*args, **kwargs):
-        calls.append(True)
-        raise AssertionError('baseline solver must not duplicate the full independent validator')
-    monkeypatch.setattr(solver_module, 'evaluate_envelope', forbidden_rollout)
-    angles = np.arange(32)*2*math.pi/32
-    path = ReferencePath(np.c_[2*np.cos(angles),2*np.sin(angles)],1.,1.)
-    solver = solver_module.MPCCSolver(path,config(),horizon=2)
-    result = solver.solve(dict(x=2.,y=0.,yaw=math.pi/2,speed=.2,steering=0.),
-                          dict(acceleration=0.,steering=0.,steering_rate=0.))
-    assert result['success'], result['status']
-    assert calls == []
-    diagnostic = result['diagnostics']['envelope']
-    assert diagnostic['minimum_initial_utilization'] == 0.
-    assert not diagnostic['execution_authorized']
-    assert diagnostic['diagnostic_scope'] == 'initial_state_only'
-    assert 'candidate_samples' not in diagnostic
-
-
-def test_soft_solver_compact_diagnostics_omit_full_rollout_traces():
-    from aims_mpcc.path import ReferencePath
-    from aims_mpcc.solver import MPCCSolver
-    angles = np.arange(32)*2*math.pi/32
-    path = ReferencePath(np.c_[2*np.cos(angles),2*np.sin(angles)],1.,1.)
-    solver = MPCCSolver(path,config(envelope_soft_enabled=True),horizon=2)
-    result = solver.solve(dict(x=2.,y=0.,yaw=math.pi/2,speed=.2,steering=0.),
-                          dict(acceleration=0.,steering=0.,steering_rate=0.))
-    assert result['success'], result['status']
-    diagnostic = result['diagnostics']['envelope']
-    assert diagnostic['future_slack_max'] <= 1e-4
-    assert not {'candidate_samples','reference_samples','reference_controls'} & diagnostic.keys()
 
 
 @pytest.mark.parametrize('index',range(7))

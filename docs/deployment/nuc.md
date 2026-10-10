@@ -1,59 +1,22 @@
-# NUC deployment
+# x86 / NUC 当前源码构建
 
-The NUC can run Nav2 and the optional CP2102 FDI IMU. It is not the current
-vehicle sensor/actuator computer. `nav.launch.py` is also supported on the Orin;
-its navigation output can reach `/drive`, so do not run either Nav2 instance
-while MPCC is active.
-
-## Native Nav2 workspace
-
-Use Ubuntu 22.04 x86-64 and ROS 2 Humble. Clone the repository with its VESC and
-CRSF submodules, install Nav2 and the package build dependencies, then build the
-small navigation workspace:
+x86-64 / NUC 使用与 Orin 相同的 main 源码、Ubuntu 22.04 和 ROS 2 Humble。按[当前部署](README.md)准备系统依赖，并只构建同一 selected closure。现有实车闭环证据来自 Orin NX；x86 构建或软件重放不等于 NUC 实车验收。
 
 ```bash
-git clone --branch feat/aims-mpcc --recurse-submodules \
-  git@github.com:EleSheep-moving/AIMSRacer.git
+git clone --branch main https://github.com/EleSheep-moving/AIMSRacer.git
 cd AIMSRacer
+git submodule update --init src/FASTLIO2_ROS2
+python3 tools/setup_dependencies.py --workspace .
+bash tools/setup_acados.sh --workspace . --jobs 2
 source /opt/ros/humble/setup.bash
-
-sudo apt update
-sudo apt install \
-  python3-colcon-common-extensions python3-numpy python3-scipy python3-yaml \
-  ros-humble-ackermann-msgs ros-humble-diagnostic-updater \
-  ros-humble-nav2-bringup ros-humble-robot-localization
-rosdep install --from-paths \
-  src/ackermann_mux src/ros2_crsf_receiver/crsf_receiver_msg \
-  src/vesc/vesc_msgs src/aims_racer_system --ignore-src -r -y --rosdistro humble
-colcon build --symlink-install --packages-select \
-  crsf_receiver_msg vesc_msgs ackermann_mux aims_racer_system
+colcon build --packages-up-to aims_racer_system aims_mpcc_rt \
+  --cmake-args -DCMAKE_BUILD_TYPE=Release -DROS_EDITION=ROS2 -DDISTRO_ROS=humble
 source install/setup.bash
+export LD_LIBRARY_PATH="$PWD/dependencies/work/acados/install/lib:${LD_LIBRARY_PATH:-}"
 ```
 
-Install the NUC rule only when the CP2102 FDI IMU is physically attached:
+固定 acados 在 x86 使用 GENERIC BLASFEO/HPIPM；ARM 使用清单中的架构设置。generated C 可以复制到另一 CPU，但 native 库与 manifest 必须在目标架构重建。[MPCC 使用](../../src/controller/docs/usage.md#离线生成与目标平台构建)给出离线流程。
 
-```bash
-sudo install -m 0644 rules/rulesForNUC/*.rules /etc/udev/rules.d/
-sudo udevadm control --reload-rules
-sudo udevadm trigger
-```
+开发测试和定位 replay 见 [verification](../../verification/README.md)，使用独立 ROS domain 和新日志目录。实际连接车辆时，设备名和地址必须与当前 [vehicle 入口](../../src/aims_racer_system/launch/vehicle.launch.py)一致，使用与车辆图相同的 ROS domain；完整启动步骤见[车辆启动](../operations/bringup.md)。
 
-The rule creates `/dev/ttyIMU`; this repository does not include an FDI IMU
-serial-driver node. Before configuring that driver, check whether `brltty` or
-`ModemManager` has claimed the CP2102 endpoint and apply the conditional remedy
-in [serial service ownership](../../rules/README.md#serial-service-ownership).
-
-Launch Nav2 with an explicit map path rather than relying on the historical
-`/home/nuc/maps/...` location:
-
-```bash
-source /opt/ros/humble/setup.bash
-source ~/AIMSRacer/install/setup.bash
-ros2 launch aims_racer_system nav.launch.py \
-  map:=/absolute/path/to/map.yaml
-```
-
-Use the same ROS domain as the rest of the vehicle graph; see the [deployment overview](README.md#ros-domain).
-
-Check `ros2 topic info /drive` before enabling Nav2. Stop MPCC and every other
-autonomous command producer first.
+[规则目录](../../rules/README.md)按连接硬件选择。NUC 的 CP2102 规则仅适用于实际接入的设备，当前主流程的 IMU 来自 MID360；规则存在不代表额外 IMU 驱动已经安装。不要凭电脑名称选择不匹配的串口规则。

@@ -277,23 +277,6 @@ def test_hash_valid_replacement_after_warm_load_requires_restart(enabled,tmp_pat
         path.project_theta(xy)
 
 
-def test_prepare_solver_prepares_projector_only_in_explicit_offline_hook(enabled,tmp_path,monkeypatch):
-    from aims_mpcc import prepare_solver,rollout_native,backends,io
-    from aims_mpcc.config import VehicleConfig
-    native,_=enabled;records=[];circle().save(tmp_path/'path')
-    monkeypatch.setattr(io,'load_config',lambda p:VehicleConfig())
-    monkeypatch.setattr(rollout_native,'prepare_kernel',lambda:records.append('rollout') or 'rollout.so')
-    monkeypatch.setattr(native,'prepare_kernel',lambda:records.append('projection') or 'projection.so')
-    class Solver:
-        n=10
-        def solve(self,*a,**kw):
-            records.append('solve')
-            return dict(status='success',success=True,iterations=1,solve_time_s=0.,diagnostics={})
-    monkeypatch.setattr(backends,'create_solver',lambda *a,**kw:Solver())
-    prepare_solver.main([str(tmp_path/'path'),'--vehicle-config',str(tmp_path/'config'), '--backend','qp'])
-    assert records==['rollout','projection','solve']
-
-
 def test_wheel_install_retains_kernel_licenses_and_offline_loader(tmp_path):
     import os,shutil,zipfile
     root=Path(__file__).parents[1];source=tmp_path/'source'
@@ -327,31 +310,6 @@ assert np.isfinite(p.project_theta([1.8,.3]))
     environment=dict(os.environ,PYTHONPATH=str(target),AIMS_MPCC_PROJECTOR_DIR=str(tmp_path/'missing'))
     checked=subprocess.run([sys.executable,'-c',script],cwd=tmp_path,env=environment,capture_output=True,text=True)
     assert checked.returncode==0,checked.stderr
-
-
-@pytest.mark.parametrize('case',['running_finish','recovery'])
-def test_frozen_entire_activation_preserves_all_execution_fields(enabled,monkeypatch,case):
-    import copy
-    from test_running_braking_capacity import running_frozen
-    from test_recovery_braking_capacity import frozen_case
-    restore=running_frozen if case=='running_finish' else frozen_case
-    native,_=enabled;dispatch=native.project_theta
-    baseline,now,actual,applied,kwargs=restore()
-    monkeypatch.setattr(native,'project_theta',lambda path,xy:None)
-    expected=baseline.activate(now,actual,applied,**kwargs)
-    accelerated,now,actual,applied,kwargs=restore()
-    prefix=copy.deepcopy((accelerated.last_command,accelerated.last_acceleration,accelerated.last_steering_rate))
-    monkeypatch.setattr(native,'project_theta',dispatch)
-    # Demonstrate the compatible production path is used before the gate.
-    assert native.project_theta(kwargs['path'],np.array([actual.x,actual.y])) is not None
-    actual_result=accelerated.activate(now,actual,applied,**kwargs)
-    assert expected and actual_result # Both original activation witnesses pass.
-    assert json.dumps(accelerated.execution_validation,sort_keys=True,allow_nan=False)==\
-           json.dumps(baseline.execution_validation,sort_keys=True,allow_nan=False)
-    assert accelerated.status==baseline.status
-    assert accelerated.reason==baseline.reason
-    assert accelerated.recovery_good_candidates==baseline.recovery_good_candidates
-    assert (accelerated.last_command,accelerated.last_acceleration,accelerated.last_steering_rate)==prefix
 
 
 def test_checked_native_entry_validates_live_tables_before_projection(enabled):

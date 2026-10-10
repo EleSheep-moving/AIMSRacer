@@ -61,7 +61,7 @@ def test_v2_removes_only_two_hard_rows_and_preserves_objective():
 
 
 def test_native_configuration_declares_selected_profile():
-    cfg=load_config(Path(__file__).parents[1]/'config/native_rate_bounded.yaml')
+    cfg=load_config(Path(__file__).parents[1]/'config/vehicle.yaml')
     assert cfg.command_profile == 'rate_bounded_v2'
     assert cfg.steering_acceleration_scale == cfg.steer_acceleration
 

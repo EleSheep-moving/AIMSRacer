@@ -1,0 +1,35 @@
+# Archived experimental field profile, not the default vehicle configuration.
+# Export with --horizon 15 --dt 0.1. See the 2026-10-10 field review.
+profile: measured
+wheelbase: 0.36
+rear_offset: 0.0
+half_length: null
+front_extent: 0.52
+rear_extent: 0.1
+half_width: 0.16
+geometry_verified: true
+enforce_corridor: false
+cruise_speed: 3.5
+max_speed: 4.0
+minimum_drive_speed: 0.2
+steer_limit: 0.45
+steer_rate: 2.0
+steer_acceleration: 2.0
+accel_limit: 1.0
+brake_limit: 1.0
+jerk_limit: 1.0
+steering_tau: 0.08
+understeer_coefficient: 0.0
+lateral_accel_limit: 1.0
+contour_weight: 16.0
+heading_weight: 4.0
+speed_weight: 133.33333333333334
+steering_weight: 0.6666666666666666
+steering_rate_weight: 0.3
+steering_acceleration_weight: 0.6
+terminal_weight: 3.0
+solver_max_iterations: 35
+command_profile: rate_bounded_v2
+steering_acceleration_scale: 2.0
+acados_rti_steps: 2
+combined_accel_constraint_enabled: false

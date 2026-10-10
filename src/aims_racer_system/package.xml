@@ -3,8 +3,8 @@
 <package format="3">
   <name>aims_racer_system</name>
   <version>0.0.0</version>
-  <description>AIMSRacer vehicle bringup, localization, navigation, and calibration tools.</description>
-  <maintainer email="you@example.com">oem</maintainer>
+  <description>AIMSRacer field vehicle bringup, known-map localization and native racing launch.</description>
+  <maintainer email="ZhizhaoZhang@gmail.com">AIMSRacer</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
@@ -25,6 +25,14 @@
   <exec_depend>lifecycle_msgs</exec_depend>
   <exec_depend>lidar_localization_ros2</exec_depend>
   <exec_depend>fastlio2</exec_depend>
+  <exec_depend>pgo</exec_depend>
+  <exec_depend>ackermann_mux</exec_depend>
+  <exec_depend>crsf_receiver</exec_depend>
+  <exec_depend>vesc_driver</exec_depend>
+  <exec_depend>vesc_ackermann</exec_depend>
+  <exec_depend>livox_ros_driver2</exec_depend>
+  <exec_depend>aims_mpcc_rt</exec_depend>
+  <exec_depend>ros2bag</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
   <depend>ackermann_msgs</depend>

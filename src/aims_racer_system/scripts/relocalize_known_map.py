@@ -64,6 +64,17 @@ def wait_until(node, predicate, deadline):
     return False
 
 
+def wait_until_active(node, deadline):
+    while time.monotonic() < deadline:
+        future = node.lifecycle.call_async(GetState.Request())
+        if not wait_until(node, future.done, deadline):
+            return False
+        response = future.result()
+        if response is not None and response.current_state.id == State.PRIMARY_STATE_ACTIVE:
+            return True
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('map_file', help='exact immutable PCD passed to known_map_localization.launch.py')
@@ -92,8 +103,7 @@ def main():
             raise RuntimeError('PCD SHA-256 differs from localization monitor map')
         if not wait_until(node, node.lifecycle.service_is_ready, deadline):
             raise RuntimeError('NDT lifecycle service unavailable')
-        future = node.lifecycle.call_async(GetState.Request())
-        if not wait_until(node, future.done, deadline) or future.result().current_state.id != State.PRIMARY_STATE_ACTIVE:
+        if not wait_until_active(node, deadline):
             raise RuntimeError('NDT must be lifecycle active before initialization')
         if not wait_until(node, lambda: node.publisher.get_subscription_count() > 0, deadline):
             raise RuntimeError('no /initialpose subscriber')

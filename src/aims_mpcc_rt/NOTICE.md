@@ -3,7 +3,7 @@
 The C++ runtime is an AIMSRacer implementation of the rear-axle kinematic
 controller and ROS interfaces. Its generated solver exports the existing
 `aims_mpcc` CasADi model, objective and constraints; generation does not replace
-the original source attribution or licenses. The legacy adapter NOTICE and
+the original source attribution or licenses. The original modeling NOTICE and
 BSD-3-Clause, Apache-2.0 and LGPL-3.0 license materials are retained in `licenses/`.
 The exact quintic reference coefficients and prepared speed profile are exported
 from the same AIMSRacer NumPy/SciPy representation.

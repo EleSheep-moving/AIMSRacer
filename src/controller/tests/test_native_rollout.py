@@ -63,31 +63,3 @@ def test_validation_rejects_bad_cached_kernel_without_online_compile(bad_cached_
     result = validate_candidate(plan, VehicleConfig(enforce_corridor=False))
     assert not result['accepted']
     assert 'Cannot load independent rollout cache' in result['reason']
-
-
-def test_handover_rejects_bad_cache_and_keeps_valid_plan(bad_cached_kernel, monkeypatch):
-    from aims_mpcc.runtime import State, Supervisor
-    from aims_mpcc.validation import validate_candidate
-    config = VehicleConfig(enforce_corridor=False)
-    supervisor = Supervisor(config, 100., handover_delay=.02, solve_period=.2)
-    supervisor.observe(State(0., 0., 0., 0., 0., 100.), 10., 0., 0.)
-    supervisor.set_mode(True, 10.)
-    supervisor.start(10.)
-    plan = dict(success=True, generation=supervisor.generation,
-                states=np.zeros((3, 6)).tolist(), controls=np.zeros((2, 3)).tolist(),
-                validation_applied=[0., 0., 0.], constraint_violation=0.,
-                source_stamp=10., submitted_at=10., stamp=10.02)
-    # Model a worker that validated before the parent's cache became invalid.
-    with monkeypatch.context() as isolated:
-        isolated.setenv('AIMS_MPCC_ROLLOUT_DIR', str(bad_cached_kernel.parent / 'missing'))
-        plan['validation'] = validate_candidate(plan, config)
-    assert plan['validation']['accepted']
-    old_plan = dict(source_stamp=9.99)
-    supervisor.plan = old_plan
-    assert supervisor.accept(plan, 10.02)
-    assert not supervisor.activate(10.02, supervisor.state,
-                                   dict(speed=0., steering=0., acceleration=0., steering_rate=0.))
-    assert supervisor.status == 'RUNNING'
-    assert supervisor.plan is old_plan
-    assert supervisor.pending_plan is None
-    assert supervisor.rejected_plans == 1

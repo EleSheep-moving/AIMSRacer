@@ -1,9 +1,9 @@
-"""Numerical input and trajectory utilities for experimental native backends."""
+"""Offline numerical input and trajectory utilities for acados model checks."""
 import math
 import time
 import numpy as np
 from .envelope import independent_rollout, jerk_limits, evaluate_envelope, evaluate_strict_envelope
-from .solver_diagnostics import json_safe
+from .serialization import json_safe
 
 
 def _angular_stopping_rate(distance,acceleration,dt):

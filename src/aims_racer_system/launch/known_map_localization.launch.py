@@ -24,7 +24,7 @@ def build_nodes(context):
              remappings=[('cloud', '/fastlio2/body_cloud'), ('anchor_status', '/localization/anchor_status'),
                          ('pcl_pose', '/localization/ndt_pose'), ('alignment_status', '/localization/ndt_status'),
                          ('odom_bridge_pose', '/localization/odom_bridge_pose'),
-                         ('initial_map', '/localizer/map_cloud')]),
+                         ('initial_map', '/localization/map_cloud')]),
         Node(package='aims_racer_system', executable='activate_ndt.py', name='activate_ndt',
              parameters=[common], output='screen'),
         Node(package='aims_racer_system', executable='localization_monitor', name='localization_monitor',

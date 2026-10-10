@@ -1,162 +1,64 @@
-# Record sensor and controller data
+# 录制传感器与控制器数据
 
-Start the selected [vehicle bringup](bringup.md), verify the
-[frame contract](../architecture.md), and source the same environment in the
-recording terminal. Use a new output directory on a disk with sufficient space.
-The commands below subscribe to data; they do not enable autonomous control.
-
-For recordings already present on the Orin, see the
-[LIO test bag catalog](lio-test-bags.md): it lists raw-input motion/static bags,
-their local paths and replay examples, and identifies recordings that cannot rerun LIO.
-
-## Sensor and estimator bag
-
-Replace `/data/session-001` with your chosen new directory:
+现场录制由 launch 管理，无需另写录包 wrapper。在[同一 workspace 环境](bringup.md)中使用：
 
 ```bash
-ros2 bag record -o /data/session-001 \
-  /livox/lidar /livox/imu \
-  /fastlio2/lio_odom /rear_axle/lio_odom /rear_axle/imu \
-  /rear_axle/wheel_odom /odometry/filtered \
-  /sensors/core /sensors/servo_position_command \
-  /rc/channels /ackermann_cmd /control/autonomy_speed_enabled \
-  /tf /tf_static
+ros2 launch aims_racer_system race.launch.py \
+  map_file:="$HOME/maps/20260928_010503/map.pcd" \
+  artifact_directory:="$HOME/aimsracer-data/bundles/field-v35-20261010" \
+  record:=true
 ```
 
-Raw point clouds increase disk throughput and size, but are needed to rerun LIO.
-For a controller experiment, append `/drive /mpcc/status /mpcc/reference
-/mpcc/prediction` to the same command. For calibration, also capture the
-`/calib/` topics specified in the [calibration guide](../../src/aims_racer_system/docs/calibration.en.md).
-Append `/fastlio2/tf` only when the isolated raw LIO TF is useful for diagnostics;
-raw LIO pose is already available in `/fastlio2/lio_odom`.
-For a known-map run, also record `/localization/map_valid`,
-`/localization/map_sha256`, `/localization/status`, `/localizer/raw_tf` and
-`/fastlio2/body_cloud` so the source correction, consistency diagnostics and
-identical-stamp raw scan/pose pair can be reviewed. The optional
-`/fastlio2/visualization/world_cloud` is not required for localization replay;
-record it only when explicitly investigating visualization output. See the
-[topic contracts](../architecture.md#topics-and-compensation).
+建图使用 `ros2 launch aims_racer_system mapping.launch.py record:=true`。录制本身不授予自主控制权限。
 
-Stop with Ctrl-C and inspect the result:
+## 目录与数据
+
+`session_directory` 留空时，在 `~/aimsracer-data/sessions/YYYY-MM-DD/` 下生成带时间和模式的目录；指定时必须是新目录。
 
 ```bash
-ros2 bag info /data/session-001
+ros2 launch aims_racer_system race.launch.py \
+  map_file:="$HOME/maps/20260928_010503/map.pcd" \
+  artifact_directory:="$HOME/aimsracer-data/bundles/field-v35-20261010" \
+  record:=true session_directory:="$HOME/aimsracer-data/sessions/my-new-run"
 ```
 
-Confirm the expected topics, message counts and duration, including `/tf_static`.
-Keep the effective vehicle/geometry/EKF/LIO configurations, repository and submodule
-commit IDs, software versions, and a note of the maneuver and localization session
-beside the bag. Do not commit large bags or generated logs to the source repository.
+会话包含 `bag/`、`session.json` 和系统 `params/` 快照；race 同时把 native `runtime.csv` 写入会话目录。`record=true` 会选择该目录作为 `log_directory`；单独使用 `log_directory` 可只记录 runtime。
 
-## Timing interpretation
+| 数据 | 自动录制内容 |
+| --- | --- |
+| 原始与修正 IMU | `/livox/imu`、`/livox/imu_bias_corrected`、`/imu/gyro_bias/status` |
+| 重放 LIO 的原始输入 | `/livox/lidar`、`/livox/imu` |
+| LIO 与后轴数据 | `/fastlio2/lio_odom`、`/fastlio2/body_cloud`、`/rear_axle/lio_odom`、`/rear_axle/imu` |
+| wheel / EKF | `/rear_axle/wheel_odom`、`/odometry/filtered` |
+| RC 与执行命令 | `/rc/channels`、`/ackermann_cmd`、`/control/autonomy_speed_enabled`、motor speed/current、servo position、`/sensors/core` |
+| TF | `/tf`、`/tf_static`、隔离的 `/fastlio2/tf` |
+| race 定位与控制 | `/localization/status`、anchor/ndt status、map identity/valid、NDT/bridge pose、`/drive`、`/mpcc/status`、reference/prediction |
+| mapping | `/pgo/loop_markers` |
 
-Receive age is observation time minus the message's source timestamp; the two
-must use a consistent clock domain. It includes scheduling and delivery as well
-as processing, and is not IPOPT or LIO core execution time alone.
+完整列表由 [launch_support.py](../../src/aims_racer_system/aims_racer_system/launch_support.py)维护。录包使用 [recording_qos.yaml](../../src/aims_racer_system/params/recording_qos.yaml)：**原始 `/livox/imu` 为 reliable、keep_last、depth=4096、volatile**，保留高频输入；其他 topic 使用 rosbag 的发布者 QoS 适配。保持 `/fastlio2/body_cloud` 与 raw LIO scan-end 时间对应，以便重放 NDT；world cloud 是可选显示输出。
 
-Livox CustomMsg stamps represent the scan start. Point `offset_time` values are
-relative to it. FAST-LIO computes the scan end from the last retained point and
-stamps its odometry with that end time; the rear-axle adapter preserves the stamp.
-LIO odometry age therefore excludes the scan acquisition interval. Record raw
-clouds and IMU if you need to inspect those stages.
+## 结束与核验
 
-P50 is the median; P95 is the age below which 95% of samples fall. Report the
-sample window, operating conditions and clock basis with those numbers. A fresh
-EKF output stamp does not prove old LIO measurements were correctly replayed.
-
-The 2026-10-04 incident bag omitted raw LiDAR. Its delayed LIO outputs can be
-replayed to study EKF behavior, but cannot drive a new LIO computation to
-reproduce the original accumulating backlog. See the
-[incident findings](../reports/2026-10-04-lio-delay.md). For a timing investigation,
-keep raw scans and IMU from startup, record the effective binary checksum and
-map/session state, and collect CPU load, frequency and temperature alongside
-the bag. Per-frame input waits, callback/core durations, matching iterations,
-queue depth and tree-rebuild events require additional LIO instrumentation;
-the shipped node does not currently expose that complete set of measurements.
-
-## MPCC reference recording
-
-A rosbag and a prepared MPCC reference serve different purposes. The controller
-loads a processed closed lap from disk. Follow [record and prepare one
-lap](../../src/controller/docs/usage.md#record-and-prepare-one-lap) for an
-`odom` reference, keeping localization running between recording and execution.
-For a saved `map` reference and restart, use the
-[known-map workflow](known-map-mpcc.md). Live local-path topic input is not
-implemented.
-
-Mapping and CSV capture can run in one mapping session, but that does **not**
-make the CSV a persistent map-frame reference. The separate
-`base_orin_livox_mapping_v2.launch.py` runs LIO and PGO without the EKF, so its
-reference-CSV command must select rear-axle LIO odometry explicitly:
+车辆停稳、撤销自主权限，再用 Ctrl-C 正常关闭 launch，让 rosbag 写完索引：
 
 ```bash
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 ros2 run aims_mpcc record_path --ros-args \
-  -p odom_topic:=/rear_axle/lio_odom -p output:=/home/aims/mapping-lap-run1.csv
+ros2 bag info "$HOME/aimsracer-data/sessions/my-new-run/bag"
 ```
 
-That CSV is still `odom/base_link`. PGO publishes a changing `map -> odom`
-transform and saves a map in `map`; do not treat the last transform as the
-whole lap's map alignment. Do not start the mapping launch beside V2: both
-launch hardware/LIO and would duplicate TF ownership. The
-[known-map workflow](known-map-mpcc.md) shows how to recover a map-frame
-candidate from saved optimized PGO poses, prepare it against an exact map file,
-and relocalize after a restart. This remains subject to live validation.
+核对 topic 数量、消息计数、时长和 `metadata.yaml`；保留完整 bundle、地图文件及其哈希、源码版本、现场起终点和干预说明。原始 bag、bundle 和日志保存在源码目录外。
 
-For the initial low-speed calibration, keep the VESC in **speed mode** and record
-the actual speed for each maneuver. About 0.8–1.2 m/s covers the current
-controller's operating region; do not mix in current/duty mode or runs above
-2 m/s when fitting that low-speed response. Record one continuous bag before
-any motion:
+## 时间和圈时口径
+
+source stamp 是测量时刻，bag 接收时间包含传输与排队，两者分别统计。EKF 新鲜 header 不意味着 LIO 测量无延迟；`/ackermann_cmd` 是转发命令，servo command echo 不是转向角测量。
+
+当前[外场复盘](../reports/2026-10-10-mpcc-field-review.md)的运动窗口为首次 RUNNING 后 `abs(vx)>0.05 m/s` 的首末时间差，包含静止起步和终点制动；它不是 flying lap。RUNNING→COMPLETE 另含终点等待。比较圈速时固定计时横截面、同配置重复，分开记录运动、完成、停车等待、误差和人工干预。
+
+## MPCC 参考录制
+
+`record_path` 保存 `odom/base_link` 原始 CSV，默认输入 `/odometry/filtered`：
 
 ```bash
-ros2 bag record -o /home/aims/mpcc-prep-run1 \
-  /livox/lidar /livox/imu \
-  /fastlio2/lio_odom /rear_axle/lio_odom /rear_axle/imu \
-  /rear_axle/wheel_odom /odometry/filtered \
-  /sensors/core /sensors/servo_position_command \
-  /commands/motor/speed /commands/servo/position \
-  /rc/channels /ackermann_cmd /control/autonomy_speed_enabled \
-  /tf /tf_static
+ros2 run aims_mpcc record_path --ros-args -p output:="$HOME/aimsracer-data/lap.csv"
 ```
 
-Choose a new output directory for every attempt and check that the disk can
-sustain raw LiDAR recording. `/ackermann_cmd` gives the requested speed, steering
-and mode (`drive.jerk == 0` for speed mode); the two `/commands/` topics show
-what reached the VESC driver. `/sensors/servo_position_command` is a command
-echo, **not** a physical steering-angle measurement. Raw IMU and the odometry
-streams allow command-to-yaw/speed fits and localization-freshness checks. The
-LiDAR topic enables later inspection or replay of LIO timing.
-
-Use this sequence, noting approximate bag times for each segment:
-
-1. Hold still for 10–15 s to measure IMU bias and baseline noise.
-2. On a clear straight, repeat 3–5 speed-mode starts from rest to a safe
-   low speed near 1 m/s, hold steady for at least 2 s, then command zero and let the car
-   stop. Include a few 0.6 ↔ 1.0 m/s steps if space allows. This measures both
-   first motion and the speed-loop/braking response with the current ERPM scale.
-3. At a steady low speed near 1 m/s, apply repeatable left/right steering
-   0 → about ±0.1–0.2 rad → 0, with 1–2 s steady sections before and after
-   each change; repeat each direction 3–5 times. Leave enough room for the
-   turn and record the actual command rather than assuming the hand motion was
-   an ideal step. The steady arcs also check curvature, steering sign and
-   left/right asymmetry. Avoid full-lock tests for this low-speed MPCC fit.
-4. Start `record_path` in another terminal just before the reference lap,
-   drive one forward closed lap with slight overlap at a safe low speed, then
-   stop that recorder. Keep the bag running through this lap. See the linked
-   usage guide for the exact CSV command and path-preparation step.
-5. Stop the bag after another stationary 10 s. Record which bag interval is the
-   lap, the speed mode used, and the effective configuration/commit IDs.
-
-The bag contains the observations, but current `prepare_path` takes the
-`record_path` CSV, not a bag directly. Measure the car footprint and minimum
-left/right free corridor widths separately; a driven lap does not establish
-track boundaries. Review speed units, sign, LIO age and missing data before
-fitting a new steering time constant or attempting MPCC control.
-When using the mapping launch, `/odometry/filtered` is absent: omit it from
-the bag command, keep `/rear_axle/lio_odom` and `/tf`, and add
-`/pgo/loop_markers` if loop-closure diagnostics are useful. Save the PGO map
-separately with `bash preprocess_script/save_map.sh`, which calls
-`/pgo/save_maps` and defaults to a dated directory under `~/maps/`. Check the
-service response and the resulting `map.pcd`/`poses.txt`: the helper checks
-the reported `success: true` and that both files are nonempty. The bag does not
-save that map artifact.
+手动前进绕一圈并少量重叠后停止 recorder。建图时可用 `-p odom_topic:=/rear_axle/lio_odom`。CSV 的 odom 原点属于该次定位会话；保存地图后需离线关联地图位姿，形成真正的 `map/base_link` CSV，再准备持久参考。`prepare_path` 不会仅靠 `--map-file` 转换坐标。参考与 bundle 准备见 [MPCC 使用](../../src/controller/docs/usage.md#准备参考)。

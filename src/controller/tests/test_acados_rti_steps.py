@@ -71,8 +71,6 @@ def test_two_pass_budget_and_final_physical_rejection_survive_first_status_error
         pytest.skip('acados native installation required')
     from aims_mpcc.acados_backend import AcadosSolver
     from aims_mpcc.validation import validate_candidate
-    from aims_mpcc.worker import _record_solve
-    from io import StringIO
     angles = np.linspace(0, 2*np.pi, 40, endpoint=False)
     path = ReferencePath(3*np.c_[np.cos(angles), np.sin(angles)], 1., 1., 'odom')
     cfg = VehicleConfig(profile='synthetic', rear_offset=.15, half_length=.28,
@@ -98,8 +96,3 @@ def test_two_pass_budget_and_final_physical_rejection_survive_first_status_error
     assert result['controls'][0][0] == pytest.approx(cfg.accel_limit + .1)
     candidate = dict(result, validation_applied=[0., applied['steering'], 0.], dt=.1)
     assert not validate_candidate(candidate, cfg, path)['accepted']
-    log = StringIO()
-    _record_solve(log, result)
-    logged = json.loads(log.getvalue())
-    assert 'states' not in logged and 'controls' not in logged
-    assert logged['failure_snapshot']['raw_native_controls'][0][0] == pytest.approx(cfg.accel_limit + .1)

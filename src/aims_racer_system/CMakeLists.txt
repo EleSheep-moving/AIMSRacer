@@ -48,19 +48,20 @@ ament_target_dependencies(imu_to_rear_axle rclcpp sensor_msgs nav_msgs)
 target_compile_options(imu_to_rear_axle PRIVATE -Wall -Wextra -Wpedantic)
 install(TARGETS imu_to_rear_axle DESTINATION lib/${PROJECT_NAME})
 
-add_executable(tf_authority_audit replay/tf_authority_audit.cpp)
-target_compile_features(tf_authority_audit PRIVATE cxx_std_17)
-ament_target_dependencies(tf_authority_audit rclcpp tf2_msgs)
-target_compile_options(tf_authority_audit PRIVATE -Wall -Wextra -Wpedantic)
-install(TARGETS tf_authority_audit DESTINATION lib/${PROJECT_NAME})
-
 ament_python_install_package(${PROJECT_NAME})
-file(GLOB system_scripts CONFIGURE_DEPENDS scripts/*.py)
-install(PROGRAMS ${system_scripts} DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY launch params behaviour_trees rviz replay
-  DESTINATION share/${PROJECT_NAME} PATTERN "__pycache__" EXCLUDE)
+install(PROGRAMS
+  scripts/activate_ndt.py scripts/relocalize_known_map.py
+  scripts/lio_to_rear_axle.py scripts/livox_gyro_bias.py
+  scripts/localization_policy.py
+  DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY launch params rviz DESTINATION share/${PROJECT_NAME}
+  PATTERN "__pycache__" EXCLUDE)
 
 if(BUILD_TESTING)
+  add_executable(tf_authority_audit ${CMAKE_CURRENT_SOURCE_DIR}/../../verification/localization/tf_authority_audit.cpp)
+  target_compile_features(tf_authority_audit PRIVATE cxx_std_17)
+  ament_target_dependencies(tf_authority_audit rclcpp tf2_msgs)
+  target_compile_options(tf_authority_audit PRIVATE -Wall -Wextra -Wpedantic)
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(rear_axle_imu_test tests/test_rear_axle_imu.cpp)
   target_link_libraries(rear_axle_imu_test rear_axle_imu)
@@ -80,10 +81,11 @@ if(BUILD_TESTING)
   ament_add_pytest_test(rear_axle_contract tests/test_rear_axle_contract.py
     ENV "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/test_logs")
   ament_add_pytest_test(gyro_bias tests/test_gyro_bias.py)
-  ament_add_pytest_test(nav_map_argument tests/test_nav_map_argument.py)
+  ament_add_pytest_test(current_launch tests/test_current_launch.py)
   ament_add_pytest_test(localization_policy tests/test_localization_policy.py)
+  ament_add_pytest_test(initializer_lifecycle tests/test_initializer_lifecycle.py)
   ament_add_pytest_test(replay_sensor_qos tests/test_replay_sensor_qos.py)
-  ament_add_pytest_test(monitor_health_delivery tests/test_monitor_health_delivery.py)
+  ament_add_pytest_test(replay_acceptance tests/test_replay_acceptance.py)
   ament_add_pytest_test(monitor_alignment_delivery tests/test_monitor_alignment_delivery.py
     ENV "MONITOR_TEST_EXECUTABLE=$<TARGET_FILE:localization_monitor>"
         "ROS_DOMAIN_ID=177" "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/alignment_test_logs")

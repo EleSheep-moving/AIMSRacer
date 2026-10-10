@@ -1,0 +1,7 @@
+# Retain raw IMU during recording. Other topics use recorded publisher QoS.
+# Other topics retain rosbag's recorded reliability/durability adaptation.
+/livox/imu:
+  history: keep_last
+  depth: 4096
+  reliability: reliable
+  durability: volatile
