@@ -41,7 +41,8 @@ body cloud 与 raw LIO odometry 保留相同 scan-end stamp，供 NDT/PGO 使用
 
 ```bash
 source /opt/ros/humble/setup.bash
-colcon build --packages-up-to aims_racer_system aims_mpcc_rt \
+export MAKEFLAGS="-j2 -l2"
+colcon build --packages-up-to aims_racer_system aims_mpcc_rt --executor sequential \
   --cmake-args -DCMAKE_BUILD_TYPE=Release -DROS_EDITION=ROS2 -DDISTRO_ROS=humble
 source install/setup.bash
 ```

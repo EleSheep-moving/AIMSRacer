@@ -147,3 +147,20 @@ def test_acados_generator_requires_real_cmake_metadata(tmp_path):
     tool = module()
     with pytest.raises(tool.PreparationError, match='link_libs'):
         tool.prepare_acados_generator(tmp_path/'source', tmp_path/'build', tmp_path/'install')
+
+def test_privileged_install_only_elevates_the_cmake_install_step(tmp_path, monkeypatch):
+    tool=module();calls=[]
+    prefix=tmp_path/'system-prefix';prefix.mkdir()
+    monkeypatch.setattr(tool.os,'access',lambda p,mode:False)
+    monkeypatch.setattr(tool.shutil,'which',lambda name:'/usr/bin/'+name)
+    monkeypatch.setattr(tool,'run',lambda *args,**kwargs:calls.append(args))
+    tool.install_build(tmp_path/'user-owned-build',prefix)
+    assert calls==[('sudo','/usr/bin/cmake','--install',str(tmp_path/'user-owned-build'))]
+
+def test_writable_install_prefix_does_not_use_sudo(tmp_path, monkeypatch):
+    tool=module();calls=[]
+    monkeypatch.setattr(tool.os,'access',lambda p,mode:True)
+    monkeypatch.setattr(tool.shutil,'which',lambda name:'/usr/bin/'+name)
+    monkeypatch.setattr(tool,'run',lambda *args,**kwargs:calls.append(args))
+    tool.install_build(tmp_path/'build',tmp_path/'user-prefix')
+    assert calls==[('/usr/bin/cmake','--install',str(tmp_path/'build'))]

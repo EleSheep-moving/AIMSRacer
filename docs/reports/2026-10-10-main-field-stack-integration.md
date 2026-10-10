@@ -37,6 +37,30 @@
 
 完整构建补齐了干净环境缺少的 PCL、GTSAM、udp_msgs 等依赖；新安装布局补齐了实际 CMake 生成的 acados link metadata 和 SDK 默认 Tera。初次缺依赖与无效测试 domain 的失败日志均保留，没有当作成功或隐藏。
 
+## NX 原生部署核对
+
+NX 标准 workspace 已准备新固定依赖和 ARM acados；旧 build/install 保存到证据目录的 `rollback/`。新默认 exporter 在 NX 原数值环境中重新生成 N15/.1 bundle，没有额外覆盖 horizon，`config.json` 和 `reference.json` 均与原 V35 **字节相同**，原 CSV、raw 和 metadata 也相同。新产物位于 `~/aimsracer-data/bundles/field-v35-20261010`。
+
+初次 NDT 构建发生内存不足，内核记录为 `cc1plus` 被 OOM 杀死。实际命令同时带 `-j2 -j8 -l8`，colcon 自动追加的 8 并发覆盖了预期限制；仅设置 `CMAKE_BUILD_PARALLEL_LEVEL=2` 不足以限制该环境。已用 `MAKEFLAGS="-j2 -l2"` 和 sequential executor 继续构建，并核对 colcon 不再追加 `-j8`。这是编译并发问题，没有调整车辆参数、优化级别或运行时线程配置。原失败日志与内核记录保留。
+
+新的标准 install 依赖闭包共 18 个包构建成功（首次完成12包，恢复构建完成6包），ARM bundle 也已完成目标平台编译。NX 回归：
+
+| 检查 | 结果 |
+|---|---|
+| 当前 map + independent acceleration bundle 的 native CTest | 24/24 passed |
+| 后轴、gyro、定位协议、初始化与 launch CTest | 11/11 passed |
+| RC selector 和合成输入 pipeline | 2/2 passed |
+| FAST-LIO 输入缓冲连续性回归 | 1/1 passed |
+| 安装后的错误启动参数 Python 检查 | 7/7 passed，无跳过 |
+
+当前 field bundle 关闭组合加速度椭圆，NX 只注册与该实际配置匹配的 bundle 测试；桌面多 fixture 的45项与 NX 24项不是同一个测试集合，不以数量差异解释为跳过失败。定位/车辆包的上游无关 lint 不作为本次整合的运行验收门槛。
+
+安装后的18个包均由 `~/AIMSRacer/install/<package>` 提供，`launch_support` 也来自该 install；四个公开 launch 的 `--show-args` 通过。实际捕获 installed vehicle 的 Node 参数，在 mapping false/true 下均为 CH10 上限100 A、deadzone50，mapping 实际 include 同一 vehicle。仅加载 launch 描述，没有启动接收机或 VESC。
+
+安装后的 native 节点在 localhost/domain176、全部输入/命令与服务 remap 的环境中读取参数：simulation/auto_start/repeat_laps 均 false、自动等待60 s、request20 Hz、N15、RTI2、solver_timeout=.05、handover=.02、TTL≈1.2 s；状态 enabled=0、requests=0。没有发布 enable、里程计或驱动输入。首轮检查脚本使用旧 launch 名与 Humble 不支持的 Python 客户端接口，修正验证脚本后通过，未为此修改运行代码。
+
+依赖准备工具只在系统安装目录不可写时提权 `cmake --install`，source/build/回执仍为当前用户所有；两个权限分支回归通过，与既有准备测试合计 13 passed。NX 已完整安装的 SDK/Sophus/CppLinuxSerial 只记录现有文件，不重复安装。
+
 ## 部署与证据
 
 当前启动方式见[启动指南](../operations/bringup.md)。NX 以 `~/AIMSRacer` main 和该目录的标准 `install` 为生产环境；重建前保存旧 build/install，保留既有外场 worktree 与数据用于回退。地图与 bundle 在源码外，分别显式选择，不能用源码 clone 假定它们存在。

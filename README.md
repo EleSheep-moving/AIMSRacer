@@ -15,7 +15,8 @@ git submodule update --init src/FASTLIO2_ROS2
 python3 tools/setup_dependencies.py --workspace .
 bash tools/setup_acados.sh --workspace . --jobs 2
 source /opt/ros/humble/setup.bash
-colcon build --packages-up-to aims_racer_system aims_mpcc_rt \
+export MAKEFLAGS="-j2 -l2"
+colcon build --packages-up-to aims_racer_system aims_mpcc_rt --executor sequential \
   --cmake-args -DCMAKE_BUILD_TYPE=Release -DROS_EDITION=ROS2 -DDISTRO_ROS=humble
 source install/setup.bash
 export LD_LIBRARY_PATH="$PWD/dependencies/work/acados/install/lib:${LD_LIBRARY_PATH:-}"

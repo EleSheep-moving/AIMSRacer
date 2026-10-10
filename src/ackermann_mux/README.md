@@ -1,13 +1,7 @@
 ackermann_mux
 =========
 
-based on twist_mux
-Ackermann multiplexer with support for
-[ackermann_msgs/AckermannDriveStamped](http://docs.ros.org/api/ackermann_msgs/html/msg/AckermannDriveStamped.html)
-topics and
-[std_msgs/Bool](http://docs.ros.org/api/std_msgs/html/msg/Bool.html) locks with priorities.
-
-<!-- See [documentation](http://wiki.ros.org/twist_mux). -->
+Current production installs the C++ RC selector `joystick_control_v2`. It selects manual or autonomous commands and publishes `/ackermann_cmd`; the unified vehicle launch supplies the field-tested CH3/CH1 transmitter profile. Original f1tenth/twist_mux source attribution is retained in package metadata and license materials.
 
 ## RC controller variants
 
@@ -73,15 +67,14 @@ explicit zero speed command. Steering is clamped to `steering_limit`. A persiste
 RC outage keeps the node alive and stopped; manual control can recover when RC
 returns. Calibration still requires a new command after that recovery.
 
-Manual throttle curves, the throttle deadzone, reversal and limit-knob behavior
-are preserved. Manual current defaults to 3–20 A (vehicle bringup overrides the
-maximum to 100 A). External calibration current has its own bound so an 80 A
-calibration trial is not silently clipped to the manual 20 A setting. Existing
+The current vehicle, mapping and race launches all use the field-tested manual
+current range **3–100 A**, controlled by CH10; CH3 controls the throttle fraction
+and the throttle deadzone is 50. The executable's fallback when run directly
+without vehicle parameters is 3–20 A; that fallback is not the vehicle launch
+configuration. External calibration current has its own bound. Existing
 `channel8_*`, `speed_channel8_*`, `current_channel8_*` and `steering_channel_mid`
 aliases remain fallbacks; canonical names take precedence. All selector parameters
 are validated at startup and read-only thereafter. Logging occurs on state changes.
-The mapping launch's previously ignored duty/steering/ESC parameters have been
-replaced or removed; its effective old steering and duty behavior is retained.
 
 ## Verification
 
@@ -94,8 +87,8 @@ timeouts, arming transitions, takeover, unsupported modes and invalid commands.
 The ROS pipeline tests start only the selector and synthetic publishers in an
 isolated DDS domain, including a paused simulation clock. They do not start the
 vehicle receiver or VESC driver.
-The additional test sources and fixtures are retained locally and are not
-included in this publication.
+Regression sources and fixtures are under `tests/` and are used during development;
+production installation contains only the selector executable.
 
 On this host (2026-10-03), an isolated synthetic workload with 100 Hz RC,
 50 Hz navigation input and 200 Hz output measured 29.0–32.0% of one CPU core for

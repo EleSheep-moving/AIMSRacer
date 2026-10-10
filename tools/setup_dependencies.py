@@ -35,6 +35,19 @@ def run(*args, cwd=None, check=True):
     return result
 
 
+def install_build(build, prefix):
+    """Keep source/build/receipts user-owned; elevate only system installation."""
+    destination = Path(prefix)
+    while not destination.exists():
+        destination = destination.parent
+    command = [shutil.which('cmake') or 'cmake', '--install', str(build)]
+    if not os.access(destination, os.W_OK):
+        if shutil.which('sudo') is None:
+            raise PreparationError(f'{prefix}: system installation needs write permission; no sudo available')
+        command.insert(0, 'sudo')
+    return run(*command)
+
+
 def git(directory, *args):
     return run('git', '-C', str(directory), *args).stdout
 
@@ -162,7 +175,7 @@ def prepare_system_dependency(workspace, name, spec, prefix, jobs):
         settings.update(BUILD_TESTS='OFF')
     run('cmake','-S',str(source),'-B',str(build),*[f'-D{k}={v}' for k,v in settings.items()])
     run('cmake','--build',str(build),'--parallel',str(jobs))
-    run('cmake','--install',str(build))
+    install_build(build, prefix)
     receipt = existing_system_dependency(name, prefix)
     if not receipt['complete']:
         raise PreparationError(f'{name}: installation omitted required artifacts')
@@ -234,7 +247,7 @@ def prepare_sdk(workspace, spec, prefix, jobs):
     run('cmake','-S',str(source),'-B',str(build),'-DCMAKE_BUILD_TYPE=Release',
         f'-DCMAKE_INSTALL_PREFIX={prefix}','-DCMAKE_POLICY_VERSION_MINIMUM=3.5')
     run('cmake','--build',str(build),'--parallel',str(jobs))
-    run('cmake','--install',str(build))
+    install_build(build, prefix)
     receipt = existing_sdk(prefix)
     if not receipt['complete']:
         raise PreparationError('SDK install did not provide the required library and headers')

@@ -38,25 +38,20 @@ bash tools/setup_acados.sh --workspace . --jobs 2
 
 只初始化主流程需要的 FAST-LIO 子模块，并保留当前提交的固定指针。准备脚本将固定版本 NDT、ndt_omp、Livox ROS 2、serial 放在同一 `src/` 下，核验 NDT 补丁和源码身份。Livox SDK2、Sophus、CppLinuxSerial 已安装时沿用并记录现有库/配置，缺失时按清单准备。acados 与 BLASFEO/HPIPM 的固定来源构建到 `dependencies/work/acados/install`。现有不同版本/本地修改由工具明确报告，不覆盖历史目录。
 
-脚本 CLI 与各 source pin 以 [setup_dependencies.py](../../tools/setup_dependencies.py)、[setup_acados.sh](../../tools/setup_acados.sh)及 manifest 为准。可通过 `--jobs` 限制构建并发；SDK 和系统库默认安装 prefix 为 `/usr/local`。若缺少这些库，先以普通用户准备 ROS source，再为系统库安装赋予权限，避免把 ROS clone 变成 root 所有：
-
-```bash
-python3 tools/setup_dependencies.py --workspace . --skip-sdk \
-  --only lidar_localization_ros2 ndt_omp_ros2 livox_ros_driver2 serial
-sudo python3 tools/setup_dependencies.py --workspace . --only Sophus CppLinuxSerial sdk
-```
-
-系统库已完整安装的 NX 使用前面的普通用户命令记录现有安装即可。
+脚本 CLI 与各 source pin 以 [setup_dependencies.py](../../tools/setup_dependencies.py)、[setup_acados.sh](../../tools/setup_acados.sh)及 manifest 为准。可通过 `--jobs` 限制构建并发；SDK 和系统库默认安装 prefix 为 `/usr/local`。普通用户运行准备工具，source/build/回执保留当前用户所有；仅系统安装目录不可写时，工具使用 `sudo cmake --install` 安装已构建的库。系统库已完整安装的 NX 只记录现有安装，不调用 sudo。不要用 sudo 运行整份准备工具，否则生成的依赖源码与 acados 目录可能归 root 所有。
 
 ## 标准 install 构建
 
 ```bash
 source /opt/ros/humble/setup.bash
-colcon build --packages-up-to aims_racer_system aims_mpcc_rt \
+export MAKEFLAGS="-j2 -l2"
+colcon build --packages-up-to aims_racer_system aims_mpcc_rt --executor sequential \
   --cmake-args -DCMAKE_BUILD_TYPE=Release -DROS_EDITION=ROS2 -DDISTRO_ROS=humble
 source install/setup.bash
 export LD_LIBRARY_PATH="$PWD/dependencies/work/acados/install/lib:${LD_LIBRARY_PATH:-}"
 ```
+
+`MAKEFLAGS="-j2 -l2"` 限制每个包的 Make 编译并发，`--executor sequential` 限制包间并发。NX 上仅设置 `CMAKE_BUILD_PARALLEL_LEVEL=2` 仍可能被 colcon 自动追加的 `-j8` 覆盖，导致 PCL/NDT 编译内存不足；不要因此更改运行时线程或车辆参数。
 
 Livox 的 ROS 2 edition/distribution 是显式构建参数。该命令选择当前整车依赖闭包；其它实验包不需要随车辆构建。使用标准 install，使安装内容与同一源码构建对应；修改后重新构建，不靠符号链接让未部署源码改变现场行为。
 
