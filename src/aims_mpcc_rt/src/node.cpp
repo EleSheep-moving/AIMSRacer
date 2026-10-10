@@ -56,7 +56,7 @@ struct Pending {Plan plan;Applied applied{};HistoryCommand prefix{};std::uint64_
 class RuntimeNode final:public rclcpp::Node {
 #ifdef AIMS_MPCC_RT_TEST_ACCESS
   friend struct RuntimeClockProbe;
-  std::atomic<bool> test_callback_entered_{false},test_compute_complete_{false},test_block_worker_{false},test_worker_blocked_{false};
+  std::atomic<bool> test_callback_entered_{false},test_odometry_entered_{false},test_compute_complete_{false},test_block_worker_{false},test_worker_blocked_{false};
 #endif
  public:
   RuntimeNode():Node("aims_mpcc_rt"){
@@ -251,8 +251,15 @@ class RuntimeNode final:public rclcpp::Node {
     return true;
   }
   void odometry(const nav_msgs::msg::Odometry& m){
+#ifdef AIMS_MPCC_RT_TEST_ACCESS
+    test_odometry_entered_.store(true);
+#endif
+    std::lock_guard<std::mutex> lock(mutex_);
+    // Clock observations share the same serialization as last_ros_now_. A
+    // timestamp sampled before waiting for the lock can be older than another
+    // callback's observation without any real ROS clock rollback.
     const double now=steady(),ros=get_clock()->now().seconds();
-    std::lock_guard<std::mutex> lock(mutex_);observe_clock_locked(ros,now);
+    observe_clock_locked(ros,now);
     try{
       if(m.header.frame_id!="odom"||m.child_frame_id!="base_link")throw std::runtime_error("expected odom/base_link state");
       double stamp=m.header.stamp.sec+m.header.stamp.nanosec*1e-9,age=ros-stamp;
@@ -535,7 +542,9 @@ class RuntimeNode final:public rclcpp::Node {
       auto value=[&](const std::string& key,const auto& v){diagnostic_msgs::msg::KeyValue kv;kv.key=key;kv.value=std::isfinite(static_cast<double>(v))?std::to_string(v):"null";status.values.push_back(kv);};
       auto text=[&](const std::string& key,const std::string& v){diagnostic_msgs::msg::KeyValue kv;kv.key=key;kv.value=json_string(v);status.values.push_back(kv);};
       text("status",phase_);text("reason",reason_);text("backend","acados_cpp");
-      text("execution_certificate_scope","activation at current speed cap; later dynamic caps use per-hold physical budget; ideal acceleration and steering lag");
+      text("execution_certificate_scope",cfg_.combined_accel_constraint_enabled?
+        "activation at current speed cap; later dynamic caps use per-hold physical budget; ideal acceleration and steering lag":
+        "independent speed, acceleration and steering bounds; curvature speed planning; ideal acceleration and steering lag");
       diagnostic_msgs::msg::KeyValue ready;ready.key="worker_ready";ready.value=solver_ready_?"true":"false";status.values.push_back(ready);
       text("startup_instance",startup_instance_);
       diagnostic_msgs::msg::KeyValue startup;startup.key="startup_disabled";startup.value=startup_disabled_?"true":"false";status.values.push_back(startup);
@@ -576,6 +585,7 @@ class RuntimeNode final:public rclcpp::Node {
       value("active_original_max_violation",active_?active_->plan.original_max_violation:0.);
       value("geometry_refreshes",last_.plan.geometry_refreshes);value("geometry_refresh_time_s",last_.plan.geometry_refresh_time_s);
       value("max_geometry_progress_shift",last_.plan.max_geometry_progress_shift);value("acados_rti_steps",cfg_.acados_rti_steps);value("native_passes",last_.plan.native_passes);value("max_violation",last_.plan.max_violation);
+      value("combined_accel_constraint_enabled",cfg_.combined_accel_constraint_enabled);
       value("log_dropped",log_dropped_.load());
       const auto& b=sampler_->braking_budget();std::ostringstream budget;
       budget<<std::boolalpha<<"{\"available\":"<<b.available<<",\"feasible\":"<<b.feasible

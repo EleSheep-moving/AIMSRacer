@@ -121,6 +121,7 @@ def export(config_path, reference_dir, output, horizon=10, dt=.1, source_only=Fa
         shutil.copyfile(source_root / name, destination)
         source_hashes[name] = digest(destination)
     manifest = dict(schema_version=1, command_profile=cfg.command_profile, stage_zero_envelope_bounds=1,
+                    combined_accel_constraint_enabled=cfg.combined_accel_constraint_enabled,
                     constraint_groups=solver._groups, capsule_abi_version=1, backend='acados_sqp_rti_hpipm', acados_commit=dependencies['acados_source'],
                     generation_dependencies=dependencies,
                     generation_sources={name:digest(output/name) for name in ('export_bundle.py','build_bundle.py')},

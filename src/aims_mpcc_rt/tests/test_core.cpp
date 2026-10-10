@@ -153,7 +153,16 @@ int main(int argc,char **argv) {
   const bool refresh_geometry=!(argc==3&&std::string(argv[2])=="--frozen-geometry");
   int geometry_refreshes=0;double maximum_geometry_shift=0.;
   std::vector<double> timings;double sum_error=0.,peak_error=0.,progress=0.,last_theta=0.;int passes=0;
-  int count=int(std::ceil((b.reference().length()/b.config().cruise_speed+5.)/execution_step));
+  // Curvature can limit speed below cruise, so use the frozen profile to
+  // estimate lap duration and allow acceleration from standstill.
+  double profile_duration=0.;
+  constexpr int duration_samples=2000;
+  const double arc_step=b.reference().length()/duration_samples;
+  for(int i=0;i<duration_samples;++i)
+    profile_duration+=arc_step*b.reference().at((i+.5)*arc_step).tangent_norm/
+      b.reference().speed_at((i+.5)*arc_step);
+  check(std::isfinite(profile_duration)&&profile_duration>0.,"finite positive profile lap duration");
+  int count=int(std::ceil((profile_duration+b.config().cruise_speed/b.config().accel_limit+5.)/execution_step));
   for(int i=0;i<count;++i) {
     auto plan=core.solve(initial,applied,{},execution_step,.05,true,0.,0.,{},refresh_geometry);
     if(!plan.success){

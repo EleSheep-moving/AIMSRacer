@@ -60,7 +60,7 @@ class OutputSampler {
       if(a_lo>a_hi) throw std::runtime_error("speed continuation infeasible");
       // Match the legacy nominal 20 ms recovery/speed-override certificate.
       // An infeasible lateral budget must not suppress bounded stopping.
-      if(!stopping&&(!valid||speed_cap<speed_)){
+      if(cfg_.combined_accel_constraint_enabled&&!stopping&&(!valid||speed_cap<speed_)){
         double speed=std::max({std::abs(measured[3]),std::abs(measured[3]+a_lo*.02),std::abs(measured[3]+a_hi*.02)});
         double angle=std::max(std::abs(measured[5]),std::abs(steering_));
         budget_.available=std::isfinite(speed)&&std::isfinite(angle)&&cfg_.steering_tau>=.001&&
@@ -144,7 +144,7 @@ class OutputSampler {
         // Source TTL or horizon coverage can end inside an otherwise valid
         // publication packet. Its recovery portion needs the same physical
         // budget as a packet that was already expired at publication.
-        if(!stopping&&(!planned_interval||speed_cap<speed_)){
+        if(cfg_.combined_accel_constraint_enabled&&!stopping&&(!planned_interval||speed_cap<speed_)){
           // Runtime supplies the decision-epoch physical prediction. The
           // internal command speed can exceed delayed feedback, so include
           // both across the supported 50 ms hold bound.

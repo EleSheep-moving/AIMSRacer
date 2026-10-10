@@ -56,7 +56,7 @@ ExecutionCertificate certify_execution(const Plan& plan,const OutputSampler& liv
     }
     return state[3]>=-1e-8&&state[3]<=cfg.max_speed+1e-8&&
       std::abs(state[5])<=cfg.steer_limit+1e-8&&acceleration>=-cfg.brake_limit-1e-8&&
-      acceleration<=cfg.accel_limit+1e-8&&utilization<=1.+1e-4&&result.max_corridor_violation<=1e-4;
+      acceleration<=cfg.accel_limit+1e-8&&(!cfg.combined_accel_constraint_enabled||utilization<=1.+1e-4)&&result.max_corridor_violation<=1e-4;
   };
   auto violation_reason=[&](double acceleration){
     std::ostringstream text;text<<"executed trace violates retained physical bounds: E="<<result.max_utilization

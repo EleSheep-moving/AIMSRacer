@@ -47,6 +47,9 @@ def validate_candidate(plan, config, path=None, tolerance=1e-4):
         else:
             envelope_ok = (diagnostic['initial_candidate_utilization'] <= 1.+tolerance and
                            diagnostic['future_slack_max'] <= tolerance)
+        if not config.combined_accel_constraint_enabled:
+            envelope_ok = True
+        diagnostic['combined_accel_constraint_enabled']=config.combined_accel_constraint_enabled
         margin = math.inf
         if config.enforce_corridor:
             if path is None:

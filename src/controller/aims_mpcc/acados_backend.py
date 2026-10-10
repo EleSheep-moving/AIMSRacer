@@ -134,7 +134,7 @@ class AcadosSolver(NumericalBackend):
         library_directory=Path(self._expected_lib_path)
         sample_count=round(self.dt/.02)+1
         corner_probes=len({0,(sample_count+1)//2,sample_count-1})
-        nonlinear_rows=(1 if self.config.command_profile=='rate_bounded_v2' else 3)+sample_count+(4*corner_probes if self.config.enforce_corridor else 0)+int(self.config.envelope_soft_enabled)
+        nonlinear_rows=(1 if self.config.command_profile=='rate_bounded_v2' else 3)+(sample_count if self.config.combined_accel_constraint_enabled else 0)+(4*corner_probes if self.config.enforce_corridor else 0)+int(self.config.envelope_soft_enabled)
         return bool(
             document['name']==self.model_name and document['model']['name']==self.model_name and
             document['problem_class']=='OCP' and routes['shared_lib_ext']=='.so' and
@@ -144,7 +144,7 @@ class AcadosSolver(NumericalBackend):
             type(dims['N']) is int and dims['N']==self.n and dims['nx']==9 and dims['np']==10 and
             dims['nu']==(4 if self.config.envelope_soft_enabled else 3) and
             dims['nh_0']==nonlinear_rows and dims['nh']==nonlinear_rows and
-            dims['nh_e']==1+(4 if self.config.enforce_corridor else 0) and dims['nbx_0']==9 and
+            dims['nh_e']==int(self.config.combined_accel_constraint_enabled)+(4 if self.config.enforce_corridor else 0) and dims['nbx_0']==9 and
             dims['nbxe_0']==9 and document['constraints']['has_x0'] is True and
             type(options['N_horizon']) is int and options['N_horizon']==self.n and
             options['nlp_solver_type']=='SQP_RTI' and options['qp_solver']=='PARTIAL_CONDENSING_HPIPM' and
@@ -216,7 +216,8 @@ class AcadosSolver(NumericalBackend):
             value=utilization(sample,u[0])-slack
             if cfg.envelope_soft_enabled and j==0:
                 value=ca.if_else(p[9]>.5,0.,value)
-            constraint(value,-1e15,1.,'operating_envelope')
+            if cfg.combined_accel_constraint_enabled:
+                constraint(value,-1e15,1.,'operating_envelope')
             if j in (0,(len(samples)+1)//2,len(samples)-1):
                 for value in corridor(sample):constraint(value,-self.path.right_width,self.path.left_width,'corridor')
         if cfg.envelope_soft_enabled:
@@ -225,7 +226,7 @@ class AcadosSolver(NumericalBackend):
         # acados does not inherit nonlinear path constraints into stage zero.
         # The first input must obey the same jerk/slew/envelope/footprint rows.
         model.con_h_expr_0=model.con_h_expr
-        terminal_h=[utilization(x,x[6])]+corridor(x)
+        terminal_h=([utilization(x,x[6])] if cfg.combined_accel_constraint_enabled else [])+corridor(x)
         model.con_h_expr_e=ca.vertcat(*terminal_h)
         self.effective_envelope_margin=max(cfg.optimization_envelope_margin,cfg.acados_envelope_margin)
         self._physical_upper=np.asarray(hi)
@@ -233,10 +234,11 @@ class AcadosSolver(NumericalBackend):
         native_upper[np.array(groups)=='operating_envelope']-=self.effective_envelope_margin
         ocp.constraints.lh=np.asarray(lo);ocp.constraints.uh=native_upper
         ocp.constraints.lh_0=np.asarray(lo);ocp.constraints.uh_0=native_upper.copy()
-        ocp.constraints.lh_e=np.r_[-1e15,[-self.path.right_width]*(len(terminal_h)-1)]
-        self._physical_terminal_upper=np.r_[1.,[self.path.left_width]*(len(terminal_h)-1)]
+        terminal_corridor_count=4 if cfg.enforce_corridor else 0
+        ocp.constraints.lh_e=np.r_[[ -1e15 ] if cfg.combined_accel_constraint_enabled else [],[-self.path.right_width]*terminal_corridor_count]
+        self._physical_terminal_upper=np.r_[[1.] if cfg.combined_accel_constraint_enabled else [],[self.path.left_width]*terminal_corridor_count]
         ocp.constraints.uh_e=self._physical_terminal_upper.copy()
-        ocp.constraints.uh_e[0]-=self.effective_envelope_margin
+        if cfg.combined_accel_constraint_enabled:ocp.constraints.uh_e[0]-=self.effective_envelope_margin
         ocp.constraints.idxbu=np.arange(u.shape[0]);ocp.constraints.lbu=np.array([-cfg.brake_limit,-cfg.steer_limit,0.]+([0.] if cfg.envelope_soft_enabled else []))
         ocp.constraints.ubu=np.array([cfg.accel_limit,cfg.steer_limit,cfg.max_speed]+([cfg.envelope_slack_limit] if cfg.envelope_soft_enabled else []))
         ocp.constraints.idxbx=np.array([3]);ocp.constraints.lbx=np.array([0.]);ocp.constraints.ubx=np.array([cfg.max_speed])
@@ -279,7 +281,7 @@ class AcadosSolver(NumericalBackend):
         violations['dynamics']=float(np.fmax.reduce(stage_defects,initial=0.))
         value=np.asarray(self._terminal_constraints(states[-1],params[-1])).ravel()
         violations['terminal_constraints']=float(np.max(np.maximum.reduce((self._ocp.constraints.lh_e-value,
-            value-terminal_upper,np.zeros(len(value))))))
+            value-terminal_upper,np.zeros(len(value)))),initial=0.))
         violations['input_bounds']=max(0.,float(np.max(self._ocp.constraints.lbu-controls)),float(np.max(controls-self._ocp.constraints.ubu)))
         violations['speed_bounds']=max(0.,float(np.max(-states[:,3])),float(np.max(states[:,3]-self.config.max_speed)))
         violations['initial_state']=float(np.max(np.abs(states[0]-initial)))

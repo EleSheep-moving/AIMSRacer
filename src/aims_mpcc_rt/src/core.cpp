@@ -138,6 +138,15 @@ Bundle Bundle::load(const std::string &directory,const std::string &config_path,
   c.envelope_accel=data["longitudinal_envelope_accel"].IsNull()?c.accel_limit:data["longitudinal_envelope_accel"].as<double>();
   c.envelope_brake=data["longitudinal_envelope_brake"].IsNull()?c.brake_limit:data["longitudinal_envelope_brake"].as<double>();
   c.enforce_corridor=data["enforce_corridor"].as<bool>();c.envelope_soft_enabled=data["envelope_soft_enabled"].as<bool>();
+  c.combined_accel_constraint_enabled=data["combined_accel_constraint_enabled"]?data["combined_accel_constraint_enabled"].as<bool>():true;
+  const bool exported_combined=manifest["combined_accel_constraint_enabled"]?manifest["combined_accel_constraint_enabled"].as<bool>():true;
+  if(c.combined_accel_constraint_enabled!=exported_combined||
+     (!exported_combined&&(c.command_profile!="rate_bounded_v2"||c.envelope_soft_enabled)))
+    throw std::runtime_error("artifact combined acceleration constraint mismatch");
+  if(!exported_combined){
+    if(std::find(i.constraint_groups.begin(),i.constraint_groups.end(),"operating_envelope")!=i.constraint_groups.end()||
+       i.nh_e!=(c.enforce_corridor?4:0))throw std::runtime_error("artifact retains disabled combined acceleration constraint");
+  }
   c.recovery_jerk_enabled=data["recovery_jerk_enabled"].as<bool>();
   c.acados_rti_steps=data["acados_rti_steps"]?data["acados_rti_steps"].as<int>():1;
   if(c.acados_rti_steps!=1&&c.acados_rti_steps!=2)throw std::runtime_error("native RTI maximum must be one or two");
@@ -370,7 +379,7 @@ Plan Core::solve(State initial,const Applied &applied,const Alignment &alignment
     parameters.push_back(p);native.parameters(capsule_,k,p.data());native.set(capsule_,k,"x",seed[k].data());
     if(k<cfg.horizon)native.set(capsule_,k,"u",inputs[k].data());
   }
-  if(native.input_bounds&&!cfg.envelope_soft_enabled){
+  if(native.input_bounds&&!cfg.envelope_soft_enabled&&cfg.combined_accel_constraint_enabled){
     // This is the retained immutable stage-zero ellipse solved exactly for a.
     // Its existing optimization reserve is preserved; subsequent nonlinear
     // rows and the independent physical certificate remain authoritative.
@@ -481,7 +490,8 @@ Plan Core::validate_candidate(const State &initial,const Applied &applied,const 
   }
   std::vector<double> terminal_u(native.nu,0.);
   auto terminal=bundle_.evaluate(6,x,terminal_u,parameters.back());
-  for(int j=0;j<native.nh_e;++j)violation(terminal[j],native.terminal_lower[j],native.terminal_upper[j],j?"terminal_corridor":"terminal_operating_envelope");
+  for(int j=0;j<native.nh_e;++j)violation(terminal[j],native.terminal_lower[j],native.terminal_upper[j],
+    cfg.combined_accel_constraint_enabled&&j==0?"terminal_operating_envelope":"terminal_corridor");
   violation(x[3],0.,cfg.max_speed,"speed_bounds");violation(x[5],-cfg.steer_limit,cfg.steer_limit,"steering_bounds");
   plan.cost+=native.cost_scaling.back()*terminal.back();
   all_finite=all_finite&&std::isfinite(plan.cost)&&std::isfinite(plan.native_cost)&&std::isfinite(plan.raw_optimizer_cost);
@@ -556,7 +566,7 @@ Plan Core::reanchor(const Plan &source,State actual,const Applied &applied,doubl
         endpoint+=rate*cfg.dt;u[1]=endpoint;
       }
       bool envelope_adjusted=false;
-      if(continuation&&v2){
+      if(continuation&&v2&&cfg.combined_accel_constraint_enabled){
         // This is a distinct, bounded alternate candidate, never acceptance of
         // the original failed controls. Reduce acceleration magnitudes using
         // each interval's complete generated lateral samples, and reevaluate

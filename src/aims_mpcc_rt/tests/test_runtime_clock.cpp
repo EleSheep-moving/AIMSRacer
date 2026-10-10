@@ -34,6 +34,39 @@ struct RuntimeClockProbe {
       throw std::runtime_error("fresh receive interleaving incorrectly faulted: "+node.reason_);
     if(node.last_output_.expired&&steady()-node.started_>=node.ttl_)
       throw std::runtime_error("clock test exceeded source TTL");
+
+    // An odometry callback waits while another callback observes a newer ROS
+    // time. The source stamp stays valid; callback entry time must not be
+    // mistaken for a backwards clock after acquiring the shared mutex.
+    nav_msgs::msg::Odometry message;
+    message.header.frame_id="odom";message.child_frame_id="base_link";
+    message.header.stamp=node.get_clock()->now();
+    message.pose.pose.position.x=ref.x+node.cfg_.rear_offset*std::cos(ref.yaw);
+    message.pose.pose.position.y=ref.y+node.cfg_.rear_offset*std::sin(ref.yaw);
+    message.pose.pose.orientation.z=std::sin(ref.yaw/2.);
+    message.pose.pose.orientation.w=std::cos(ref.yaw/2.);
+    std::thread receiver([&]{node.odometry(message);});
+    const auto receiver_deadline=Steady::now()+std::chrono::seconds(2);
+    while(!node.test_odometry_entered_.load()&&Steady::now()<receiver_deadline)std::this_thread::yield();
+    if(!node.test_odometry_entered_.load()){
+      lock.unlock();receiver.join();throw std::runtime_error("odometry did not enter callback");
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    node.observe_clock_locked(node.get_clock()->now().seconds(),steady());
+    lock.unlock();receiver.join();lock.lock();
+    if(!node.enabled_||node.phase_!="RUNNING"||!node.snapshot_.present)
+      throw std::runtime_error("queued odometry incorrectly reset ROS clock: "+node.reason_);
+    const double source=message.header.stamp.sec+message.header.stamp.nanosec*1e-9;
+    if(node.snapshot_.ros_source!=source)
+      throw std::runtime_error("queued odometry was not accepted");
+
+    // Real rollback protection, including invalidation, remains unchanged.
+    const double ros=node.get_clock()->now().seconds();
+    node.observe_clock_locked(ros,steady());
+    node.observe_clock_locked(ros-.002,steady());
+    if(node.enabled_||node.phase_!="FAULT"||node.snapshot_.present||node.mode_||!node.identity_.empty())
+      throw std::runtime_error("genuine ROS clock rollback did not invalidate control");
+    std::cout<<"clock ordering regressions and genuine rollback protection passed\n";
   }
 };
 }

@@ -32,6 +32,9 @@ class VehicleConfig:
     steering_tau: float = .115
     understeer_coefficient: float = 0.
     lateral_accel_limit: float = 1.
+    # Explicit v2 experiment: independent actuator bounds and curvature speed
+    # planning without a hard longitudinal/lateral acceleration ellipse.
+    combined_accel_constraint_enabled: bool = True
     # Operating envelope halfaxes are independent of hard actuator capabilities.
     # None preserves the historical halfaxes for existing vehicle profiles.
     longitudinal_envelope_accel: float | None = None
@@ -71,12 +74,15 @@ class VehicleConfig:
             raise ValueError('acados_rti_steps must be integer one or two')
         if type(self.geometry_verified) is not bool:
             raise ValueError('geometry_verified must be a boolean')
-        boolean_fields = {'geometry_verified', 'enforce_corridor', 'envelope_soft_enabled', 'recovery_jerk_enabled'}
+        boolean_fields = {'geometry_verified', 'enforce_corridor', 'envelope_soft_enabled', 'recovery_jerk_enabled',
+                          'combined_accel_constraint_enabled'}
         for name in boolean_fields:
             if type(getattr(self, name)) is not bool:
                 raise ValueError(f'{name} must be a boolean')
         if self.command_profile not in ('legacy_bounded_v1', 'rate_bounded_v2'):
             raise ValueError('command_profile must be legacy_bounded_v1 or rate_bounded_v2')
+        if not self.combined_accel_constraint_enabled and (self.command_profile!='rate_bounded_v2' or self.envelope_soft_enabled):
+            raise ValueError('disabled combined acceleration constraint requires strict rate_bounded_v2')
         if self.profile not in ('measured', 'synthetic'):
             raise ValueError('profile must be measured or synthetic')
         if self.profile == 'synthetic' and not allow_synthetic:

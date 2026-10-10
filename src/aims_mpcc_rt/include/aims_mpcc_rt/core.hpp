@@ -25,6 +25,7 @@ struct Config {
   double acados_envelope_margin{}, optimization_envelope_margin{};
   double recovery_jerk_limit{}, envelope_recovery_time{}, envelope_slack_limit{};
   bool enforce_corridor{}, envelope_soft_enabled{}, recovery_jerk_enabled{};
+  bool combined_accel_constraint_enabled{true};
   int horizon{};
   int acados_rti_steps{1};
   double dt{};
