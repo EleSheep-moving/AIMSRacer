@@ -1,4 +1,7 @@
+<a id="实验报告"></a>
 # Experiment reports
+
+**English** · [简体中文](README.zh-CN.md)
 
 These are dated evidence, not current operating instructions. Keep their sample
 conditions, source assumptions and limitations with the results. Current behavior
@@ -7,7 +10,7 @@ in the [checklist](../operations/vehicle-checklist.md).
 
 | Report | Scope |
 | --- | --- |
-| [2026-10-10 main 场地栈整合](2026-10-10-main-field-stack-integration.md) | 实跑源码/参数核对、纯 native 安装入口、默认 v35 bundle 与软件验证边界 |
+| [2026-10-10 main field-stack integration](2026-10-10-main-field-stack-integration.md) | Field-run source/parameter audit, native-only installation entry, default v35 bundle and software-verification limits |
 | [2026-10-10 field review and lap-time priorities](2026-10-10-mpcc-field-review.md) | Latest NX source audit, all field sessions, raw-bag completion checks, solver timing, speed-profile saturation and primary racing-source comparison |
 | [2026-10-10 speed boundaries and clock ordering](2026-10-10-mpcc-speed-gates.md) | Field interventions, speed overshoot rejection, clock fix and progressively faster configurations |
 | [2026-10-10 independent acceleration experiment](2026-10-10-mpcc-independent-acceleration.md) | Explicit v2 combined-envelope removal with retained actuator bounds |

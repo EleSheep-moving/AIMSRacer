@@ -1,29 +1,35 @@
-# 车辆运行检查
+<a id="车辆运行检查"></a>
+# Vehicle operation checklist
 
-本清单用于当前 native 实车流程。软件回归与实验验证放在 `verification/`；现场操作参考[启动](bringup.md)和[已知地图](known-map-mpcc.md)。
+**English** · [简体中文](vehicle-checklist.zh-CN.md)
 
-## 启动前
+This checklist covers the current native vehicle workflow. Software regression and experimental verification are in `verification/`; consult [bringup](bringup.md) and [known maps](known-map-mpcc.md) for field operation.
 
-- 确认 RC/物理急停、供电、VESC 与 `/dev/ttyELRS`、`/dev/ttyVESC` 正常；核对 Livox 网络配置。
-- 核对地图 PCD、参考和目标平台 bundle 的身份；从同一 workspace 的 install 环境启动。
-- 确认 `base_link` 后轴位置、传感器安装、车体 footprint 与实际车辆相符。默认 footprint 为后轴前方 0.52 m、后方 0.10 m、左右各 0.16 m。
-- 确认预期行驶区域有物理余量。当前 `enforce_corridor=false`，文件中的左右各 0.5 m 不提供真实边界保护。
-- 只启动 vehicle、mapping、race 之一；已知地图 race 的 NDT 与建图 PGO 不共用 map TF 归属。
+<a id="启动前"></a>
+## Before launch
 
-## 启用前
+- Confirm RC/physical emergency stop, power, VESC, `/dev/ttyELRS`, and `/dev/ttyVESC` operate correctly; check Livox network configuration.
+- Verify the identities of the map PCD, reference, and target-platform bundle; launch from the same workspace's install environment.
+- Confirm that `base_link` rear axle location, sensor mounting, and vehicle footprint match the actual vehicle. The default footprint extends 0.52 m ahead of the rear axle, 0.10 m behind, and 0.16 m to each side.
+- Confirm physical clearance in the intended driving area. Currently `enforce_corridor=false`; the 0.5 m widths on either side in the file do not provide real boundary protection.
+- Launch only one of vehicle, mapping, or race; NDT in known-map race and PGO during mapping must not share ownership of map TF.
 
-- RC 保持可立即接管；核对转向符号和 speed 模式单位。
-- 使用实际 **map/base_link** 初值初始化，观察地图、点云和车辆位姿是否一致。
-- 查看 `/localization/status` 中的 ready、map identity、epoch 和健康；查看 `/mpcc/status` 中 solver、状态新鲜度和自动启动原因。
-- 确保只有一个 `/drive` 发布者，实际命令由 RC 选择器转发至 `/ackermann_cmd`。
-- 车辆静止，方向在参考切线 30° 内。`auto_start=true` 会在条件满足后自主启用一次，操作员应在授权前完成现场检查。
-- 需要保留数据时使用 `record=true` 并确认新会话目录可写、有可用空间。
+<a id="启用前"></a>
+## Before enable
 
-## 行驶、停止与记录
+- Keep RC ready for immediate takeover; check steering signs and speed-mode units.
+- Initialize with the actual **map/base_link** pose and observe whether the map, point cloud, and vehicle pose agree.
+- Check ready state, map identity, epoch, and health in `/localization/status`; check solver, state freshness, and auto start reasons in `/mpcc/status`.
+- Ensure only one `/drive` publisher exists and the RC selector forwards actual commands to `/ackermann_cmd`.
+- Keep the vehicle stationary with its heading within 30° of the reference tangent. `auto_start=true` enables autonomy once when conditions are met; the operator should complete field checks before granting permission.
+- When data must be retained, use `record=true` and confirm that the new session directory is writable with available storage space.
 
-- 观察横向误差、速度跟踪、定位健康、候选/接管拒绝与人工干预。已有 bag 响应可以继续分析；完整纵向辨识按后续加速度接口计划进行。
-- 显式 `/mpcc/enable {data:false}` 会停车并取消未完成自动启动；紧急情况使用 RC/物理急停。
-- 单圈默认自动停车；连续圈 `repeat_laps=true` 由操作员 stop。COMPLETE 等待与运动时间分别记录。
-- 停稳并撤销权限后关闭 launch，检查 bag 元数据、`runtime.csv` 和配置快照。
+<a id="行驶停止与记录"></a>
+## Driving, stopping, and recording
 
-默认配置是 2026-10-10 v35 实跑参数：巡航 3.5、硬上限 4、加速/制动 1、规划 ay=1（单位 m/s 或 m/s²），N15/dt=.1/RTI2。规划峰值约 2.99、实测约 2.89 m/s。实跑证据适用于该车、地图和记录条件，后续变化按同轨重复数据评估。[复盘](../reports/2026-10-10-mpcc-field-review.md)给出完整限制。
+- Observe lateral error, speed tracking, localization health, candidate/takeover rejections, and operator interventions. Existing bag responses can be analyzed further; complete longitudinal identification is planned with the future acceleration interface.
+- Explicit `/mpcc/enable {data:false}` stops the vehicle and cancels pending auto start; use RC/physical emergency stop in an emergency.
+- The default single lap stops automatically; repeated laps with `repeat_laps=true` are stopped by the operator. Record COMPLETE waiting and motion time separately.
+- After the vehicle is stationary and permission has been revoked, close launch and check bag metadata, `runtime.csv`, and configuration snapshots.
+
+Default configuration uses the 2026-10-10 v35 field-run parameters: cruise 3.5, hard cap 4, acceleration/braking 1, planning ay=1 (units m/s or m/s²), N15/dt=.1/RTI2. Planned peak was approximately 2.99 and measured peak approximately 2.89 m/s. Field evidence applies to this vehicle, map, and recorded conditions; evaluate later changes using repeated data on the same track. The [review](../reports/2026-10-10-mpcc-field-review.md) gives the complete limitations.

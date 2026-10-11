@@ -1,6 +1,9 @@
-# x86 / NUC 当前源码构建
+<a id="x86--nuc-当前源码构建"></a>
+# Building current source for x86 / NUC
 
-x86-64 / NUC 使用与 Orin 相同的 main 源码、Ubuntu 22.04 和 ROS 2 Humble。按[当前部署](README.md)准备系统依赖，并只构建同一 selected closure。现有实车闭环证据来自 Orin NX；x86 构建或软件重放不等于 NUC 实车验收。
+**English** · [简体中文](nuc.zh-CN.md)
+
+x86-64 / NUC uses the same main source, Ubuntu 22.04, and ROS 2 Humble as Orin. Prepare system dependencies according to [current deployment](README.md) and build only the same selected closure. Existing closed-loop vehicle evidence comes from Orin NX; an x86 build or software replay does not constitute NUC vehicle acceptance.
 
 ```bash
 git clone --branch main https://github.com/EleSheep-moving/AIMSRacer.git
@@ -16,8 +19,8 @@ source install/setup.bash
 export LD_LIBRARY_PATH="$PWD/dependencies/work/acados/install/lib:${LD_LIBRARY_PATH:-}"
 ```
 
-固定 acados 在 x86 使用 GENERIC BLASFEO/HPIPM；ARM 使用清单中的架构设置。generated C 可以复制到另一 CPU，但 native 库与 manifest 必须在目标架构重建。[MPCC 使用](../../src/controller/docs/usage.md#离线生成与目标平台构建)给出离线流程。
+The fixed acados uses GENERIC BLASFEO/HPIPM on x86; ARM uses the architecture settings in the manifest. Generated C can be copied to another CPU, but native libraries and manifests must be rebuilt on the target architecture. [MPCC usage](../../src/controller/docs/usage.md#离线生成与目标平台构建) provides the offline workflow.
 
-开发测试和定位 replay 见 [verification](../../verification/README.md)，使用独立 ROS domain 和新日志目录。实际连接车辆时，设备名和地址必须与当前 [vehicle 入口](../../src/aims_racer_system/launch/vehicle.launch.py)一致，使用与车辆图相同的 ROS domain；完整启动步骤见[车辆启动](../operations/bringup.md)。
+For development tests and localization replay, see [verification](../../verification/README.md), using a separate ROS domain and a new log directory. When connecting to a vehicle, device names and addresses must match the current [vehicle entry point](../../src/aims_racer_system/launch/vehicle.launch.py), using the same ROS domain as the vehicle graph; see [vehicle bringup](../operations/bringup.md) for the full procedure.
 
-[规则目录](../../rules/README.md)按连接硬件选择。NUC 的 CP2102 规则仅适用于实际接入的设备，当前主流程的 IMU 来自 MID360；规则存在不代表额外 IMU 驱动已经安装。不要凭电脑名称选择不匹配的串口规则。
+Select from the [rules directory](../../rules/README.md) according to the connected hardware. The NUC CP2102 rule applies only to a device actually connected; the current main workflow obtains its IMU from MID360. A rule's existence does not mean an additional IMU driver is installed. Do not choose incompatible serial rules based on the computer's name.

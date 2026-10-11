@@ -17,16 +17,17 @@
 
 | 我想…… | 从这里开始 |
 | --- | --- |
-| 安装与构建 | [部署指南](docs/deployment/README.md) · [Orin NX](docs/deployment/orin.md) · [x86 / NUC](docs/deployment/nuc.md) |
-| 手动驾驶、建图或跟踪保存轨迹 | [启动指南](docs/operations/bringup.md) · [已知地图初始化](docs/operations/known-map-mpcc.md) |
-| 准备地图坐标系参考和求解器 bundle | [参考与 bundle 流程](src/controller/docs/usage.md) · [地图/参考工具](tools/reference/README.md) |
-| 录制与分析一次运行 | [录制指南](docs/operations/recording.md) · [运行时诊断](src/aims_mpcc_rt/README.md) |
-| 理解或修改控制器 | [MPCC 实现](src/controller/docs/implementation.md) · [原生运行时](src/aims_mpcc_rt/README.md) |
-| 查看接口与定位状态 | [坐标系与话题](docs/architecture.md) · [定位健康](docs/localization_monitor.md) |
-| 查看实测或执行回归 | [外场结果](docs/reports/2026-10-10-mpcc-field-review.md) · [开发验证](verification/README.md) |
+| 安装与构建 | [部署指南](docs/deployment/README.zh-CN.md) · [Orin NX](docs/deployment/orin.zh-CN.md) · [x86 / NUC](docs/deployment/nuc.zh-CN.md) |
+| 手动驾驶、建图或跟踪保存轨迹 | [启动指南](docs/operations/bringup.zh-CN.md) · [已知地图初始化](docs/operations/known-map-mpcc.zh-CN.md) |
+| 准备地图坐标系参考和求解器 bundle | [参考与 bundle 流程](src/controller/docs/usage.zh-CN.md) · [地图/参考工具](tools/reference/README.zh-CN.md) |
+| 录制与分析一次运行 | [录制指南](docs/operations/recording.zh-CN.md) · [运行时诊断](src/aims_mpcc_rt/README.zh-CN.md) |
+| 理解或修改控制器 | [MPCC 实现](src/controller/docs/implementation.zh-CN.md) · [原生运行时](src/aims_mpcc_rt/README.zh-CN.md) |
+| 理解转向与速度响应 | [车辆响应与模型假设](docs/vehicle-response.zh-CN.md) |
+| 查看接口与定位状态 | [坐标系与话题](docs/architecture.zh-CN.md) · [定位健康](docs/localization_monitor.zh-CN.md) |
+| 查看实测或执行回归 | [外场结果](docs/reports/2026-10-10-mpcc-field-review.md) · [开发验证](verification/README.zh-CN.md) |
 | 浏览所有指南 | **[完整文档索引](docs/README.zh-CN.md)** |
 
-项目首页和文档索引提供中英双语。大部分详细操作指南目前为中文，索引标明各文档的语言。
+首页和总索引列出的当前指南均提供完整英文与简体中文版，默认英文，每份指南设有语言切换。历史实验报告保留原语言。
 
 <a id="architecture"></a>
 ## 系统如何协作
@@ -61,14 +62,14 @@ flowchart TB
 - **MPCC：** 在 `odom` 中预测运动，通过可信对齐关联 `map` 中的保存参考。
 - **RC 选择器：** 决定实际转发给车辆的命令。`/drive` 是控制提议，`/ackermann_cmd` 是转发命令。
 
-TF 链为 **`map → odom → base_link → livox_frame`**。已知地图运行时，NDT 拥有 `map → odom`，EKF 拥有 `odom → base_link`；`base_link` 位于**后轴中点**。[架构指南](docs/architecture.md)说明建图模式的归属、时间戳和全部话题。
+TF 链为 **`map → odom → base_link → livox_frame`**。已知地图运行时，NDT 拥有 `map → odom`，EKF 拥有 `odom → base_link`；`base_link` 位于**后轴中点**。[架构指南](docs/architecture.zh-CN.md)说明建图模式的归属、时间戳和全部话题。
 
 <a id="quick-start"></a>
 ## 快速开始
 
 ### 1. 准备 workspace
 
-按[部署指南](docs/deployment/README.md)安装系统依赖并配置硬件。
+按[部署指南](docs/deployment/README.zh-CN.md)安装系统依赖并配置硬件。
 
 <details>
 <summary><strong>首次源码准备与构建</strong></summary>
@@ -109,7 +110,7 @@ export LD_LIBRARY_PATH="$PWD/dependencies/work/acados/install/lib:${LD_LIBRARY_P
 | 已知地图轨迹跟踪 | 下方 `race.launch.py` 命令 | 车辆、NDT、定位 monitor 和原生 MPCC |
 | 接入已有车辆/定位图，仅启动控制器 | `aims_mpcc_rt/mpcc.launch.py` | 原生 MPCC |
 
-三个整车入口每次选择一个。控制器单独启动方式见[原生运行时指南](src/aims_mpcc_rt/README.md)。
+三个整车入口每次选择一个。控制器单独启动方式见[原生运行时指南](src/aims_mpcc_rt/README.zh-CN.md)。
 
 使用 NX 当前已部署数据启动已知地图运行：
 
@@ -120,11 +121,11 @@ ros2 launch aims_racer_system race.launch.py \
   record:=true
 ~~~
 
-**必需数据：** 已有 PCD 地图，以及在目标 CPU 上编译的完整求解器 bundle，包含参考与配置。数据保存在源码外，clone 仓库不会得到它们。新数据按[参考/bundle 流程](src/controller/docs/usage.md)准备。
+**必需数据：** 已有 PCD 地图，以及在目标 CPU 上编译的完整求解器 bundle，包含参考与配置。数据保存在源码外，clone 仓库不会得到它们。新数据按[参考/bundle 流程](src/controller/docs/usage.zh-CN.md)准备。
 
 ### 3. 初始化、启用与停止
 
-按车辆实际后轴位置与朝向，通过 RViz 或[初始化工具](docs/operations/known-map-mpcc.md)设置 **`map/base_link`** 初值。定位就绪、RC 选择自主 speed 模式后启用：
+按车辆实际后轴位置与朝向，通过 RViz 或[初始化工具](docs/operations/known-map-mpcc.zh-CN.md)设置 **`map/base_link`** 初值。定位就绪、RC 选择自主 speed 模式后启用：
 
 ~~~bash
 ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: true}'
@@ -143,7 +144,7 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 | `repeat_laps` | `false` | 单圈停车；`true` 持续运行直到停止 |
 | `initial_pose` | 空 | `map/base_link` 中的 `x y z roll pitch yaw`；角度 rad |
 
-显式停止会取消等待中的自动启动。完成或故障后不会自动重新启用。录制数据位于 `~/aimsracer-data/sessions/`，详见[录制指南](docs/operations/recording.md)。
+显式停止会取消等待中的自动启动。完成或故障后不会自动重新启用。录制数据位于 `~/aimsracer-data/sessions/`，详见[录制指南](docs/operations/recording.zh-CN.md)。
 
 <a id="defaults"></a>
 ## 当前默认配置
@@ -165,7 +166,16 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 | 走廊 / 组合加速度椭圆 | 当前外场配置均关闭 |
 | 手动电流映射 | **CH10：3–100 A**；CH3 油门，死区 **50** |
 
-以上为配置频率和限制值。定时发布不会产生新的测量或地图配准。MPCC 当前使用**速度命令**。全部参数和权重见 [vehicle.yaml](src/controller/config/vehicle.yaml)，求解与运行时细节见[实现指南](src/controller/docs/implementation.md)。
+以上为配置频率和限制值。定时发布不会产生新的测量或地图配准。MPCC 当前使用**速度命令**。全部参数和权重见 [vehicle.yaml](src/controller/config/vehicle.yaml)，求解与运行时细节见[实现指南](src/controller/docs/implementation.zh-CN.md)。
+
+<a id="vehicle-response"></a>
+## 车辆响应
+
+当前转向模型使用 **`steering_tau: 0.08 s`** 集中近似命令到车身的响应，没有单独的纯延迟状态。纵向预测采用 **`dv/dt = a`**，实际车辆通过 **VESC 速度 PID** 接收速度目标。
+
+纵向响应与 PID 整定、电池/母线电压、电流限制、车速和负载有关。历史拟合延迟与时间常数只对应实测工况，不能直接视为所有运行条件下的固定值。
+
+20 ms 命令周期和接管提前量描述执行调度，不代表执行器延迟。舵机命令回显不是车轮角度实测值。[车辆响应指南](docs/vehicle-response.zh-CN.md)说明历史实测、模型边界，以及修改响应参数后如何重建 bundle。
 
 <a id="results"></a>
 ## 实测结果与验证
@@ -188,13 +198,13 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 
 | 位置 | 职责 |
 | --- | --- |
-| [src/aims_racer_system](src/aims_racer_system/README.md) | 整车 launch、估计适配与定位健康 |
-| [src/aims_mpcc_rt](src/aims_mpcc_rt/README.md) | 原生 C++ 运行时与生成 bundle 工具 |
-| [src/controller](src/controller/README.md) | 离线参考、模型、速度规划与车辆配置 |
-| [src/ackermann_mux](src/ackermann_mux/README.md) | RC 选择与实际命令转发 |
+| [src/aims_racer_system](src/aims_racer_system/README.zh-CN.md) | 整车 launch、估计适配与定位健康 |
+| [src/aims_mpcc_rt](src/aims_mpcc_rt/README.zh-CN.md) | 原生 C++ 运行时与生成 bundle 工具 |
+| [src/controller](src/controller/README.zh-CN.md) | 离线参考、模型、速度规划与车辆配置 |
+| [src/ackermann_mux](src/ackermann_mux/README.zh-CN.md) | RC 选择与实际命令转发 |
 | [dependencies/manifest.json](dependencies/manifest.json) · `tools/` | 固定依赖与准备 |
-| [tools/reference](tools/reference/README.md) | 保存地图与闭环参考准备 |
-| [verification](verification/README.md) | 开发回归、重放与审计 |
+| [tools/reference](tools/reference/README.zh-CN.md) | 保存地图与闭环参考准备 |
+| [verification](verification/README.zh-CN.md) | 开发回归、重放与审计 |
 | [docs](docs/README.zh-CN.md) | 操作指南、架构与日期化证据 |
 
 地图、生成 bundle 和原始 bag 保存在源码外。在线控制器是 `aims_mpcc_rt`，`aims_mpcc` 提供离线工具。
@@ -202,7 +212,7 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 <a id="credits"></a>
 ## 致谢与许可证
 
-第三方归属和许可证保存在[模型 NOTICE](src/controller/NOTICE.md)、[原生运行时 NOTICE](src/aims_mpcc_rt/NOTICE.md)及各包中。依赖版本与补丁见[固定清单](dependencies/manifest.json)。
+第三方归属和许可证保存在[模型 NOTICE](src/controller/NOTICE.zh-CN.md)、[原生运行时 NOTICE](src/aims_mpcc_rt/NOTICE.zh-CN.md)及各包中。依赖版本与补丁见[固定清单](dependencies/manifest.json)。
 
 本项目基于以下开源贡献：
 

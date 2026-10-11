@@ -1,8 +1,11 @@
 ackermann_mux
 =========
 
+**English** · [简体中文](README.zh-CN.md)
+
 Current production installs the C++ RC selector `joystick_control_v2`. It selects manual or autonomous commands and publishes `/ackermann_cmd`; the unified vehicle launch supplies the field-tested CH3/CH1 transmitter profile. Original f1tenth/twist_mux source attribution is retained in package metadata and license materials.
 
+<a id="rc-控制器配置变体"></a>
 ## RC controller variants
 
 Both profiles use the same C++ executable, `joystick_control_v2`. Select the
@@ -24,6 +27,7 @@ ros2 run ackermann_mux joystick_control_v2 --ros-args \
 
 Production installs only `joystick_control_v2`. The old mux and Python utilities are no longer built or installed; the unified vehicle launch owns startup.
 
+<a id="仲裁与标定安全"></a>
 ## Arbitration and calibration safety
 
 Subscriptions retain only the latest sample using best-effort QoS. At 200 Hz,
@@ -76,6 +80,7 @@ configuration. External calibration current has its own bound. Existing
 aliases remain fallbacks; canonical names take precedence. All selector parameters
 are validated at startup and read-only thereafter. Logging occurs on state changes.
 
+<a id="验证"></a>
 ## Verification
 
 ```bash

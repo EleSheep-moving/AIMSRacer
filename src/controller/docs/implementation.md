@@ -1,26 +1,31 @@
-# Native MPCC 实现与阅读路线
+<a id="native-mpcc-实现与阅读路线"></a>
+# Native MPCC implementation and reading guide
 
-当前生产链为离线 Python 生成模型/参考/bundle，在线 C++ 调用 generated acados SQP-RTI。部署与启用命令见[使用](usage.md)；坐标和命令归属见[架构](../../../docs/architecture.md)。本文描述当前 v35 配置及 native 执行链。
+**English** · [简体中文](implementation.zh-CN.md)
 
-## 从输入到执行
+The current production chain uses offline Python to generate the model/reference/bundle, and online C++ to call generated acados SQP-RTI. Deployment and enable commands are in [usage](usage.md); frames and command ownership are in [architecture](../../../docs/architecture.md). This document describes the current v35 configuration and native execution chain.
 
-| 位置 | 责任 |
+<a id="从输入到执行"></a>
+## From input to execution
+
+| Location | Responsibility |
 | --- | --- |
-| [recorder.py](../aims_mpcc/recorder.py)、[prepare.py](../aims_mpcc/prepare.py) | 原始后轴 CSV 记录和闭环参考准备 |
-| [path.py](../aims_mpcc/path.py) | 周期 quintic 参考、投影、坐标与几何元数据 |
-| [speed_planner.py](../aims_mpcc/speed_planner.py) | 曲率限速、物理距离积分、闭环前后向加减速传播 |
-| [backend_models.py](../aims_mpcc/backend_models.py)、[acados_backend.py](../aims_mpcc/acados_backend.py) | 离线离散模型、代价和约束 |
-| [export_bundle.py](../../aims_mpcc_rt/scripts/export_bundle.py)、[build_bundle.py](../../aims_mpcc_rt/scripts/build_bundle.py) | 固定输入、生成 C、目标平台编译和 manifest |
-| [core.cpp](../../aims_mpcc_rt/src/core.cpp) | 加载 bundle、RTI、候选重积分与验证 |
-| [node.cpp](../../aims_mpcc_rt/src/node.cpp) | ROS 状态、worker、接管、输出、启动/停车及异步日志 |
-| [history.hpp](../../aims_mpcc_rt/include/aims_mpcc_rt/history.hpp)、[execution.cpp](../../aims_mpcc_rt/src/execution.cpp) | 实际命令历史、接管对齐和输出采样 |
-| [health.hpp](../../aims_mpcc_rt/include/aims_mpcc_rt/health.hpp) | protocol-v1 地图锚点/健康资格 |
+| [recorder.py](../aims_mpcc/recorder.py), [prepare.py](../aims_mpcc/prepare.py) | Record raw rear-axle CSV and prepare a closed-loop reference |
+| [path.py](../aims_mpcc/path.py) | Periodic quintic reference, projection, coordinates and geometry metadata |
+| [speed_planner.py](../aims_mpcc/speed_planner.py) | Curvature speed limits, physical-distance integration and cyclic forward/backward acceleration/braking propagation |
+| [backend_models.py](../aims_mpcc/backend_models.py), [acados_backend.py](../aims_mpcc/acados_backend.py) | Offline discrete model, costs and constraints |
+| [export_bundle.py](../../aims_mpcc_rt/scripts/export_bundle.py), [build_bundle.py](../../aims_mpcc_rt/scripts/build_bundle.py) | Freeze inputs, generate C, compile for the target platform and create manifests |
+| [core.cpp](../../aims_mpcc_rt/src/core.cpp) | Bundle loading, RTI, candidate reintegration and validation |
+| [node.cpp](../../aims_mpcc_rt/src/node.cpp) | ROS state, worker, takeover, output, startup/stopping and asynchronous logging |
+| [history.hpp](../../aims_mpcc_rt/include/aims_mpcc_rt/history.hpp), [execution.cpp](../../aims_mpcc_rt/src/execution.cpp) | Actual command history, takeover alignment and output sampling |
+| [health.hpp](../../aims_mpcc_rt/include/aims_mpcc_rt/health.hpp) | Protocol-v1 map-anchor/health qualification |
 
-## 状态、模型与输入
+<a id="状态模型与输入"></a>
+## States, model and inputs
 
-六个物理状态为 `[x,y,yaw,v,theta,delta]`：后轴位置、朝向、速度、参考进度参数和模型转角。三个控制为 `[acceleration,steering_endpoint,virtual_progress_speed]`。内部另存上一加速度、转向命令端点和命令速率，合计九个内部状态。
+The six principal states, including virtual progress, are `[x,y,yaw,v,theta,delta]`: rear-axle position, heading, speed, reference progress parameter and modeled steering angle. The three controls are `[acceleration,steering_endpoint,virtual_progress_speed]`. Previous acceleration, steering-command endpoint and command rate are stored internally as well, giving nine internal states in total.
 
-后轴模型的主要关系为：
+The main rear-axle model relationships are:
 
 \[
 \dot x=v\cos\psi,\quad \dot y=v\sin\psi,\quad
@@ -29,44 +34,49 @@
 \dot\delta=\frac{\delta_{cmd}-\delta}{\tau_\delta}.
 \]
 
-`theta` 参数来自录制点的累计弦长；平滑后不与真实弧长严格相等，几何线性化与速度传播使用样条切线 norm。当前 `L=.36 m`、`tau_delta=.08 s`、`k_u=0`；零欠转向系数是模型假设，不是测得无侧滑。
+The `theta` parameter comes from cumulative chord length of recorded points; after smoothing it is not exactly physical arc length. Geometry linearization and speed propagation use the spline tangent norm. Currently `L=.36 m`, `tau_delta=.08 s` and `k_u=0`; the steering lag is a lumped approximation of vehicle yaw response. Zero understeer coefficient is a model assumption, not a measurement of no sideslip.
 
-100 ms 求解 stage 内有五个 20 ms RK4 子步，转向端点按输出持有的命令 ramp 采样。求解模型优化加速度，底盘实际接收速度设定；理想加速度传播并不证明未知电机响应。详细纵向辨识继续按后续加速度接口计划进行。
+Each 100 ms solve stage contains five 20 ms RK4 substeps, and steering endpoints are sampled along the command ramp held by the output. The optimization model chooses acceleration, while the chassis actually receives speed setpoints; ideal acceleration propagation does not establish the unknown motor response. Detailed longitudinal identification remains part of the subsequent acceleration-interface plan.
 
-## 参考、误差与目标
+<a id="参考误差与目标"></a>
+## Reference, errors and objective
 
-参考是固定周期 quintic 曲线，物理状态在 `odom` 传播；map 参考使用同一资格载荷中的 `map ← odom` 对齐。每次 RTI 的局部几何由参考进度处冻结，第二次可更新几何。该模型使用 Cartesian 状态与 contour/lag 误差，不是 Frenet 状态动力学。
+The reference is a fixed periodic quintic curve, and physical states propagate in `odom`; map references use the `map ← odom` alignment from the same qualification payload. Each RTI pass freezes local geometry at reference progress, and the second pass may update geometry. This model uses Cartesian states with contour/lag errors, rather than Frenet-state dynamics.
 
-contour 为法向距离，lag 为切向误差，heading 与参考切线比较。代价包括归一化 contour、lag、heading、速度跟踪、虚拟进度速度跟踪、转向 feedforward 偏差、加速度以及转向命令速率/速率变化；终端放大状态代价。当前 `contour_weight=16`、`heading_weight=4`、`speed_weight=133.333...`。权重对应不同尺度和量纲，数值不能直接比较强弱。
+Contour is normal distance, lag is tangential error, and heading is compared with the reference tangent. Costs include normalized contour, lag, heading, speed tracking, virtual-progress-speed tracking, steering feedforward deviation, acceleration and steering-command rate/rate change; terminal costs amplify state costs. Currently `contour_weight=16`, `heading_weight=4` and `speed_weight=133.333...`. The weights correspond to different scales and units, so their numerical values cannot directly indicate relative strength.
 
-当前 v 与虚拟进度速度追随曲率速度参考，没有线性推进奖励。曲率速度上限为 `min(cruise,max_speed,sqrt(ay/abs(kappa)))`，随后按周期物理距离传播加速与制动限制。规划参考被冻结进 bundle。实跑将 cruise 从 2.6 提到 3.5 后，规划理想滚动时间收益仅约 0.096 s；详见[外场复盘](../../../docs/reports/2026-10-10-mpcc-field-review.md)。
+Current v and virtual progress speed track the curvature-based speed reference, with no linear progress reward. The curvature speed bound is `min(cruise,max_speed,sqrt(ay/abs(kappa)))`, followed by acceleration and braking limit propagation over cyclic physical distance. The planned reference is frozen into the bundle. In the field runs, increasing cruise from 2.6 to 3.5 improved the planned ideal rolling time by only about 0.096 s; see the [field review](../../../docs/reports/2026-10-10-mpcc-field-review.md).
 
-## 当前约束范围
+<a id="当前约束范围"></a>
+## Current constraint scope
 
-`rate_bounded_v2` 保留速度、加减速、转角和转向速率边界；转向速率变化仍有代价。当前独立加速度设置 `combined_accel_constraint_enabled=false`，生成 OCP、重积分候选、执行认证和制动预算使用一致配置；曲率速度规划 ay=1 继续生效。它不保证轮胎横向力预算。
+`rate_bounded_v2` retains speed, acceleration/braking, steering angle and steering-rate bounds; steering-rate change still carries a cost. The current independent-acceleration setting is `combined_accel_constraint_enabled=false`; the generated OCP, reintegrated candidates, execution certification and braking budget use consistent configuration. Curvature speed planning ay=1 remains active. It does not guarantee the tire lateral-force budget.
 
-`enforce_corridor=false` 关闭参考 footprint 约束与实测/启动 footprint 停车检查。左右各 0.5 m 是保存的课程模型，不是实测赛道边界。恢复边界约束或改变物理参数须生成新 bundle，并以实际空间/车辆数据评价。后续研发假设不写入本次实跑证据。
+`enforce_corridor=false` disables reference footprint constraints and measured/startup footprint stopping checks. The saved 0.5 m widths on each side are a course model, not measured track boundaries. Restoring boundary constraints or changing physical parameters requires a new bundle and evaluation against actual space/vehicle data. Subsequent research assumptions are not part of this field-run evidence.
 
+<a id="测量时间计算与接管"></a>
 ## Measurement time, computation and takeover
 
-一个请求固定原始 EKF source epoch、由实际 `/ackermann_cmd` 历史预测的执行起点和地图对齐。一次只拥有一个 pending plan，优化请求上限 20 Hz，命令输出 50 Hz。`solver_timeout=.05 s` 包括完整 worker 计算和结果 delivery 等待；超过预算的结果不进入执行。
+Each request fixes the original EKF source epoch, the execution start predicted from actual `/ackermann_cmd` history, and map alignment. Only one pending plan is owned at a time, optimization requests are capped at 20 Hz, and commands are output at 50 Hz. `solver_timeout=.05 s` includes the full worker computation and result-delivery wait; results over budget do not enter execution.
 
-候选先经非线性重积分和当前配置约束检查；接管时按实际状态和已应用前缀重新对齐并重新验证。执行不能跳过尚未实际发出的新控制。无法通过验证的候选丢弃，旧计划保持原 source TTL；N15/dt=.1 默认 `plan_ttl=1.2 s`。`handover_delay=.02 s` 是预计接管提前量，与求解预算和 source TTL 分别计时。
+Candidates first undergo nonlinear reintegration and constraint checks under the current configuration. At takeover, they are realigned to actual state and the applied prefix, then validated again. Execution cannot skip new controls that have not actually been issued. Candidates that fail validation are discarded, and the old plan retains its original source TTL; N15/dt=.1 defaults to `plan_ttl=1.2 s`. `handover_delay=.02 s` is the anticipated takeover lead time, timed separately from the solve budget and source TTL.
 
-命令历史必须区分 `/drive` 提议和 `/ackermann_cmd` 转发；`minimum_drive_speed=.2 m/s` 为现有底盘小正设定映射，disabled/faulted 保持零，停车阶段低于阈值归零。物理速度仍能在起步/停车时经过该区间。
+Command history must distinguish `/drive` proposals from forwarded `/ackermann_cmd` commands. `minimum_drive_speed=.2 m/s` maps small positive setpoints for the existing chassis; disabled/faulted output stays zero, and stopping output below the threshold becomes zero. Physical speed can still pass through this interval during startup/stopping.
 
-worker 调用、结果交付、接管与完整输出 callback 分别计时。状态/时钟/定位/RC 所有权变化会使计划失效。C++ 并不保证上游状态始终新鲜，TF 时间戳也不代替地图资格。
+Worker calls, result delivery, takeover and the complete output callback are timed separately. Changes in state/clock/localization/RC ownership invalidate plans. C++ does not guarantee that upstream state is always fresh, and TF timestamps do not replace map qualification.
 
-## 启动、单圈与故障
+<a id="启动单圈与故障"></a>
+## Startup, single lap and faults
 
-native 节点出生时 disabled，`/mpcc/enable` 执行统一条件检查。`auto_start=true` 在默认 60 s 内等待同一组条件，成功后只启动一次；显式 stop 取消等待。成功启动之后的 COMPLETE 或故障不会自动再次 enable，fatal 不自动重启。
+The native node starts disabled, and `/mpcc/enable` performs the unified condition checks. `auto_start=true` waits for the same conditions within the default 60 s window, then starts only once on success; explicit stop cancels the wait. COMPLETE or a fault after a successful start does not automatically enable again, and fatal faults do not restart automatically.
 
-`repeat_laps=false` 从实际启用位置计一圈，终点速度 cap 和停车逻辑负责停止；true 连续圈由操作员 stop。Plan expiry/失去资格会进入停车或恢复逻辑，重新运行需要显式授权。现场 RC/急停仍决定底盘执行权限。
+`repeat_laps=false` counts one lap from the actual enable position, and the endpoint speed cap and stopping logic bring the vehicle to a stop; true runs continuous laps until operator stop. Plan expiry/loss of qualification enters stopping or recovery logic, and running again requires explicit authorization. Field RC/emergency stop still determines chassis execution permission.
 
-## 日志与证据
+<a id="日志与证据"></a>
+## Logs and evidence
 
-`runtime.csv` 保存 worker disposition、delivery、接管接受/原因、reanchor 和命令发布（含零输出）。异步有界日志队列的丢项由诊断报告。`/mpcc/status` 保存实际状态、新鲜度、自动启动和求解/接管计数。`record=true` 将 bag、runtime 与系统快照放在一个会话目录，见[录制](../../../docs/operations/recording.md)。
+`runtime.csv` records worker disposition, delivery, takeover acceptance/reasons, reanchor and command publication, including zero output. Diagnostics report dropped entries from the bounded asynchronous log queue. `/mpcc/status` records actual state, freshness, automatic startup and solve/takeover counts. `record=true` stores the bag, runtime and system snapshot in one session directory; see [recording](../../../docs/operations/recording.md).
 
-2026-10-10 NX 已有真实 FAST-LIO2/EKF/NDT 下的闭环行驶，规划峰值 2.99、实测约 2.89 m/s。报告中的运动窗口含起步/制动，不能称 flying lap；完整 worker 时长与 native solver、输出 callback 时长分别解释。软件回归位于 `verification/`，新增入口与单 workspace 整合的检查不替代原始实跑。
+On 2026-10-10, NX completed closed-loop driving with actual FAST-LIO2/EKF/NDT, with a planned peak of 2.99 and measured peak approximately 2.89 m/s. The report's motion windows include startup/braking and cannot be called flying laps; full worker duration, native solver duration and output callback duration are interpreted separately. Software regressions live under `verification/`; checks of new entry points and single-workspace integration do not replace the original field runs.
 
-模型和参考来源保留 [NOTICE.md](../NOTICE.md)、[LICENSE](../LICENSE) 和 native [NOTICE.md](../../aims_mpcc_rt/NOTICE.md)。
+Model and reference attribution is retained in [NOTICE.md](../NOTICE.md), [LICENSE](../LICENSE) and the native [NOTICE.md](../../aims_mpcc_rt/NOTICE.md).

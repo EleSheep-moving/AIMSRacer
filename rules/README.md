@@ -1,4 +1,7 @@
+<a id="按平台选择设备规则"></a>
 # Device rules by platform
+
+**English** · [简体中文](README.zh-CN.md)
 
 Install only the directory that matches the computer physically connected to the
 device. Rules create stable `/dev` names; they do not install or start a ROS
@@ -40,6 +43,7 @@ device with `ls -l /dev/ttyELRS /dev/ttyVESC /dev/ttyIMU` after reconnecting it.
 The CP2102 rule preserves its existing `0777` mode; tighten it only after the
 owning FDI IMU driver and user/group requirements are verified.
 
+<a id="串口服务占用"></a>
 ## Serial service ownership
 
 A udev rule creates a stable name but cannot stop another service from opening

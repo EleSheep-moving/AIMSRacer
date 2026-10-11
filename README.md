@@ -22,11 +22,12 @@ A ROS 2 autonomous racing stack developed at **PolyU AIMS Lab**. AIMSRacer follo
 | Prepare a map-aligned reference and solver bundle | [Reference and bundle workflow](src/controller/docs/usage.md) · [Map/reference tools](tools/reference/README.md) |
 | Record and inspect a run | [Recording](docs/operations/recording.md) · [Runtime diagnostics](src/aims_mpcc_rt/README.md) |
 | Understand or change the controller | [MPCC implementation](src/controller/docs/implementation.md) · [Native runtime](src/aims_mpcc_rt/README.md) |
+| Understand steering and speed response | [Vehicle response and model assumptions](docs/vehicle-response.md) |
 | Check interfaces and localization | [Frames and topics](docs/architecture.md) · [Localization health](docs/localization_monitor.md) |
 | Review measurements or run regressions | [Field results](docs/reports/2026-10-10-mpcc-field-review.md) · [Development verification](verification/README.md) |
 | Browse all guides | **[Documentation index](docs/README.md)** |
 
-The project overviews and documentation indexes are bilingual. Most detailed operating guides currently use Chinese; the index identifies their language.
+Current guides linked from this overview and the documentation index have full English and Simplified Chinese versions. English is the default; each guide has a language switch. Historical reports retain their original language.
 
 <a id="architecture"></a>
 ## How the stack fits together
@@ -63,7 +64,6 @@ flowchart TB
 
 TF chain: **`map → odom → base_link → livox_frame`**. In known-map operation, NDT owns `map → odom` and EKF owns `odom → base_link`. `base_link` is the **rear-axle center**. See [architecture](docs/architecture.md) for mapping-mode ownership, timing, and all topics.
 
-<a id="quick-start"></a>
 ## Quick start
 
 ### 1. Prepare the workspace
@@ -166,6 +166,14 @@ Defaults reproduce the **2026-10-10 V35 field configuration**. The deployed bund
 | Manual current mapping | **CH10: 3–100 A**; throttle on CH3, deadzone **50** |
 
 These are configured rates and limits. A publication timer does not create a new measurement or map match. MPCC currently uses **speed commands**. Full parameters and weights: [vehicle.yaml](src/controller/config/vehicle.yaml). Solver/runtime details: [implementation](src/controller/docs/implementation.md).
+
+## Vehicle response
+
+The current steering model uses **`steering_tau: 0.08 s`** as a lumped command-to-vehicle response approximation, with no separate pure-delay state. Longitudinal prediction assumes **`dv/dt = a`**, while the vehicle receives speed targets through the **VESC speed PID**.
+
+Longitudinal response depends on PID tuning, battery / bus voltage, current limits, speed and load. Historical fitted delays and time constants apply to the measured conditions, not every run.
+
+The 20 ms command period and handover lead describe execution timing, not actuator delay. A servo-command echo is not a measured wheel angle. See [vehicle response](docs/vehicle-response.md) for the dated measurements, model limits, and how to rebuild a bundle after changing response parameters.
 
 <a id="results"></a>
 ## Measured results and validation

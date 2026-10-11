@@ -1,55 +1,61 @@
-# 定位健康监控
+<a id="定位健康监控"></a>
+# Localization health monitor
 
-`known_map_localization.launch.py` 默认启动 C++ 可执行文件
-`aims_racer_system/localization_monitor`。节点名、话题和参数文件保持原有接口。
-Python 版本保留为参考实现；默认启动流程不再使用它。
+**English** · [简体中文](localization_monitor.zh-CN.md)
 
-## 修改原因
+`known_map_localization.launch.py` launches the C++ executable
+`aims_racer_system/localization_monitor` by default. Node names, topics, and parameter files retain the existing interfaces.
+The Python version remains as a reference implementation; the default launch workflow no longer uses it.
 
-2026-10-08 权重实验 A1 在定位健康检查中出现
-`ekf_age_sec=0.110562809`、`ekf_receive_age_sec=0.003381803`，超过
-100 ms 的源时间新鲜度门限。同期录包中的 EKF 仍连续发布且源时间新鲜，
-因此证据指向监控端消息处理积压。现有数据不能进一步区分 Python 执行、
-DDS 投递和操作系统调度各自的影响。
+<a id="修改原因"></a>
+## Reason for the change
 
-旧监控 EKF 订阅深度为 500；200 Hz 时可积压约 2.5 秒数据。
-C++ 实现使用可靠订阅、深度 2。点云订阅使用传感器 QoS、深度 1。
-用于点云时间对齐的 EKF 历史独立保留 5 秒，不依赖订阅队列。
-匹配质量计算使用单个后台任务，主执行器不等待计算结果。
-后台任务只读取点云、变换快照和地图，不修改健康状态。
+During the 2026-10-08 A1 weight experiment, localization health checks reported
+`ekf_age_sec=0.110562809` and `ekf_receive_age_sec=0.003381803`, exceeding
+the 100 ms source-time freshness threshold. EKF messages in the concurrent recording remained continuous and fresh in source time,
+so the evidence points to a message processing backlog at the monitor. The available data cannot further distinguish the effects of Python execution,
+DDS delivery, and operating system scheduling.
 
-## 保留的保护语义
+The old monitor's EKF subscription depth was 500; at 200 Hz this could accumulate approximately 2.5 seconds of data.
+The C++ implementation uses a reliable subscription with depth 2. The point cloud subscription uses sensor QoS with depth 1.
+EKF history for point cloud time alignment is retained independently for 5 seconds and does not depend on the subscription queue.
+Matching quality computation uses one background task; the main executor does not wait for its result.
+The background task only reads point clouds, transform snapshots, and the map; it does not modify health state.
 
-- EKF 源时间和单调时钟接收时间均不得超过 100 ms。
-- 点云两种时间不得超过 500 ms；可信锚点两种时间不得超过 1 秒。
-- 重复源时间不能刷新接收看门狗；未来或倒退的输入时间无效。
-- 锚点必须符合 epoch、event_sequence、anchor_sequence 和提交时间协议。
-- 时钟倒退后必须进入新 epoch；失效后需要三次有效提交恢复。
-- 健康序列随 epoch 重置；静态 TF 不会刷新可信锚点。
-- 点云匹配质量仅用于诊断，不参与 ready 判定。
-- MPCC 的故障锁存逻辑不变。
+<a id="保留的保护语义"></a>
+## Preserved protection semantics
 
-点云诊断仍使用源时间 EKF 插值和最近一次已提交的 map→odom 修正，
-不插值修正、不外推 EKF。PCL 最近邻使用单精度坐标，诊断数值可能与
-Python 双精度实现有微小差异；内点距离阈值仍为 0.25 m。
+- EKF source-time age and monotonic-clock receive age must both remain within 100 ms.
+- Both point cloud ages must remain within 500 ms; both trusted anchor ages must remain within 1 second.
+- Repeated source times cannot refresh the receive watchdog; future or reversed input times are invalid.
+- Anchors must satisfy the epoch, event_sequence, anchor_sequence, and commit-time protocol.
+- Time reversal requires a new epoch; recovery after invalidation requires three valid commits.
+- The health sequence resets with the epoch; static TF does not refresh the trusted anchor.
+- Point cloud matching quality is diagnostic only and does not determine ready state.
+- MPCC fault latching logic is unchanged.
 
-## 新增诊断字段
+Point cloud diagnostics still use EKF interpolation at source time and the most recently committed map→odom correction,
+without interpolating corrections or extrapolating EKF. PCL nearest-neighbor queries use single-precision coordinates, so diagnostic values may differ slightly from
+the Python double-precision implementation; the inlier distance threshold remains 0.25 m.
 
-在 `/localization/status` 中：
+<a id="新增诊断字段"></a>
+## Added diagnostic fields
 
-| 字段 | 含义 |
+In `/localization/status`:
+
+| Field | Meaning |
 |---|---|
-| `implementation` | `cpp` 表示当前使用原生实现 |
-| `ekf_callback_age_sec` | 最近有效 EKF 回调开始处理时的源时间年龄 |
-| `ekf_max_callback_age_sec` | 进程启动以来上述年龄最大值 |
-| `ekf_callback_count` | 有效、非重复 EKF 回调数量 |
-| `ekf_stale_callback_count` | 上述回调中源时间年龄超过 EKF 门限的数量 |
-| `quality_worker_busy` | 是否存在尚未收取结果的点云质量任务 |
+| `implementation` | `cpp` indicates that the native implementation is in use |
+| `ekf_callback_age_sec` | Source-time age when processing began for the most recent valid EKF callback |
+| `ekf_max_callback_age_sec` | Maximum of that age since process startup |
+| `ekf_callback_count` | Number of valid, nonduplicate EKF callbacks |
+| `ekf_stale_callback_count` | Number of those callbacks whose source-time age exceeded the EKF threshold |
+| `quality_worker_busy` | Whether a point cloud quality task has a result still pending collection |
 
-`ekf_age_sec` 仍表示发布健康状态时最新已处理 EKF 的源时间年龄；
-`ekf_receive_age_sec` 仍表示距离处理该消息已过去的单调时钟时间。
-新增计数和最大值按进程生命周期累计，不随 epoch 重置。
-回放工具记录原生可执行文件 SHA256，以标识实际运行版本。
+`ekf_age_sec` still represents the source-time age of the latest processed EKF when health status is published;
+`ekf_receive_age_sec` still represents monotonic-clock time elapsed since processing that message.
+The new counters and maximum accumulate over the process lifetime and do not reset with epochs.
+The replay tool records the native executable's SHA256 to identify the version actually run.
 
-启动命令和 `params/localization_monitor.yaml` 的保护门限无需调整。
-编译成功只能说明构建完成，延迟改善幅度及实车效果需要单独验证。
+Launch commands and protection thresholds in `params/localization_monitor.yaml` do not need adjustment.
+Successful compilation only establishes that the build completed; the amount of delay improvement and vehicle effects require separate verification.

@@ -1,6 +1,9 @@
-# 车辆启动
+<a id="车辆启动"></a>
+# Vehicle bringup
 
-当前流程使用一个 workspace。先按[部署指南](../deployment/README.md)准备 ROS 和硬件，再在根目录准备固定源码与构建：
+**English** · [简体中文](bringup.zh-CN.md)
+
+The current workflow uses one workspace. First prepare ROS and hardware according to the [deployment guide](../deployment/README.md), then prepare fixed sources and build from the root:
 
 ```bash
 git submodule update --init src/FASTLIO2_ROS2
@@ -14,35 +17,36 @@ source install/setup.bash
 export LD_LIBRARY_PATH="$PWD/dependencies/work/acados/install/lib:${LD_LIBRARY_PATH:-}"
 ```
 
-以后每个操作终端只需 source `/opt/ros/humble/setup.bash` 和当前根目录的 `install/setup.bash`，设置当前 acados `install/lib` 路径。zsh 使用对应 `setup.zsh`。同一车辆图的所有终端使用相同 `ROS_DOMAIN_ID` 与 DDS 配置。Livox Ethernet UDP 与 ROS DDS 是两条独立链路；网络和串口规则见[部署](../deployment/README.md)及 [rules](../../rules/README.md)。
+For later operation terminals, source `/opt/ros/humble/setup.bash` and `install/setup.bash` from the current root, and set the current acados `install/lib` path. Use the corresponding `setup.zsh` for zsh. All terminals in the same vehicle graph use the same `ROS_DOMAIN_ID` and DDS configuration. Livox Ethernet UDP and ROS DDS are separate links; see [deployment](../deployment/README.md) and [rules](../../rules/README.md) for networking and serial rules.
 
-## 选择一个入口
+<a id="选择一个入口"></a>
+## Choose one entry point
 
-| 入口 | 内容 | 用途 |
+| Entry point | Contents | Purpose |
 | --- | --- | --- |
-| `vehicle.launch.py` | MID360、FAST-LIO2、后轴适配、EKF、RC、VESC | 手动驾驶和传感器检查 |
-| `mapping.launch.py` | 车辆传感器、PGO、建图 TF、可选录包 | 手动驾驶建图 |
-| `race.launch.py` | vehicle、NDT、定位 monitor、native MPCC、可选录包 | 已知地图闭环单圈或连续圈 |
+| `vehicle.launch.py` | MID360, FAST-LIO2, rear axle adaptation, EKF, RC, VESC | Manual driving and sensor checks |
+| `mapping.launch.py` | Vehicle sensors, PGO, mapping TF, optional recording | Mapping while driving manually |
+| `race.launch.py` | vehicle, NDT, localization monitor, native MPCC, optional recording | Known-map closed-loop single or repeated laps |
 
 ```bash
 ros2 launch aims_racer_system vehicle.launch.py
 ```
 
-建图使用以下独立入口；PGO 与已知地图 NDT 的 `map → odom` 归属不能同时启用：
+Use the following separate entry point for mapping; PGO and known-map NDT ownership of `map → odom` cannot be enabled simultaneously:
 
 ```bash
 ros2 launch aims_racer_system mapping.launch.py record:=true
 ```
 
-建图完成并确认 PGO 已接收数据后，用保留的[地图保存工具](../../tools/save_map.sh)写新目录：
+After completing mapping and confirming that PGO has received data, use the retained [map saving tool](../../tools/save_map.sh) to write a new directory:
 
 ```bash
 bash tools/save_map.sh "$HOME/maps/my-new-map"
 ```
 
-该脚本检查服务成功及 `map.pcd`、`poses.txt` 文件；参考恢复见 [tools/reference](../../tools/reference/README.md)。
+The script checks service success and the `map.pcd` and `poses.txt` files; see [tools/reference](../../tools/reference/README.md) for reference recovery.
 
-已知地图运行：
+Known-map operation:
 
 ```bash
 ros2 launch aims_racer_system race.launch.py \
@@ -51,20 +55,21 @@ ros2 launch aims_racer_system race.launch.py \
   record:=true
 ```
 
-`race` 已包含车辆和定位，无需额外启动。它要求现有地图和完整 native bundle，默认 `auto_start=false`、`repeat_laps=false`、`record=false`。地图初始化、手动启用与一次自动启动见[已知地图指南](known-map-mpcc.md)，参数详见 [MPCC 使用](../../src/controller/docs/usage.md#在线启动参数)。
+`race` already includes the vehicle and localization, so no additional launch is needed. It requires an existing map and a complete native bundle, with defaults `auto_start=false`, `repeat_laps=false`, and `record=false`. See the [known-map guide](known-map-mpcc.md) for map initialization, manual enable, and one-time auto start, and [MPCC usage](../../src/controller/docs/usage.md#在线启动参数) for parameters.
 
-## 运行与停止
+<a id="运行与停止"></a>
+## Run and stop
 
-启动时保持 RC 锁定，确认定位地图与实际摆放一致、车辆静止、转向方向正确。检查项目见[车辆检查](vehicle-checklist.md)。选定自主 speed 模式后，手动启用：
+Keep RC locked during startup; confirm that the localization map agrees with the vehicle's actual placement, the vehicle is stationary, and the steering direction is correct. See [vehicle checks](vehicle-checklist.md). After selecting autonomous speed mode, enable manually:
 
 ```bash
 ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: true}'
 ```
 
-停止及取消尚未发生的自动启动：
+Stop and cancel an auto start that has not yet occurred:
 
 ```bash
 ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 ```
 
-现场紧急停止依靠 RC/物理急停；停稳并撤销权限后再 Ctrl-C。保存录包、runtime 和地图/bundle 身份，详见[录制](recording.md)。同一次运行只允许一个 `/drive` 发布者。
+Field emergency stopping relies on RC/the physical emergency stop; use Ctrl-C after the vehicle is stationary and permission has been revoked. Preserve the bag, runtime, and map/bundle identity; see [recording](recording.md). Only one `/drive` publisher is permitted in a run.

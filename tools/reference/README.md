@@ -1,25 +1,30 @@
-# 离线参考恢复
+<a id="离线参考恢复"></a>
+# Offline reference recovery
 
-这里保留两个只读取原始输入、写入新 CSV/JSON 的参考恢复工具；生成 native bundle 的脚本在 `src/aims_mpcc_rt/scripts/`。车辆使用 [race 入口](../../docs/operations/known-map-mpcc.md)，离线步骤见 [MPCC 使用](../../src/controller/docs/usage.md#准备参考)。
+**English** · [简体中文](README.zh-CN.md)
 
-| 工具 | 输入与输出 |
+This directory retains two reference-recovery tools that only read original inputs and write new CSV/JSON files; native bundle generation scripts are in `src/aims_mpcc_rt/scripts/`. Vehicle operation uses the [race entry point](../../docs/operations/known-map-mpcc.md); offline steps are in [MPCC usage](../../src/controller/docs/usage.md#准备参考).
+
+| Tool | Input and output |
 | --- | --- |
-| [recover_closed_lap.py](recover_closed_lap.py) | recorder 的 `odom/base_link` CSV；选择含首尾的一圈 row，校正有限闭合漂移，输出 odom-frame 候选 CSV 与 JSON |
-| [recover_pgo_map_lap.py](recover_pgo_map_lap.py) | 保存的 `poses.txt`、同目录 `map.pcd`、实际后轴/Livox geometry、已恢复的同圈 CSV；选择 PGO key-pose 区间，输出 `map/base_link` 候选 CSV 与身份/匹配 JSON |
+| [recover_closed_lap.py](recover_closed_lap.py) | Recorder `odom/base_link` CSV; select inclusive rows for one lap, correct bounded closure drift, and output a candidate odom-frame CSV and JSON |
+| [recover_pgo_map_lap.py](recover_pgo_map_lap.py) | Saved `poses.txt`, `map.pcd` in the same directory, actual rear-axle/Livox geometry and the recovered CSV for the same lap; select a PGO key-pose interval, and output a candidate `map/base_link` CSV and identity/matching JSON |
 
-查看真实参数后，依据原始记录选择闭环区间：
+Inspect actual parameters, then choose a closed-loop interval from the original recordings:
 
 ```bash
 python3 tools/reference/recover_closed_lap.py --help
 python3 tools/reference/recover_pgo_map_lap.py --help
 ```
 
-`recover_closed_lap` 的 `--first-row/--last-row` 和地图恢复的 `--first-pose/--last-pose` 都包含两端索引。闭环漂移校正不等于地图配准，也不测量边界；地图恢复需要确认 CSV 与 PGO pose 是同一圈，并使用该车的 mounting geometry。不要将 odom CSV 仅改 frame 名就当作 map reference。
 
-建图运行中，用 [save_map.sh](../save_map.sh)请求 `/pgo/save_maps`：
+`recover_closed_lap`'s `--first-row/--last-row` and map recovery's `--first-pose/--last-pose` both include both endpoint indices. Closure-drift correction is not map registration and does not measure boundaries. Map recovery requires confirmation that CSV and PGO poses belong to the same lap, and uses the vehicle's mounting geometry. Merely renaming the frame of an odom CSV does not make it a map reference.
+
+During mapping, use [save_map.sh](../save_map.sh) to request `/pgo/save_maps`:
 
 ```bash
 bash tools/save_map.sh "$HOME/maps/my-new-map"
 ```
 
-工具要求新地图输出，核对服务成功并检查 `map.pcd` 与 `poses.txt` 实际存在。保留完整地图目录，不覆盖已经绑定参考的 PCD。参考恢复后，按 `prepare_path --map-file` 绑定 map SHA，再 export/build 新 bundle；记录原始 CSV、区间、geometry 和 map 身份。
+
+The tool requires a new map output; verify service success and the actual existence of `map.pcd` and `poses.txt`. Retain the complete map directory and do not overwrite a PCD already bound to a reference. After reference recovery, bind the map SHA using `prepare_path --map-file`, then export/build a new bundle; record the original CSV, intervals, geometry and map identity.

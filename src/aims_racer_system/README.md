@@ -1,16 +1,20 @@
-# AIMSRacer 系统集成
+<a id="aimsracer-系统集成"></a>
+# AIMSRacer system integration
 
-本包维护车辆 launch、后轴数据适配、gyro bias 校正、EKF/定位配置与已知地图初始化。当前生产入口使用一个 workspace：
+**English** · [简体中文](README.zh-CN.md)
 
-| 入口 | 用途 |
+This package maintains vehicle launch, rear axle data adaptation, gyro bias correction, EKF/localization configuration, and known-map initialization. Current production entry points use one workspace:
+
+| Entry point | Purpose |
 | --- | --- |
-| `vehicle.launch.py` | MID360、FAST-LIO2、后轴适配、EKF、RC/VESC |
-| `mapping.launch.py` | 手动驾驶建图、PGO 与可选录包 |
-| `race.launch.py` | vehicle、已知地图 NDT/monitor、native MPCC 与可选录包 |
+| `vehicle.launch.py` | MID360, FAST-LIO2, rear axle adaptation, EKF, RC/VESC |
+| `mapping.launch.py` | Mapping while driving manually, PGO, and optional recording |
+| `race.launch.py` | vehicle, known-map NDT/monitor, native MPCC, and optional recording |
 
-[启动](../../docs/operations/bringup.md)描述源码准备和构建，[架构](../../docs/architecture.md)统一 topics、TF、时间与命令所有权。
+[Bringup](../../docs/operations/bringup.md) describes source preparation and building; [architecture](../../docs/architecture.md) defines topics, TF, timing, and command ownership consistently.
 
-## 已知地图运行
+<a id="已知地图运行"></a>
+## Known-map operation
 
 ```bash
 ros2 launch aims_racer_system race.launch.py \
@@ -19,7 +23,7 @@ ros2 launch aims_racer_system race.launch.py \
   record:=true
 ```
 
-`map_file`、`artifact_directory` 必填；`initial_pose` 可选，格式为 map 中 **base_link** 的 `x y z roll pitch yaw`，角度 rad。省略时通过工具或 RViz 初始化：
+`map_file` and `artifact_directory` are required; `initial_pose` is optional, formatted as **base_link**'s `x y z roll pitch yaw` in map, with angles in rad. If omitted, initialize through the tool or RViz:
 
 ```bash
 ros2 run aims_racer_system relocalize_known_map.py \
@@ -27,17 +31,19 @@ ros2 run aims_racer_system relocalize_known_map.py \
   --x 0 --y 0 --z 0 --roll 0 --pitch 0 --yaw 0
 ```
 
-示例值须替换为实际后轴摆放。[已知地图指南](../../docs/operations/known-map-mpcc.md)解释 epoch、map identity 和资格。`auto_start=false` 默认手动 enable；true 由 native 节点就绪后启用一次，显式 stop 取消等待。`repeat_laps=false` 默认单圈停车，true 连续圈直到 stop。完成/故障不自动重启或再次启用。
+Replace example values with the actual rear axle placement. The [known-map guide](../../docs/operations/known-map-mpcc.md) explains epoch, map identity, and eligibility. `auto_start=false` defaults to manual enable; true lets the native node enable once when ready, and explicit stop cancels waiting. `repeat_laps=false` defaults to stopping after one lap; true continues lapping until stop. Completion/fault does not trigger automatic restart or re-enabling.
 
-## 录制与估计
+<a id="录制与估计"></a>
+## Recording and estimation
 
-`record=true` 自动记录 raw/corrected IMU、LIO、wheel/EKF、TF、NDT/MPCC 状态，race 同时保存 runtime。`session_directory` 留空自动生成日期会话，指定时须新目录；完整列表及 reliable/depth=4096 原始 IMU QoS 见[录制](../../docs/operations/recording.md)。
+`record=true` automatically records raw/corrected IMU, LIO, wheel/EKF, TF, and NDT/MPCC status; race also saves runtime. An empty `session_directory` generates a dated session automatically; an explicitly specified directory must be new. See [recording](../../docs/operations/recording.md) for the complete list and raw IMU reliable/depth=4096 QoS.
 
-`base_link` 是后轴中点。C++ `imu_to_rear_axle` 保留 IMU source stamp 和不可用信息，转换单位并做杠杆补偿；`lio_to_rear_axle.py` 提供同一点的 odometry。EKF 融合 LIO、wheel vx 与 IMU yaw rate，保持 2 s 延迟历史。gyro 校正保留独立原始与修正 topic。
+`base_link` is the rear axle midpoint. C++ `imu_to_rear_axle` retains the IMU source stamp and unavailability information, converts units, and compensates the lever arm; `lio_to_rear_axle.py` provides odometry at the same point. The EKF fuses LIO, wheel vx, and IMU yaw rate, retaining 2 s of delayed history. Gyro correction retains separate raw and corrected topics.
 
-body cloud 与 raw LIO odometry 保留相同 scan-end stamp，供 NDT/PGO 使用；world cloud/path 为可选显示输出。race 中 EKF 拥有 `odom → base_link`，NDT 拥有 `map → odom`；mapping 中由后轴 LIO 与 PGO 分别拥有这两条边。
+Body cloud and raw LIO odometry retain the same scan-end stamp for NDT/PGO; world cloud/path are optional display outputs. In race, EKF owns `odom → base_link` and NDT owns `map → odom`; during mapping, rear axle LIO and PGO own these two edges respectively.
 
-## 构建与证据
+<a id="构建与证据"></a>
+## Build and evidence
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -47,4 +53,4 @@ colcon build --packages-up-to aims_racer_system aims_mpcc_rt --executor sequenti
 source install/setup.bash
 ```
 
-固定依赖准备见[根 README](../../README.md)。软件验证放在 `verification/`；本包的[校准说明](docs/calibration.md)和日期化[外场报告](../../docs/reports/2026-10-10-mpcc-field-review.md)保留具体条件。当前默认 v35 bundle 的规划峰值约 2.99 m/s、实车峰值约 2.89 m/s；source、构建、软件检查与实跑证据分别解释。
+See the [root README](../../README.md) for fixed dependency preparation. Software verification is in `verification/`; this package's [calibration notes](docs/calibration.md) and dated [field report](../../docs/reports/2026-10-10-mpcc-field-review.md) preserve specific conditions. The current default v35 bundle's planned peak is approximately 2.99 m/s and the vehicle peak approximately 2.89 m/s; source, build, software checks, and field-run evidence are explained separately.

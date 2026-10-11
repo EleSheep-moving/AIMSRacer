@@ -1,22 +1,28 @@
-# Native MPCC 使用
+<a id="native-mpcc-使用"></a>
+# Native MPCC usage
 
-当前在线控制由 `aims_mpcc_rt/mpcc_rt_node` 执行。`aims_mpcc` 仅提供参考录制与准备，模型和数值工具用于离线生成。整车操作见[启动](../../../docs/operations/bringup.md)、[地图初始化](../../../docs/operations/known-map-mpcc.md)、[录制](../../../docs/operations/recording.md)。
+**English** · [简体中文](usage.zh-CN.md)
 
-## 当前实跑配置
+Current online control runs in `aims_mpcc_rt/mpcc_rt_node`. `aims_mpcc` only provides reference recording/preparation, with model and numerical tools used for offline generation. Complete vehicle operations are covered by [bringup](../../../docs/operations/bringup.md), [map initialization](../../../docs/operations/known-map-mpcc.md) and [recording](../../../docs/operations/recording.md).
 
-默认 [vehicle.yaml](../config/vehicle.yaml)为 2026-10-10 v35 参数：N15/dt=.1（1.5 s 预览）、RTI 至多两次、20 Hz 请求上限、50 Hz 命令。巡航 3.5、硬上限 4、加速/制动 1、曲率规划 ay=1，单位分别为 m/s、m/s²。后轴 footprint 前 0.52、后 0.10、半宽 0.16 m；转向滞后 0.08 s 是现有车辆 yaw 响应的模型近似。
+<a id="当前实跑配置"></a>
+## Current field-run configuration
 
-`enforce_corridor=false` 和 `combined_accel_constraint_enabled=false` 是本次实跑条件。物理速度/加减速/转角/转向速率、有限数和输入/定位资格仍检查；规划 ay 不提供运行时轮胎约束保证。规划峰值约 2.99、实测约 2.89 m/s。[外场复盘](../../../docs/reports/2026-10-10-mpcc-field-review.md)说明运动窗口和 COMPLETE 的不同计时口径。
+The default [vehicle.yaml](../config/vehicle.yaml) contains the 2026-10-10 v35 parameters: N15/dt=.1 (1.5 s preview), at most two RTI passes, a 20 Hz request cap and 50 Hz commands. Cruise is 3.5, the hard limit 4, acceleration/braking 1 and curvature planning ay=1, with units m/s and m/s² respectively. The rear-axle footprint has front 0.52, rear 0.10 and half-width 0.16 m; the steering lag of 0.08 s is a lumped model approximation of the current vehicle yaw response.
 
-## 准备参考
+`enforce_corridor=false` and `combined_accel_constraint_enabled=false` are conditions of these field runs. Physical speed/acceleration/braking/steering angle/steering rate, finite values and input/localization qualification are still checked; planning ay provides no runtime tire-constraint guarantee. The planned peak was approximately 2.99 and measured peak approximately 2.89 m/s. The [field review](../../../docs/reports/2026-10-10-mpcc-field-review.md) explains the different timing definitions for motion windows and COMPLETE.
 
-当前部署 bundle 已包含参考，正常运行无需重复准备。新参考先录制：
+<a id="准备参考"></a>
+## Prepare a reference
+
+The current deployed bundle already includes its reference, so normal operation does not require repeated preparation. First record a new reference:
 
 ```bash
 ros2 run aims_mpcc record_path --ros-args -p output:="$HOME/aimsracer-data/lap.csv"
 ```
 
-手动前进一圈并保留少量重叠。默认录 `/odometry/filtered` 的 `odom/base_link`；建图可改 `odom_topic` 为 `/rear_axle/lio_odom`。`odom` CSV 与当前会话原点绑定。要在重新启动后复用，先离线关联保存地图的 pose，形成 `map/base_link` CSV。历史关联例子见[地图参考报告](../../../docs/reports/2026-09-28-map-reference.md)。 保留的恢复脚本与输入说明见 [tools/reference](../../../tools/reference/README.md)。
+
+Drive forward manually for one lap and retain a small overlap. By default this records `odom/base_link` from `/odometry/filtered`; for mapping, `odom_topic` can be changed to `/rear_axle/lio_odom`. An `odom` CSV is tied to the current session origin. For reuse after restarting, first associate it offline with the saved map poses to obtain a `map/base_link` CSV. Historical association examples are in the [map-reference report](../../../docs/reports/2026-09-28-map-reference.md). Retained recovery scripts and input descriptions are in [tools/reference](../../../tools/reference/README.md).
 
 ```bash
 ros2 run aims_mpcc prepare_path /absolute/path/to/closed_map.csv \
@@ -26,13 +32,15 @@ ros2 run aims_mpcc prepare_path /absolute/path/to/closed_map.csv \
   --map-file "$HOME/maps/20260928_010503/map.pcd"
 ```
 
-`--map-file` 为 map-frame CSV 绑定 PCD SHA-256，不执行坐标转换。左右宽度必须反映确认过的空间，示例值 0.5 m 是课程模型。`--start-time`、`--end-time` 可截取一个闭环。准备过程拒绝无效闭合、倒车、不连续、交叉、曲率和坐标/几何不匹配，保留原始 CSV，输出 `path.csv`、`metadata.json`、`raw.csv`；输出目录必须新建。
 
-周期 quintic 样条描述固定几何；速度由曲率与周期加速/制动传播规划，不照抄驾驶员 CSV 速度。当前不接收在线轨迹 topic，也未实现按位置速度区域或在线赛线优化。
+`--map-file` binds the PCD SHA-256 to a map-frame CSV and does not transform coordinates. Left/right widths must reflect confirmed space; the example 0.5 m value is a course model. `--start-time` and `--end-time` can extract one closed loop. Preparation rejects invalid closure, reversing, discontinuities, crossings, curvature and frame/geometry mismatches; it retains the original CSV and outputs `path.csv`, `metadata.json` and `raw.csv`. The output directory must be new.
 
-## 离线生成与目标平台构建
+A periodic quintic spline defines fixed geometry; speed is planned from curvature and cyclic acceleration/braking propagation, rather than copied from the driver's CSV speed. Currently there is no online trajectory topic input, position-based speed zones or online racing-line optimization.
 
-先按[源码准备](../../../docs/operations/bringup.md)安装固定 acados，离线 Python 环境需有 CasADi 3.7.2、NumPy、SciPy、PyYAML 和固定源码的 acados_template。在 workspace 根目录设置：
+<a id="离线生成与目标平台构建"></a>
+## Offline generation and target-platform build
+
+First install pinned acados following [source preparation](../../../docs/operations/bringup.md). The offline Python environment needs CasADi 3.7.2, NumPy, SciPy, PyYAML and acados_template from the pinned source. Set the following at the workspace root:
 
 ```bash
 export ROOT="$PWD"
@@ -50,13 +58,15 @@ python3 src/aims_mpcc_rt/scripts/build_bundle.py \
   --acados-install "$ACADOS_INSTALL_DIR"
 ```
 
-`--source-only` 生成固定 C 和模型数据，后一步针对当前 CPU 编译。x86 生成的完整 source bundle 可复制到 NX，再在 NX 执行 `build_bundle.py`；不能把 x86 共享库当作 NX 产物。完成目标构建后保留整个 bundle，包含 `input_reference/`、`input_config.yaml`、`manifest.json`、`native_manifest.json`、生成 C 和共享库。改变 config、reference 或生成器时离线创建新 bundle。
 
-在线节点验证哈希、ABI、平台及加载库，不在线生成或编译。构建证据与实车效果分别记录；软件回归放在 `verification/`。
+`--source-only` generates fixed C and model data; the subsequent step compiles for the current CPU. A complete source bundle generated on x86 can be copied to NX, where `build_bundle.py` is then run; x86 shared libraries cannot serve as NX artifacts. After target compilation, retain the whole bundle, including `input_reference/`, `input_config.yaml`, `manifest.json`, `native_manifest.json`, generated C and shared libraries. Changes to config, reference or generator require a new bundle created offline.
 
-## 在线启动参数
+The online node verifies hashes, ABI, platform and loaded libraries; it does not generate or compile online. Record build evidence separately from vehicle results; software regressions belong in `verification/`.
 
-推荐整车入口：
+<a id="在线启动参数"></a>
+## Online launch parameters
+
+Recommended complete vehicle entry point:
 
 ```bash
 ros2 launch aims_racer_system race.launch.py \
@@ -65,35 +75,39 @@ ros2 launch aims_racer_system race.launch.py \
   record:=true
 ```
 
-| race 参数 | 默认 / 含义 |
-| --- | --- |
-| `map_file` | 必填，准确的不可变 PCD |
-| `artifact_directory` | 必填，已在目标平台构建的完整 bundle |
-| `initial_pose` | 空；可填 map 中 base_link 的 `x y z roll pitch yaw`，角度 rad |
-| `auto_start` | false；等待同一组 enable 条件后启动一次 |
-| `repeat_laps` | false；单圈停车，true 连续圈 |
-| `record` | false；true 自动 bag 与 runtime |
-| `session_directory` | 空；自动日期会话目录，指定时须新目录 |
-| `log_directory` | 空；只记录 native runtime；record=true 选择会话目录 |
 
-需要与现有车辆/定位图连接时，单独 native 入口为：
+| race parameter | Default / meaning |
+| --- | --- |
+| `map_file` | Required; the exact immutable PCD |
+| `artifact_directory` | Required; complete bundle already built for the target platform |
+| `initial_pose` | Empty; optionally `x y z roll pitch yaw` of base_link in map, angles in rad |
+| `auto_start` | false; starts once after waiting for the same enable conditions |
+| `repeat_laps` | false; stops after one lap; true runs continuous laps |
+| `record` | false; true automatically records bag and runtime |
+| `session_directory` | Empty; automatic dated session directory; an explicit directory must be new |
+| `log_directory` | Empty; native runtime only; record=true selects the session directory |
+
+To connect to an existing vehicle/localization graph, use the standalone native entry point:
 
 ```bash
 ros2 launch aims_mpcc_rt mpcc.launch.py \
   artifact_directory:="$HOME/aimsracer-data/bundles/field-v35-20261010"
 ```
 
-native launch 从 bundle 派生 `input_reference/` 和 `input_config.yaml`，horizon/dt 来自 manifest。无需重复指定路径、车辆配置或时域。native 入口另有 `auto_start_timeout=60`、`solve_frequency=20` Hz、`solver_timeout=.05` s、`handover_delay=.02` s、`odom_topic=/odometry/filtered`；参数启动后固定。完整交付预算包含 worker 与 delivery 等待，不等于仅 solver 时长。原始 source TTL 为 `0.8×N×dt=1.2 s`，不会因结果丢弃或新交付而续期。
 
-## 初始化、启用与停止
+The native launch derives `input_reference/` and `input_config.yaml` from the bundle, with horizon/dt from the manifest. Paths, vehicle configuration and horizon need not be repeated. The native entry point also provides `auto_start_timeout=60`, `solve_frequency=20` Hz, `solver_timeout=.05` s, `handover_delay=.02` s and `odom_topic=/odometry/filtered`; parameters are fixed after startup. The complete delivery budget includes worker execution and delivery wait and does not equal solver duration alone. Original source TTL is `0.8×N×dt=1.2 s`; discarded results or new deliveries do not renew it.
 
-初始化按[已知地图](../../../docs/operations/known-map-mpcc.md)提供 map/base_link pose 或 RViz。`/mpcc/status` 与 `/localization/status` 描述实际资格。手动启用/停止：
+<a id="初始化启用与停止"></a>
+## Initialization, enable and stop
+
+Initialize with a map/base_link pose or RViz according to [known-map operation](../../../docs/operations/known-map-mpcc.md). `/mpcc/status` and `/localization/status` describe actual qualification. To enable/stop manually:
 
 ```bash
 ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: true}'
 ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 ```
 
-enable 要求 solver ready、新鲜后轴状态、实际转发历史、RC 权限、可信地图锚点、唯一 `/drive` 发布者、车辆静止和参考方向匹配。`auto_start=true` 复用这组条件，在默认 60 s 内成功后只启动一次；显式 stop 取消等待。完成或故障不自动重新启用，fatal 不重启。
 
-`repeat_laps=false` 从实际启用位置计一圈并停车，true 连续圈直到 stop。使用 RC/急停处理现场紧急情况，撤销权限、停稳后关闭 launch。日志内容与计时口径见[录制](../../../docs/operations/recording.md)。
+Enable requires a ready solver, fresh rear-axle state, actual forwarded history, RC permission, trusted map anchor, a unique `/drive` publisher, a stationary vehicle and matching reference direction. `auto_start=true` reuses these conditions and starts only once after success within the default 60 s window; explicit stop cancels the wait. Completion or faults do not automatically re-enable, and fatal faults do not restart.
+
+`repeat_laps=false` counts one lap from the actual enable position and stops; true runs continuous laps until stop. Use RC/emergency stop for field emergencies, revoke permission, wait until stationary and then close the launch. Log content and timing definitions are in [recording](../../../docs/operations/recording.md).

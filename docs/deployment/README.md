@@ -1,10 +1,14 @@
-# 当前 main 部署
+<a id="当前-main-部署"></a>
+# Current main deployment
 
-当前车辆主流程为原生 Ubuntu 22.04、ROS 2 Humble、单 workspace：FAST-LIO2、后轴 EKF、保存地图 NDT 与 native acados/C++ MPCC。实际闭环行驶证据来自 Orin NX，见[外场复盘](../reports/2026-10-10-mpcc-field-review.md)。[Orin](orin.md)说明现场设备，[x86 / NUC](nuc.md)说明同源码的目标平台构建。
+**English** · [简体中文](README.zh-CN.md)
 
-## 系统依赖
+The current vehicle workflow uses native Ubuntu 22.04, ROS 2 Humble, and one workspace: FAST-LIO2, rear axle EKF, saved-map NDT, and native acados/C++ MPCC. Actual closed-loop driving evidence comes from Orin NX; see the [field review](../reports/2026-10-10-mpcc-field-review.md). [Orin](orin.md) describes the field hardware; [x86 / NUC](nuc.md) describes building the same source for the target platform.
 
-先完成 ROS 2 Humble 的 apt 源与基础安装，再安装当前包闭包使用的构建依赖：
+<a id="系统依赖"></a>
+## System dependencies
+
+First configure the ROS 2 Humble apt repository and complete the basic installation, then install the build dependencies used by the current package closure:
 
 ```bash
 sudo apt update
@@ -24,9 +28,10 @@ sudo apt install \
 python3 -m pip install --user 'casadi==3.7.2' 'matplotlib<3.9' deprecated jinja2 future
 ```
 
-以上面向当前 selected package closure。源码包的依赖声明与 CMake 仍是具体构建依据，固定源和补丁在[依赖清单](../../dependencies/manifest.json)。
+These dependencies target the current selected package closure. Source package dependency declarations and CMake remain the basis for individual builds; fixed sources and patches are in the [dependency manifest](../../dependencies/manifest.json).
 
-## 源码准备
+<a id="源码准备"></a>
+## Source preparation
 
 ```bash
 git clone --branch main https://github.com/EleSheep-moving/AIMSRacer.git
@@ -36,11 +41,12 @@ python3 tools/setup_dependencies.py --workspace .
 bash tools/setup_acados.sh --workspace . --jobs 2
 ```
 
-只初始化主流程需要的 FAST-LIO 子模块，并保留当前提交的固定指针。准备脚本将固定版本 NDT、ndt_omp、Livox ROS 2、serial 放在同一 `src/` 下，核验 NDT 补丁和源码身份。Livox SDK2、Sophus、CppLinuxSerial 已安装时沿用并记录现有库/配置，缺失时按清单准备。acados 与 BLASFEO/HPIPM 的固定来源构建到 `dependencies/work/acados/install`。现有不同版本/本地修改由工具明确报告，不覆盖历史目录。
+Initialize only the FAST-LIO submodule required by the main workflow and retain the fixed pointer in the current commit. The preparation script places fixed versions of NDT, ndt_omp, Livox ROS 2, and serial under the same `src/`, verifying NDT patches and source identity. When Livox SDK2, Sophus, and CppLinuxSerial are already installed, it reuses and records the existing libraries/configurations; otherwise, it prepares them according to the manifest. Fixed acados and BLASFEO/HPIPM sources build into `dependencies/work/acados/install`. The tools explicitly report differing existing versions/local changes without overwriting historical directories.
 
-脚本 CLI 与各 source pin 以 [setup_dependencies.py](../../tools/setup_dependencies.py)、[setup_acados.sh](../../tools/setup_acados.sh)及 manifest 为准。可通过 `--jobs` 限制构建并发；SDK 和系统库默认安装 prefix 为 `/usr/local`。普通用户运行准备工具，source/build/回执保留当前用户所有；仅系统安装目录不可写时，工具使用 `sudo cmake --install` 安装已构建的库。系统库已完整安装的 NX 只记录现有安装，不调用 sudo。不要用 sudo 运行整份准备工具，否则生成的依赖源码与 acados 目录可能归 root 所有。
+The script CLI and source pins are defined by [setup_dependencies.py](../../tools/setup_dependencies.py), [setup_acados.sh](../../tools/setup_acados.sh), and the manifest. Use `--jobs` to limit build concurrency; the default installation prefix for SDKs and system libraries is `/usr/local`. Run the preparation tools as a normal user so source/build/receipts remain owned by that user; only when the system installation directory is not writable do the tools use `sudo cmake --install` to install already-built libraries. An NX with complete system libraries only records the existing installation and does not call sudo. Do not run the entire preparation tool with sudo, as that may leave dependency sources and acados directories owned by root.
 
-## 标准 install 构建
+<a id="标准-install-构建"></a>
+## Standard install build
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -51,20 +57,22 @@ source install/setup.bash
 export LD_LIBRARY_PATH="$PWD/dependencies/work/acados/install/lib:${LD_LIBRARY_PATH:-}"
 ```
 
-`MAKEFLAGS="-j2 -l2"` 限制每个包的 Make 编译并发，`--executor sequential` 限制包间并发。NX 上仅设置 `CMAKE_BUILD_PARALLEL_LEVEL=2` 仍可能被 colcon 自动追加的 `-j8` 覆盖，导致 PCL/NDT 编译内存不足；不要因此更改运行时线程或车辆参数。
+`MAKEFLAGS="-j2 -l2"` limits Make compilation concurrency within each package; `--executor sequential` limits concurrency between packages. On NX, setting only `CMAKE_BUILD_PARALLEL_LEVEL=2` may still be overridden by colcon's automatically appended `-j8`, exhausting memory during PCL/NDT compilation; do not change runtime threads or vehicle parameters in response.
 
-Livox 的 ROS 2 edition/distribution 是显式构建参数。该命令选择当前整车依赖闭包；其它实验包不需要随车辆构建。使用标准 install，使安装内容与同一源码构建对应；修改后重新构建，不靠符号链接让未部署源码改变现场行为。
+Livox's ROS 2 edition/distribution are explicit build arguments. This command selects the current complete vehicle dependency closure; other experimental packages need not be built with the vehicle. Use a standard install so installed content corresponds to a build of the same source; rebuild after changes rather than using symbolic links that allow undeployed source to change field behavior.
 
-## 数据与 bundle
+<a id="数据与-bundle"></a>
+## Data and bundle
 
-保存地图和 bundle 放在源码目录外。当前 NX 部署目标为 `~/maps/20260928_010503/map.pcd` 与 `~/aimsracer-data/bundles/field-v35-20261010`；新机器需实际复制这些完整数据，源码 clone 不包含它们。
+Keep saved maps and bundles outside the source directory. Current NX deployment targets are `~/maps/20260928_010503/map.pcd` and `~/aimsracer-data/bundles/field-v35-20261010`; a new machine requires an actual copy of these complete data, which are not included in a source clone.
 
-生成器额外使用固定源码的 acados_template。离线生成环境设置 `ACADOS_SOURCE_DIR=.../acados/source`、`ACADOS_INSTALL_DIR=.../acados/install`，并将 `source/interfaces/acados_template` 加入 PYTHONPATH；依赖准备工具不自动安装离线 Python 包。完整 export/build 命令见 [MPCC 使用](../../src/controller/docs/usage.md#离线生成与目标平台构建)。跨架构传递 generated C 后，在目标 CPU 构建完整 native bundle。
+The generator additionally uses acados_template from the fixed source. Set `ACADOS_SOURCE_DIR=.../acados/source` and `ACADOS_INSTALL_DIR=.../acados/install` in the offline generation environment and add `source/interfaces/acados_template` to PYTHONPATH; the dependency preparation tool does not automatically install offline Python packages. Full export/build commands are in [MPCC usage](../../src/controller/docs/usage.md#离线生成与目标平台构建). After transferring generated C between architectures, build the complete native bundle on the target CPU.
 
-## ROS domain 与设备
+<a id="ros-domain-与设备"></a>
+## ROS domain and devices
 
-每个车辆终端 source `/opt/ros/humble/setup.bash` 和该 workspace 的 `install/setup.bash`，使用相同 `ROS_DOMAIN_ID` 与 DDS 设置。默认未设置时为 domain 0。若使用 CycloneDDS loopback 配置，确认 XML 和 participant capacity 足够覆盖图；单独设置 `ROS_LOCALHOST_ONLY` 不替代实际 DDS interface 配置。Livox Ethernet UDP 网络单独核对。
+In every vehicle terminal, source `/opt/ros/humble/setup.bash` and this workspace's `install/setup.bash`, using the same `ROS_DOMAIN_ID` and DDS settings. The default is domain 0 when unset. When using a CycloneDDS loopback configuration, confirm that its XML and participant capacity cover the graph; setting `ROS_LOCALHOST_ONLY` alone does not replace an actual DDS interface configuration. Check Livox Ethernet UDP networking separately.
 
-[设备规则](../../rules/README.md)按实际连线选择；规则只提供稳定设备名，不启动驱动。确认 [MID360_config.json](../../src/aims_racer_system/params/MID360_config.json)中的设备与主机地址适用于现场。
+Choose [device rules](../../rules/README.md) according to the actual wiring; rules only provide stable device names and do not start drivers. Confirm that the device and host addresses in [MID360_config.json](../../src/aims_racer_system/params/MID360_config.json) match the field setup.
 
-启动命令、地图初始化与自动录制见[车辆启动](../operations/bringup.md)、[已知地图](../operations/known-map-mpcc.md)、[录制](../operations/recording.md)。回归和重放用于开发，见 [verification](../../verification/README.md)。
+Launch commands, map initialization, and automatic recording are described in [vehicle bringup](../operations/bringup.md), [known maps](../operations/known-map-mpcc.md), and [recording](../operations/recording.md). Regression checks and replay support development; see [verification](../../verification/README.md).

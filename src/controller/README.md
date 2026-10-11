@@ -1,17 +1,21 @@
-# AIMSRacer 参考与离线模型工具
+<a id="aimsracer-参考与离线模型工具"></a>
+# AIMSRacer reference and offline model tools
 
-ROS 包名 `aims_mpcc`，源码目录为 `src/controller`。它提供 `record_path`、`prepare_path`，并保存 native acados bundle 生成所需的车辆配置、周期参考、模型和速度规划工具。在线控制由 [aims_mpcc_rt](../aims_mpcc_rt/README.md) 的 C++ 节点承担；整车使用 [race.launch.py](../aims_racer_system/launch/race.launch.py)。
+**English** · [简体中文](README.zh-CN.md)
 
-当前默认 [vehicle.yaml](config/vehicle.yaml)与 2026-10-10 后期实跑一致：巡航 3.5 m/s、硬上限 4 m/s、加速/制动 1 m/s²、规划 ay=1 m/s²、RTI 至多两次；bundle 使用 N15/dt=.1。车体参考为后轴 `base_link`，footprint 前/后/半宽为 0.52/0.10/0.16 m。`enforce_corridor=false`、组合加速度椭圆关闭；保存参考宽度不是实际赛道边界。
+The ROS package is named `aims_mpcc`, with source under `src/controller`. It provides `record_path` and `prepare_path`, and retains the vehicle configuration, periodic reference, model and speed-planning tools needed to generate native acados bundles. Online control runs in the C++ node of [aims_mpcc_rt](../aims_mpcc_rt/README.md); the complete vehicle uses [race.launch.py](../aims_racer_system/launch/race.launch.py).
 
-实跑规划峰值约 2.99 m/s、实测约 2.89 m/s，参见[外场复盘](../../docs/reports/2026-10-10-mpcc-field-review.md)。
+The current default [vehicle.yaml](config/vehicle.yaml) matches the later field runs on 2026-10-10: cruise 3.5 m/s, hard limit 4 m/s, acceleration/braking 1 m/s², planning ay=1 m/s² and at most two RTI passes; the bundle uses N15/dt=.1. The vehicle reference is the rear-axle `base_link`, with footprint front/rear/half-width 0.52/0.10/0.16 m. `enforce_corridor=false` and the combined acceleration ellipse is disabled; saved reference widths are not actual track boundaries.
 
-## 使用
+The field-run planned peak was approximately 2.99 m/s and the measured peak approximately 2.89 m/s; see the [field review](../../docs/reports/2026-10-10-mpcc-field-review.md).
 
-- [准备参考、导出 bundle 和运行](docs/usage.md)
-- [模型、成本与 native 执行实现](docs/implementation.md)
-- [系统坐标、topics 和命令归属](../../docs/architecture.md)
-- [已知地图初始化](../../docs/operations/known-map-mpcc.md)
+<a id="使用"></a>
+## Usage
+
+- [Prepare a reference, export a bundle and run](docs/usage.md)
+- [Model, costs and native execution implementation](docs/implementation.md)
+- [System frames, topics and command ownership](../../docs/architecture.md)
+- [Known-map initialization](../../docs/operations/known-map-mpcc.md)
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -22,11 +26,13 @@ ros2 run aims_mpcc prepare_path "$HOME/aimsracer-data/lap.csv" \
   --vehicle-config src/controller/config/vehicle.yaml --left-width 0.5 --right-width 0.5
 ```
 
-示例 0.5 m 左右宽度须按实际可用空间检查；`record_path` 输出 `odom/base_link`，绑定该次定位原点。持久地图参考须先得到真正的 map-frame CSV，并用 `--map-file` 绑定 PCD；此参数不转换 CSV 坐标。生成和目标平台构建使用 `src/aims_mpcc_rt/scripts/export_bundle.py`、`build_bundle.py`，详细命令见[使用指南](docs/usage.md#离线生成与目标平台构建)。
 
-## 构建与来源
+Check the example left/right widths of 0.5 m against the available physical space. `record_path` outputs `odom/base_link`, tied to the localization origin of that session. A persistent map reference first requires a genuine map-frame CSV and a PCD bound with `--map-file`; this parameter does not transform CSV coordinates. Generation and target-platform builds use `src/aims_mpcc_rt/scripts/export_bundle.py` and `build_bundle.py`; detailed commands are in the [usage guide](docs/usage.md#离线生成与目标平台构建).
 
-从 workspace 根目录构建整个主流程：
+<a id="构建与来源"></a>
+## Build and attribution
+
+Build the complete main workflow from the workspace root:
 
 ```bash
 export MAKEFLAGS="-j2 -l2"
@@ -34,4 +40,5 @@ colcon build --packages-up-to aims_racer_system aims_mpcc_rt --executor sequenti
   --cmake-args -DCMAKE_BUILD_TYPE=Release -DROS_EDITION=ROS2 -DDISTRO_ROS=humble
 ```
 
-软件验证位于 `verification/`，不属于车辆启动流程。第三方来源与许可保存在 [NOTICE.md](NOTICE.md)、[LICENSE](LICENSE) 和 [vendor](aims_mpcc/vendor/)；参考与模型继续保留相应归属。
+
+Software verification lives under `verification/` and is outside the vehicle startup workflow. Third-party sources and licenses are retained in [NOTICE.md](NOTICE.md), [LICENSE](LICENSE) and [vendor](aims_mpcc/vendor/); the reference and model retain their corresponding attribution.
