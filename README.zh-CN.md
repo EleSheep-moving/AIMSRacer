@@ -211,6 +211,8 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 
 地图、生成 bundle 和原始 bag 保存在源码外。在线控制器是 `aims_mpcc_rt`，`aims_mpcc` 提供离线工具。
 
+当前开发和车辆部署使用 **`main`**。**`Ood/…`** 分支保留已退役的开发历史，不作为当前启动配置。正在使用的 FAST-LIO 子模块继续固定在本仓库记录的、已推送的 `perf/serial-lio-worker` 提交。
+
 <a id="credits"></a>
 ## 致谢与许可证
 

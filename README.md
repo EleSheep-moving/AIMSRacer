@@ -209,6 +209,8 @@ The planned speed profile peaked at **2.990 m/s**, below the 3.5 m/s cruise targ
 
 Maps, generated bundles and raw bags live outside this tree. The online controller is `aims_mpcc_rt`; `aims_mpcc` supplies offline tools.
 
+Use **`main`** for current development and vehicle deployment. **`Ood/…`** branches retain retired development history; they are not current launch configurations. The active FAST-LIO submodule remains pinned to the published `perf/serial-lio-worker` commit recorded by this repository.
+
 <a id="credits"></a>
 ## Acknowledgements and licenses
 
