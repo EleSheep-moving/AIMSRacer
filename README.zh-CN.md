@@ -175,6 +175,8 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 
 纵向响应与 PID 整定、电池/母线电压、电流限制、车速和负载有关。历史拟合延迟与时间常数只对应实测工况，不能直接视为所有运行条件下的固定值。
 
+两轮 V35 NX 实测中，请求到候选结果交付 P95 为 **4.00 / 2.66 ms**；无歧义匹配的非零命令，从 EKF 源时间戳到首条转发命令的 P95 为 **50.29 / 46.62 ms**。后者包含调度和 RC 转发，不包含执行器物理响应，详见[计时定义](docs/vehicle-response.zh-CN.md#mpcc-计算与命令交付)。
+
 20 ms 命令周期和接管提前量描述执行调度，不代表执行器延迟。舵机命令回显不是车轮角度实测值。[车辆响应指南](docs/vehicle-response.zh-CN.md)说明历史实测、模型边界，以及修改响应参数后如何重建 bundle。
 
 <a id="results"></a>
@@ -185,11 +187,11 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 | 外场指标 | V35 第一次 | V35 第二次 |
 | --- | ---: | ---: |
 | EKF 实测速度峰值 | 2.887 m/s | 2.885 m/s |
-| MPCC worker 完整计算 P95 | 4.001 ms | 2.656 ms |
+| MPCC 请求至候选交付 P95 | 4.001 ms | 2.656 ms |
 | 绝对横向误差 P95 | 8.87 cm | 8.89 cm |
 | 含起步与制动的运动窗口 | 21.65 s | 22.08 s |
 
-规划速度峰值为 **2.990 m/s**，低于 3.5 m/s 的巡航目标。worker 计算不含交付等待，与求解器单独耗时、命令发布周期分别统计。运动窗口包含静止起步和制动，不是 flying lap 圈时。定义、记录编号和完整证据见[外场复盘](docs/reports/2026-10-10-mpcc-field-review.md)。
+规划速度峰值为 **2.990 m/s**，低于 3.5 m/s 的巡航目标。候选交付包含 worker 计算和结果交付等待，不含定时接管与命令发布；它与求解器单独耗时、命令发布周期分别统计。运动窗口包含静止起步和制动，不是 flying lap 圈时。定义、记录编号和完整证据见[外场复盘](docs/reports/2026-10-10-mpcc-field-review.md)。
 
 **main 栈软件验证：** NX 构建完成18个包；原生控制器24/24、系统适配11/11、RC 2/2、FAST-LIO 输入缓冲1/1、启动检查7/7通过。部署检查使用隔离/remap接口，没有发送车辆命令。[整合与验证记录](docs/reports/2026-10-10-main-field-stack-integration.md)说明范围，包括新组合 launch 与可选自动启动的软件检查。
 

@@ -173,6 +173,8 @@ The current steering model uses **`steering_tau: 0.08 s`** as a lumped command-t
 
 Longitudinal response depends on PID tuning, battery / bus voltage, current limits, speed and load. Historical fitted delays and time constants apply to the measured conditions, not every run.
 
+In the two V35 NX runs, request-to-candidate delivery P95 was **4.00 / 2.66 ms**. EKF-source-to-first-forwarded-command P95 was **50.29 / 46.62 ms** for unambiguously matched nonzero commands. This includes scheduling and RC forwarding, but excludes physical actuator response; see the [timing definitions](docs/vehicle-response.md#mpcc-computation-and-command-delivery).
+
 The 20 ms command period and handover lead describe execution timing, not actuator delay. A servo-command echo is not a measured wheel angle. See [vehicle response](docs/vehicle-response.md) for the dated measurements, model limits, and how to rebuild a bundle after changing response parameters.
 
 <a id="results"></a>
@@ -183,11 +185,11 @@ The two late V35 runs used **FAST-LIO2 + EKF + NDT concurrently on Orin NX**.
 | Field measurement | V35 run A | V35 run B |
 | --- | ---: | ---: |
 | Measured peak EKF speed | 2.887 m/s | 2.885 m/s |
-| MPCC worker computation P95 | 4.001 ms | 2.656 ms |
+| MPCC request-to-candidate delivery P95 | 4.001 ms | 2.656 ms |
 | Absolute cross-track error P95 | 8.87 cm | 8.89 cm |
 | Motion window, including start and braking | 21.65 s | 22.08 s |
 
-The planned speed profile peaked at **2.990 m/s**, below the 3.5 m/s cruise target. Worker computation excludes delivery wait and is distinct from solver-only time and the command period. Motion windows include stationary starts and braking; these are not flying-lap times. See [field review](docs/reports/2026-10-10-mpcc-field-review.md) for definitions, run identifiers and evidence.
+The planned speed profile peaked at **2.990 m/s**, below the 3.5 m/s cruise target. Candidate delivery includes worker computation and result-delivery wait; it excludes scheduled takeover and command publication and is distinct from solver-only time and the command period. Motion windows include stationary starts and braking; these are not flying-lap times. See [field review](docs/reports/2026-10-10-mpcc-field-review.md) for definitions, run identifiers and evidence.
 
 **Main-stack software verification:** 18 packages built on NX; native controller 24/24, system adapters 11/11, RC 2/2, FAST-LIO input buffer 1/1, startup checks 7/7 passed. Deployment checks used isolated/remapped interfaces and issued no vehicle commands. See [integration and verification](docs/reports/2026-10-10-main-field-stack-integration.md) for the scope, including software checks of the new combined launches and optional automatic start.
 
