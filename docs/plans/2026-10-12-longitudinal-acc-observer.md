@@ -14,12 +14,12 @@
 
 ## Tasks
 
-- [ ] 1. Implement and test `verification/acceleration/observer.py` and `test_observer.py`. Use immutable configuration, scalar Kalman measurements, Joseph covariance updates, nonfinite rejection and fixed-lag replay. Test before implementation and save failing/passing logs.
-- [ ] 2. Implement `verification/acceleration/replay.py`: verify raw input hashes, preserve source stamps, reconstruct corrected force provenance, define training/held-out roles and emit current-time estimates in receipt order.
-- [ ] 3. Implement `verification/acceleration/evaluate.py`: construct offline proxies separately from causal inputs, score per-run noise/forecast/onset/residual tradeoffs, select parameters using training runs only and report held-out results without retuning.
-- [ ] 4. Generate standalone English 16:9 plots and bilingual reports in `aimsracer-data/sessions/2026-10-12/longitudinal-acc-observer`. Include all settings, covariances, clock limits and original source hashes. Explicitly state whether IMU actually improves the baseline.
-- [ ] 5. Run independent spec and code-quality review. Resolve findings, repeat only affected verification and commit this experiment branch. Preserve main/NX production source.
-- [ ] 6. Run selected offline observer configurations and timing on NX if reachable; mark target verification separately. Document remaining field acceptance and integration work. No live driving or actuator work.
+- [x] 1. Implement and test `verification/acceleration/observer.py` and `test_observer.py`. Use immutable configuration, scalar Kalman measurements, Joseph covariance updates, nonfinite rejection and fixed-lag replay. Test before implementation and save failing/passing logs.
+- [x] 2. Implement `verification/acceleration/replay.py`: verify raw input hashes, preserve source stamps, reconstruct corrected force provenance, define training/held-out roles and emit current-time estimates in receipt order.
+- [x] 3. Implement `verification/acceleration/evaluate.py`: construct offline proxies separately from causal inputs, score per-run noise/forecast/onset/residual tradeoffs, select parameters using training runs only and report held-out results without retuning.
+- [x] 4. Generate standalone English 16:9 plots and bilingual reports in `aimsracer-data/sessions/2026-10-12/longitudinal-acc-observer`. Include all settings, covariances, clock limits and original source hashes. Explicitly state whether IMU actually improves the baseline.
+- [x] 5. Run independent spec and code-quality review. Resolve findings, repeat only affected verification and commit this experiment branch. Preserve main/NX production source.
+- [x] 6. Run selected offline observer configurations and timing on NX if reachable; mark target verification separately. Document remaining field acceptance and integration work. No live driving or actuator work.
 
 ## Commands
 
@@ -32,3 +32,7 @@ python3 /repo/verification/acceleration/evaluate.py --evidence /data/sessions/20
 ```
 
 Expected verification is numerical and methodological consistency, not a predetermined winner or an unmeasured closed-loop PASS.
+
+## Completion evidence (2026-10-12)
+
+27 numerical/pipeline tests pass on desktop and NX. Expanded training grid: 408 run/configuration trials; 24 final selected replays, no numerical failures or historical-input drops. NX reproduces desktop arrays to maximum absolute difference 1.1546319456101628e-14. Independent core spec and final code-quality reviews passed after onset/provenance/bounded-history fixes. Final bilingual reports describe measured results and finite-grid/shared-sensor limitations. Only this experiment branch is committed; current production rear-adapter changes stay in main/NX working trees. No live driving, production topic integration or actuator changes performed.
