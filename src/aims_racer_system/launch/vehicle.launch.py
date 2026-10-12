@@ -12,6 +12,7 @@ def build_vehicle(context):
     share=Path(get_package_share_directory('aims_racer_system'))
     mapping=flag(context,'mapping')
     selector={'channel_profile':'steering_ch1_throttle_ch3_aux_ch5_to_ch10',
+        'publish_rate_hz':100.0,
         'rc_timeout_sec':.2,'nav_timeout_sec':.2,'calib_timeout_sec':.2,
         'limit_min_value':172,'limit_max_value':1810,'channel_min_range':172,
         'channel_mid':992,'channel_max_range':1810,'switch_mid_value':992,

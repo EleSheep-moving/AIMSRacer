@@ -61,3 +61,5 @@ colcon build --symlink-install --packages-select ackermann_mux
 回归源码和 fixtures 位于 `tests/`，用于开发；生产安装仅包含选择器可执行文件。
 
 在本机（2026-10-03），隔离合成工作负载采用 100 Hz RC、50 Hz 导航输入和 200 Hz 输出；预热后采样三个 3 s 窗口，原始 Python 选择器测得单 CPU 核心占用 29.0–32.0%，C++ 为 4.3–4.7%。两者均输出约 200 commands/s。这些是进程 CPU 测量，不是最坏延迟上界或实车驾驶测试。
+
+车辆 `vehicle.launch.py` 将 `publish_rate_hz` 显式配置为 **100 Hz**，用于 VESC 指令链；独立组件默认值仍为 200 Hz。

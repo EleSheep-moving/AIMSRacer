@@ -14,3 +14,7 @@
 [submodule "src/zed-ros2-examples"]
 	path = src/zed/zed-ros2-examples
 	url = https://github.com/stereolabs/zed-ros2-examples.git
+[submodule "src/vesc"]
+	path = src/vesc
+	url = https://github.com/EleSheep-moving/vesc.git
+	branch = main

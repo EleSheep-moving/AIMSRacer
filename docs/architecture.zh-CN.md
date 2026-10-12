@@ -77,7 +77,7 @@ VESC 不发布该车辆 TF。PGO 与 NDT 使用不同运行入口，以保持 ma
 | `/fastlio2/visualization/world_cloud` | LIO | 可选 raw LIO world 显示，默认关闭；不用于定位控制 |
 | `/rear_axle/lio_odom` | 后轴适配 | `odom/base_link`，保留 LIO stamp；EKF |
 | `/rear_axle/imu` | 后轴适配 | `base_link` IMU，m/s²，保留 IMU stamp；EKF |
-| `/rear_axle/wheel_odom` | VESC | 后轴 wheel vx，约 50 Hz 名义；EKF |
+| `/rear_axle/wheel_odom` | VESC | 后轴 wheel vx，100 Hz 配置；EKF |
 | `/state_estimation/longitudinal_acceleration` | 可选轮速＋IMU 观测器 | `AccelWithCovarianceStamped`，`base_link`，linear.x=`d(body_vx)/dt`，ROS 估计时间戳；录制/下游参考，不输入导航 EKF |
 | `/state_estimation/longitudinal_acceleration/status` | 同一独立观测器 | 初始化、源年龄、比力有效性、计数与回调耗时；年龄告警只用于诊断 |
 | `/odometry/filtered` | EKF | `odom/base_link`，200 Hz 配置；MPCC、scan-time TF 预测 |
@@ -89,7 +89,7 @@ VESC 不发布该车辆 TF。PGO 与 NDT 使用不同运行入口，以保持 ma
 | `/localization/map_valid` | monitor | 定位资格标志；不是独立精度测量 |
 | `/localization/status` | monitor | ready、健康、新鲜度和 map identity；native 控制资格检查 |
 | `/drive` | native MPCC | 50 Hz 提议，最多 20 Hz 优化请求；RC 选择执行 |
-| `/ackermann_cmd` | RC selector | 已选择的转发命令，200 Hz 配置；VESC 与 MPCC 输入历史 |
+| `/ackermann_cmd` | RC selector | 已选择的转发命令，100 Hz 配置；VESC 与 MPCC 输入历史 |
 | `/control/autonomy_speed_enabled` | RC selector | 自主 speed 模式权限 |
 | `/commands/motor/speed` | VESC converter | 目标 ERPM；不是实测车速 |
 | `/commands/servo/position` | VESC converter | servo 目标；不是转角测量 |

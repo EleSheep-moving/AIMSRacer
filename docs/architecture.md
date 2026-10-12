@@ -77,7 +77,7 @@ The following rates are configured targets or nominal values driven by inputs; f
 | `/fastlio2/visualization/world_cloud` | LIO | Optional raw LIO world display, disabled by default; not used for localization or control |
 | `/rear_axle/lio_odom` | Rear axle adaptation | `odom/base_link`, retaining LIO stamp; EKF |
 | `/rear_axle/imu` | Rear axle adaptation | `base_link` IMU, m/s², retaining IMU stamp; EKF |
-| `/rear_axle/wheel_odom` | VESC | Rear axle wheel vx, nominally around 50 Hz; EKF |
+| `/rear_axle/wheel_odom` | VESC | Rear axle wheel vx, configured 100 Hz; EKF |
 | `/state_estimation/longitudinal_acceleration` | Optional wheel + IMU observer | `AccelWithCovarianceStamped`, `base_link`, linear.x=`d(body_vx)/dt`, ROS estimate-time stamp; recording/downstream reference, no navigation EKF fusion |
 | `/state_estimation/longitudinal_acceleration/status` | Same dedicated observer | Initialization, source ages, force validity, counters and callback timing; age warnings are diagnostic only |
 | `/odometry/filtered` | EKF | `odom/base_link`, configured 200 Hz; MPCC, scan-time TF prediction |
@@ -89,7 +89,7 @@ The following rates are configured targets or nominal values driven by inputs; f
 | `/localization/map_valid` | Monitor | Localization eligibility flag; not an independent accuracy measurement |
 | `/localization/status` | Monitor | Ready state, health, freshness, and map identity; native control eligibility checks |
 | `/drive` | Native MPCC | 50 Hz proposals, at most 20 Hz optimization requests; RC selects execution |
-| `/ackermann_cmd` | RC selector | Selected forwarded command, configured 200 Hz; VESC and MPCC input history |
+| `/ackermann_cmd` | RC selector | Selected forwarded command, configured 100 Hz; VESC and MPCC input history |
 | `/control/autonomy_speed_enabled` | RC selector | Permission for autonomous speed mode |
 | `/commands/motor/speed` | VESC converter | Target ERPM; not measured vehicle speed |
 | `/commands/servo/position` | VESC converter | Servo target; not a steering angle measurement |

@@ -36,12 +36,12 @@ python3 -m pip install --user 'casadi==3.7.2' 'matplotlib<3.9' deprecated jinja2
 ```bash
 git clone --branch main https://github.com/EleSheep-moving/AIMSRacer.git
 cd AIMSRacer
-git submodule update --init src/FASTLIO2_ROS2
+git submodule update --init src/FASTLIO2_ROS2 src/vesc
 python3 tools/setup_dependencies.py --workspace .
 bash tools/setup_acados.sh --workspace . --jobs 2
 ```
 
-只初始化主流程需要的 FAST-LIO 子模块，并保留当前提交的固定指针。准备脚本将固定版本 NDT、ndt_omp、Livox ROS 2、serial 放在同一 `src/` 下，核验 NDT 补丁和源码身份。Livox SDK2、Sophus、CppLinuxSerial 已安装时沿用并记录现有库/配置，缺失时按清单准备。acados 与 BLASFEO/HPIPM 的固定来源构建到 `dependencies/work/acados/install`。现有不同版本/本地修改由工具明确报告，不覆盖历史目录。
+初始化主流程需要的 FAST-LIO 和 VESC 子模块，并保留当前提交的固定指针。准备脚本将固定版本 NDT、ndt_omp、Livox ROS 2、serial 放在同一 `src/` 下，核验 NDT 补丁和源码身份。Livox SDK2、Sophus、CppLinuxSerial 已安装时沿用并记录现有库/配置，缺失时按清单准备。acados 与 BLASFEO/HPIPM 的固定来源构建到 `dependencies/work/acados/install`。现有不同版本/本地修改由工具明确报告，不覆盖历史目录。
 
 脚本 CLI 与各 source pin 以 [setup_dependencies.py](../../tools/setup_dependencies.py)、[setup_acados.sh](../../tools/setup_acados.sh)及 manifest 为准。可通过 `--jobs` 限制构建并发；SDK 和系统库默认安装 prefix 为 `/usr/local`。普通用户运行准备工具，source/build/回执保留当前用户所有；仅系统安装目录不可写时，工具使用 `sudo cmake --install` 安装已构建的库。系统库已完整安装的 NX 只记录现有安装，不调用 sudo。不要用 sudo 运行整份准备工具，否则生成的依赖源码与 acados 目录可能归 root 所有。
 

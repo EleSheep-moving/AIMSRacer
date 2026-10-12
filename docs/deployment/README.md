@@ -36,12 +36,12 @@ These dependencies target the current selected package closure. Source package d
 ```bash
 git clone --branch main https://github.com/EleSheep-moving/AIMSRacer.git
 cd AIMSRacer
-git submodule update --init src/FASTLIO2_ROS2
+git submodule update --init src/FASTLIO2_ROS2 src/vesc
 python3 tools/setup_dependencies.py --workspace .
 bash tools/setup_acados.sh --workspace . --jobs 2
 ```
 
-Initialize only the FAST-LIO submodule required by the main workflow and retain the fixed pointer in the current commit. The preparation script places fixed versions of NDT, ndt_omp, Livox ROS 2, and serial under the same `src/`, verifying NDT patches and source identity. When Livox SDK2, Sophus, and CppLinuxSerial are already installed, it reuses and records the existing libraries/configurations; otherwise, it prepares them according to the manifest. Fixed acados and BLASFEO/HPIPM sources build into `dependencies/work/acados/install`. The tools explicitly report differing existing versions/local changes without overwriting historical directories.
+Initialize the FAST-LIO and VESC submodules required by the main workflow and retain the fixed pointer in the current commit. The preparation script places fixed versions of NDT, ndt_omp, Livox ROS 2, and serial under the same `src/`, verifying NDT patches and source identity. When Livox SDK2, Sophus, and CppLinuxSerial are already installed, it reuses and records the existing libraries/configurations; otherwise, it prepares them according to the manifest. Fixed acados and BLASFEO/HPIPM sources build into `dependencies/work/acados/install`. The tools explicitly report differing existing versions/local changes without overwriting historical directories.
 
 The script CLI and source pins are defined by [setup_dependencies.py](../../tools/setup_dependencies.py), [setup_acados.sh](../../tools/setup_acados.sh), and the manifest. Use `--jobs` to limit build concurrency; the default installation prefix for SDKs and system libraries is `/usr/local`. Run the preparation tools as a normal user so source/build/receipts remain owned by that user; only when the system installation directory is not writable do the tools use `sudo cmake --install` to install already-built libraries. An NX with complete system libraries only records the existing installation and does not call sudo. Do not run the entire preparation tool with sudo, as that may leave dependency sources and acados directories owned by root.
 

@@ -100,3 +100,5 @@ On this host (2026-10-03), an isolated synthetic workload with 100 Hz RC,
 the original Python selector and 4.3–4.7% for C++ (three 3 s windows after warmup).
 Both produced approximately 200 commands/s. These are process CPU measurements,
 not a bound on worst-case latency or a vehicle driving test.
+
+The vehicle launch overrides `publish_rate_hz` to **100 Hz** for the VESC command chain. The standalone component default remains 200 Hz.

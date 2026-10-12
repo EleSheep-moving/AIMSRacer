@@ -80,7 +80,7 @@ TF 链为 **`map → odom → base_link → livox_frame`**。已知地图运行�
 ~~~bash
 git clone --branch main https://github.com/EleSheep-moving/AIMSRacer.git
 cd AIMSRacer
-git submodule update --init src/FASTLIO2_ROS2
+git submodule update --init src/FASTLIO2_ROS2 src/vesc
 python3 tools/setup_dependencies.py --workspace .
 bash tools/setup_acados.sh --workspace . --jobs 2
 source /opt/ros/humble/setup.bash
