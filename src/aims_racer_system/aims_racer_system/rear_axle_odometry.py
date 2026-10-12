@@ -1,7 +1,28 @@
 """Rigid-body unified Livox-origin odometry conversion to rear-axle base_link."""
 import copy
+from bisect import bisect_left
 import numpy as np
 from scipy.spatial.transform import Rotation
+
+
+def source_time_angular_velocity(history, stamp_ns, max_interval_ns=30_000_000):
+    """Exact gyro knot or interpolation at the LIO source time; never extrapolate.
+
+    History holds increasing integer nanosecond stamps and Livox-frame rates.
+    Future *receipt* times are irrelevant; a later measured knot may bracket
+    the requested source time. Return None for absent coverage or a source gap.
+    """
+    index = bisect_left(history, stamp_ns, key=lambda sample: sample[0])
+    if index < len(history) and history[index][0] == stamp_ns:
+        return np.asarray(history[index][1], dtype=float)
+    if index == 0 or index == len(history):
+        return None
+    left, right = history[index-1], history[index]
+    interval = right[0] - left[0]
+    if interval <= 0 or interval > max_interval_ns:
+        return None
+    fraction = (stamp_ns-left[0]) / interval
+    return (1.-fraction)*np.asarray(left[1]) + fraction*np.asarray(right[1])
 
 
 def skew(v):

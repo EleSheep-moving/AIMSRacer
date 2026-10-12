@@ -36,8 +36,6 @@ public:
   explicit AngularHistory(double window = 0.025, double max_gap = 0.03);
   bool add(double stamp, const Vector3 & omega, const Matrix3 & covariance);
   std::optional<Derivative> derivative() const;
-  std::optional<Quaternion> orientation(
-    double stamp, const Quaternion & quaternion, double target) const;
 
 private:
   struct Sample
@@ -56,7 +54,6 @@ struct ImuConfig
   Vector3 lever = Vector3::Zero();
   Quaternion mounting = Quaternion::Identity();
   double accel_scale = 9.80665;
-  double max_attitude_age = 0.25;
   double angular_acceleration_window = 0.025;
   double max_gyro_gap = 0.03;
 };
@@ -75,8 +72,6 @@ struct ImuOutput
   Vector3 omega;
   Matrix3 omega_covariance;
   bool compensated = false;
-  Quaternion orientation = Quaternion::Identity();
-  Matrix3 orientation_covariance = Matrix3::Zero();
   Vector3 specific_force = Vector3::Zero();
   Matrix3 force_covariance = Matrix3::Zero();
 };
@@ -86,19 +81,11 @@ class RearAxleImu
 {
 public:
   explicit RearAxleImu(const ImuConfig & config);
-  bool add_attitude(double stamp, const Quaternion & world_imu, const Matrix3 & covariance);
   std::optional<ImuOutput> process(const ImuInput & input);
 
 private:
-  struct Attitude
-  {
-    double stamp;
-    Quaternion quaternion;
-    double maximum_variance;
-  };
   ImuConfig config_;
   Matrix3 rotation_;
   AngularHistory history_;
-  std::deque<Attitude> attitudes_;
 };
 }  // namespace aims_racer_system

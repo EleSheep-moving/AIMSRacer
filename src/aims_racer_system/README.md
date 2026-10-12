@@ -40,6 +40,8 @@ Replace example values with the actual rear axle placement. The [known-map guide
 
 `base_link` is the rear axle midpoint. C++ `imu_to_rear_axle` retains the IMU source stamp and unavailability information, converts units, and compensates the lever arm; `lio_to_rear_axle.py` provides odometry at the same point. The EKF fuses LIO, wheel vx, and IMU yaw rate, retaining 2 s of delayed history. Gyro correction retains separate raw and corrected topics.
 
+`/rear_axle/lio_odom` keeps the LIO scan-end stamp and uses gyro matched/interpolated at that source time. `/rear_axle/imu` stays current with incoming IMU and has no dependency on LIO latency; it supplies gravity-containing specific force and marks orientation unavailable. There is no attitude extrapolation or additional aligned-IMU topic. See [the timestamp correction report](../../docs/reports/2026-10-11-rear-imu-source-time.md).
+
 Body cloud and raw LIO odometry retain the same scan-end stamp for NDT/PGO; world cloud/path are optional display outputs. In race, EKF owns `odom → base_link` and NDT owns `map → odom`; during mapping, rear axle LIO and PGO own these two edges respectively.
 
 <a id="构建与证据"></a>

@@ -1,6 +1,5 @@
 #include "aims_racer_system/rear_axle_imu.hpp"
 
-#include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <array>
@@ -51,7 +50,6 @@ public:
     config.lever = Vector3(lever[0], lever[1], lever[2]);
     config.mounting = Quaternion(quaternion[3], quaternion[0], quaternion[1], quaternion[2]);
     config.accel_scale = declare_parameter("accel_scale", 9.80665);
-    config.max_attitude_age = declare_parameter("max_attitude_age", 0.25);
     config.angular_acceleration_window = declare_parameter("angular_acceleration_window", 0.025);
     config.max_gyro_gap = declare_parameter("max_gyro_gap", 0.03);
     processor_ = std::make_unique<RearAxleImu>(config);
@@ -59,27 +57,9 @@ public:
     imu_subscription_ = create_subscription<sensor_msgs::msg::Imu>(
       "/livox/imu", rclcpp::SensorDataQoS(),
       [this](sensor_msgs::msg::Imu::ConstSharedPtr msg) {imu(*msg);});
-    odometry_subscription_ = create_subscription<nav_msgs::msg::Odometry>(
-      "/fastlio2/lio_odom", rclcpp::SensorDataQoS(),
-      [this](nav_msgs::msg::Odometry::ConstSharedPtr msg) {odometry(*msg);});
   }
 
 private:
-  void odometry(const nav_msgs::msg::Odometry & msg)
-  {
-    if (msg.header.frame_id != "odom" || msg.child_frame_id != "livox_frame") {
-      return;
-    }
-    const auto & q = msg.pose.pose.orientation;
-    Matrix3 covariance;
-    for (int row = 0; row < 3; ++row) {
-      for (int column = 0; column < 3; ++column) {
-        covariance(row, column) = msg.pose.covariance[(row + 3) * 6 + column + 3];
-      }
-    }
-    processor_->add_attitude(seconds(msg.header.stamp), Quaternion(q.w, q.x, q.y, q.z), covariance);
-  }
-
   void imu(const sensor_msgs::msg::Imu & msg)
   {
     if (msg.header.frame_id != "livox_frame") {
@@ -103,11 +83,6 @@ private:
     copy_vector(result->omega, out.angular_velocity);
     copy_matrix(result->omega_covariance, out.angular_velocity_covariance);
     if (result->compensated) {
-      out.orientation.x = result->orientation.x();
-      out.orientation.y = result->orientation.y();
-      out.orientation.z = result->orientation.z();
-      out.orientation.w = result->orientation.w();
-      copy_matrix(result->orientation_covariance, out.orientation_covariance);
       copy_vector(result->specific_force, out.linear_acceleration);
       copy_matrix(result->force_covariance, out.linear_acceleration_covariance);
     }
@@ -117,7 +92,6 @@ private:
   std::unique_ptr<RearAxleImu> processor_;
   rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscription_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_subscription_;
 };
 }  // namespace aims_racer_system
 

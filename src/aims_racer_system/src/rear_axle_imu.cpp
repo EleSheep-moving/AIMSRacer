@@ -7,28 +7,6 @@
 
 namespace aims_racer_system
 {
-namespace
-{
-double maximum_eigenvalue(const Matrix3 & covariance)
-{
-  Eigen::SelfAdjointEigenSolver<Matrix3> solver(covariance, Eigen::EigenvaluesOnly);
-  if (solver.info() != Eigen::Success) {
-    throw std::invalid_argument("Covariance eigendecomposition failed");
-  }
-  return solver.eigenvalues().maxCoeff();
-}
-
-Quaternion integrate(const Quaternion & rotation, const Vector3 & increment)
-{
-  const double angle = increment.norm();
-  Quaternion delta = Quaternion::Identity();
-  if (angle > 0.0) {
-    delta = Quaternion(Eigen::AngleAxisd(angle, increment / angle));
-  }
-  return (rotation * delta).normalized();
-}
-}  // namespace
-
 Matrix3 validate_covariance(const Matrix3 & covariance, double fallback)
 {
   if (!covariance.allFinite()) {
@@ -128,42 +106,6 @@ std::optional<AngularHistory::Derivative> AngularHistory::derivative() const
   return result;
 }
 
-std::optional<Quaternion> AngularHistory::orientation(
-  double stamp, const Quaternion & quaternion, double target) const
-{
-  if (target < stamp || samples_.empty() || samples_.front().stamp > stamp ||
-    samples_.back().stamp < target)
-  {
-    return std::nullopt;
-  }
-  auto next = std::upper_bound(
-    samples_.begin(), samples_.end(), stamp,
-    [](double value, const Sample & sample) {return value < sample.stamp;});
-  const auto & left = *std::prev(next);
-  Vector3 omega = left.omega;
-  if (next != samples_.end()) {
-    const double fraction = (stamp - left.stamp) / (next->stamp - left.stamp);
-    omega += fraction * (next->omega - left.omega);
-  }
-  Quaternion rotation = quaternion.normalized();
-  double previous = stamp;
-  // At recorded knots the rates are already known: no arrays or repeated interpolation.
-  for (; next != samples_.end() && next->stamp < target; ++next) {
-    rotation = integrate(rotation, 0.5 * (omega + next->omega) * (next->stamp - previous));
-    previous = next->stamp;
-    omega = next->omega;
-  }
-  if (target > previous) {
-    Vector3 final_omega = omega;
-    if (next != samples_.end()) {
-      const double fraction = (target - previous) / (next->stamp - previous);
-      final_omega += fraction * (next->omega - omega);
-    }
-    rotation = integrate(rotation, 0.5 * (omega + final_omega) * (target - previous));
-  }
-  return rotation;
-}
-
 RearAxleImu::RearAxleImu(const ImuConfig & config)
 : config_(config), history_(config.angular_acceleration_window, config.max_gyro_gap)
 {
@@ -172,36 +114,12 @@ RearAxleImu::RearAxleImu(const ImuConfig & config)
   {
     throw std::invalid_argument("Invalid IMU mounting transform");
   }
-  if (!std::isfinite(config.accel_scale) || config.accel_scale <= 0.0 ||
-    !std::isfinite(config.max_attitude_age) || config.max_attitude_age <= 0.0 ||
-    config.max_attitude_age > 1.0)
+  if (!std::isfinite(config.accel_scale) || config.accel_scale <= 0.0)
   {
-    throw std::invalid_argument("Invalid scale or attitude age");
+    throw std::invalid_argument("Invalid acceleration scale");
   }
   config_.mounting.normalize();
   rotation_ = config_.mounting.toRotationMatrix();
-}
-
-bool RearAxleImu::add_attitude(
-  double stamp, const Quaternion & world_imu, const Matrix3 & covariance)
-{
-  if (!std::isfinite(stamp) || !world_imu.coeffs().allFinite() ||
-    std::abs(world_imu.norm() - 1.0) > 1e-2 ||
-    (!attitudes_.empty() && stamp <= attitudes_.back().stamp))
-  {
-    return false;
-  }
-  try {
-    const Matrix3 valid = validate_covariance(covariance, 0.01);
-    attitudes_.push_back({stamp, (world_imu.normalized() * config_.mounting.conjugate()).normalized(),
-        maximum_eigenvalue(valid)});
-    if (attitudes_.size() > 100) {
-      attitudes_.pop_front();
-    }
-  } catch (const std::invalid_argument &) {
-    return false;
-  }
-  return true;
 }
 
 std::optional<ImuOutput> RearAxleImu::process(const ImuInput & input)
@@ -218,41 +136,21 @@ std::optional<ImuOutput> RearAxleImu::process(const ImuInput & input)
     const double scale_squared = config_.accel_scale * config_.accel_scale;
     const Matrix3 cf = validate_covariance(input.force_covariance, 0.05 / scale_squared);
     force_covariance = rotation_ * cf * rotation_.transpose() * scale_squared;
-    if (history_.add(input.stamp, out.omega, out.omega_covariance)) {
-      attitudes_.clear();
-    }
+    history_.add(input.stamp, out.omega, out.omega_covariance);
   } catch (const std::invalid_argument &) {
     return std::nullopt;
   }
   const auto derivative = history_.derivative();
-  const Attitude * anchor = nullptr;
-  for (auto it = attitudes_.rbegin(); it != attitudes_.rend(); ++it) {
-    const double age = input.stamp - it->stamp;
-    if (age > config_.max_attitude_age) {
-      break;
-    }
-    if (age >= 0.0) {
-      anchor = &*it;
-      break;
-    }
-  }
-  if (derivative && anchor) {
-    const auto propagated = history_.orientation(anchor->stamp, anchor->quaternion, input.stamp);
-    if (propagated) {
-      const Vector3 force = rotation_ * input.specific_force * config_.accel_scale;
-      const auto corrected = compensate_force(
-        force, out.omega, derivative->alpha, config_.lever,
-        force_covariance, out.omega_covariance, derivative->covariance);
-      const double age = input.stamp - anchor->stamp;
-      const double variance = std::max(anchor->maximum_variance, 1e-6) +
-        age * age * maximum_eigenvalue(out.omega_covariance);
-      out.compensated = true;
-      out.orientation = *propagated;
-      out.orientation_covariance = Matrix3::Identity() * variance;
-      out.specific_force = corrected.force;
-      out.force_covariance = corrected.covariance + Matrix3::Identity() * 9.80665 * 9.80665 * variance;
-    }
+  if (derivative) {
+    const Vector3 force = rotation_ * input.specific_force * config_.accel_scale;
+    const auto corrected = compensate_force(
+      force, out.omega, derivative->alpha, config_.lever,
+      force_covariance, out.omega_covariance, derivative->covariance);
+    out.compensated = true;
+    out.specific_force = corrected.force;
+    out.force_covariance = corrected.covariance;
   }
   return out;
 }
+
 }  // namespace aims_racer_system

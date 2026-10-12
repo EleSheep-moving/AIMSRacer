@@ -97,6 +97,10 @@ The following rates are configured targets or nominal values driven by inputs; f
 <a id="ekf-与-lio-时间"></a>
 ## EKF and LIO timing
 
+Rear axle odometry retains the exact processed LIO scan-end timestamp, even when the message arrives late. Its rotational velocity correction uses gyro measured at that source time: an exact IMU knot or interpolation between bracketing knots (maximum interval 30 ms). It waits for missing upper IMU coverage without predicting LIO pose or replacing its stamp with receipt time.
+
+Rear axle IMU publishes immediately from the latest corrected IMU input, retaining its exact source stamp. It converts g to m/s², rotates by the fixed mounting transform, and removes rotational lever acceleration. It does not subscribe to LIO or estimate orientation; `orientation_covariance[0] = -1`. Acceleration remains gravity-containing specific force. A short gyro-history startup/reset can mark acceleration unavailable, but LIO latency cannot. No additional aligned-IMU topic is published. Offline gravity removal pairs this stream with LIO attitude by source time; the current planar EKF does not fuse acceleration.
+
 The EKF uses rear axle LIO pose/linear velocity, wheel vx, and IMU yaw rate; it does not fuse IMU acceleration/orientation, integrated wheel pose, or yaw rate inferred from steering. `two_d_mode=true`, delayed measurement history is 2 s, and `predict_to_current_time=true` after replay. LIO and IMU data are correlated, not independent observation sources.
 
 FAST-LIO uses a single worker to process scans and complete IMU intervals. The default pending lidar depth is 2; overload retains newer scans while preserving the IMU needed for propagation; raw IMU uses reliable depth 4096. Checks for time reversal, nonfinite values, overflow, and scan-end coverage remain. A fresh EKF header does not imply zero LIO delay; see the [field review](reports/2026-10-10-mpcc-field-review.md) for specific versions and measurements.

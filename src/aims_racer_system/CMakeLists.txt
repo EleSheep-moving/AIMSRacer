@@ -44,7 +44,7 @@ target_compile_options(rear_axle_imu PRIVATE -Wall -Wextra -Wpedantic)
 
 add_executable(imu_to_rear_axle src/imu_to_rear_axle.cpp)
 target_link_libraries(imu_to_rear_axle rear_axle_imu)
-ament_target_dependencies(imu_to_rear_axle rclcpp sensor_msgs nav_msgs)
+ament_target_dependencies(imu_to_rear_axle rclcpp sensor_msgs)
 target_compile_options(imu_to_rear_axle PRIVATE -Wall -Wextra -Wpedantic)
 install(TARGETS imu_to_rear_axle DESTINATION lib/${PROJECT_NAME})
 
@@ -80,6 +80,9 @@ if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(rear_axle_contract tests/test_rear_axle_contract.py
     ENV "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/test_logs")
+  ament_add_pytest_test(rear_axle_timestamps tests/test_rear_axle_timestamps.py
+    ENV "ROS_DOMAIN_ID=188" "ROS_LOCALHOST_ONLY=1"
+        "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/timestamp_test_logs")
   ament_add_pytest_test(gyro_bias tests/test_gyro_bias.py)
   ament_add_pytest_test(current_launch tests/test_current_launch.py)
   ament_add_pytest_test(localization_policy tests/test_localization_policy.py)

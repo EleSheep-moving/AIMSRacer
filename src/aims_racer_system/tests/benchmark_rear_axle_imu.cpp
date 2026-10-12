@@ -34,13 +34,6 @@ int main()
   const Vector3 omega(0.01, 0.02, 0.3);
   const Matrix3 covariance = Matrix3::Identity() * 0.01;
   for (int i = 0; i < 400; ++i) {history.add(i * 0.005, omega, covariance);}
-  const double target = 399 * 0.005;
-  for (double age : {0.025, 0.05, 0.1, 0.15, 0.25}) {
-    std::cout << "orientation_age_s=" << age << ' ';
-    measure("orientation", [&]() {
-        return history.orientation(target - age, Quaternion::Identity(), target)->w();
-      });
-  }
   measure("derivative", [&]() {return history.derivative()->alpha.norm();});
   measure("force_compensation", [&]() {
       return compensate_force(Vector3(0., 0., 9.80665), omega, Vector3::Zero(),
