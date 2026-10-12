@@ -2,13 +2,15 @@
 
 [简体中文](README.zh-CN.md)
 
-This is an **offline, causal comparison**, isolated on `feat/longitudinal-acc-observer`. It consumes archived wheel speed, corrected rear-axle IMU specific force and optional LIO attitude. It produces scalar velocity/acceleration estimates and evidence. It has no ROS publishers, launch files or vehicle-command interfaces.
+This directory contains the **offline, causal comparison** and a separate ROS/DDS runtime replay harness. Offline replay consumes archived wheel speed, corrected rear-axle IMU specific force and optional LIO attitude, producing scalar estimates and evidence. The installed wheel + IMU runtime lives in `aims_racer_system`, uses the same observer core, and is opt-in through `longitudinal_acceleration:=true` (default `false`). See the [runtime operation guide](../../docs/operations/longitudinal-acceleration.md).
 
 ## Files
 
 | File | Responsibility |
 |---|---|
-| [observer.py](observer.py) | Kalman observer, integer source times, immutable emitted estimates and delayed historical updates |
+| [observer.py](observer.py) | Offline compatibility import of the [canonical installed core](../../src/aims_racer_system/aims_racer_system/longitudinal_observer.py): integer source times, immutable emitted estimates and delayed historical updates |
+| [ROS wrapper](../../src/aims_racer_system/aims_racer_system/longitudinal_acceleration.py) | Dedicated wheel + IMU node, acceleration/status messages, initialization and source-age diagnostics |
+| [runtime_replay.py](runtime_replay.py) | Actual DDS delivery and receipt-order oracle comparison using the ROS wrapper, without vehicle drivers |
 | [replay.py](replay.py) | Hash-verified input loading, receipt-order replay, training-only parameter selection |
 | [evaluate.py](evaluate.py) | Separate offline references, metrics, plots and artifact-only plot regeneration |
 | [test_observer.py](test_observer.py) | Numerical, clock, history, nuisance and synthetic-truth tests |
@@ -26,18 +28,18 @@ da/dt = white jerk
 dd/dt = random walk
 wheel speed = v + noise
 rear specific force x = a + d + noise
-optional historical LIO gravity x ≈ d + noise
+optional historical apparent-gravity x (-g_body,x) ≈ d + noise
 ```
 
-`a` estimates the derivative of body longitudinal speed. `d` includes body gravity, accelerometer bias and `(ω × v)x`; the last observation is an approximate prior, not an exact measurement of the whole disturbance. The recordings use identity Livox/base rotation. A different mounting needs an explicit rotation before this scalar input construction.
+Specific force is `f = a_inertial − g`, so restoring inertial acceleration uses `a_inertial = f + g` in the same frame. In a z-up world `g = [0,0,−9.80665] m/s²`; resting accelerometers read approximately +9.81 m/s² in z. Observer state `a` estimates `d(body_vx)/dt`, not the full inertial acceleration vector. `d` includes `−g_body,x`, accelerometer bias and `(ω × v)_x`; the last observation is an approximate prior, not an exact measurement of the whole disturbance. The recordings use identity Livox/base rotation. A different mounting needs an explicit rotation before this scalar input construction.
 
 Each measurement retains its integer source stamp. Only after its recorded receipt can it enter the observer. A late observation is inserted into bounded historical measurements and the suffix is replayed. Current scalar estimates are predicted to the IMU receipt time. Previously emitted estimates never change. **No LIO pose or attitude is extrapolated, and latest IMU output does not wait for LIO.**
 
 History retains at most 2 seconds and 4,096 measurements plus one posterior anchor. `count_trimmed`, `too_old` and numerical failure counters expose admission/retention effects. Snapshot prediction continues through input gaps; covariance grows. There is no new acceleration-to-motor path and no production EKF configuration change.
 
-## Reproduce
+## Reproduce the offline comparison
 
-Dependencies: Python 3.10, NumPy, SciPy, Matplotlib and pytest. The existing desktop image is `aimsracer-mpcc:main-dev-20261011`; the report records its image ID. On NX, use existing system Python. No ROS environment is required.
+Dependencies: Python 3.10, NumPy, SciPy, Matplotlib and pytest. The existing desktop image is `aimsracer-mpcc:main-dev-20261011`; the report records its image ID. On NX, use existing system Python. The offline comparison needs no ROS environment; the separate runtime replay below requires sourced ROS and the installed package.
 
 ```bash
 python3 -m pytest -p no:cacheprovider verification/acceleration -q
@@ -61,6 +63,23 @@ python3 verification/acceleration/evaluate.py --evidence /path/to/nx-evidence
 ```
 
 Outputs include `inputs.json`, input metadata hashes, all training trials, frozen settings, per-run `metrics.csv`, timestamped estimates and English 16:9 PNG plots. Estimator times are floating elapsed seconds relative to the stored integer `origin_ns`, preserving small source/receipt differences. JSON metric files use Python's `NaN` for unavailable metrics; the CSV also exposes missing values. They should not be silently converted to zero.
+
+## Separate ROS runtime replay
+
+Build/install `aims_racer_system`, then source ROS 2 Humble and `install/setup.bash`. This harness starts the observer wrapper and input/output probes only. It publishes archived wheel/force events approximately in real time, maps integer source times into the current ROS epoch, and checks emitted estimates against the canonical observer using actual callback order and each output timestamp. Run in its required isolated localhost domain:
+
+```bash
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ROS_DOMAIN_ID=191 ROS_LOCALHOST_ONLY=1 OPENBLAS_NUM_THREADS=1 \
+  python3 verification/acceleration/runtime_replay.py \
+  --inputs /path/to/2026-10-11/longitudinal-acceleration \
+  --forces /path/to/2026-10-11/imu-source-time-alignment \
+  --output /path/to/new-runtime-evidence \
+  --run 193524_v35_n15_accel1_cap4_lap02
+```
+
+It requires the same frozen input hashes as offline replay and writes `runtime-replay.json`, `outputs.jsonl` and `status.json`. Checks include DDS input/output counts, frame/covariance semantics, oracle equality, timestamp ages, callback costs and absence of `/drive` or `/tf` publishers in that isolated graph. These are wrapper/delivery checks; they do not establish physical acceleration accuracy, hard deadlines, localization joint load or field acceptance. The installed node has no LIO input, navigation EKF fusion or vehicle-command path. Age warnings only report data freshness, and published acceleration covariance is uncalibrated model uncertainty.
 
 ## Evidence limits
 

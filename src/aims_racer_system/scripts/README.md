@@ -9,8 +9,11 @@ The current vehicle runs through [entry points in one workspace](../../../docs/o
 | --- | --- |
 | `livox_gyro_bias.py` | Outputs gyro bias corrected IMU and diagnostics, retaining raw IMU |
 | `lio_to_rear_axle.py` | Converts raw LIO to rear axle odometry; owns odom/base_link TF during mapping |
+| `longitudinal_acceleration.py` | Optional wheel + IMU acceleration/status publisher; canonical observer is in the package Python module |
 | `activate_ndt.py` | Configures and activates the NDT lifecycle |
 | `relocalize_known_map.py` | Initializes from an explicit six-dimensional map/base_link pose and waits for a new trusted epoch |
+
+For acceleration evaluation, add `longitudinal_acceleration:=true` to vehicle/race (default `false`) or run `ros2 launch aims_racer_system longitudinal_acceleration.launch.py` against an existing graph. The standalone launch starts only this observer. Use one instance; it publishes no commands or TF and is not fused into navigation EKF. See the [acceleration guide](../../../docs/operations/longitudinal-acceleration.md) and [offline/runtime verification](../../../verification/acceleration/README.md).
 
 Known-map initialization uses the installed entry point:
 

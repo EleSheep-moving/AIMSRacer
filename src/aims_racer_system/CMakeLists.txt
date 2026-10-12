@@ -52,7 +52,7 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/activate_ndt.py scripts/relocalize_known_map.py
   scripts/lio_to_rear_axle.py scripts/livox_gyro_bias.py
-  scripts/localization_policy.py
+  scripts/localization_policy.py scripts/longitudinal_acceleration.py
   DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch params rviz DESTINATION share/${PROJECT_NAME}
   PATTERN "__pycache__" EXCLUDE)
@@ -85,6 +85,11 @@ if(BUILD_TESTING)
         "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/timestamp_test_logs")
   ament_add_pytest_test(gyro_bias tests/test_gyro_bias.py)
   ament_add_pytest_test(current_launch tests/test_current_launch.py)
+  ament_add_pytest_test(longitudinal_observer
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../verification/acceleration/test_observer.py)
+  ament_add_pytest_test(longitudinal_acceleration tests/test_longitudinal_acceleration.py
+    ENV "ROS_DOMAIN_ID=189" "ROS_LOCALHOST_ONLY=1"
+        "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/acceleration_test_logs")
   ament_add_pytest_test(localization_policy tests/test_localization_policy.py)
   ament_add_pytest_test(initializer_lifecycle tests/test_initializer_lifecycle.py)
   ament_add_pytest_test(replay_sensor_qos tests/test_replay_sensor_qos.py)

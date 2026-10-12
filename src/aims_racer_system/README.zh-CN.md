@@ -10,6 +10,7 @@
 | `vehicle.launch.py` | MID360、FAST-LIO2、后轴适配、EKF、RC/VESC |
 | `mapping.launch.py` | 手动驾驶建图、PGO 与可选录包 |
 | `race.launch.py` | vehicle、已知地图 NDT/monitor、native MPCC 与可选录包 |
+| `longitudinal_acceleration.launch.py` | 在已有车辆图上单独运行轮速＋IMU 加速度观测器 |
 
 [启动](../../docs/operations/bringup.zh-CN.md)描述源码准备和构建，[架构](../../docs/architecture.zh-CN.md)统一 topics、TF、时间与命令所有权。
 
@@ -36,13 +37,23 @@ ros2 run aims_racer_system relocalize_known_map.py \
 <a id="recording-and-estimation"></a>
 ## 录制与估计
 
-`record=true` 自动记录 raw/corrected IMU、LIO、wheel/EKF、TF、NDT/MPCC 状态，race 同时保存 runtime。`session_directory` 留空自动生成日期会话，指定时须新目录；完整列表及 reliable/depth=4096 原始 IMU QoS 见[录制](../../docs/operations/recording.zh-CN.md)。
+`record=true` 自动记录 raw/corrected IMU、LIO、wheel/EKF、TF、NDT/MPCC 状态及已发布的可选加速度估计/状态，race 同时保存 runtime。`session_directory` 留空自动生成日期会话，指定时须新目录；完整列表及 reliable/depth=4096 原始 IMU QoS 见[录制](../../docs/operations/recording.zh-CN.md)。
 
 `base_link` 是后轴中点。C++ `imu_to_rear_axle` 保留 IMU source stamp 和不可用信息，转换单位并做杠杆补偿；`lio_to_rear_axle.py` 提供同一点的 odometry。EKF 融合 LIO、wheel vx 与 IMU yaw rate，保持 2 s 延迟历史。gyro 校正保留独立原始与修正 topic。
 
-`/rear_axle/lio_odom` 保留 LIO scan-end 时间戳，用源时刻匹配或插值的 gyro；`/rear_axle/imu` 随最新 IMU 到达发布，不依赖 LIO 延迟，输出含重力的比力，姿态标为不可用。没有姿态外推，也不新增对齐 IMU 话题。见[时间戳修正报告](../../docs/reports/2026-10-11-rear-imu-source-time.zh-CN.md)。
+`/rear_axle/lio_odom` 保留 LIO scan-end 时间戳，用源时刻匹配或插值的 gyro；`/rear_axle/imu` 随最新 IMU 到达发布，不依赖 LIO 延迟，输出比力 `f = a − g`，姿态标为不可用。z 轴向上的世界中 `g = [0,0,−9.80665] m/s²`；恢复惯性加速度需在同一坐标系使用 `a = f + g`。没有姿态外推，也不新增对齐 IMU 话题。见[时间戳修正报告](../../docs/reports/2026-10-11-rear-imu-source-time.zh-CN.md)。
 
 body cloud 与 raw LIO odometry 保留相同 scan-end stamp，供 NDT/PGO 使用；world cloud/path 为可选显示输出。race 中 EKF 拥有 `odom → base_link`，NDT 拥有 `map → odom`；mapping 中由后轴 LIO 与 PGO 分别拥有这两条边。
+
+## 可选纵向加速度
+
+场地验证时给 vehicle/race 添加 `longitudinal_acceleration:=true`，默认 `false`。车辆图已运行时，可只启动观测器：
+
+```bash
+ros2 launch aims_racer_system longitudinal_acceleration.launch.py
+```
+
+选择集成或独立启动，只运行一个实例。节点输入轮速 vx 和后轴 IMU 比力，发布 `/state_estimation/longitudinal_acceleration` 与 `/state_estimation/longitudinal_acceleration/status`。输出 linear.x 是 `d(body_vx)/dt`，协方差是模型不确定性，尚未用场地真值标定。没有 LIO 位姿预测、命令或 TF 发布，导航 EKF 不融合该输出。源年龄告警只用于诊断。初始化、时间戳及两圈录制见[操作指南](../../docs/operations/longitudinal-acceleration.zh-CN.md)。
 
 <a id="build-and-evidence"></a>
 ## 构建与证据

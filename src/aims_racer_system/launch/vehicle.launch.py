@@ -43,6 +43,8 @@ def build_vehicle(context):
     ]
     if not mapping:nodes.append(Node(package='robot_localization',executable='ekf_node',name='ekf_filter_node',
         parameters=[str(share/'params/ekf_rear.yaml')],output='screen'))
+    if flag(context,'longitudinal_acceleration'):
+        nodes.append(include('aims_racer_system','longitudinal_acceleration.launch.py'))
     return nodes
 
 
@@ -50,6 +52,7 @@ def generate_launch_description():
     params=Path(get_package_share_directory('aims_racer_system'))/'params'
     return LaunchDescription([
         DeclareLaunchArgument('mapping',default_value='false',description='Mapping TF arrangement; normally selected by mapping.launch.py'),
+        DeclareLaunchArgument('longitudinal_acceleration',default_value='false',description='Independent wheel/IMU acceleration estimate for field evaluation'),
         DeclareLaunchArgument('vesc_config',default_value=str(params/'vesc.yaml')),
         DeclareLaunchArgument('lio_config',default_value=str(params/'fastlio_rear.yaml')),
         DeclareLaunchArgument('mid360_config',default_value=str(params/'MID360_config.json')),

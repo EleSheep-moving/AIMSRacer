@@ -103,3 +103,36 @@ def test_fastlio_namespace_and_rc_parameters_match_field_bringup():
  assert lio.get('namespace')=='fastlio2'
  selector=next(n for n in nodes if n['executable']=='joystick_control_v2')['parameters'][0]
  assert selector['current_limit_max_current']==100.0 and selector['channel_deadzone']==50
+
+def test_acceleration_is_opt_in_and_standalone_has_no_vehicle_drivers():
+ for name in ['vehicle.launch.py','race.launch.py']:
+  assert defaults(name)['longitudinal_acceleration']=='false'
+ m=load('vehicle.launch.py');m.Node=lambda **kw:kw
+ m.include=lambda package,filename,arguments=None:dict(include=filename,args=arguments)
+ c=LaunchContext();c.launch_configurations.update(mapping='false',vesc_config='/vesc',lio_config='/lio',mid360_config='/livox')
+ assert not any(isinstance(a,dict) and a.get('include')=='longitudinal_acceleration.launch.py' for a in m.build_vehicle(c))
+ c.launch_configurations['longitudinal_acceleration']='true'
+ assert sum(isinstance(a,dict) and a.get('include')=='longitudinal_acceleration.launch.py' for a in m.build_vehicle(c))==1
+ standalone=load('longitudinal_acceleration.launch.py').generate_launch_description()
+ nodes=[a for a in standalone.entities if isinstance(a,Node)]
+ assert len(nodes)==1 and nodes[0].node_package=='aims_racer_system'
+ assert nodes[0].node_executable=='longitudinal_acceleration.py'
+
+def test_race_propagates_acceleration_flag_without_enabling_controller(tmp_path):
+ m=load('race.launch.py');seen=[]
+ m.include=lambda package,filename,arguments=None:seen.append((filename,arguments)) or object()
+ map_file=tmp_path/'map.pcd';map_file.write_text('map')
+ bundle=tmp_path/'bundle';bundle.mkdir()
+ c=LaunchContext();c.launch_configurations.update(map_file=str(map_file),artifact_directory=str(bundle),
+   record='false',auto_start='false',repeat_laps='false',initial_pose='',longitudinal_acceleration='true')
+ m.build_race(c)
+ assert next(a for f,a in seen if f=='vehicle.launch.py')['longitudinal_acceleration']=='true'
+ assert next(a for f,a in seen if f=='mpcc.launch.py')['auto_start']=='false'
+
+def test_recording_includes_acceleration_and_its_input_streams(tmp_path):
+ from aims_racer_system.launch_support import recording_actions
+ c=LaunchContext();c.launch_configurations.update(record='true',session_directory=str(tmp_path/'acc-session'))
+ action=recording_actions(c,ROOT,mode='race')[0]
+ cmd={perform_substitutions(c,item) for item in action.cmd}
+ assert {'/state_estimation/longitudinal_acceleration','/state_estimation/longitudinal_acceleration/status',
+         '/rear_axle/imu','/rear_axle/wheel_odom','/livox/imu','/odometry/filtered'}<=cmd

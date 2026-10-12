@@ -37,6 +37,7 @@ def recording_actions(context,share,mode='race'):
     topics=['/livox/lidar','/livox/imu','/livox/imu_bias_corrected','/fastlio2/lio_odom',
         '/fastlio2/body_cloud','/rear_axle/lio_odom','/rear_axle/imu','/rear_axle/wheel_odom',
         '/odometry/filtered','/imu/gyro_bias/status','/sensors/core','/rc/channels',
+        '/state_estimation/longitudinal_acceleration','/state_estimation/longitudinal_acceleration/status',
         '/ackermann_cmd','/control/autonomy_speed_enabled','/commands/motor/speed',
         '/commands/motor/current','/commands/servo/position','/tf','/tf_static','/fastlio2/tf']
     if mode=='race':topics+=['/drive','/mpcc/status','/mpcc/reference','/mpcc/prediction',

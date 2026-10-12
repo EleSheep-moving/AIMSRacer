@@ -14,6 +14,8 @@ ros2 launch aims_racer_system race.launch.py \
 
 建图使用 `ros2 launch aims_racer_system mapping.launch.py record:=true`。录制本身不授予自主控制权限。
 
+可选加速度验证时，给 race/vehicle 添加 `longitudinal_acceleration:=true` 并保留 `record:=true`，观测器默认关闭。录包话题列表始终包含其估计和独立状态，因此在已有车辆图上单独启动的观测器也会被录制。会话随其他系统参数保存 `longitudinal_acceleration.yaml`。静止段加两次普通圈的操作见[加速度指南](longitudinal-acceleration.zh-CN.md)。
+
 <a id="directory-and-data"></a>
 ## 目录与数据
 
@@ -34,6 +36,7 @@ ros2 launch aims_racer_system race.launch.py \
 | 重放 LIO 的原始输入 | `/livox/lidar`、`/livox/imu` |
 | LIO 与后轴数据 | `/fastlio2/lio_odom`、`/fastlio2/body_cloud`、`/rear_axle/lio_odom`、`/rear_axle/imu` |
 | wheel / EKF | `/rear_axle/wheel_odom`、`/odometry/filtered` |
+| 可选加速度 | 已发布的 `/state_estimation/longitudinal_acceleration`、`/state_estimation/longitudinal_acceleration/status` |
 | RC 与执行命令 | `/rc/channels`、`/ackermann_cmd`、`/control/autonomy_speed_enabled`、motor speed/current、servo position、`/sensors/core` |
 | TF | `/tf`、`/tf_static`、隔离的 `/fastlio2/tf` |
 | race 定位与控制 | `/localization/status`、anchor/ndt status、map identity/valid、NDT/bridge pose、`/drive`、`/mpcc/status`、reference/prediction |
@@ -56,6 +59,8 @@ ros2 bag info "$HOME/aimsracer-data/sessions/my-new-run/bag"
 ## 时间和圈时口径
 
 source stamp 是测量时刻，bag 接收时间包含传输与排队，两者分别统计。EKF 新鲜 header 不意味着 LIO 测量无延迟；`/ackermann_cmd` 是转发命令，servo command echo 不是转向角测量。
+
+加速度 header 是标量预测后的 ROS 估计时刻，不是原 IMU 测量时刻。应结合独立状态里的轮速/IMU/比力源年龄分析；新鲜输出不能单独证明输入新鲜。linear.x 是 `d(body_vx)/dt`，发布协方差尚未用场地真值标定。
 
 当前[外场复盘](../reports/2026-10-10-mpcc-field-review.md)的运动窗口为首次 RUNNING 后 `abs(vx)>0.05 m/s` 的首末时间差，包含静止起步和终点制动；它不是 flying lap。RUNNING→COMPLETE 另含终点等待。比较圈速时固定计时横截面、同配置重复，分开记录运动、完成、停车等待、误差和人工干预。
 

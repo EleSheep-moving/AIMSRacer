@@ -14,6 +14,8 @@ ros2 launch aims_racer_system race.launch.py \
 
 For mapping, use `ros2 launch aims_racer_system mapping.launch.py record:=true`. Recording itself does not grant autonomous control permission.
 
+For optional acceleration evaluation, add `longitudinal_acceleration:=true` to race/vehicle while retaining `record:=true`; the observer defaults off. The recording topic list always includes its estimate and dedicated status, so an observer started separately against the running graph is recorded too. The session snapshots `longitudinal_acceleration.yaml` with the other system parameters. See the [acceleration guide](longitudinal-acceleration.md) for a stationary interval followed by two ordinary laps.
+
 <a id="目录与数据"></a>
 ## Directory and data
 
@@ -34,6 +36,7 @@ A session contains `bag/`, `session.json`, and system `params/` snapshots; race 
 | Raw inputs for LIO replay | `/livox/lidar`, `/livox/imu` |
 | LIO and rear axle data | `/fastlio2/lio_odom`, `/fastlio2/body_cloud`, `/rear_axle/lio_odom`, `/rear_axle/imu` |
 | wheel / EKF | `/rear_axle/wheel_odom`, `/odometry/filtered` |
+| Optional acceleration | `/state_estimation/longitudinal_acceleration`, `/state_estimation/longitudinal_acceleration/status` when published |
 | RC and execution commands | `/rc/channels`, `/ackermann_cmd`, `/control/autonomy_speed_enabled`, motor speed/current, servo position, `/sensors/core` |
 | TF | `/tf`, `/tf_static`, isolated `/fastlio2/tf` |
 | race localization and control | `/localization/status`, anchor/ndt status, map identity/valid, NDT/bridge pose, `/drive`, `/mpcc/status`, reference/prediction |
@@ -56,6 +59,8 @@ Check topic count, message counts, duration, and `metadata.yaml`; retain the com
 ## Time and lap-time conventions
 
 The source stamp is the measurement time; bag receive time includes transmission and queuing, so analyze them separately. A fresh EKF header does not mean LIO measurements have no delay; `/ackermann_cmd` is a forwarded command, and servo command echo is not a steering angle measurement.
+
+The acceleration header is the ROS estimate time after scalar prediction, not the original IMU measurement time. Compare it with wheel/IMU/force source ages from the dedicated status; a fresh output alone does not prove fresh inputs. Linear.x is `d(body_vx)/dt`, and the published covariance has not been calibrated against field truth.
 
 The motion window in the current [field review](../reports/2026-10-10-mpcc-field-review.md) is the interval between the first and last `abs(vx)>0.05 m/s` after the first RUNNING state, including a stationary start and finish braking; it is not a flying lap. RUNNING→COMPLETE additionally includes waiting at the end. For lap-time comparisons, fix the timing cross-section, repeat with the same configuration, and separately record motion, completion, stopped waiting, errors, and operator interventions.
 

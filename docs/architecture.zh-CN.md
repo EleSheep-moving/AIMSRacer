@@ -17,6 +17,9 @@ flowchart LR
     RearIMU --> EKF[EKF]
     RearLIO --> EKF
     Wheel[VESC wheel speed] --> EKF
+    Wheel --> Acc[optional acceleration observer]
+    RearIMU --> Acc
+    Acc --> AccOut[acceleration / dedicated status / recording]
     LIO --> NDT[NDT known map]
     EKF --> NDT
     NDT --> Health[localization monitor]
@@ -75,6 +78,8 @@ VESC 不发布该车辆 TF。PGO 与 NDT 使用不同运行入口，以保持 ma
 | `/rear_axle/lio_odom` | 后轴适配 | `odom/base_link`，保留 LIO stamp；EKF |
 | `/rear_axle/imu` | 后轴适配 | `base_link` IMU，m/s²，保留 IMU stamp；EKF |
 | `/rear_axle/wheel_odom` | VESC | 后轴 wheel vx，约 50 Hz 名义；EKF |
+| `/state_estimation/longitudinal_acceleration` | 可选轮速＋IMU 观测器 | `AccelWithCovarianceStamped`，`base_link`，linear.x=`d(body_vx)/dt`，ROS 估计时间戳；录制/下游参考，不输入导航 EKF |
+| `/state_estimation/longitudinal_acceleration/status` | 同一独立观测器 | 初始化、源年龄、比力有效性、计数与回调耗时；年龄告警只用于诊断 |
 | `/odometry/filtered` | EKF | `odom/base_link`，200 Hz 配置；MPCC、scan-time TF 预测 |
 | `/localization/ndt_pose` | NDT | 配准输出 pose |
 | `/localization/odom_bridge_pose` | NDT | 连续本地运动与地图锚点桥接 pose |
@@ -99,11 +104,17 @@ VESC 不发布该车辆 TF。PGO 与 NDT 使用不同运行入口，以保持 ma
 
 后轴里程计严格保留 LIO 扫描结束时的原时间戳，即使消息晚到也不改成接收时间。速度的旋转杠杆补偿使用该源时刻的陀螺仪：精确匹配，或在前后测量之间插值（最大间隔 30 ms）。若尚缺后一条 IMU，则等待覆盖，不预测 LIO 位姿。
 
-后轴 IMU 收到最新校正 IMU 后立即发布，保留其原时间戳，完成 g 到 m/s²、固定安装坐标旋转及旋转杠杆补偿。它不订阅 LIO、不估计姿态，`orientation_covariance[0] = -1`；加速度仍是含重力的比力。陀螺仪历史启动或中断后短暂不足时，加速度可标为不可用；LIO 延迟不再影响它。没有新增对齐 IMU 话题。离线去重力按源时间对齐该流与 LIO 姿态；当前平面 EKF 不融合加速度。
+后轴 IMU 收到最新校正 IMU 后立即发布，保留其原时间戳，完成 g 到 m/s²、固定安装坐标旋转及旋转杠杆补偿。它不订阅 LIO、不估计姿态，`orientation_covariance[0] = -1`；加速度仍是比力 `f = a − g`。z 轴向上的世界中 `g = [0,0,−9.80665] m/s²`；恢复惯性加速度需在同一坐标系使用 `a = f + g`。因此水平静止加速度计 z 分量约为 +9.81 m/s²。陀螺仪历史启动或中断后短暂不足时，加速度可标为不可用；LIO 延迟不再影响它。没有新增对齐 IMU 话题。离线去重力按源时间对齐该流与 LIO 姿态；当前平面 EKF 不融合加速度。
 
 EKF 使用后轴 LIO pose/linear velocity、wheel vx 和 IMU yaw rate；不融合 IMU acceleration/orientation，也不融合 wheel 积分 pose 或转向推算 yaw rate。`two_d_mode=true`，延迟测量历史为 2 s，回放后 `predict_to_current_time=true`。LIO 和 IMU 数据相关，不是独立观测源。
 
 FAST-LIO 用单一 worker 处理 scan 和完整 IMU 区间。pending lidar 默认深度 2，过载保留新扫描，传播所需 IMU 保留；原始 IMU reliable 深度 4096。时间回退、非有限值、溢出和 scan-end 覆盖仍检查。新鲜 EKF header 不代表 LIO 无延迟；具体版本与实测见[外场复盘](reports/2026-10-10-mpcc-field-review.md)。
+
+## 可选纵向加速度
+
+Vehicle/race 提供 `longitudinal_acceleration:=true`，默认 `false`。独立 `longitudinal_acceleration.launch.py` 只在已有轮速/IMU 发布器上启动观测器。它不使用 LIO、不重建姿态、不外推 LIO 位姿，也不发布 TF 或命令。既有导航 EKF 不融合其输出。
+
+标量模型用轮速和纵向比力估计 `[v,a,d]`：`v_wheel≈v`、`f_x≈a+d`，其中 `a=d(body_vx)/dt`。干扰 `d` 包含 `−g_body,x`、加速度计零偏和 `(ω×v)_x`；旋转时，该输出不同于完整惯性加速度向量。输出 linear.x 协方差是模型方差，尚未用场地真值标定，其他分量未被观测。有效轮速和比力完成初始化后，只有 IMU 回调触发输出；源年龄告警不冻结输出。源/估计时间、无效比力、回放重置与录制见[操作指南](operations/longitudinal-acceleration.zh-CN.md)。
 
 ## Persistent reference and local control frames
 

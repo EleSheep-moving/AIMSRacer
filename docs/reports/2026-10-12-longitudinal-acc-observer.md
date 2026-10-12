@@ -6,7 +6,7 @@ Date: 2026-10-12 · [简体中文](2026-10-12-longitudinal-acc-observer.zh-CN.md
 
 **Wheel speed + rear IMU is the preferred candidate for the next runtime estimation test.** On the two held-out recordings its 200 ms wheel-speed forecast RMSE improves by **22.3% and 26.0%** over the independently tuned wheel-only observer. Stationary acceleration standard deviation is **0.00450 / 0.00432 m/s²**. The additional delayed LIO gravity constraint provides no consistent forecast improvement and introduces a stationary mean around **+0.010 m/s²** on these recordings; leave that option disabled initially.
 
-This establishes a useful causal estimate on recorded inputs, not independently measured acceleration accuracy or readiness for acceleration closed-loop control. No production ROS node, navigation EKF, MPCC, FAST-LIO or VESC setting was changed by this experiment. The preceding source-time rear-adapter fixes remain separate uncommitted changes in main and on NX.
+This establishes a useful causal estimate on recorded inputs, not independently measured acceleration accuracy or readiness for acceleration closed-loop control. No production ROS node, navigation EKF, MPCC, FAST-LIO or VESC setting was changed by this experiment. At this offline experiment snapshot, the preceding source-time rear-adapter fixes were separate pending changes. They have since been preserved in commit `ab0374a`; see the [runtime guide](../operations/longitudinal-acceleration.md) for the subsequent opt-in ROS integration.
 
 ![Comparison](assets/2026-10-12-longitudinal-acc-observer/comparison.png)
 
@@ -18,7 +18,7 @@ This establishes a useful causal estimate on recorded inputs, not independently 
 | Wheel + IMU | `[v,a,d]` | Wheel speed, corrected rear longitudinal specific force |
 | Wheel + IMU + LIO | `[v,a,d]` | Above plus historical longitudinal gravity from LIO attitude |
 
-The process is `dv/dt=a`, white-jerk acceleration and random-walk disturbance. Measurement equations are `v_wheel=v+noise`, `f_x=a+d+noise`, and optional `g_x≈d+noise`. Body-speed derivative `a` differs from inertial longitudinal acceleration by rotation terms. Here `d` contains gravity, accelerometer bias and `(ω×v)x`; treating LIO gravity as the whole disturbance is an approximation.
+The process is `dv/dt=a`, white-jerk acceleration and random-walk disturbance. Measurement equations are `v_wheel=v+noise`, `f_x=a+d+noise`, and optional `−g_body,x≈d+noise`. Body-speed derivative `a` differs from inertial longitudinal acceleration by rotation terms. Here `d` contains `−g_body,x`, accelerometer bias and `(ω×v)x`; treating LIO gravity as the whole disturbance is an approximation.
 
 Input rotation is identity Livox/base mounting, with the existing rear-axle lever correction already applied by the frozen C++ force replay. LIO quaternion is body-to-world, xyzw; historical projection is `9.80665 × 2(qx qz − qw qy)`. This is a scalar historical constraint, not pose/attitude propagation. LIO and force share the same IMU and are not independent truth sources.
 

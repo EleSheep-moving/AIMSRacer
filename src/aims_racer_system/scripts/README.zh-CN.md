@@ -9,8 +9,11 @@
 | --- | --- |
 | `livox_gyro_bias.py` | 输出 gyro bias 修正 IMU 与诊断，原始 IMU 保留 |
 | `lio_to_rear_axle.py` | raw LIO 转为后轴 odometry；mapping 时拥有 odom/base_link TF |
+| `longitudinal_acceleration.py` | 可选轮速＋IMU 加速度/状态发布器，规范观测器位于包 Python 模块中 |
 | `activate_ndt.py` | 配置并激活 NDT lifecycle |
 | `relocalize_known_map.py` | 用明确 map/base_link 六维初值初始化并等待可信新 epoch |
+
+加速度验证时给 vehicle/race 添加 `longitudinal_acceleration:=true`（默认 `false`），或在已有车辆图上运行 `ros2 launch aims_racer_system longitudinal_acceleration.launch.py`。独立 launch 只启动该观测器，只运行一个实例；不发布命令或 TF，导航 EKF 不融合其输出。见[加速度指南](../../../docs/operations/longitudinal-acceleration.zh-CN.md)与[离线/运行期验证](../../../verification/acceleration/README.zh-CN.md)。
 
 已知地图初始化使用安装入口：
 

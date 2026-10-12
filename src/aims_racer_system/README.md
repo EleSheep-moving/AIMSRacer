@@ -10,6 +10,7 @@ This package maintains vehicle launch, rear axle data adaptation, gyro bias corr
 | `vehicle.launch.py` | MID360, FAST-LIO2, rear axle adaptation, EKF, RC/VESC |
 | `mapping.launch.py` | Mapping while driving manually, PGO, and optional recording |
 | `race.launch.py` | vehicle, known-map NDT/monitor, native MPCC, and optional recording |
+| `longitudinal_acceleration.launch.py` | Independent wheel + IMU acceleration observer only, using an existing vehicle graph |
 
 [Bringup](../../docs/operations/bringup.md) describes source preparation and building; [architecture](../../docs/architecture.md) defines topics, TF, timing, and command ownership consistently.
 
@@ -36,13 +37,23 @@ Replace example values with the actual rear axle placement. The [known-map guide
 <a id="录制与估计"></a>
 ## Recording and estimation
 
-`record=true` automatically records raw/corrected IMU, LIO, wheel/EKF, TF, and NDT/MPCC status; race also saves runtime. An empty `session_directory` generates a dated session automatically; an explicitly specified directory must be new. See [recording](../../docs/operations/recording.md) for the complete list and raw IMU reliable/depth=4096 QoS.
+`record=true` automatically records raw/corrected IMU, LIO, wheel/EKF, TF, NDT/MPCC status, and the optional acceleration estimate/status when published; race also saves runtime. An empty `session_directory` generates a dated session automatically; an explicitly specified directory must be new. See [recording](../../docs/operations/recording.md) for the complete list and raw IMU reliable/depth=4096 QoS.
 
 `base_link` is the rear axle midpoint. C++ `imu_to_rear_axle` retains the IMU source stamp and unavailability information, converts units, and compensates the lever arm; `lio_to_rear_axle.py` provides odometry at the same point. The EKF fuses LIO, wheel vx, and IMU yaw rate, retaining 2 s of delayed history. Gyro correction retains separate raw and corrected topics.
 
-`/rear_axle/lio_odom` keeps the LIO scan-end stamp and uses gyro matched/interpolated at that source time. `/rear_axle/imu` stays current with incoming IMU and has no dependency on LIO latency; it supplies gravity-containing specific force and marks orientation unavailable. There is no attitude extrapolation or additional aligned-IMU topic. See [the timestamp correction report](../../docs/reports/2026-10-11-rear-imu-source-time.md).
+`/rear_axle/lio_odom` keeps the LIO scan-end stamp and uses gyro matched/interpolated at that source time. `/rear_axle/imu` stays current with incoming IMU and has no dependency on LIO latency; it supplies specific force `f = a − g` and marks orientation unavailable. In a z-up world `g = [0,0,−9.80665] m/s²`; restoring inertial acceleration uses `a = f + g` in the same frame. There is no attitude extrapolation or additional aligned-IMU topic. See [the timestamp correction report](../../docs/reports/2026-10-11-rear-imu-source-time.md).
 
 Body cloud and raw LIO odometry retain the same scan-end stamp for NDT/PGO; world cloud/path are optional display outputs. In race, EKF owns `odom → base_link` and NDT owns `map → odom`; during mapping, rear axle LIO and PGO own these two edges respectively.
+
+## Optional longitudinal acceleration
+
+Add `longitudinal_acceleration:=true` to vehicle/race for field evaluation; the default is `false`. With an existing graph, start only the observer:
+
+```bash
+ros2 launch aims_racer_system longitudinal_acceleration.launch.py
+```
+
+Use either integrated or standalone launch, with one observer instance. It consumes wheel vx and rear IMU specific force and publishes `/state_estimation/longitudinal_acceleration` plus `/state_estimation/longitudinal_acceleration/status`. Output linear.x is `d(body_vx)/dt`; covariance is model uncertainty, not calibrated field uncertainty. It uses no LIO pose prediction and publishes no commands or TF. Navigation EKF does not fuse this output. Source-age warnings are diagnostics only. See the [operation guide](../../docs/operations/longitudinal-acceleration.md) for initialization, timestamps and two-lap recording.
 
 <a id="构建与证据"></a>
 ## Build and evidence

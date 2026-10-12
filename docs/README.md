@@ -28,6 +28,7 @@ Guides for the current **FAST-LIO2 + rear-axle EKF + NDT + native MPCC** stack. 
 | [Launch guide](operations/bringup.md) | Choose vehicle, mapping, race or controller-only launch | English / 简体中文 |
 | [Known-map MPCC](operations/known-map-mpcc.md) | Map and bundle identity, rear-axle initial pose, enable, stop and repeated laps | English / 简体中文 |
 | [Recording](operations/recording.md) | Launch-managed bags, runtime logs, QoS, session layout and timing definitions | English / 简体中文 |
+| [Longitudinal acceleration](operations/longitudinal-acceleration.md) | Optional wheel + IMU output, standalone launch, diagnostics and field recording | English / 简体中文 |
 | [Vehicle checklist](operations/vehicle-checklist.md) | Device, localization, authority and run checks | English / 简体中文 |
 | [Reference and bundle workflow](../src/controller/docs/usage.md) | Map-frame reference, speed planning, export and target-CPU build | English / 简体中文 |
 | [Map/reference tools](../tools/reference/README.md) | Save a PGO map and recover a matching closed reference | English / 简体中文 |
@@ -54,6 +55,7 @@ Maps, reference inputs, generated bundles and raw bags are external data. A repo
 | Reference | What it establishes | Language |
 | --- | --- | --- |
 | [Development verification](../verification/README.md) | Current regression/replay tools, test locations and required bundle inputs | English / 简体中文 |
+| [Acceleration verification](../verification/acceleration/README.md) | Offline comparison tools, shared observer and separate ROS/DDS runtime replay | English / 简体中文 |
 | [Main-stack integration](reports/2026-10-10-main-field-stack-integration.md) | Field-default parity, NX builds, installed providers and software checks | Chinese |
 | [Latest field review](reports/2026-10-10-mpcc-field-review.md) | Run-by-run motion, speed, tracking, solver timing and joint CPU load | Chinese |
 | [All dated reports](reports/README.md) | Earlier LIO, EKF, gyro bias, vehicle response, control and localization evidence | English / 简体中文 |

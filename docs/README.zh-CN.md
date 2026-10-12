@@ -28,6 +28,7 @@
 | [启动指南](operations/bringup.zh-CN.md) | 选择 vehicle、mapping、race 或单独控制器入口 | English / 简体中文 |
 | [已知地图 MPCC](operations/known-map-mpcc.zh-CN.md) | 地图/bundle 身份、后轴初值、启用、停止与连续圈 | English / 简体中文 |
 | [录制指南](operations/recording.zh-CN.md) | launch 录包、runtime 日志、QoS、会话目录与计时口径 | English / 简体中文 |
+| [纵向加速度](operations/longitudinal-acceleration.zh-CN.md) | 可选轮速＋IMU 输出、独立启动、诊断与场地录制 | English / 简体中文 |
 | [车辆检查](operations/vehicle-checklist.zh-CN.md) | 设备、定位、权限与运行检查 | English / 简体中文 |
 | [参考与 bundle 流程](../src/controller/docs/usage.zh-CN.md) | map 参考、速度规划、导出与目标 CPU 编译 | English / 简体中文 |
 | [地图/参考工具](../tools/reference/README.zh-CN.md) | 保存 PGO 地图，恢复与地图对应的闭环参考 | English / 简体中文 |
@@ -54,6 +55,7 @@
 | 资料 | 说明 | 语言 |
 | --- | --- | --- |
 | [开发验证](../verification/README.zh-CN.md) | 当前回归/重放工具、测试位置与所需 bundle 输入 | English / 简体中文 |
+| [加速度验证](../verification/acceleration/README.zh-CN.md) | 离线比较工具、共用观测器及独立 ROS/DDS 运行期回放 | English / 简体中文 |
 | [main 栈整合](reports/2026-10-10-main-field-stack-integration.md) | 外场默认配置一致性、NX 构建、实际安装来源与软件检查 | 中文 |
 | [最新外场复盘](reports/2026-10-10-mpcc-field-review.md) | 分次运动时间、速度、跟踪、求解耗时与联合 CPU 负载 | 中文 |
 | [全部日期化报告](reports/README.zh-CN.md) | 历史 LIO、EKF、gyro 零偏、车辆响应、控制与定位证据 | English / 简体中文 |

@@ -21,6 +21,7 @@
 | 手动驾驶、建图或跟踪保存轨迹 | [启动指南](docs/operations/bringup.zh-CN.md) · [已知地图初始化](docs/operations/known-map-mpcc.zh-CN.md) |
 | 准备地图坐标系参考和求解器 bundle | [参考与 bundle 流程](src/controller/docs/usage.zh-CN.md) · [地图/参考工具](tools/reference/README.zh-CN.md) |
 | 录制与分析一次运行 | [录制指南](docs/operations/recording.zh-CN.md) · [运行时诊断](src/aims_mpcc_rt/README.zh-CN.md) |
+| 观测纵向加速度 | [可选轮速＋IMU 观测器](docs/operations/longitudinal-acceleration.zh-CN.md) |
 | 理解或修改控制器 | [MPCC 实现](src/controller/docs/implementation.zh-CN.md) · [原生运行时](src/aims_mpcc_rt/README.zh-CN.md) |
 | 理解转向与速度响应 | [车辆响应与模型假设](docs/vehicle-response.zh-CN.md) |
 | 查看接口与定位状态 | [坐标系与话题](docs/architecture.zh-CN.md) · [定位健康](docs/localization_monitor.zh-CN.md) |
@@ -140,6 +141,7 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 | 可选 race 参数 | 默认 | 行为 |
 | --- | --- | --- |
 | `record` | `false` | 录制 bag、配置快照与 `runtime.csv` |
+| `longitudinal_acceleration` | `false` | 独立发布轮速＋IMU 加速度与诊断供验证，不接入控制或 EKF 融合 |
 | `auto_start` | `false` | 正常就绪条件满足后启用一次 |
 | `repeat_laps` | `false` | 单圈停车；`true` 持续运行直到停止 |
 | `initial_pose` | 空 | `map/base_link` 中的 `x y z roll pitch yaw`；角度 rad |

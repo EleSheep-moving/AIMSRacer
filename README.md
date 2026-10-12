@@ -21,6 +21,7 @@ A ROS 2 autonomous racing stack developed at **PolyU AIMS Lab**. AIMSRacer follo
 | Drive, map, or run a saved trajectory | [Launch guide](docs/operations/bringup.md) · [Known-map initialization](docs/operations/known-map-mpcc.md) |
 | Prepare a map-aligned reference and solver bundle | [Reference and bundle workflow](src/controller/docs/usage.md) · [Map/reference tools](tools/reference/README.md) |
 | Record and inspect a run | [Recording](docs/operations/recording.md) · [Runtime diagnostics](src/aims_mpcc_rt/README.md) |
+| Observe longitudinal acceleration | [Optional wheel + IMU observer](docs/operations/longitudinal-acceleration.md) |
 | Understand or change the controller | [MPCC implementation](src/controller/docs/implementation.md) · [Native runtime](src/aims_mpcc_rt/README.md) |
 | Understand steering and speed response | [Vehicle response and model assumptions](docs/vehicle-response.md) |
 | Check interfaces and localization | [Frames and topics](docs/architecture.md) · [Localization health](docs/localization_monitor.md) |
@@ -139,6 +140,7 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 | Optional race argument | Default | Behavior |
 | --- | --- | --- |
 | `record` | `false` | Record a bag, configuration snapshots and `runtime.csv` |
+| `longitudinal_acceleration` | `false` | Publish independent wheel + IMU acceleration and diagnostics for evaluation; no control or EKF fusion |
 | `auto_start` | `false` | Enable once after the normal readiness checks |
 | `repeat_laps` | `false` | Stop after one lap; `true` runs until stopped |
 | `initial_pose` | Empty | `x y z roll pitch yaw` in `map/base_link`; radians |

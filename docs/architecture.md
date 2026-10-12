@@ -17,6 +17,9 @@ flowchart LR
     RearIMU --> EKF[EKF]
     RearLIO --> EKF
     Wheel[VESC wheel speed] --> EKF
+    Wheel --> Acc[optional acceleration observer]
+    RearIMU --> Acc
+    Acc --> AccOut[acceleration / dedicated status / recording]
     LIO --> NDT[NDT known map]
     EKF --> NDT
     NDT --> Health[localization monitor]
@@ -75,6 +78,8 @@ The following rates are configured targets or nominal values driven by inputs; f
 | `/rear_axle/lio_odom` | Rear axle adaptation | `odom/base_link`, retaining LIO stamp; EKF |
 | `/rear_axle/imu` | Rear axle adaptation | `base_link` IMU, m/s², retaining IMU stamp; EKF |
 | `/rear_axle/wheel_odom` | VESC | Rear axle wheel vx, nominally around 50 Hz; EKF |
+| `/state_estimation/longitudinal_acceleration` | Optional wheel + IMU observer | `AccelWithCovarianceStamped`, `base_link`, linear.x=`d(body_vx)/dt`, ROS estimate-time stamp; recording/downstream reference, no navigation EKF fusion |
+| `/state_estimation/longitudinal_acceleration/status` | Same dedicated observer | Initialization, source ages, force validity, counters and callback timing; age warnings are diagnostic only |
 | `/odometry/filtered` | EKF | `odom/base_link`, configured 200 Hz; MPCC, scan-time TF prediction |
 | `/localization/ndt_pose` | NDT | Pose output from registration |
 | `/localization/odom_bridge_pose` | NDT | Pose bridging continuous local motion and the map anchor |
@@ -99,11 +104,17 @@ The following rates are configured targets or nominal values driven by inputs; f
 
 Rear axle odometry retains the exact processed LIO scan-end timestamp, even when the message arrives late. Its rotational velocity correction uses gyro measured at that source time: an exact IMU knot or interpolation between bracketing knots (maximum interval 30 ms). It waits for missing upper IMU coverage without predicting LIO pose or replacing its stamp with receipt time.
 
-Rear axle IMU publishes immediately from the latest corrected IMU input, retaining its exact source stamp. It converts g to m/s², rotates by the fixed mounting transform, and removes rotational lever acceleration. It does not subscribe to LIO or estimate orientation; `orientation_covariance[0] = -1`. Acceleration remains gravity-containing specific force. A short gyro-history startup/reset can mark acceleration unavailable, but LIO latency cannot. No additional aligned-IMU topic is published. Offline gravity removal pairs this stream with LIO attitude by source time; the current planar EKF does not fuse acceleration.
+Rear axle IMU publishes immediately from the latest corrected IMU input, retaining its exact source stamp. It converts g to m/s², rotates by the fixed mounting transform, and removes rotational lever acceleration. It does not subscribe to LIO or estimate orientation; `orientation_covariance[0] = -1`. Acceleration remains specific force `f = a − g`. In the z-up world `g = [0,0,−9.80665] m/s²`; restoring inertial acceleration requires `a = f + g`, with both vectors in the same frame. A resting level accelerometer therefore reads about +9.81 m/s² in z. A short gyro-history startup/reset can mark acceleration unavailable, but LIO latency cannot. No additional aligned-IMU topic is published. Offline gravity removal pairs this stream with LIO attitude by source time; the current planar EKF does not fuse acceleration.
 
 The EKF uses rear axle LIO pose/linear velocity, wheel vx, and IMU yaw rate; it does not fuse IMU acceleration/orientation, integrated wheel pose, or yaw rate inferred from steering. `two_d_mode=true`, delayed measurement history is 2 s, and `predict_to_current_time=true` after replay. LIO and IMU data are correlated, not independent observation sources.
 
 FAST-LIO uses a single worker to process scans and complete IMU intervals. The default pending lidar depth is 2; overload retains newer scans while preserving the IMU needed for propagation; raw IMU uses reliable depth 4096. Checks for time reversal, nonfinite values, overflow, and scan-end coverage remain. A fresh EKF header does not imply zero LIO delay; see the [field review](reports/2026-10-10-mpcc-field-review.md) for specific versions and measurements.
+
+## Optional longitudinal acceleration
+
+Vehicle/race expose `longitudinal_acceleration:=true`, default `false`. The standalone `longitudinal_acceleration.launch.py` starts only the observer against existing wheel/IMU publishers. It uses no LIO or attitude reconstruction, extrapolates no LIO pose, and publishes no TF or commands. The existing navigation EKF does not fuse its output.
+
+The scalar model estimates `[v,a,d]` using wheel speed and longitudinal specific force: `v_wheel≈v`, `f_x≈a+d`, with `a=d(body_vx)/dt`. Disturbance `d` includes `−g_body,x`, accelerometer bias and `(ω×v)_x`; this output differs from the complete inertial acceleration vector during rotation. Output linear.x covariance is the model variance, not calibrated field uncertainty; other components are unobserved. Only IMU callbacks trigger output after initialization with valid wheel and force observations; source-age warnings do not freeze it. See the [operation guide](operations/longitudinal-acceleration.md) for source/estimate times, unavailable force, replay resets and recording.
 
 ## Persistent reference and local control frames
 
