@@ -45,7 +45,7 @@ flowchart TB
     N -- "Map anchor + health" --> C
     R["Saved map reference"] --> C
     C -- "/drive" --> S["RC selector"]
-    S -- "/ackermann_cmd" --> V["VESC"]
+    S -- "/vesc/command" --> V["VESC"]
     classDef sensor fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
     classDef estimation fill:#ecfdf5,stroke:#0f766e,color:#064e3b;
     classDef controller fill:#0f172a,stroke:#38bdf8,color:#f8fafc;
@@ -61,7 +61,7 @@ flowchart TB
 - **FAST-LIO2 + EKF：** 提供连续局部运动与后轴状态。
 - **NDT：** 用保存地图提供全局修正，同时监控可信锚点新鲜度与地图身份。
 - **MPCC：** 在 `odom` 中预测运动，通过可信对齐关联 `map` 中的保存参考。
-- **RC 选择器：** 决定实际转发给车辆的命令。`/drive` 是控制提议，`/ackermann_cmd` 是转发命令。
+- **RC 选择器：** 决定实际转发给车辆的命令。`/drive` 是控制提议，`/vesc/command` 是转发命令。 详见[新控制接口](docs/vesc-command.md)。
 
 TF 链为 **`map → odom → base_link → livox_frame`**。已知地图运行时，NDT 拥有 `map → odom`，EKF 拥有 `odom → base_link`；`base_link` 位于**后轴中点**。[架构指南](docs/architecture.zh-CN.md)说明建图模式的归属、时间戳和全部话题。
 

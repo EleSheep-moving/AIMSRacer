@@ -7,6 +7,7 @@
 
 | 报告 | 范围 |
 | --- | --- |
+| [2026-10-13 VESC 新控制消息](2026-10-13-vesc-native-command.md) | 中控/驱动/MPCC 迁移、单调时钟保护及仅虚拟串口的软件验收 |
 | [2026-10-12 加速度实时节点](2026-10-12-longitudinal-acc-runtime.zh-CN.md) | 可选安装节点、主机/NX 测试及实时 DDS 回放边界 |
 | [2026-10-12 加速度对照](2026-10-12-longitudinal-acc-observer.zh-CN.md) | 八次录包、因果轮速/IMU 估计器与保留包预测证据 |
 | [2026-10-11 后轴 IMU 源时间](2026-10-11-rear-imu-source-time.zh-CN.md) | 独立实时比力与保留 LIO 源时间的后轴里程计 |

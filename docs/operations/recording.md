@@ -37,7 +37,7 @@ A session contains `bag/`, `session.json`, and system `params/` snapshots; race 
 | LIO and rear axle data | `/fastlio2/lio_odom`, `/fastlio2/body_cloud`, `/rear_axle/lio_odom`, `/rear_axle/imu` |
 | wheel / EKF | `/rear_axle/wheel_odom`, `/odometry/filtered` |
 | Optional acceleration | `/state_estimation/longitudinal_acceleration`, `/state_estimation/longitudinal_acceleration/status` when published |
-| RC and execution commands | `/rc/channels`, `/ackermann_cmd`, `/control/autonomy_speed_enabled`, motor speed/current, servo position, `/sensors/core` |
+| RC and execution commands | `/rc/channels`, `/vesc/command`, `/control/autonomy_speed_enabled`, typed speed/current/duty targets and servo command echo, `/sensors/core` |
 | TF | `/tf`, `/tf_static`, isolated `/fastlio2/tf` |
 | race localization and control | `/localization/status`, anchor/ndt status, map identity/valid, NDT/bridge pose, `/drive`, `/mpcc/status`, reference/prediction |
 | mapping | `/pgo/loop_markers` |
@@ -58,7 +58,7 @@ Check topic count, message counts, duration, and `metadata.yaml`; retain the com
 <a id="时间和圈时口径"></a>
 ## Time and lap-time conventions
 
-The source stamp is the measurement time; bag receive time includes transmission and queuing, so analyze them separately. A fresh EKF header does not mean LIO measurements have no delay; `/ackermann_cmd` is a forwarded command, and servo command echo is not a steering angle measurement.
+The source stamp is the measurement time; bag receive time includes transmission and queuing, so analyze them separately. A fresh EKF header does not mean LIO measurements have no delay; `/vesc/command` is a forwarded command, and servo command echo is not a steering angle measurement.
 
 The acceleration header is the ROS estimate time after scalar prediction, not the original IMU measurement time. Compare it with wheel/IMU/force source ages from the dedicated status; a fresh output alone does not prove fresh inputs. Linear.x is `d(body_vx)/dt`, and the published covariance has not been calibrated against field truth.
 

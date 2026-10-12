@@ -68,6 +68,9 @@ void JoystickConfig::validate() const
       throw std::invalid_argument("Limits and timeouts must be finite and positive");
     }
   }
+  if (!std::isfinite(command_brake_limit) || command_brake_limit < 0.0) {
+    throw std::invalid_argument("Brake limit must be finite and nonnegative");
+  }
   if (!(std::isfinite(speed_min) && 0.0 <= speed_min && speed_min <= speed_max &&
     std::isfinite(current_min) && 0.0 <= current_min && current_min <= current_max &&
     command_duty_limit <= 1.0 && speed_max <= command_speed_limit &&
@@ -116,23 +119,16 @@ void JoystickSelector::receive_rc(const Channels & channels, SteadyTime now)
 
 bool JoystickSelector::valid_command(const DriveCommand & c, double source_age) const
 {
-  if (!std::isfinite(c.steering) || !std::isfinite(c.speed) ||
-    !std::isfinite(c.acceleration) || !std::isfinite(c.jerk) ||
-    !std::isfinite(source_age) || source_age < 0.0)
-  {
-    return false;
+  if (!std::isfinite(c.steering) || !std::isfinite(source_age) || source_age < 0.0 ||
+    c.mode > DriveCommand::MODE_BRAKE_CURRENT) {return false;}
+  const double targets[] = {c.speed, c.current, c.duty, c.brake, c.acceleration};
+  for (unsigned i = 0; i < 5; ++i) {
+    if (!std::isfinite(targets[i]) || (i != c.mode && targets[i] != 0.0)) {return false;}
   }
-  if (c.jerk == 0.0) {
-    return std::abs(c.speed) <= config_.command_speed_limit;
-  }
-  if (c.jerk == 2.0) {
-    return std::abs(c.acceleration) <= config_.command_current_limit;
-  }
-  if (c.jerk == 3.0) {
-    return std::abs(c.acceleration) <= config_.command_duty_limit;
-  }
-  // jerk=1 is not implemented by this vehicle's ackermann_to_vesc converter.
-  return false;
+  return std::abs(c.speed) <= config_.command_speed_limit &&
+    std::abs(c.current) <= config_.command_current_limit &&
+    std::abs(c.duty) <= config_.command_duty_limit &&
+    c.brake >= 0.0 && c.brake <= config_.command_brake_limit;
 }
 
 JoystickSelector::CachedCommand JoystickSelector::cache(
@@ -171,7 +167,8 @@ bool JoystickSelector::fresh_command(
 int JoystickSelector::esc_mode() const
 {
   const int value = channel(config_.esc_mode_channel);
-  return value < config_.switch_low ? 0 : (value < config_.switch_high ? 2 : 3);
+  return value < config_.switch_low ? DriveCommand::MODE_SPEED :
+    (value < config_.switch_high ? DriveCommand::MODE_CURRENT : DriveCommand::MODE_DUTY);
 }
 
 double JoystickSelector::normalized(int raw) const
@@ -200,11 +197,6 @@ DriveCommand JoystickSelector::sanitized(const DriveCommand & command) const
   DriveCommand result = command;
   result.steering = std::clamp(
     result.steering, -config_.steering_limit, config_.steering_limit);
-  if (result.jerk == 0.0) {
-    result.acceleration = 0.0;
-  } else {
-    result.speed = 0.0;
-  }
   return result;
 }
 
@@ -245,7 +237,7 @@ Selection JoystickSelector::select(SteadyTime now)
       output.state = SelectionState::UnsupportedNavigationMode;
     } else if (!navigation_.present) {
       output.state = SelectionState::WaitingNavigation;
-    } else if (!navigation_.valid || navigation_.command.jerk != 0.0) {
+    } else if (!navigation_.valid || navigation_.command.mode != DriveCommand::MODE_SPEED) {
       output.state = SelectionState::InvalidNavigation;
     } else if (!fresh_command(navigation_, now, config_.nav_timeout)) {
       output.state = SelectionState::NavigationExpired;
@@ -257,16 +249,16 @@ Selection JoystickSelector::select(SteadyTime now)
   }
   output.command.steering = normalized(channel(config_.steering_channel)) *
     config_.steering_limit * (config_.steering_reverse ? -1.0 : 1.0);
-  output.command.jerk = esc_mode();
+  output.command.mode = esc_mode();
   if (esc_mode() == 0) {
     output.state = SelectionState::ManualSpeed;
     output.command.speed = manual_throttle(config_.speed_min, config_.speed_max);
-  } else if (esc_mode() == 2) {
+  } else if (esc_mode() == DriveCommand::MODE_CURRENT) {
     output.state = SelectionState::ManualCurrent;
-    output.command.acceleration = manual_throttle(config_.current_min, config_.current_max);
+    output.command.current = manual_throttle(config_.current_min, config_.current_max);
   } else {
     output.state = SelectionState::ManualDuty;
-    output.command.acceleration = manual_throttle(0.0, config_.command_duty_limit);
+    output.command.duty = manual_throttle(0.0, config_.command_duty_limit);
   }
   return output;
 }

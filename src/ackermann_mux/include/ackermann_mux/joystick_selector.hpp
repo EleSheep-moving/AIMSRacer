@@ -17,6 +17,7 @@
 
 #include <array>
 #include <chrono>
+#include <cstdint>
 #include <string>
 
 namespace ackermann_mux
@@ -35,6 +36,7 @@ struct JoystickConfig
   double steering_limit{0.4751};
   // External commands have separate bounds; the RC knob only limits manual driving.
   double command_speed_limit{12.0}, command_current_limit{100.0}, command_duty_limit{0.8};
+  double command_brake_limit{0.0};
   double rc_timeout{0.2}, nav_timeout{0.2}, calib_timeout{0.2};
   bool direction_reverse{false}, steering_reverse{true};
 
@@ -44,7 +46,10 @@ struct JoystickConfig
 
 struct DriveCommand
 {
-  double steering{0.0}, speed{0.0}, acceleration{0.0}, jerk{0.0};
+  enum : uint8_t {MODE_SPEED = 0, MODE_CURRENT = 1, MODE_DUTY = 2,
+    MODE_BRAKE_CURRENT = 3, MODE_ACCELERATION = 4};
+  double steering{0.0}, speed{0.0}, current{0.0}, duty{0.0}, brake{0.0}, acceleration{0.0};
+  uint8_t mode{MODE_SPEED};
 };
 
 enum class SelectionState

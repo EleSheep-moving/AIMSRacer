@@ -57,11 +57,11 @@ contour 为法向距离，lag 为切向误差，heading 与参考切线比较。
 <a id="measurement-time-computation-and-takeover"></a>
 ## 测量时间、计算与接管
 
-一个请求固定原始 EKF source epoch、由实际 `/ackermann_cmd` 历史预测的执行起点和地图对齐。一次只拥有一个 pending plan，优化请求上限 20 Hz，命令输出 50 Hz。`solver_timeout=.05 s` 包括完整 worker 计算和结果 delivery 等待；超过预算的结果不进入执行。
+一个请求固定原始 EKF source epoch、由实际 `/vesc/command` 历史预测的执行起点和地图对齐。一次只拥有一个 pending plan，优化请求上限 20 Hz，命令输出 50 Hz。`solver_timeout=.05 s` 包括完整 worker 计算和结果 delivery 等待；超过预算的结果不进入执行。
 
 候选先经非线性重积分和当前配置约束检查；接管时按实际状态和已应用前缀重新对齐并重新验证。执行不能跳过尚未实际发出的新控制。无法通过验证的候选丢弃，旧计划保持原 source TTL；N15/dt=.1 默认 `plan_ttl=1.2 s`。`handover_delay=.02 s` 是预计接管提前量，与求解预算和 source TTL 分别计时。
 
-命令历史必须区分 `/drive` 提议和 `/ackermann_cmd` 转发；`minimum_drive_speed=.2 m/s` 为现有底盘小正设定映射，disabled/faulted 保持零，停车阶段低于阈值归零。物理速度仍能在起步/停车时经过该区间。
+命令历史必须区分 `/drive` 提议和 `/vesc/command` 转发；`minimum_drive_speed=.2 m/s` 为现有底盘小正设定映射，disabled/faulted 保持零，停车阶段低于阈值归零。物理速度仍能在起步/停车时经过该区间。
 
 worker 调用、结果交付、接管与完整输出 callback 分别计时。状态/时钟/定位/RC 所有权变化会使计划失效。C++ 并不保证上游状态始终新鲜，TF 时间戳也不代替地图资格。
 

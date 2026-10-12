@@ -33,6 +33,7 @@ def test_joystick_pipeline(tmp_path, monkeypatch, paused_clock):
     from rclpy.qos import QoSProfile, ReliabilityPolicy
     from ament_index_python.packages import get_package_prefix
     from ackermann_msgs.msg import AckermannDriveStamped
+    from vesc_msgs.msg import VescCommand
     from crsf_receiver_msg.msg import CRSFChannels16
     from rosgraph_msgs.msg import Clock
     from std_msgs.msg import Bool
@@ -55,10 +56,10 @@ def test_joystick_pipeline(tmp_path, monkeypatch, paused_clock):
             qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
             rc_pub = node.create_publisher(CRSFChannels16, '/rc/channels', qos)
             nav_pub = node.create_publisher(AckermannDriveStamped, '/drive', qos)
-            calib_pub = node.create_publisher(AckermannDriveStamped, '/calib/ackermann_cmd', qos)
+            calib_pub = node.create_publisher(VescCommand, '/calib/vesc_command', qos)
             clock_pub = node.create_publisher(Clock, '/clock', 10)
             commands, statuses = [], []
-            node.create_subscription(AckermannDriveStamped, '/ackermann_cmd', commands.append, 10)
+            node.create_subscription(VescCommand, '/vesc/command', commands.append, 10)
             node.create_subscription(Bool, '/control/autonomy_speed_enabled', statuses.append, 10)
             rc = CRSFChannels16()
             for i in range(1, 17):
@@ -107,24 +108,28 @@ def test_joystick_pipeline(tmp_path, monkeypatch, paused_clock):
             def stopped():
                 assert len(commands) >= 5
                 for msg in commands[-5:]:
-                    assert msg.drive.speed == 0.0
-                    assert msg.drive.acceleration == 0.0
-                    assert msg.drive.jerk == 0.0
-                    assert msg.drive.steering_angle == 0.0
+                    assert msg.target_speed_mps == 0.0
+                    assert msg.target_current == 0.0
+                    assert msg.target_duty == 0.0
+                    assert msg.target_brake_current == 0.0
+                    assert msg.target_acceleration_mps2 == 0.0
+                    assert msg.header.frame_id == "base_link"
+                    assert msg.control_mode == VescCommand.MODE_SPEED
+                    assert msg.steering_angle == 0.0
 
             pump(.08, send_rc=False)
             stopped()  # Before the first RC frame, actively publish a safe command.
             rc.ch3 = 1810
             pump(.15)
-            assert commands[-1].drive.speed == pytest.approx(12.0)
+            assert commands[-1].target_speed_mps == pytest.approx(12.0)
             rc.ch6 = 992
             pump(.1)
-            assert commands[-1].drive.jerk == 2.0
-            assert commands[-1].drive.acceleration == pytest.approx(20.0)
+            assert commands[-1].control_mode == VescCommand.MODE_CURRENT
+            assert commands[-1].target_current == pytest.approx(20.0)
             rc.ch6 = 1810
             pump(.1)
-            assert commands[-1].drive.jerk == 3.0
-            assert commands[-1].drive.acceleration == pytest.approx(.8)
+            assert commands[-1].control_mode == VescCommand.MODE_DUTY
+            assert commands[-1].target_duty == pytest.approx(.8)
             rc.ch5 = 172
             pump(.1)
             stopped()
@@ -134,24 +139,25 @@ def test_joystick_pipeline(tmp_path, monkeypatch, paused_clock):
             rc.ch8 = 1810
             pump(.1)
             stopped()
-            calib = AckermannDriveStamped()
-            calib.drive.acceleration = 8.0
-            calib.drive.jerk = 2.0
+            calib = VescCommand()
+            calib.header.frame_id = "base_link"
+            calib.target_current = 8.0
+            calib.control_mode = VescCommand.MODE_CURRENT
             pump(.15, calib=calib)
-            assert commands[-1].drive.jerk == 2.0
-            assert commands[-1].drive.acceleration == 8.0
+            assert commands[-1].control_mode == VescCommand.MODE_CURRENT
+            assert commands[-1].target_current == 8.0
             assert not statuses[-1].data
             commands.clear()
             pump(.35)  # RC remains alive, calibration producer disappears.
             stopped()
-            assert any(msg.drive.acceleration == 8.0 for msg in commands)
-            assert any(msg.drive.acceleration == 0.0 for msg in commands)
+            assert any(msg.target_current == 8.0 for msg in commands)
+            assert any(msg.target_current == 0.0 for msg in commands)
             if not paused_clock:
                 # Even continuous receipt cannot renew a stale source timestamp.
                 pump(.15, calib=calib, restamp=False)
                 stopped()
             pump(.1, calib=calib)
-            assert commands[-1].drive.acceleration == 8.0
+            assert commands[-1].target_current == 8.0
             rc.ch5 = 172
             pump(.1)
             stopped()
@@ -159,28 +165,30 @@ def test_joystick_pipeline(tmp_path, monkeypatch, paused_clock):
             pump(.1)
             stopped()  # Unlock does not revive a cached calibration command.
             pump(.1, calib=calib)
-            assert commands[-1].drive.acceleration == 8.0
+            assert commands[-1].target_current == 8.0
             pump(.35, send_rc=False)
             stopped()
             pump(.1)
             stopped()  # RC recovery must receive a new calibration command.
 
-            for jerk, speed, acceleration in ((0.0, 2.0, 0.0), (3.0, 0.0, .2)):
-                calib.drive.jerk = jerk
-                calib.drive.speed = speed
-                calib.drive.acceleration = acceleration
+            for mode, speed, duty in ((0, 2.0, 0.0), (2, 0.0, .2)):
+                calib.control_mode = mode
+                calib.target_speed_mps = speed
+                calib.target_current = 0.0
+                calib.target_duty = duty
                 pump(.1, calib=calib)
-                assert commands[-1].drive.jerk == jerk
-                assert commands[-1].drive.speed == pytest.approx(speed)
-                assert commands[-1].drive.acceleration == pytest.approx(acceleration)
-            calib.drive.jerk = 1.0  # Unsupported by downstream.
+                assert commands[-1].control_mode == mode
+                assert commands[-1].target_speed_mps == pytest.approx(speed)
+                assert commands[-1].target_duty == pytest.approx(duty)
+            calib.control_mode = VescCommand.MODE_ACCELERATION  # Reserved, including zero.
+            calib.target_duty = 0.0
             pump(.1, calib=calib)
             stopped()
-            calib.drive.jerk = 0.0
-            calib.drive.speed = float('nan')
+            calib.control_mode = VescCommand.MODE_SPEED
+            calib.target_speed_mps = float('nan')
             pump(.1, calib=calib)
             stopped()
-            calib.drive.speed = 2.0
+            calib.target_speed_mps = 2.0
             calib.header.stamp.sec = calib.header.stamp.nanosec = 0
             pump(.1, calib=calib, restamp=False)
             stopped()
@@ -194,7 +202,7 @@ def test_joystick_pipeline(tmp_path, monkeypatch, paused_clock):
             nav.drive.speed = 3.0
             nav.drive.steering_angle = .2
             pump(.15, nav=nav)
-            assert commands[-1].drive.speed == 3.0
+            assert commands[-1].target_speed_mps == 3.0
             pump(.35)
             stopped()
             assert statuses[-1].data
@@ -207,17 +215,17 @@ def test_joystick_pipeline(tmp_path, monkeypatch, paused_clock):
             stopped()
             rc.ch6 = 172
             pump(.1, nav=nav)
-            assert commands[-1].drive.speed == 3.0
+            assert commands[-1].target_speed_mps == 3.0
             rc.ch7 = 172
             rc.ch3 = 992
             pump(.1, nav=nav)
             stopped()  # Manual selection overrides a live navigation command.
             assert not statuses[-1].data
 
-            # Output continues around 200 Hz, including with paused simulation time.
+            # Output continues around 100 Hz, including with paused simulation time.
             commands.clear()
             pump(.3)
-            assert 35 <= len(commands) <= 85
+            assert 23 <= len(commands) <= 38
             assert process.poll() is None
             # No warning spam while stopped. Failures log only transitions.
             assert len(log_path.read_text().splitlines()) < 80

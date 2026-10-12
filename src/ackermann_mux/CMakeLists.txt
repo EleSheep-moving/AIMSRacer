@@ -21,6 +21,7 @@ find_package(rclpy REQUIRED)
 
 find_package(std_msgs REQUIRED)
 find_package(ackermann_msgs REQUIRED)
+find_package(vesc_msgs REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 find_package(crsf_receiver_msg REQUIRED)
 
@@ -41,7 +42,7 @@ target_include_directories(joystick_selector PUBLIC include)
 add_executable(joystick_control_v2 src/joystick_control_v2.cpp)
 target_link_libraries(joystick_control_v2 joystick_selector)
 ament_target_dependencies(joystick_control_v2
-  rclcpp rcl_interfaces std_msgs ackermann_msgs crsf_receiver_msg)
+  rclcpp rcl_interfaces std_msgs ackermann_msgs vesc_msgs crsf_receiver_msg)
 
 install(
   TARGETS joystick_control_v2
@@ -64,6 +65,7 @@ if(BUILD_TESTING)
     JOYSTICK_REFERENCE_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/data/joystick_python_reference.csv")
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(joystick_pipeline tests/test_joystick_pipeline.py TIMEOUT 60)
+  ament_add_pytest_test(vehicle_pipeline tests/test_vehicle_pipeline.py TIMEOUT 60)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 

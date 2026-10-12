@@ -42,6 +42,8 @@ def test_recording_retains_reliable_imu_and_all_replay_inputs(tmp_path):
  assert '--qos-profile-overrides-path' in cmd
  assert {'/livox/lidar','/livox/imu','/odometry/filtered','/mpcc/status','/localization/anchor_status','/tf_static'} <= set(cmd)
  assert not any('localizer/raw_tf' in item for item in cmd)
+ assert '/vesc/command' in cmd and '/drive' in cmd
+ assert '/ackermann_cmd' not in cmd and '/commands/motor/speed' not in cmd
  assert (tmp_path/'new-session/session.json').is_file()
  with pytest.raises(FileExistsError):recording_actions(c,ROOT,mode='race')
 
@@ -58,6 +60,7 @@ def test_vehicle_preserves_single_ekf_tf_owner_and_no_old_localizer():
  packages=[n.node_package for n in nodes if isinstance(n,Node)]
  assert packages.count('fastlio2')==1 and packages.count('robot_localization')==1
  assert 'localizer' not in packages
+ assert packages.count('vesc_driver')==1 and packages.count('vesc_ackermann')==1
  c.launch_configurations['mapping']='true'
  mapping=m.build_vehicle(c)
  packages=[n.node_package for n in mapping if isinstance(n,Node)]
@@ -101,7 +104,7 @@ def test_fastlio_namespace_and_rc_parameters_match_field_bringup():
  nodes=[a for a in m.build_vehicle(c) if isinstance(a,dict)]
  lio=next(n for n in nodes if n['package']=='fastlio2')
  assert lio.get('namespace')=='fastlio2'
- selector=next(n for n in nodes if n['executable']=='joystick_control_v2')['parameters'][0]
+ selector=next(n for n in nodes if n['executable']=='joystick_control_v2')['parameters'][-1]
  assert selector['current_limit_max_current']==100.0 and selector['channel_deadzone']==50
 
 def test_acceleration_is_opt_in_and_standalone_has_no_vehicle_drivers():
@@ -136,3 +139,13 @@ def test_recording_includes_acceleration_and_its_input_streams(tmp_path):
  cmd={perform_substitutions(c,item) for item in action.cmd}
  assert {'/state_estimation/longitudinal_acceleration','/state_estimation/longitudinal_acceleration/status',
          '/rear_axle/imu','/rear_axle/wheel_odom','/livox/imu','/odometry/filtered'}<=cmd
+
+
+def test_recording_snapshots_selected_vesc_configuration(tmp_path):
+ from aims_racer_system.launch_support import recording_actions
+ config=tmp_path/'custom-vesc.yaml'
+ config.write_text('/**:\n  ros__parameters:\n    current_startup_enabled: false\n')
+ c=LaunchContext();c.launch_configurations.update(record='true',
+     session_directory=str(tmp_path/'custom-session'),vesc_config=str(config))
+ recording_actions(c,ROOT,mode='race')
+ assert (tmp_path/'custom-session/params/vesc_selected.yaml').read_text()==config.read_text()

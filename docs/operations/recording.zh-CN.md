@@ -37,7 +37,7 @@ ros2 launch aims_racer_system race.launch.py \
 | LIO 与后轴数据 | `/fastlio2/lio_odom`、`/fastlio2/body_cloud`、`/rear_axle/lio_odom`、`/rear_axle/imu` |
 | wheel / EKF | `/rear_axle/wheel_odom`、`/odometry/filtered` |
 | 可选加速度 | 已发布的 `/state_estimation/longitudinal_acceleration`、`/state_estimation/longitudinal_acceleration/status` |
-| RC 与执行命令 | `/rc/channels`、`/ackermann_cmd`、`/control/autonomy_speed_enabled`、motor speed/current、servo position、`/sensors/core` |
+| RC 与执行命令 | `/rc/channels`、`/vesc/command`、`/control/autonomy_speed_enabled`、显式速度/电流/占空比目标与 servo command echo、`/sensors/core` |
 | TF | `/tf`、`/tf_static`、隔离的 `/fastlio2/tf` |
 | race 定位与控制 | `/localization/status`、anchor/ndt status、map identity/valid、NDT/bridge pose、`/drive`、`/mpcc/status`、reference/prediction |
 | mapping | `/pgo/loop_markers` |
@@ -58,7 +58,7 @@ ros2 bag info "$HOME/aimsracer-data/sessions/my-new-run/bag"
 <a id="time-and-lap-time-conventions"></a>
 ## 时间和圈时口径
 
-source stamp 是测量时刻，bag 接收时间包含传输与排队，两者分别统计。EKF 新鲜 header 不意味着 LIO 测量无延迟；`/ackermann_cmd` 是转发命令，servo command echo 不是转向角测量。
+source stamp 是测量时刻，bag 接收时间包含传输与排队，两者分别统计。EKF 新鲜 header 不意味着 LIO 测量无延迟；`/vesc/command` 是转发命令，servo command echo 不是转向角测量。
 
 加速度 header 是标量预测后的 ROS 估计时刻，不是原 IMU 测量时刻。应结合独立状态里的轮速/IMU/比力源年龄分析；新鲜输出不能单独证明输入新鲜。linear.x 是 `d(body_vx)/dt`，发布协方差尚未用场地真值标定。
 

@@ -20,7 +20,7 @@
 - RC 保持可立即接管；核对转向符号和 speed 模式单位。
 - 使用实际 **map/base_link** 初值初始化，观察地图、点云和车辆位姿是否一致。
 - 查看 `/localization/status` 中的 ready、map identity、epoch 和健康；查看 `/mpcc/status` 中 solver、状态新鲜度和自动启动原因。
-- 确保只有一个 `/drive` 发布者，实际命令由 RC 选择器转发至 `/ackermann_cmd`。
+- 确保只有一个 `/drive` 发布者，实际命令由 RC 选择器转发至 `/vesc/command`。
 - 车辆静止，方向在参考切线 30° 内。`auto_start=true` 会在条件满足后自主启用一次，操作员应在授权前完成现场检查。
 - 需要保留数据时使用 `record=true` 并确认新会话目录可写、有可用空间。
 

@@ -28,12 +28,12 @@ flowchart LR
     Bundle[immutable bundle] --> MPCC
     MPCC --> Drive[/drive]
     Drive --> RC[RC selector]
-    RC --> Applied[/ackermann_cmd]
-    Applied --> VESC[VESC converter / driver]
+    RC --> Applied[/vesc/command]
+    Applied --> VESC[VESC driver]
     Applied --> MPCC
 ```
 
-MPCC 发布的是提议。RC 选择器决定是否转发、以何种模式转发；控制器使用实际 `/ackermann_cmd` 历史预测测量到执行期间的运动。电机/servo command 与实际速度、转角不是同一种数据。当前控制接口为 speed 模式，完整纵向辨识按后续加速度接口计划进行。
+MPCC 发布的是提议。RC 选择器决定是否转发、以何种模式转发；控制器使用实际 `/vesc/command` 历史预测测量到执行期间的运动。电机/servo command 与实际速度、转角不是同一种数据。当前控制接口为 speed 模式，完整纵向辨识按后续加速度接口计划进行。
 
 <a id="frame-and-mounting-conventions"></a>
 ## 坐标与安装约定
@@ -89,10 +89,8 @@ VESC 不发布该车辆 TF。PGO 与 NDT 使用不同运行入口，以保持 ma
 | `/localization/map_valid` | monitor | 定位资格标志；不是独立精度测量 |
 | `/localization/status` | monitor | ready、健康、新鲜度和 map identity；native 控制资格检查 |
 | `/drive` | native MPCC | 50 Hz 提议，最多 20 Hz 优化请求；RC 选择执行 |
-| `/ackermann_cmd` | RC selector | 已选择的转发命令，100 Hz 配置；VESC 与 MPCC 输入历史 |
+| `/vesc/command` | RC selector | 已选择的转发命令，100 Hz 配置；VESC 与 MPCC 输入历史 |
 | `/control/autonomy_speed_enabled` | RC selector | 自主 speed 模式权限 |
-| `/commands/motor/speed` | VESC converter | 目标 ERPM；不是实测车速 |
-| `/commands/servo/position` | VESC converter | servo 目标；不是转角测量 |
 | `/sensors/core` | VESC driver | 实际 ERPM、电流、电压等 telemetry |
 | `/sensors/servo_position_command` | VESC driver | servo 命令 echo |
 | `/mpcc/status` | native MPCC | 执行阶段、自动启动、资格、worker/接管/输出诊断 |

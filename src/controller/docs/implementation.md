@@ -57,11 +57,11 @@ Current v and virtual progress speed track the curvature-based speed reference, 
 <a id="测量时间计算与接管"></a>
 ## Measurement time, computation and takeover
 
-Each request fixes the original EKF source epoch, the execution start predicted from actual `/ackermann_cmd` history, and map alignment. Only one pending plan is owned at a time, optimization requests are capped at 20 Hz, and commands are output at 50 Hz. `solver_timeout=.05 s` includes the full worker computation and result-delivery wait; results over budget do not enter execution.
+Each request fixes the original EKF source epoch, the execution start predicted from actual `/vesc/command` history, and map alignment. Only one pending plan is owned at a time, optimization requests are capped at 20 Hz, and commands are output at 50 Hz. `solver_timeout=.05 s` includes the full worker computation and result-delivery wait; results over budget do not enter execution.
 
 Candidates first undergo nonlinear reintegration and constraint checks under the current configuration. At takeover, they are realigned to actual state and the applied prefix, then validated again. Execution cannot skip new controls that have not actually been issued. Candidates that fail validation are discarded, and the old plan retains its original source TTL; N15/dt=.1 defaults to `plan_ttl=1.2 s`. `handover_delay=.02 s` is the anticipated takeover lead time, timed separately from the solve budget and source TTL.
 
-Command history must distinguish `/drive` proposals from forwarded `/ackermann_cmd` commands. `minimum_drive_speed=.2 m/s` maps small positive setpoints for the existing chassis; disabled/faulted output stays zero, and stopping output below the threshold becomes zero. Physical speed can still pass through this interval during startup/stopping.
+Command history must distinguish `/drive` proposals from forwarded `/vesc/command` commands. `minimum_drive_speed=.2 m/s` maps small positive setpoints for the existing chassis; disabled/faulted output stays zero, and stopping output below the threshold becomes zero. Physical speed can still pass through this interval during startup/stopping.
 
 Worker calls, result delivery, takeover and the complete output callback are timed separately. Changes in state/clock/localization/RC ownership invalidate plans. C++ does not guarantee that upstream state is always fresh, and TF timestamps do not replace map qualification.
 

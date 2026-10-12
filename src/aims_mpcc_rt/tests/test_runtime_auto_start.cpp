@@ -73,7 +73,7 @@ struct RuntimeClockProbe {
       {std::lock_guard<std::mutex> lock(node.mutex_);node.identity_=node.bundle_.reference().map_sha256();
         node.mode_=scenario!="anchor_rc_epoch";node.mode_received_=steady();
         if(scenario=="anchor_worker_epoch")node.solver_ready_=false;}
-      Drive stopped;node.forwarded(stopped);
+      VescCommand stopped;stopped.header.frame_id="base_link";stopped.header.stamp=node.now();node.forwarded(stopped);
       const auto r=node.bundle_.reference().at(0.);nav_msgs::msg::Odometry odom;
       odom.header.frame_id="odom";odom.child_frame_id="base_link";odom.header.stamp=node.get_clock()->now();
       odom.pose.pose.position.x=r.x+node.cfg_.rear_offset*std::cos(r.yaw);
@@ -149,7 +149,7 @@ int main(int argc,char** argv){
     "-p","simulation:=true","-p","repeat_laps:=true"};
   if(scenario!="default")args.insert(args.end(),{"-p","auto_start:=true"});
   for(const std::string topic:{"/drive","/mpcc/status","/mpcc/reference","/mpcc/prediction","/mpcc/enable",
-      "/ackermann_cmd","/odometry/filtered","/control/autonomy_speed_enabled","/localization/status","/localization/map_sha256"})
+      "/vesc/command","/odometry/filtered","/control/autonomy_speed_enabled","/localization/status","/localization/map_sha256"})
     args.insert(args.end(),{"-r",topic+":=/auto_start_test"+topic});
   std::vector<char*> raw;for(auto& arg:args)raw.push_back(arg.data());rclcpp::init(raw.size(),raw.data());
   int result=0;try{auto node=std::make_shared<aims_mpcc_rt::RuntimeNode>();

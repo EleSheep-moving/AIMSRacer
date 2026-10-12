@@ -45,7 +45,7 @@ flowchart TB
     N -- "Map anchor + health" --> C
     R["Saved map reference"] --> C
     C -- "/drive" --> S["RC selector"]
-    S -- "/ackermann_cmd" --> V["VESC"]
+    S -- "/vesc/command" --> V["VESC"]
     classDef sensor fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
     classDef estimation fill:#ecfdf5,stroke:#0f766e,color:#064e3b;
     classDef controller fill:#0f172a,stroke:#38bdf8,color:#f8fafc;
@@ -61,7 +61,7 @@ flowchart TB
 - **FAST-LIO2 + EKF:** continuous local motion and rear-axle state.
 - **NDT:** global correction against the saved map, with trusted-anchor freshness and map identity monitoring.
 - **MPCC:** predicts motion in `odom` and associates the saved `map` reference through the trusted alignment.
-- **RC selector:** chooses the command actually forwarded to the vehicle. `/drive` is a proposal; `/ackermann_cmd` is the forwarded command.
+- **RC selector:** chooses the command actually forwarded to the vehicle. `/drive` is a proposal; `/vesc/command` is the forwarded command. See [native command semantics](docs/vesc-command.md).
 
 TF chain: **`map → odom → base_link → livox_frame`**. In known-map operation, NDT owns `map → odom` and EKF owns `odom → base_link`. `base_link` is the **rear-axle center**. See [architecture](docs/architecture.md) for mapping-mode ownership, timing, and all topics.
 

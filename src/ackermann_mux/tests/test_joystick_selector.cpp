@@ -47,8 +47,11 @@ void expect_stop(const Selection & output)
 {
   EXPECT_DOUBLE_EQ(output.command.speed, 0.0);
   EXPECT_DOUBLE_EQ(output.command.steering, 0.0);
+  EXPECT_DOUBLE_EQ(output.command.current, 0.0);
+  EXPECT_DOUBLE_EQ(output.command.duty, 0.0);
+  EXPECT_DOUBLE_EQ(output.command.brake, 0.0);
   EXPECT_DOUBLE_EQ(output.command.acceleration, 0.0);
-  EXPECT_DOUBLE_EQ(output.command.jerk, 0.0);
+  EXPECT_DOUBLE_EQ(output.command.mode, DriveCommand::MODE_SPEED);
 }
 
 TEST(JoystickSelector, RejectsInvalidConfiguration)
@@ -93,19 +96,19 @@ TEST(JoystickSelector, BothProfilesPreserveManualModesAndLimits)
     rc[c.esc_mode_channel - 1] = 992;
     selector.receive_rc(rc, at(1.2));
     out = selector.select(at(1.2));
-    EXPECT_DOUBLE_EQ(out.command.acceleration, 3.0);
-    EXPECT_DOUBLE_EQ(out.command.jerk, 2.0);
+    EXPECT_DOUBLE_EQ(out.command.current, 3.0);
+    EXPECT_DOUBLE_EQ(out.command.mode, DriveCommand::MODE_CURRENT);
     rc[c.limit_channel - 1] = 1810;
     selector.receive_rc(rc, at(1.3));
-    EXPECT_DOUBLE_EQ(selector.select(at(1.3)).command.acceleration, 20.0);
+    EXPECT_DOUBLE_EQ(selector.select(at(1.3)).command.current, 20.0);
     rc[c.esc_mode_channel - 1] = 1810;
     selector.receive_rc(rc, at(1.4));
     out = selector.select(at(1.4));
-    EXPECT_DOUBLE_EQ(out.command.acceleration, 0.8);
-    EXPECT_DOUBLE_EQ(out.command.jerk, 3.0);
+    EXPECT_DOUBLE_EQ(out.command.duty, 0.8);
+    EXPECT_DOUBLE_EQ(out.command.mode, DriveCommand::MODE_DUTY);
     rc[c.limit_channel - 1] = 172;
     selector.receive_rc(rc, at(1.5));
-    EXPECT_DOUBLE_EQ(selector.select(at(1.5)).command.acceleration, 0.0);
+    EXPECT_DOUBLE_EQ(selector.select(at(1.5)).command.duty, 0.0);
   }
 }
 
@@ -130,7 +133,10 @@ TEST(JoystickSelector, MatchesRecordedPythonManualOutputs)
     selector.receive_rc(rc, at(1.0));
     const auto command = selector.select(at(1.0)).command;
     for (const double actual :
-      {command.steering, command.speed, command.acceleration, command.jerk})
+      {command.steering, command.speed,
+        command.mode == DriveCommand::MODE_CURRENT ? command.current : command.duty,
+        command.mode == DriveCommand::MODE_SPEED ? 0.0 :
+        (command.mode == DriveCommand::MODE_CURRENT ? 2.0 : 3.0)})
     {
       std::getline(row, field, ',');
       EXPECT_NEAR(actual, std::stod(field), 1e-6) << "reference row " << count;
@@ -193,7 +199,7 @@ TEST(JoystickSelector, NavigationSelectionHasNoProducerEnableCycle)
   auto out = selector.select(at(1.0));
   EXPECT_TRUE(out.autonomy_speed_enabled);
   expect_stop(out);
-  selector.receive_navigation({0.1, 2.0, 0.0, 0.0}, at(1.0));
+  selector.receive_navigation({0.1, 2.0, 0.0, 0.0, 0.0, 0.0, DriveCommand::MODE_SPEED}, at(1.0));
   EXPECT_DOUBLE_EQ(selector.select(at(1.1)).command.speed, 2.0);
   selector.receive_rc(rc, at(1.2));
   out = selector.select(at(1.21));
@@ -216,23 +222,23 @@ TEST(JoystickSelector, CalibrationRequiresNewCommandAfterArming)
   JoystickSelector selector(c);
   auto rc = manual(c);
   selector.receive_rc(rc, at(1.0));
-  selector.receive_calibration({0.1, 0.0, 8.0, 2.0}, at(1.01), 0.0);
+  selector.receive_calibration({0.1, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.01), 0.0);
   rc[c.calib_mode_channel - 1] = 1810;
   selector.receive_rc(rc, at(1.02));
   expect_stop(selector.select(at(1.02)));
-  selector.receive_calibration({0.1, 0.0, 8.0, 2.0}, at(1.025), 0.01);
+  selector.receive_calibration({0.1, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.025), 0.01);
   expect_stop(selector.select(at(1.025)));  // Stamped before arming, delivered afterwards.
-  selector.receive_calibration({0.1, 0.0, 8.0, 2.0}, at(1.03), 0.0);
-  EXPECT_DOUBLE_EQ(selector.select(at(1.04)).command.acceleration, 8.0);
+  selector.receive_calibration({0.1, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.03), 0.0);
+  EXPECT_DOUBLE_EQ(selector.select(at(1.04)).command.current, 8.0);
   rc[c.lock_channel - 1] = 172;
   selector.receive_rc(rc, at(1.05));
   expect_stop(selector.select(at(1.05)));
-  selector.receive_calibration({0.1, 0.0, 8.0, 2.0}, at(1.06), 0.0);
+  selector.receive_calibration({0.1, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.06), 0.0);
   rc[c.lock_channel - 1] = 1810;
   selector.receive_rc(rc, at(1.07));
   expect_stop(selector.select(at(1.07)));
-  selector.receive_calibration({0.1, 0.0, 8.0, 2.0}, at(1.08), 0.0);
-  EXPECT_DOUBLE_EQ(selector.select(at(1.08)).command.acceleration, 8.0);
+  selector.receive_calibration({0.1, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.08), 0.0);
+  EXPECT_DOUBLE_EQ(selector.select(at(1.08)).command.current, 8.0);
   rc[c.calib_mode_channel - 1] = 172;
   selector.receive_rc(rc, at(1.09));
   rc[c.calib_mode_channel - 1] = 1810;
@@ -247,19 +253,19 @@ TEST(JoystickSelector, CalibrationTimeoutCannotRenewItself)
   auto rc = manual(c);
   rc[c.calib_mode_channel - 1] = 1810;
   selector.receive_rc(rc, at(1.0));
-  selector.receive_calibration({0.1, 0.0, 8.0, 2.0}, at(1.0), 0.0);
+  selector.receive_calibration({0.1, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.0), 0.0);
   for (int tick = 1; tick <= 19; ++tick) {
     selector.receive_rc(rc, at(1.0 + tick * 0.01));
-    EXPECT_DOUBLE_EQ(selector.select(at(1.0 + tick * 0.01)).command.acceleration, 8.0);
+    EXPECT_DOUBLE_EQ(selector.select(at(1.0 + tick * 0.01)).command.current, 8.0);
   }
   selector.receive_rc(rc, at(1.21));
   EXPECT_EQ(selector.select(at(1.21)).state, SelectionState::CalibrationExpired);
   expect_stop(selector.select(at(1.21)));
   // Replaying an old stamped message cannot extend its lifetime.
-  selector.receive_calibration({0.1, 0.0, 8.0, 2.0}, at(1.22), 0.22);
+  selector.receive_calibration({0.1, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.22), 0.22);
   expect_stop(selector.select(at(1.22)));
-  selector.receive_calibration({0.1, 0.0, 8.0, 2.0}, at(1.23), 0.15);
-  EXPECT_DOUBLE_EQ(selector.select(at(1.24)).command.acceleration, 8.0);
+  selector.receive_calibration({0.1, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.23), 0.15);
+  EXPECT_DOUBLE_EQ(selector.select(at(1.24)).command.current, 8.0);
   selector.receive_rc(rc, at(1.3));
   expect_stop(selector.select(at(1.3)));
 }
@@ -272,12 +278,12 @@ TEST(JoystickSelector, CalibrationRecoveryAfterRCLossNeedsNewCommand)
   rc[c.calib_mode_channel - 1] = 1810;
   JoystickSelector selector(c);
   selector.receive_rc(rc, at(1.0));
-  selector.receive_calibration({0.0, 0.0, 8.0, 2.0}, at(1.0), 0.0);
+  selector.receive_calibration({0.0, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.0), 0.0);
   expect_stop(selector.select(at(1.21)));
   selector.receive_rc(rc, at(1.22));
   expect_stop(selector.select(at(1.22)));
-  selector.receive_calibration({0.0, 0.0, 8.0, 2.0}, at(1.23), 0.0);
-  EXPECT_DOUBLE_EQ(selector.select(at(1.23)).command.acceleration, 8.0);
+  selector.receive_calibration({0.0, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.23), 0.0);
+  EXPECT_DOUBLE_EQ(selector.select(at(1.23)).command.current, 8.0);
   // Recovery must also work if no timer happened to observe the outage.
   selector.receive_rc(rc, at(1.5));
   expect_stop(selector.select(at(1.5)));
@@ -290,15 +296,16 @@ TEST(JoystickSelector, CalibrationUsesProducerModeAndIndependentCurrentBound)
   auto rc = manual(c);
   rc[c.calib_mode_channel - 1] = 1810;
   selector.receive_rc(rc, at(1.0));
-  for (const auto & command : {DriveCommand{0.2, 3.0, 0.0, 0.0},
-      DriveCommand{0.2, 0.0, 80.0, 2.0}, DriveCommand{0.2, 0.0, 0.3, 3.0}})
+  for (const auto & command : {DriveCommand{0.2, 3.0, 0.0, 0.0, 0.0, 0.0, DriveCommand::MODE_SPEED},
+      DriveCommand{0.2, 0.0, 80.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, DriveCommand{0.2, 0.0, 0.0, 0.3, 0.0, 0.0, DriveCommand::MODE_DUTY}})
   {
     selector.receive_calibration(command, at(1.01), 0.0);
     const auto out = selector.select(at(1.01));
     EXPECT_EQ(out.state, SelectionState::Calibration);
-    EXPECT_DOUBLE_EQ(out.command.jerk, command.jerk);
+    EXPECT_DOUBLE_EQ(out.command.mode, command.mode);
     EXPECT_DOUBLE_EQ(out.command.speed, command.speed);
-    EXPECT_DOUBLE_EQ(out.command.acceleration, command.acceleration);
+    EXPECT_DOUBLE_EQ(out.command.current, command.current);
+    EXPECT_DOUBLE_EQ(out.command.duty, command.duty);
     EXPECT_FALSE(out.autonomy_speed_enabled);
   }
 }
@@ -311,27 +318,28 @@ TEST(JoystickSelector, InvalidCommandsReplacePreviouslyValidCommandsWithStops)
   rc[c.calib_mode_channel - 1] = 1810;
   selector.receive_rc(rc, at(1.0));
   const double nan = std::numeric_limits<double>::quiet_NaN();
-  for (const auto & invalid : {DriveCommand{nan, 1.0, 0.0, 0.0},
-      DriveCommand{0.0, nan, 0.0, 0.0}, DriveCommand{0.0, 1.0, nan, 0.0},
-      DriveCommand{0.0, 1.0, 0.0, nan}, DriveCommand{0.0, 1.0, 0.0, 1.0},
-      DriveCommand{0.0, 1.0, 0.0, 2.5}, DriveCommand{0.0, 13.0, 0.0, 0.0},
-      DriveCommand{0.0, 0.0, 101.0, 2.0}, DriveCommand{0.0, 0.0, 0.81, 3.0}})
+  for (const auto & invalid : {DriveCommand{nan, 1.0, 0.0, 0.0, 0.0, 0.0, DriveCommand::MODE_SPEED},
+      DriveCommand{0.0, nan, 0.0, 0.0, 0.0, 0.0, DriveCommand::MODE_SPEED}, DriveCommand{0.0, 1.0, 0.0, 0.0, 0.0, nan, DriveCommand::MODE_SPEED},
+      DriveCommand{0.0, 1.0, 1.0, 0.0, 0.0, 0.0, DriveCommand::MODE_SPEED}, DriveCommand{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, DriveCommand::MODE_ACCELERATION},
+      DriveCommand{0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 255}, DriveCommand{0.0, 13.0, 0.0, 0.0, 0.0, 0.0, DriveCommand::MODE_SPEED},
+      DriveCommand{0.0, 0.0, 101.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, DriveCommand{0.0, 0.0, 0.0, 0.81, 0.0, 0.0, DriveCommand::MODE_DUTY},
+      DriveCommand{0.0, 0.0, 0.0, 0.0, 1.0, 0.0, DriveCommand::MODE_BRAKE_CURRENT}})
   {
-    selector.receive_calibration({0.0, 1.0, 0.0, 0.0}, at(1.0), 0.0);
+    selector.receive_calibration({0.0, 1.0, 0.0, 0.0, 0.0, 0.0, DriveCommand::MODE_SPEED}, at(1.0), 0.0);
     selector.receive_calibration(invalid, at(1.01), 0.0);
     EXPECT_EQ(selector.select(at(1.01)).state, SelectionState::InvalidCalibration);
     expect_stop(selector.select(at(1.01)));
   }
   for (double age : {nan, -0.1, 0.21}) {
-    selector.receive_calibration({0.0, 1.0, 0.0, 0.0}, at(1.01), age);
+    selector.receive_calibration({0.0, 1.0, 0.0, 0.0, 0.0, 0.0, DriveCommand::MODE_SPEED}, at(1.01), age);
     expect_stop(selector.select(at(1.01)));
   }
   rc[c.calib_mode_channel - 1] = 172;
   rc[c.control_source_channel - 1] = 1810;
   selector.receive_rc(rc, at(1.02));
-  selector.receive_navigation({0.0, 0.0, 8.0, 2.0}, at(1.02));
+  selector.receive_navigation({0.0, 0.0, 8.0, 0.0, 0.0, 0.0, DriveCommand::MODE_CURRENT}, at(1.02));
   expect_stop(selector.select(at(1.02)));
-  selector.receive_navigation({nan, 1.0, 0.0, 0.0}, at(1.02));
+  selector.receive_navigation({nan, 1.0, 0.0, 0.0, 0.0, 0.0, DriveCommand::MODE_SPEED}, at(1.02));
   expect_stop(selector.select(at(1.02)));
 }
 
@@ -342,7 +350,7 @@ TEST(JoystickSelector, SourceAgeAndReceiveAgeBothLimitNavigationLifetime)
   rc[c.control_source_channel - 1] = 1810;
   JoystickSelector selector(c);
   selector.receive_rc(rc, at(1.0));
-  selector.receive_navigation({1.0, 2.0, 0.0, 0.0}, at(1.0), 0.15);
+  selector.receive_navigation({1.0, 2.0, 0.0, 0.0, 0.0, 0.0, DriveCommand::MODE_SPEED}, at(1.0), 0.15);
   EXPECT_DOUBLE_EQ(selector.select(at(1.01)).command.steering, c.steering_limit);
   expect_stop(selector.select(at(1.06)));
 }

@@ -6,6 +6,8 @@
 This guide connects the current V35 controller model to the recorded vehicle response. It separates **configured model parameters**, **dated measurements**, and **behavior that has not yet been identified**.
 
 <a id="当前控制器建模了什么"></a>
+The current interface is `/vesc/command` (100 Hz, `VescCommand`). The 2026-10-10/11 latency statistics and original bags below retain `/ackermann_cmd` and the historical 200 Hz configuration; they are not measurements of the new interface.
+
 ## What the current controller models
 
 | Item | Current implementation | Meaning |
@@ -17,7 +19,7 @@ This guide connects the current V35 controller model to the recorded vehicle res
 | Command publication / handover lead | 20 ms / 20 ms | Execution scheduling; neither value identifies actuator delay. |
 | Acceleration / braking bounds | 1.0 / 1.0 m/s² | Configured prediction and command limits, not measured maximum traction or braking capability. |
 
-`δ` is an **estimated effective steering state**, not a measured front-wheel angle. `/sensors/servo_position_command` reports the commanded servo position; receiving it does not prove that the wheels have reached that angle. The forwarded vehicle command is `/ackermann_cmd`; `/drive` is the controller proposal before RC selection.
+`δ` is an **estimated effective steering state**, not a measured front-wheel angle. `/sensors/servo_position_command` reports the commanded servo position; receiving it does not prove that the wheels have reached that angle. The forwarded vehicle command is `/vesc/command`; `/drive` is the controller proposal before RC selection.
 
 The current model and configuration are in [vehicle.yaml](../src/controller/config/vehicle.yaml), [the exported interval model](../src/controller/aims_mpcc/backend_models.py), and [native state propagation](../src/aims_mpcc_rt/src/core.cpp). See [MPCC implementation](../src/controller/docs/implementation.md) for states, controls and integration.
 
@@ -50,7 +52,7 @@ The 50 Hz command timer samples the plan more frequently than the up-to-20 Hz op
 
 A saved reference is prepared offline. Online MPCC repeatedly optimizes the next **15 × 0.1 s = 1.5 s** of motion; it does not optimize the entire lap on each request. The prediction horizon is a future time interval, not computation time. Bundle generation/build and startup are also separate from a running control cycle.
 
-The running chain is: **latest EKF/map conditions → request snapshot and motion prediction → acados solve and candidate checks → result delivery → scheduled takeover and execution checks → `/drive` → RC selector → `/ackermann_cmd`**.
+The running chain is: **latest EKF/map conditions → request snapshot and motion prediction → acados solve and candidate checks → result delivery → scheduled takeover and execution checks → `/drive` → RC selector → `/vesc/command`**.
 
 The two V35 NX field runs on 2026-10-10 ran FAST-LIO2, EKF and NDT concurrently. Rejoining the original logs by request sequence gives:
 
@@ -92,7 +94,7 @@ Read the original methods and qualifications in [speed-mode calibration](reports
 <a id="下一次调参如何利用这些信息"></a>
 ## How to use this in the next tuning session
 
-1. Compare **forwarded `/ackermann_cmd`** with source-stamped wheel speed, LIO/EKF motion and bias-corrected IMU yaw rate. Keep command publication, measurement time and receipt time distinct.
+1. Compare **forwarded `/vesc/command`** with source-stamped wheel speed, LIO/EKF motion and bias-corrected IMU yaw rate. Keep command publication, measurement time and receipt time distinct.
 2. Separate stationary starts, acceleration, braking and steady cornering; compare prediction residuals within speed ranges and comparable PID, voltage and load conditions. A speed-scale error or stale state can resemble an actuator-model error.
 3. Keep frame and unit conventions consistent. `base_link` is the rear-axle center; raw Livox acceleration uses `g` and the rear-axle adapter converts it to m/s². Angular velocity uses rad/s. See [architecture](architecture.md).
 4. Use repeated measured mismatch to decide whether to refit the lumped steering lag, introduce a separate pure delay, or identify a longitudinal response model. The current speed-mode interface has its own closed-loop response even though the optimizer predicts ideal acceleration.

@@ -1,3 +1,4 @@
+#include "vesc_msgs/command_validation.hpp"
 #include "aims_mpcc_rt/core.hpp"
 #include "aims_mpcc_rt/health.hpp"
 #include "aims_mpcc_rt/history.hpp"
@@ -28,6 +29,7 @@
 
 namespace aims_mpcc_rt {
 using Steady=std::chrono::steady_clock;
+using VescCommand=vesc_msgs::msg::VescCommand;
 using Drive=ackermann_msgs::msg::AckermannDriveStamped;
 static double steady(){return std::chrono::duration<double>(Steady::now().time_since_epoch()).count();}
 static double wrap_angle(double a){return std::atan2(std::sin(a),std::cos(a));}
@@ -110,8 +112,8 @@ class RuntimeNode final:public rclcpp::Node {
       [this](std_msgs::msg::Bool::ConstSharedPtr m){std::lock_guard<std::mutex> lock(mutex_);
         if(mode_&&!m->data&&enabled_)fault_locked("Autonomy withdrawn; re-enable required");
         mode_=m->data;mode_received_=steady();},options);
-    command_sub_=create_subscription<Drive>("/ackermann_cmd",10,
-      [this](Drive::ConstSharedPtr m){forwarded(*m);},options);
+    command_sub_=create_subscription<VescCommand>("/vesc/command",rclcpp::QoS(1).reliable(),
+      [this](VescCommand::ConstSharedPtr m,const rclcpp::MessageInfo& info){forwarded(*m,&info);},options);
     if(bundle_.reference().frame_id()=="map"){
       tf_=std::make_unique<tf2_ros::Buffer>(get_clock());
       listener_=std::make_shared<tf2_ros::TransformListener>(*tf_,this,false);
@@ -342,16 +344,32 @@ class RuntimeNode final:public rclcpp::Node {
       record_auto_start_anchor_locked(now);
     }catch(const std::exception& e){if(enabled_)fault_locked(e.what());}
   }
-  void forwarded(const Drive& m){
-    if(m.drive.jerk!=0.)return;
+  void forwarded(const VescCommand& m,const rclcpp::MessageInfo* info=nullptr){
     double now=steady();std::lock_guard<std::mutex> lock(mutex_);
     observe_clock_locked(get_clock()->now().seconds(),now);
+    if(m.header.stamp.sec<0||m.header.stamp.nanosec>=1000000000u)return;
+    const double age=(get_clock()->now()-rclcpp::Time(m.header.stamp,get_clock()->get_clock_type())).seconds();
+    if(age<0.||age>.1)return;
+    if(info&&info->get_rmw_message_info().source_timestamp>0){
+      const auto system_ns=std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+      const double dds_age=(system_ns-info->get_rmw_message_info().source_timestamp)*1e-9;
+      if(dds_age<0.||dds_age>.1)return;
+    }
+    if(!vesc_msgs::valid_command(m)) {
+      if(enabled_)fault_locked("Invalid or unsupported VESC command");
+      return;
+    }
+    if(m.control_mode!=m.MODE_SPEED) {
+      if(enabled_)fault_locked("VESC control mode withdrew speed authority; re-enable after RC selection");
+      return;
+    }
     try{
       double accel=0.,rate=0.;
       for(auto it=recent_.rbegin();it!=recent_.rend();++it)if(now>=it->first&&now-it->first<=.1&&
-         std::abs(it->second.speed-m.drive.speed)<1e-6&&std::abs(it->second.steering-m.drive.steering_angle)<1e-6){
+         std::abs(it->second.speed-m.target_speed_mps)<1e-6&&std::abs(it->second.steering-m.steering_angle)<1e-6){
         accel=it->second.acceleration;rate=it->second.steering_rate;break;}
-      history_->record(now,std::clamp(double(m.drive.steering_angle),-cfg_.steer_limit,cfg_.steer_limit),m.drive.speed,accel,rate);
+      history_->record(now,std::clamp(double(m.steering_angle),-cfg_.steer_limit,cfg_.steer_limit),m.target_speed_mps,accel,rate);
     }catch(const std::exception& e){if(enabled_)fault_locked(e.what());}
   }
   void solve_loop(){
@@ -759,7 +777,7 @@ std::lock_guard<std::mutex> lock(log_mutex_);
   rclcpp::Publisher<Drive>::SharedPtr pub_;rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr status_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr reference_pub_,prediction_pub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_;
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr mode_sub_;rclcpp::Subscription<Drive>::SharedPtr command_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr mode_sub_;rclcpp::Subscription<VescCommand>::SharedPtr command_sub_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr identity_sub_;
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr health_sub_;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr enable_;

@@ -26,6 +26,7 @@
 
   <depend>std_msgs</depend>
   <depend>ackermann_msgs</depend>
+  <depend>vesc_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>crsf_receiver_msg</depend>
 
@@ -45,4 +46,7 @@
   <export>
     <build_type>ament_cmake</build_type>
   </export>
+  <test_depend>vesc_driver</test_depend>
+  <test_depend>vesc_ackermann</test_depend>
+  <test_depend>nav_msgs</test_depend>
 </package>

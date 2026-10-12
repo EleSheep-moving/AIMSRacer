@@ -239,7 +239,7 @@ def test_dds_independent_process_outputs_without_lio_tf_or_drive(tmp_path):
             assert {name for name, _ in info} == {'/rear_axle/wheel_odom', '/rear_axle/imu'}
             pubs = node.get_publisher_names_and_types_by_node('longitudinal_acceleration', '/')
             assert {name for name, _ in pubs} <= {'/rosout', '/parameter_events', '/state_estimation/longitudinal_acceleration', '/state_estimation/longitudinal_acceleration/status'}
-            assert not any(node.count_publishers(topic) for topic in ('/tf', '/tf_static', '/drive', '/ackermann_cmd'))
+            assert not any(node.count_publishers(topic) for topic in ('/tf', '/tf_static', '/drive', '/vesc/command'))
             ns = node.get_clock().now().nanoseconds - 10_000_000
             wp.publish(wheel(ns)); spin(.1)
             assert not seen

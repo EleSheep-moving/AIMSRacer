@@ -55,7 +55,7 @@ launch 自动从 bundle 派生 reference/config；N/dt 来自 manifest。默认 
 | 接口 | 作用 |
 | --- | --- |
 | `/odometry/filtered` | 后轴 `odom/base_link` 状态 |
-| `/ackermann_cmd` | 已转发输入历史 |
+| `/vesc/command` | 已转发输入历史 |
 | `/control/autonomy_speed_enabled` | RC 自主 speed 权限 |
 | `/localization/status`、anchor/map identity | 可信地图资格与对齐 |
 | `/drive` | 唯一 native 控制提议，由 RC 选择器执行 |

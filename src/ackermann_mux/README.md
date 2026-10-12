@@ -3,7 +3,7 @@ ackermann_mux
 
 **English** · [简体中文](README.zh-CN.md)
 
-Current production installs the C++ RC selector `joystick_control_v2`. It selects manual or autonomous commands and publishes `/ackermann_cmd`; the unified vehicle launch supplies the field-tested CH3/CH1 transmitter profile. Original f1tenth/twist_mux source attribution is retained in package metadata and license materials.
+Current production installs the C++ RC selector `joystick_control_v2`. It selects manual or autonomous commands and publishes `/vesc/command`; the unified vehicle launch supplies the field-tested CH3/CH1 transmitter profile. Original f1tenth/twist_mux source attribution is retained in package metadata and license materials.
 
 <a id="rc-控制器配置变体"></a>
 ## RC controller variants
@@ -30,15 +30,15 @@ Production installs only `joystick_control_v2`. The old mux and Python utilities
 <a id="仲裁与标定安全"></a>
 ## Arbitration and calibration safety
 
-Subscriptions retain only the latest sample using best-effort QoS. At 200 Hz,
-the selector publishes `/ackermann_cmd` and `/control/autonomy_speed_enabled`.
+Subscriptions retain only the latest sample using best-effort QoS. At 100 Hz,
+the selector publishes `/vesc/command` and `/control/autonomy_speed_enabled`.
 Lock and RC validity take priority over calibration, navigation and manual
 commands. The autonomy flag describes RC selection independently of `/drive`
 availability, so a producer can start without an enable dependency cycle.
 
 | Parameter | Default | Meaning |
 | --- | ---: | --- |
-| `publish_rate_hz` | 200.0 | Wall timer rate; independent of ROS simulation time |
+| `publish_rate_hz` | 100.0 | Wall timer rate; independent of ROS simulation time |
 | `rc_timeout_sec` | 0.2 | Maximum time since receiving a valid RC frame |
 | `nav_timeout_sec` | 0.2 | Maximum receipt/source age of a navigation command |
 | `calib_timeout_sec` | 0.2 | Maximum receipt/source age of a calibration command |
@@ -54,17 +54,16 @@ clock from extending an already accepted command. Producers must share the
 selector's ROS clock. Unstamped legacy navigation commands use receipt age;
 unstamped calibration is rejected by default.
 
-Calibration accepts `drive.jerk=0` (speed), `2` (current in `acceleration`) and
-`3` (duty in `acceleration`), regardless of the RC ESC switch. Entering calibration,
-unlocking or recovering RC clears its cached command; a new command must arrive
-after arming, and its source timestamp must not predate that arming. When the
-producer disappears, the selector sends zero speed on the
-first output cycle after the command expires. It never renews freshness by
-restamping its own output. The actual stop latency also includes scheduling,
-transport and motor response; this is not a hard real-time guarantee.
+Calibration uses `/calib/vesc_command` (`vesc_msgs/VescCommand`), with explicit
+speed, current, duty or brake-current mode. Nonzero braking is disabled by default
+(`brake_max=0`). All inactive targets must be zero; frame_id must be `base_link`.
+Entering calibration, unlocking or recovering RC clears its cached command; a new
+source-stamped command must arrive after arming. Source and DDS publication age
+are both checked, then ageing uses steady time. Producer expiry sends zero speed
+and centered steering on the next selector tick.
 
-`jerk=1` acceleration feedforward is rejected because the vehicle's
-`ackermann_to_vesc` has no implementation for it. Navigation supports speed mode
+Acceleration mode (4), including zero acceleration, is reserved and rejected.
+`/drive` remains Ackermann speed proposals; jerk must be zero. Navigation supports speed mode
 only. Unsupported modes, missing/expired inputs, malformed RC, nonfinite command
 values and commands exceeding external speed/current/duty limits all produce an
 explicit zero speed command. Steering is clamped to `steering_limit`. A persistent
@@ -84,7 +83,7 @@ are validated at startup and read-only thereafter. Logging occurs on state chang
 ## Verification
 
 ```bash
-colcon build --symlink-install --packages-select ackermann_mux
+colcon build --symlink-install --packages-up-to ackermann_mux
 ```
 
 Local native tests covered both profiles against 120 recorded Python manual outputs,
@@ -101,4 +100,4 @@ the original Python selector and 4.3–4.7% for C++ (three 3 s windows after war
 Both produced approximately 200 commands/s. These are process CPU measurements,
 not a bound on worst-case latency or a vehicle driving test.
 
-The vehicle launch overrides `publish_rate_hz` to **100 Hz** for the VESC command chain. The standalone component default remains 200 Hz.
+The vehicle launch overrides `publish_rate_hz` to **100 Hz** for the VESC command chain. The standalone default is also 100 Hz.

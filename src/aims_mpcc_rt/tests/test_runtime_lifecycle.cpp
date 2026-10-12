@@ -23,6 +23,49 @@ struct RuntimeClockProbe {
     auto req=std::make_shared<std_srvs::srv::SetBool::Request>();req->data=true;
     auto res=std::make_shared<std_srvs::srv::SetBool::Response>();node.enable_request(req,res);return res->success;
   }
+  static void native_command(RuntimeNode& node){
+    auto require=[](bool value,const char* message){if(!value)throw std::runtime_error(message);};
+    VescCommand c;c.header.frame_id="base_link";c.header.stamp=node.now();
+    c.target_speed_mps=2.;c.steering_angle=.2;
+    OutputCommand own;own.speed=c.target_speed_mps;own.steering=c.steering_angle;
+    own.acceleration=.7;own.steering_rate=.3;
+    {std::lock_guard<std::mutex> lock(node.mutex_);node.history_->clear();node.recent_.clear();
+      node.recent_.push_back({steady(),own});}
+    node.forwarded(c);
+    auto history=node.history_->command_at(steady());
+    require(history.speed==2.&&history.steering==double(c.steering_angle),"native units changed in MPCC history");
+    require(history.acceleration==.7&&history.steering_rate==.3,"matching own proposal lost feedforward history");
+    const double last=node.history_->newest();
+    c.header.stamp=node.now()-rclcpp::Duration::from_seconds(.2);node.forwarded(c);
+    require(node.history_->newest()==last,"stale ROS-stamped command refreshed history");
+    c.header.stamp=node.now();
+    rmw_message_info_t raw{};
+    raw.source_timestamp=std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::system_clock::now().time_since_epoch()).count()-200000000;
+    rclcpp::MessageInfo info(raw);node.forwarded(c,&info);
+    require(node.history_->newest()==last,"stale DDS command refreshed history");
+    c.target_speed_mps=1.5;c.header.stamp=node.now();node.forwarded(c);
+    history=node.history_->command_at(steady());
+    require(history.speed==1.5&&history.acceleration==0.&&history.steering_rate==0.,
+      "unmatched command inherited old feedforward");
+    own.speed=1.5;
+    {std::lock_guard<std::mutex> lock(node.mutex_);node.recent_.clear();node.recent_.push_back({steady()-.2,own});}
+    c.header.stamp=node.now();node.forwarded(c);
+    require(node.history_->command_at(steady()).acceleration==0.,"old proposal matched beyond 100 ms");
+    for(uint8_t mode:{VescCommand::MODE_CURRENT,VescCommand::MODE_DUTY,
+        VescCommand::MODE_BRAKE_CURRENT,VescCommand::MODE_ACCELERATION}){
+      const double before=node.history_->newest();
+      c=VescCommand();c.header.frame_id="base_link";c.header.stamp=node.now();c.control_mode=mode;
+      {std::lock_guard<std::mutex> lock(node.mutex_);node.enabled_=true;node.phase_="RUNNING";}
+      node.forwarded(c);
+      require(node.history_->newest()==before,"non-speed mode entered velocity history");
+      require(!node.enabled_&&node.phase_=="FAULT","non-speed mode did not withdraw autonomy");
+    }
+    c=VescCommand();c.header.frame_id="base_link";c.header.stamp=node.now();
+    c.target_speed_mps=1.;c.target_current=1.;
+    const double before=node.history_->newest();node.forwarded(c);
+    require(node.history_->newest()==before,"inactive target bypassed native validation");
+  }
   static void startup(RuntimeNode& node,bool initial_only=false){
     if(node.has_parameter("shadow"))throw std::runtime_error("removed shadow mode remains declared");
     if(std::string(node.pub_->get_topic_name())!="/mpcc_rt_test/drive"||
@@ -49,7 +92,7 @@ struct RuntimeClockProbe {
     if(enable(node))throw std::runtime_error("enable unexpectedly succeeded without fresh inputs");status(0);
     const double deadline=steady()+2.;while(steady()<deadline){bool ready=false;
       {std::lock_guard<std::mutex> lock(node.mutex_);ready=node.solver_ready_;}if(ready)break;std::this_thread::yield();}
-    auto fresh=[&]{Drive stopped;node.forwarded(stopped);node.odometry(odom(node));
+    auto fresh=[&]{VescCommand stopped;stopped.header.frame_id="base_link";stopped.header.stamp=node.now();node.forwarded(stopped);node.odometry(odom(node));
       std::lock_guard<std::mutex> lock(node.mutex_);node.mode_=true;node.mode_received_=steady();};
     fresh();if(!enable(node))throw std::runtime_error("valid explicit enable failed");status(1);
     {std::lock_guard<std::mutex> lock(node.mutex_);node.snapshot_.state[3]=.2;}
@@ -65,17 +108,17 @@ struct RuntimeClockProbe {
     {std::lock_guard<std::mutex> lock(node.mutex_);node.snapshot_.present=true;node.snapshot_.epoch="old";}
     auto next=health("new",ns);next["map_sha256"]=node.bundle_.reference().map_sha256();node.accept_health(next);
     if(node.snapshot_.present||enable(node))throw std::runtime_error("new ready epoch authorized old snapshot while disabled");
-    Drive d;node.forwarded(d);node.odometry(odom(node));
+    VescCommand d;d.header.frame_id="base_link";d.header.stamp=node.now();node.forwarded(d);node.odometry(odom(node));
     if(!node.snapshot_.present||node.snapshot_.epoch!="new")throw std::runtime_error("new odometry not bound to new accepted anchor");
     const double limit=steady()+2.;while(!node.solver_ready_&&steady()<limit)std::this_thread::yield();
     {std::lock_guard<std::mutex> lock(node.mutex_);node.mode_=true;node.mode_received_=steady();}
     if(!enable(node))throw std::runtime_error("fresh new epoch state and history did not permit stationary enable");
     if(node.bundle_.reference().frame_id()=="map"&&node.cfg_.command_profile=="rate_bounded_v2"){
       auto wrong=next;wrong["health_sequence"]="2";wrong["anchor_sequence"]="2";wrong["alignment_anchor_sequence"]="2";wrong["map_sha256"]="wrong-map";wrong["map_odom_x"]="123";
-      node.accept_health(wrong);node.forwarded(d);node.odometry(odom(node));
+      node.accept_health(wrong);d.header.stamp=node.now();node.forwarded(d);node.odometry(odom(node));
       if(node.health_.qualified()||enable(node))throw std::runtime_error("wrong-map atomic anchor survived odometry and authorized enable");
       auto changed=next;changed["health_sequence"]="2";changed["map_odom_x"]="123";
-      node.accept_health(changed);node.forwarded(d);node.odometry(odom(node));
+      node.accept_health(changed);d.header.stamp=node.now();node.forwarded(d);node.odometry(odom(node));
       if(node.health_.qualified()||enable(node))throw std::runtime_error("invalid packet permitted replacing committed anchor without changing identity");
     }
   }
@@ -84,7 +127,7 @@ struct RuntimeClockProbe {
     if(rcl_enable_ros_time_override(handle)!=RCL_RET_OK||rcl_set_ros_time_override(handle,200000000000LL)!=RCL_RET_OK)
       throw std::runtime_error("could not establish initial ROS test clock");
     auto initial=health("before-reset",200000000000LL);initial["map_sha256"]=node.bundle_.reference().map_sha256();node.accept_health(initial);
-    Drive d;node.forwarded(d);node.odometry(odom(node));
+    VescCommand d;d.header.frame_id="base_link";d.header.stamp=node.now();node.forwarded(d);node.odometry(odom(node));
     {std::lock_guard<std::mutex> lock(node.mutex_);node.enabled_=true;node.recent_.push_back({steady(),{}});node.progress_ready_=true;}
     auto generation=node.generation_;
     if(rcl_set_ros_time_override(handle,100000000000LL)!=RCL_RET_OK)throw std::runtime_error("could not reset ROS test clock");
@@ -97,7 +140,7 @@ struct RuntimeClockProbe {
       fresh["health_sequence"]=fresh["anchor_sequence"]=fresh["alignment_anchor_sequence"]=std::to_string(i+1);
       fresh["map_sha256"]=node.bundle_.reference().map_sha256();node.accept_health(fresh);
       {std::lock_guard<std::mutex> lock(node.mutex_);node.identity_=node.bundle_.reference().map_sha256();}
-      node.forwarded(d);node.odometry(odom(node));}
+      d.header.stamp=node.now();node.forwarded(d);node.odometry(odom(node));}
     if(!node.snapshot_.present||node.snapshot_.ros_source>101.||node.enabled_)throw std::runtime_error("fresh reset clock did not recover without old watermark");
   }
   static void anchor_order(RuntimeNode& node){
@@ -105,7 +148,7 @@ struct RuntimeClockProbe {
     auto anchor=health("stable",node.get_clock()->now().nanoseconds());
     anchor["map_sha256"]=node.bundle_.reference().map_sha256();node.accept_health(anchor);
     {std::lock_guard<std::mutex> lock(node.mutex_);node.identity_=node.bundle_.reference().map_sha256();}
-    Drive stopped;node.forwarded(stopped);node.odometry(odom(node));
+    VescCommand stopped;stopped.header.frame_id="base_link";stopped.header.stamp=node.now();node.forwarded(stopped);node.odometry(odom(node));
     const double deadline=steady()+2.;
     while(steady()<deadline){bool ready=false;{std::lock_guard<std::mutex> lock(node.mutex_);ready=node.solver_ready_;}if(ready)break;std::this_thread::yield();}
     {std::lock_guard<std::mutex> lock(node.mutex_);node.mode_=true;node.mode_received_=steady();}
@@ -113,7 +156,7 @@ struct RuntimeClockProbe {
     for(int sequence:{2,3}){
       // Both legal arrival orders: health then output before odom; odom then
       // health then output. The odom-frame physical state remains unchanged.
-      if(sequence==3){node.forwarded(stopped);node.odometry(odom(node));}
+      if(sequence==3){stopped.header.stamp=node.now();node.forwarded(stopped);node.odometry(odom(node));}
       Snapshot prior;double history_epoch=0.;{std::lock_guard<std::mutex> lock(node.mutex_);prior=node.snapshot_;history_epoch=node.history_->newest();}
       anchor["health_sequence"]=anchor["anchor_sequence"]=anchor["alignment_anchor_sequence"]=std::to_string(sequence);
       anchor["last_anchor_stamp_ns"]=anchor["alignment_stamp_ns"]=std::to_string(node.get_clock()->now().nanoseconds());
@@ -125,7 +168,7 @@ struct RuntimeClockProbe {
         if(node.snapshot_.state!=prior.state||node.snapshot_.source!=prior.source||node.snapshot_.received!=prior.received||
            node.history_->newest()!=history_epoch)throw std::runtime_error("anchor update relabeled or refreshed odometry/history epochs");
       }
-      if(sequence==2){node.forwarded(stopped);node.odometry(odom(node));}
+      if(sequence==2){stopped.header.stamp=node.now();node.forwarded(stopped);node.odometry(odom(node));}
     }
     const auto alignment=node.snapshot_.alignment;auto duplicate=anchor;duplicate["map_odom_x"]=".5";
     node.accept_health(duplicate); // duplicate heartbeat cannot replace the committed record
@@ -140,7 +183,7 @@ struct RuntimeClockProbe {
     if(!domain||std::stoi(domain)<200)throw std::runtime_error("stall fixture requires a private ROS domain >=200");
     rclcpp::executors::SingleThreadedExecutor executor;executor.add_node(node.get_node_base_interface());
     auto odom_pub=node.create_publisher<nav_msgs::msg::Odometry>("/odometry/filtered",rclcpp::SensorDataQoS());
-    auto applied_pub=node.create_publisher<Drive>("/ackermann_cmd",10);
+    auto applied_pub=node.create_publisher<VescCommand>("/vesc/command",10);
     auto authority_pub=node.create_publisher<std_msgs::msg::Bool>("/control/autonomy_speed_enabled",10);
     bool ready_seen=false;
     auto startup_status=node.create_subscription<diagnostic_msgs::msg::DiagnosticArray>("/mpcc/status",10,
@@ -166,7 +209,8 @@ struct RuntimeClockProbe {
       auto m=odom(node);m.pose.pose.position.x=plant[0]+node.cfg_.rear_offset*std::cos(plant[2]);
       m.pose.pose.position.y=plant[1]+node.cfg_.rear_offset*std::sin(plant[2]);m.pose.pose.orientation.z=std::sin(plant[2]/2.);
       m.pose.pose.orientation.w=std::cos(plant[2]/2.);m.twist.twist.linear.x=plant[3];
-      actual.header.stamp=node.get_clock()->now();actual.drive.jerk=0.;applied_pub->publish(actual);
+      VescCommand feedback;feedback.header.stamp=node.now();feedback.header.frame_id="base_link";
+      feedback.target_speed_mps=actual.drive.speed;feedback.steering_angle=actual.drive.steering_angle;applied_pub->publish(feedback);
       std_msgs::msg::Bool authority;authority.data=true;authority_pub->publish(authority);odom_pub->publish(m);
       executor.spin_some();
       if(!enabled&&ready_seen&&steady()-startup>=.25)enabled=enable(node);
@@ -289,12 +333,13 @@ int main(int argc,char** argv){
   if(argc>2&&std::string(argv[2])=="capture"){
     setenv("AIMS_MPCC_CAPTURE_REQUEST","1",1);args.insert(args.end(),{"-p","log_directory:=/tmp/aims-runtime-request-capture"});}
   if(argc>2&&std::string(argv[2])=="stall")args.insert(args.end(),{"-p",std::string("log_directory:=")+(argc>3?argv[3]:"/tmp/aims-runtime-worker-stall"),
-    "-r","/ackermann_cmd:=/mpcc_worker_stall/ackermann_cmd","-r","/odometry/filtered:=/mpcc_worker_stall/odometry",
+    "-r","/vesc/command:=/mpcc_worker_stall/vesc/command","-r","/odometry/filtered:=/mpcc_worker_stall/odometry",
     "-r","/control/autonomy_speed_enabled:=/mpcc_worker_stall/autonomy_speed_enabled"});
   std::vector<char*> raw;for(auto& s:args)raw.push_back(s.data());rclcpp::init(raw.size(),raw.data());
   const bool mesh=argc>2&&std::string(argv[2])=="mesh";
   int result=0;try{auto node=std::make_shared<aims_mpcc_rt::RuntimeNode>();
     if(mesh)throw std::runtime_error("unqualified v2 50 ms mesh started a controller");if(argc>2&&std::string(argv[2])=="delivery")aims_mpcc_rt::RuntimeClockProbe::delivery(*node);
+    else if(argc>2&&std::string(argv[2])=="command")aims_mpcc_rt::RuntimeClockProbe::native_command(*node);
     else if(startup){aims_mpcc_rt::RuntimeClockProbe::startup(*node);node.reset();
       setenv("AIMS_MPCC_RT_SUPERVISOR_INSTANCE","startup-restarted-instance",1);
       node=std::make_shared<aims_mpcc_rt::RuntimeNode>();aims_mpcc_rt::RuntimeClockProbe::startup(*node,true);}

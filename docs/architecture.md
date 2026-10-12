@@ -28,12 +28,12 @@ flowchart LR
     Bundle[immutable bundle] --> MPCC
     MPCC --> Drive[/drive]
     Drive --> RC[RC selector]
-    RC --> Applied[/ackermann_cmd]
-    Applied --> VESC[VESC converter / driver]
+    RC --> Applied[/vesc/command]
+    Applied --> VESC[VESC driver]
     Applied --> MPCC
 ```
 
-MPCC publishes proposals. The RC selector decides whether to forward them and in which mode; the controller uses the actual `/ackermann_cmd` history to predict motion between measurement and execution. Motor/servo commands and measured speed/steering angle are different data. The current control interface uses speed mode; complete longitudinal identification is planned with the future acceleration interface.
+MPCC publishes proposals. The RC selector decides whether to forward them and in which mode; the controller uses the actual `/vesc/command` history to predict motion between measurement and execution. Motor/servo commands and measured speed/steering angle are different data. The current control interface uses speed mode; complete longitudinal identification is planned with the future acceleration interface.
 
 <a id="坐标与安装约定"></a>
 ## Frame and mounting conventions
@@ -89,10 +89,8 @@ The following rates are configured targets or nominal values driven by inputs; f
 | `/localization/map_valid` | Monitor | Localization eligibility flag; not an independent accuracy measurement |
 | `/localization/status` | Monitor | Ready state, health, freshness, and map identity; native control eligibility checks |
 | `/drive` | Native MPCC | 50 Hz proposals, at most 20 Hz optimization requests; RC selects execution |
-| `/ackermann_cmd` | RC selector | Selected forwarded command, configured 100 Hz; VESC and MPCC input history |
+| `/vesc/command` | RC selector | Selected forwarded command, configured 100 Hz; VESC and MPCC input history |
 | `/control/autonomy_speed_enabled` | RC selector | Permission for autonomous speed mode |
-| `/commands/motor/speed` | VESC converter | Target ERPM; not measured vehicle speed |
-| `/commands/servo/position` | VESC converter | Servo target; not a steering angle measurement |
 | `/sensors/core` | VESC driver | Actual ERPM, current, voltage, and other telemetry |
 | `/sensors/servo_position_command` | VESC driver | Servo command echo |
 | `/mpcc/status` | Native MPCC | Execution phase, auto start, eligibility, worker/takeover/output diagnostics |

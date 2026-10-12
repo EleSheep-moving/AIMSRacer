@@ -20,7 +20,7 @@ This checklist covers the current native vehicle workflow. Software regression a
 - Keep RC ready for immediate takeover; check steering signs and speed-mode units.
 - Initialize with the actual **map/base_link** pose and observe whether the map, point cloud, and vehicle pose agree.
 - Check ready state, map identity, epoch, and health in `/localization/status`; check solver, state freshness, and auto start reasons in `/mpcc/status`.
-- Ensure only one `/drive` publisher exists and the RC selector forwards actual commands to `/ackermann_cmd`.
+- Ensure only one `/drive` publisher exists and the RC selector forwards actual commands to `/vesc/command`.
 - Keep the vehicle stationary with its heading within 30° of the reference tangent. `auto_start=true` enables autonomy once when conditions are met; the operator should complete field checks before granting permission.
 - When data must be retained, use `record=true` and confirm that the new session directory is writable with available storage space.
 

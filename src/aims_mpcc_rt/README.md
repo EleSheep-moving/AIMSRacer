@@ -58,7 +58,7 @@ The launch derives reference/config automatically from the bundle; N/dt comes fr
 | Interface | Purpose |
 | --- | --- |
 | `/odometry/filtered` | Rear-axle `odom/base_link` state |
-| `/ackermann_cmd` | Forwarded input history |
+| `/vesc/command` | Forwarded input history |
 | `/control/autonomy_speed_enabled` | RC autonomous speed permission |
 | `/localization/status`, anchor/map identity | Trusted map qualification and alignment |
 | `/drive` | Unique native control proposal, executed by the RC selector |
