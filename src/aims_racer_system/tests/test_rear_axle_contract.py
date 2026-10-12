@@ -9,9 +9,21 @@ import yaml
 from launch import LaunchContext
 from nav_msgs.msg import Odometry
 
-from aims_racer_system.rear_axle_odometry import convert_odometry
+from aims_racer_system.rear_axle_odometry import convert_odometry, source_time_angular_velocity
 
 PACKAGE = Path(__file__).resolve().parents[1]
+
+
+def test_gyro_source_time_interpolation_without_extrapolation():
+    epoch = 1_791_624_375_000_000_001
+    history = [(epoch-3_000_000, [0., 0., .397]), (epoch+2_000_000, [0., 0., .402]),
+               (epoch+170_000_000, [0., 0., .570])]
+    np.testing.assert_allclose(source_time_angular_velocity(history, epoch), [0., 0., .4])
+    np.testing.assert_allclose(source_time_angular_velocity(history, history[0][0]), history[0][1])
+    assert source_time_angular_velocity(history, epoch-4_000_000) is None
+    assert source_time_angular_velocity(history, epoch+171_000_000) is None
+    assert source_time_angular_velocity(history, epoch+100_000_000) is None
+    assert source_time_angular_velocity([], epoch) is None
 
 
 @pytest.mark.parametrize('mount_rpy', [[0., 0., 0.], [.2, -.1, .4]])

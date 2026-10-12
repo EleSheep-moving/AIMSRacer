@@ -40,6 +40,8 @@ ros2 run aims_racer_system relocalize_known_map.py \
 
 `base_link` 是后轴中点。C++ `imu_to_rear_axle` 保留 IMU source stamp 和不可用信息，转换单位并做杠杆补偿；`lio_to_rear_axle.py` 提供同一点的 odometry。EKF 融合 LIO、wheel vx 与 IMU yaw rate，保持 2 s 延迟历史。gyro 校正保留独立原始与修正 topic。
 
+`/rear_axle/lio_odom` 保留 LIO scan-end 时间戳，用源时刻匹配或插值的 gyro；`/rear_axle/imu` 随最新 IMU 到达发布，不依赖 LIO 延迟，输出含重力的比力，姿态标为不可用。没有姿态外推，也不新增对齐 IMU 话题。见[时间戳修正报告](../../docs/reports/2026-10-11-rear-imu-source-time.zh-CN.md)。
+
 body cloud 与 raw LIO odometry 保留相同 scan-end stamp，供 NDT/PGO 使用；world cloud/path 为可选显示输出。race 中 EKF 拥有 `odom → base_link`，NDT 拥有 `map → odom`；mapping 中由后轴 LIO 与 PGO 分别拥有这两条边。
 
 <a id="build-and-evidence"></a>

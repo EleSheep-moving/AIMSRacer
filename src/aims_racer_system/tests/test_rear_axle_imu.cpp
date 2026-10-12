@@ -43,7 +43,7 @@ struct Values
 };
 }  // namespace
 
-TEST(RearAxleImu, MatchesOriginalPythonCallbacks)
+TEST(RearAxleImu, PreservesOriginalGyroAndValidForceValues)
 {
   std::ifstream fixture(IMU_REFERENCE_PATH);
   ASSERT_TRUE(fixture.good());
@@ -67,7 +67,7 @@ TEST(RearAxleImu, MatchesOriginalPythonCallbacks)
       config.lever = values.vector();
       config.mounting = values.quaternion();
       config.accel_scale = values.next();
-      config.max_attitude_age = values.next();
+      values.next();  // Retired legacy attitude-age parameter in the fixture.
       config.angular_acceleration_window = values.next();
       config.max_gyro_gap = values.next();
       processor = std::make_unique<RearAxleImu>(config);
@@ -76,7 +76,7 @@ TEST(RearAxleImu, MatchesOriginalPythonCallbacks)
       const double stamp = values.next();
       const Quaternion quaternion = values.quaternion();
       const Matrix3 covariance = values.matrix();
-      processor->add_attitude(stamp, quaternion, covariance);
+      (void)stamp; (void)quaternion; (void)covariance;  // No LIO dependency in force conversion.
     } else {
       ASSERT_EQ(kind, "I");
       ASSERT_TRUE(processor);
@@ -93,18 +93,20 @@ TEST(RearAxleImu, MatchesOriginalPythonCallbacks)
         EXPECT_LT((output->omega - values.vector()).cwiseAbs().maxCoeff(), 1e-8);
         EXPECT_LT((output->omega_covariance - values.matrix()).cwiseAbs().maxCoeff(), 1e-8);
         const bool valid = values.next() != 0.0;
-        ASSERT_EQ(output->compensated, valid);
+        // Original fixture includes the retired attitude gate. Compare actual force values
+        // where that implementation had a usable measurement.
         const Quaternion expected = values.quaternion();
-        EXPECT_LT((output->orientation.toRotationMatrix() - expected.toRotationMatrix()).norm(), 1e-8);
-        Matrix3 expected_orientation = values.matrix();
-        if (!valid) {
-          expected_orientation(0, 0) = 0.0;  // ROS unavailable sentinel is set by the adapter.
+        (void)expected;
+        values.matrix();  // Retired propagated-orientation covariance.
+        const Vector3 expected_force_value = values.vector();
+        if (valid) {
+          ASSERT_TRUE(output->compensated);
+          EXPECT_LT((output->specific_force - expected_force_value).cwiseAbs().maxCoeff(), 1e-8);
         }
-        EXPECT_LT((output->orientation_covariance - expected_orientation).cwiseAbs().maxCoeff(), 1e-8);
-        EXPECT_LT((output->specific_force - values.vector()).cwiseAbs().maxCoeff(), 1e-8);
-        Matrix3 expected_force = values.matrix();
-        if (!valid) {expected_force(0, 0) = 0.0;}
-        EXPECT_LT((output->force_covariance - expected_force).cwiseAbs().maxCoeff(), 1e-8);
+        values.matrix();  // Legacy covariance included a gravity/attitude inflation.
+        if (output->compensated) {
+          EXPECT_GT(Eigen::SelfAdjointEigenSolver<Matrix3>(output->force_covariance).eigenvalues().minCoeff(), 0.0);
+        }
         valid ? ++compensated : ++unavailable;
       } else {
         ++dropped;
@@ -156,23 +158,7 @@ TEST(AngularHistory, DerivativeAndHistoryReset)
   EXPECT_TRUE(history.add(0.04, Vector3::Zero(), Matrix3::Identity()));
   EXPECT_FALSE(history.derivative());
   EXPECT_TRUE(history.add(0.1, Vector3::Zero(), Matrix3::Identity()));
-  EXPECT_FALSE(history.orientation(0.04, Quaternion::Identity(), 0.1));
-}
 
-TEST(AngularHistory, IntegratesBetweenSamplesAndBoundsHistory)
-{
-  AngularHistory history;
-  const Vector3 omega(0.0, 0.0, 0.4);
-  for (int i = 0; i < 410; ++i) {
-    history.add(i * 0.005, omega, Matrix3::Identity() * 0.01);
-  }
-  EXPECT_FALSE(history.orientation(0.0, Quaternion::Identity(), 0.1));
-  const auto result = history.orientation(1.013, Quaternion::Identity(), 1.108);
-  ASSERT_TRUE(result);
-  const Quaternion expected(Eigen::AngleAxisd(0.4 * (1.108 - 1.013), Vector3::UnitZ()));
-  EXPECT_LT(result->angularDistance(expected), 1e-12);
-  EXPECT_FALSE(history.orientation(1.0, Quaternion::Identity(), 2.1));
-  EXPECT_FALSE(history.orientation(1.1, Quaternion::Identity(), 1.0));
 }
 
 TEST(RearAxleImu, RejectsInvalidConfiguration)
@@ -186,4 +172,64 @@ TEST(RearAxleImu, RejectsInvalidConfiguration)
   config = ImuConfig{};
   config.angular_acceleration_window = std::numeric_limits<double>::quiet_NaN();
   EXPECT_THROW(RearAxleImu processor(config), std::invalid_argument);
+}
+
+TEST(RearAxleImu, CompensatesForceWithoutLioAttitude)
+{
+  ImuConfig config;
+  config.lever = Vector3(0.3, 0.0, 0.03);
+  RearAxleImu processor(config);
+  const Vector3 omega(0., 0., 0.4);
+  const Vector3 rear_force(0.5, 0.2, 9.80665);
+  const Vector3 sensor_force = rear_force + omega.cross(omega.cross(config.lever));
+  std::optional<ImuOutput> result;
+  for (int i = 0; i < 10; ++i) {
+    result = processor.process({10. + i * .005, omega, sensor_force / config.accel_scale,
+      Matrix3::Identity() * .01, Matrix3::Zero()});
+  }
+  ASSERT_TRUE(result);
+  ASSERT_TRUE(result->compensated);
+  EXPECT_LT((result->specific_force - rear_force).norm(), 1e-12);
+}
+
+TEST(RearAxleImu, OnlyGyroHistoryGapsInvalidateFiniteForce)
+{
+  RearAxleImu processor(ImuConfig{});
+  const auto sample = [](double stamp) {
+      return ImuInput{stamp, Vector3(0., 0., .4), Vector3(0., 0., 1.),
+        Matrix3::Identity() * .01, Matrix3::Zero()};
+    };
+  EXPECT_FALSE(processor.process(sample(10.))->compensated);
+  EXPECT_FALSE(processor.process(sample(10.005))->compensated);
+  EXPECT_TRUE(processor.process(sample(10.010))->compensated);
+  for (int i = 3; i < 120; ++i) {
+    ASSERT_TRUE(processor.process(sample(10. + i * .005))->compensated);
+  }
+  // A genuine gap resets alpha estimation; yaw rate remains available immediately.
+  const auto after_gap = processor.process(sample(11.));
+  ASSERT_TRUE(after_gap);
+  EXPECT_FALSE(after_gap->compensated);
+  EXPECT_DOUBLE_EQ(after_gap->omega.z(), .4);
+  EXPECT_FALSE(processor.process(sample(11.005))->compensated);
+  EXPECT_TRUE(processor.process(sample(11.010))->compensated);
+}
+
+TEST(RearAxleImu, RotatesForceAndGyroUsingFixedMounting)
+{
+  ImuConfig config;
+  config.mounting = Quaternion(Eigen::AngleAxisd(.3, Vector3::UnitX()));
+  config.lever = Vector3(.3, 0., .03);
+  RearAxleImu processor(config);
+  const Vector3 omega(0., 0., .4);
+  const Vector3 rear_force(.5, .2, 9.80665);
+  const Vector3 sensor = config.mounting.conjugate() *
+    (rear_force + omega.cross(omega.cross(config.lever))) / config.accel_scale;
+  std::optional<ImuOutput> result;
+  for (int i = 0; i < 10; ++i) {
+    result = processor.process({10. + i * .005, config.mounting.conjugate() * omega,
+      sensor, Matrix3::Identity() * .01, Matrix3::Zero()});
+  }
+  ASSERT_TRUE(result && result->compensated);
+  EXPECT_LT((result->omega - omega).norm(), 1e-12);
+  EXPECT_LT((result->specific_force - rear_force).norm(), 1e-12);
 }
