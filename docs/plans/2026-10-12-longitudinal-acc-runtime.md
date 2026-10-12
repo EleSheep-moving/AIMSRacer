@@ -34,34 +34,34 @@
 
 Files: create `src/aims_racer_system/aims_racer_system/longitudinal_observer.py`, `longitudinal_acceleration.py`, `scripts/longitudinal_acceleration.py`, `tests/test_longitudinal_acceleration.py`; replace `verification/acceleration/observer.py` with a shim importing the same canonical core.
 
-- [ ] Add failing tests for public runtime module, ROS output, correct dimensions, source/estimate stamps, initialization, invalid force, wrong frames, late wheel update, old/future input and playback clock reversal. Test through real ROS messages/context; no hardware commands.
-- [ ] Preserve observer mathematics byte-for-byte apart from module location. Existing 27 numerical/pipeline tests must still pass.
-- [ ] Implement wrapper and test steady stationary force offset plus known acceleration. A real DDS test checks publications without LIO and verifies no TF or drive publisher.
-- [ ] Save failing and passing logs using the existing Docker image and source ROS environment. Commit owned files only after root verification/reviews.
+- [x] Add failing tests for public runtime module, ROS output, correct dimensions, source/estimate stamps, initialization, invalid force, wrong frames, late wheel update, old/future input and playback clock reversal. Test through real ROS messages/context; no hardware commands.
+- [x] Preserve observer mathematics byte-for-byte apart from module location. Existing 27 numerical/pipeline tests must still pass.
+- [x] Implement wrapper and test steady stationary force offset plus known acceleration. A real DDS test checks publications without LIO and verifies no TF or drive publisher.
+- [x] Save failing and passing logs using the existing Docker image and source ROS environment. Commit owned files only after root verification/reviews.
 
 ### 3. Launch and recording (root ownership)
 
 Files: CMakeLists.txt; new `params/longitudinal_acceleration.yaml`; new `launch/longitudinal_acceleration.launch.py`; vehicle.launch.py; race.launch.py; launch_support.py; test_current_launch.py; recording_qos.yaml if required.
 
-- [ ] Add launch regressions first: defaults off, explicit true includes exactly one observer, race propagates flag, standalone has no drivers/TF/controller, recording retains accel/status and original inputs.
-- [ ] Install script and add package pytest targets for core/runtime. YAML settings match frozen selected B configuration.
-- [ ] Standalone command: `ros2 launch aims_racer_system longitudinal_acceleration.launch.py` against already running vehicle. Integrated: existing race/vehicle command adds `longitudinal_acceleration:=true`; `record:=true` retains both new topics. Do not start standalone plus integrated instance simultaneously.
-- [ ] Preserve all existing vehicle parameters, RC authority, EKF, NDT and MPCC defaults exactly.
+- [x] Add launch regressions first: defaults off, explicit true includes exactly one observer, race propagates flag, standalone has no drivers/TF/controller, recording retains accel/status and original inputs.
+- [x] Install script and add package pytest targets for core/runtime. YAML settings match frozen selected B configuration.
+- [x] Standalone command: `ros2 launch aims_racer_system longitudinal_acceleration.launch.py` against already running vehicle. Integrated: existing race/vehicle command adds `longitudinal_acceleration:=true`; `record:=true` retains both new topics. Do not start standalone plus integrated instance simultaneously.
+- [x] Preserve all existing vehicle parameters, RC authority, EKF, NDT and MPCC defaults exactly.
 
 ### 4. NX verification and merge
 
-- [ ] Independent spec review, then code-quality review; fix required findings with regression evidence.
-- [ ] Build/test aims_racer_system in existing desktop image with isolated outputs; full numerical/pipeline checks and installed launch arguments.
-- [ ] Sync source to an isolated NX workspace or approved main after verified merge. Preserve old NX pending files in a named stash/backup before fast-forward, verify restored canonical files identical.
-- [ ] Build/test NX with bounded workers; source installed module and check standalone launch arguments. Synthetic ROS tests use isolated localhost domain; no live drivers.
-- [ ] Replay corrected frozen force + wheel inputs through actual ROS wrapper at approximately real time on NX and compare against canonical receive/snapshot oracle at emitted timestamps. Record delivery, data age and callback timings; no claim of localization joint-load or field acceptance.
-- [ ] Commit/review/merge main, synchronize GitHub and NX as previously authorized, verify source SHA / branch / installed interfaces. Leave no verification ROS processes.
+- [x] Independent spec review, then code-quality review; fix required findings with regression evidence.
+- [x] Build/test aims_racer_system in existing desktop image with isolated outputs; full numerical/pipeline checks and installed launch arguments.
+- [x] Sync source to an isolated NX workspace or approved main after verified merge. Preserve old NX pending files in a named stash/backup before fast-forward, verify restored canonical files identical.
+- [x] Build/test NX with bounded workers; source installed module and check standalone launch arguments. Synthetic ROS tests use isolated localhost domain; no live drivers.
+- [x] Replay corrected frozen force + wheel inputs through actual ROS wrapper at approximately real time on NX and compare against canonical receive/snapshot oracle at emitted timestamps. Record delivery, data age and callback timings; no claim of localization joint-load or field acceptance.
+- [x] Commit/review/merge main, synchronize GitHub and NX as previously authorized, verify source SHA / branch / installed interfaces. Leave no verification ROS processes.
 
 ### 5. User-facing documentation
 
-- [ ] Add English/Chinese `docs/operations/longitudinal-acceleration.md` guides, index from README and docs index. Update package/script guides and architecture with exact output semantics and opt-in flag.
-- [ ] Add brief field steps: ordinary vehicle/race graph, observer enabled, recording enabled, static interval then two normal laps. Existing controller commands continue; acceleration remains observational.
-- [ ] Explicitly distinguish offline evidence, installed realtime readiness, real-time replay and pending field/load validation. Describe specific force f=a-g, conversion a=f+g and body-derivative rotation terms consistently.
+- [x] Add English/Chinese `docs/operations/longitudinal-acceleration.md` guides, index from README and docs index. Update package/script guides and architecture with exact output semantics and opt-in flag.
+- [x] Add brief field steps: ordinary vehicle/race graph, observer enabled, recording enabled, static interval then two normal laps. Existing controller commands continue; acceleration remains observational.
+- [x] Explicitly distinguish offline evidence, installed realtime readiness, real-time replay and pending field/load validation. Describe specific force f=a-g, conversion a=f+g and body-derivative rotation terms consistently.
 
 ## Verification commands
 
@@ -76,3 +76,7 @@ ros2 launch aims_racer_system longitudinal_acceleration.launch.py --show-args
 ```
 
 Evidence directory: `/home/elesheep/aimsracer-data/sessions/2026-10-12/longitudinal-acc-runtime`; NX equivalent under `/home/aims/aimsracer-data/sessions/2026-10-12/longitudinal-acc-runtime`. Actual launch/delivery results, source hashes and remaining field acceptance must be recorded before reporting readiness.
+
+## Completion evidence
+
+Implementation `ba81fc7` is merged to main and installed on NX. Desktop, isolated NX and NX main package checks each report 110 tests with zero errors/failures/skips. Both independent reviews passed. NX DDS replay received all 8,967 inputs and delivered all 7,170 outputs; scalar/covariance oracle error zero. The named NX stash preserves preceding source-time changes. Two field laps and localization joint-load evaluation remain the next vehicle acceptance step. See [runtime report](../reports/2026-10-12-longitudinal-acc-runtime.md).

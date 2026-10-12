@@ -7,6 +7,9 @@
 
 | 报告 | 范围 |
 | --- | --- |
+| [2026-10-12 加速度实时节点](2026-10-12-longitudinal-acc-runtime.zh-CN.md) | 可选安装节点、主机/NX 测试及实时 DDS 回放边界 |
+| [2026-10-12 加速度对照](2026-10-12-longitudinal-acc-observer.zh-CN.md) | 八次录包、因果轮速/IMU 估计器与保留包预测证据 |
+| [2026-10-11 后轴 IMU 源时间](2026-10-11-rear-imu-source-time.zh-CN.md) | 独立实时比力与保留 LIO 源时间的后轴里程计 |
 | [2026-10-10 main 场地栈整合](2026-10-10-main-field-stack-integration.md) | 实跑源码/参数核对、纯 native 安装入口、默认 v35 bundle 与软件验证边界 |
 | [2026-10-10 场地复盘与圈时优先项](2026-10-10-mpcc-field-review.md) | 最新 NX 源码核查、全部场地 session、原始 bag 完成检查、求解时序、速度规划饱和与竞速原始源码比较 |
 | [2026-10-10 速度边界与时钟顺序](2026-10-10-mpcc-speed-gates.md) | 场地干预、速度超调拒绝、时钟修复和逐步提速配置 |

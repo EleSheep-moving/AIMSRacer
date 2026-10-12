@@ -10,6 +10,9 @@ in the [checklist](../operations/vehicle-checklist.md).
 
 | Report | Scope |
 | --- | --- |
+| [2026-10-12 acceleration runtime](2026-10-12-longitudinal-acc-runtime.md) | Opt-in installed observer, desktop/NX tests and real-time DDS replay limits |
+| [2026-10-12 acceleration comparison](2026-10-12-longitudinal-acc-observer.md) | Eight recorded runs, causal wheel/IMU observers and held-out forecast evidence |
+| [2026-10-11 rear IMU source time](2026-10-11-rear-imu-source-time.md) | Independent current force and source-stamped LIO rear odometry |
 | [2026-10-10 main field-stack integration](2026-10-10-main-field-stack-integration.md) | Field-run source/parameter audit, native-only installation entry, default v35 bundle and software-verification limits |
 | [2026-10-10 field review and lap-time priorities](2026-10-10-mpcc-field-review.md) | Latest NX source audit, all field sessions, raw-bag completion checks, solver timing, speed-profile saturation and primary racing-source comparison |
 | [2026-10-10 speed boundaries and clock ordering](2026-10-10-mpcc-speed-gates.md) | Field interventions, speed overshoot rejection, clock fix and progressively faster configurations |
