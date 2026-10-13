@@ -18,7 +18,8 @@ def build_race(context):
     artifact=str(Path(artifact).expanduser().resolve(strict=True)) if artifact else ''
     reference=cfg.get('reference_directory','')
     if controller=='pp':
-        if not reference and artifact:reference=str(Path(artifact)/'input_reference')
+        if flag(context,'auto_start'):raise ValueError('PP requires explicit /pp/enable; auto_start must be false')
+        if not reference and artifact:reference=artifact
         if not reference:raise ValueError('PP requires reference_directory or artifact_directory')
         cfg['reference_directory']=str(Path(reference).expanduser().resolve(strict=True))
         cfg['vehicle_config']=cfg.get('vehicle_config','') or (str(Path(artifact)/'input_config.yaml') if artifact else
