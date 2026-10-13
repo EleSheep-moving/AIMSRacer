@@ -25,7 +25,7 @@ ROS_DOMAIN_ID=93 python3 -m pytest /repo/src/aims_pp/test -q -p no:cacheprovider
 
 Result after integration correction: **30 passed in 7.41 s**, no skips. Output retained in
 `/evidence/pp-tests.txt` in `aims-pp-calibration-dev`. This includes AST numeric
-parity against the recovered external controller (108 randomized steering
+parity against the recovered controller (108 randomized steering
 queries and 9 lookahead speeds), closed-circle projection/seam tests, source
 clock/epoch/replay gates, one lap and repeated laps, actual SetBool services,
 authority/current-mode stop, duplicate publisher detection, simulation-clock
@@ -51,3 +51,8 @@ because PPConfig lacked the flag and default association rejected a rear axle
 outside nominal reference widths. Both passed after the flag was read from
 vehicle configuration and the footprint gate became conditional. Forward
 association, map identity, state freshness and authority gates remain active.
+
+Target portability correction: numeric parity now reads the bundled verbatim
+fixture under `test/fixtures`, verifies fixture/class SHA and records its matching
+historical Git blob. Tests require no external snapshot or host paths and do not
+skip the 108 steering queries. This changes tests only.

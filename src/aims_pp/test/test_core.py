@@ -1,4 +1,6 @@
 import ast
+import hashlib
+import json
 import math
 from pathlib import Path
 
@@ -12,16 +14,16 @@ def test_package_is_available():
 
 
 def legacy_controller():
-    # Execute only the recovered numeric class, never its ROS/hardware module.
-    source = Path('/home/elesheep/aimsracer-data/sessions/2026-10-13/calibration-recovery-audit/longitudinal_calib.py')
-    if not source.exists():
-        source = Path('/data/sessions/2026-10-13/calibration-recovery-audit/longitudinal_calib.py')
-    if not source.exists():
-        pytest.skip('Recovered source required for independent parity evidence')
+    # Bundled verbatim numeric fixture has no ROS/hardware imports or host paths.
+    source = Path(__file__).parent/'fixtures'/'recovered_enhanced_pp.py'
+    provenance=json.loads(source.with_name('provenance.json').read_text())
+    assert hashlib.sha256(source.read_bytes()).hexdigest()==provenance['fixture_sha256']
     tree = ast.parse(source.read_text())
+    helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == '_angle_wrap')
     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'PurePursuitController')
-    scope = {'math': math, 'np': np, '_angle_wrap': lambda a: (a + math.pi) % (2 * math.pi) - math.pi}
-    exec(compile(ast.Module(body=[cls], type_ignores=[]), str(source), 'exec'), scope)
+    assert hashlib.sha256(ast.get_source_segment(source.read_text(),cls).encode()).hexdigest()==provenance['class_sha256']
+    scope = {'math': math, 'np': np}
+    exec(compile(ast.Module(body=[helper,cls], type_ignores=[]), str(source), 'exec'), scope)
     return scope['PurePursuitController'](max_steering=.45)
 
 

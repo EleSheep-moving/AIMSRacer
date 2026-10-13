@@ -96,8 +96,8 @@ Its own final-command authority must still be checked by its owner.
 
 Tests: `python3 -m pytest src/aims_pp/test -q`. ROS tests require a built Humble
 workspace and an isolated `ROS_DOMAIN_ID`. The recovered-source parity test
-reads only the numeric class AST and executes no hardware module. It skips
-when the external audit snapshot is unavailable. These tests establish
+uses a bundled verbatim numeric fixture and verifies its SHA/provenance; it
+executes no hardware module and needs no external audit path. These tests establish
 numeric and ROS interface behavior; they do not qualify ARM timing or real
 vehicle tracking. The bounded coarse/Newton projector requires a path with
 unambiguous local association: intersections or closely overlapping branches
