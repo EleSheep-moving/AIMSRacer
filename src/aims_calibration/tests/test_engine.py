@@ -377,12 +377,16 @@ def test_five_mps_requires_explicit_hold_limit_and_does_not_expand_current_stage
     with pytest.raises(ValueError): config(hold_sampling='unknown')
 
 
-def test_hold_speed_overshoot_margin_is_explicit_and_never_raises_requested_speed():
+def test_hold_speed_overshoot_waits_for_settling_without_stopping():
     e=Engine(config(speeds=(5.,),max_speed=5.,speed_overshoot_tolerance=.2,hold_sampling='cumulative'))
     e.enable(True)
     for t in (1.,1.01,1.05,1.16,1.17): request=step(e,t,v=5.1)
     assert e.state=='MEASURE' and request.speed==5.
-    step(e,1.18,v=5.21)
-    assert e.state=='FAULT' and e.reason=='overspeed'
+    samples=len(e.samples)
+    request=step(e,1.18,v=5.23)
+    assert e.state=='PREPARE' and request.speed==5. and e.enabled
+    assert len(e.samples)==samples and not e.trials
+    for t in (1.2,1.25,1.31,1.32,1.42,1.52,1.53): step(e,t,v=5.)
+    assert e.state=='COMPLETE' and e.trials[0]['success']
     with pytest.raises(ValueError): config(speed_overshoot_tolerance=.21)
     with pytest.raises(ValueError): config('accel_interval',speed_overshoot_tolerance=.1)

@@ -17,7 +17,7 @@ class Config:
     start_speed: float = 1.
     end_speed: float = .5
     max_speed: float = 4.
-    speed_overshoot_tolerance: float = 0.
+    speed_overshoot_tolerance: float = 0.  # Legacy profile field; no measured-speed stop gate.
     max_current: float = 100.
     stable_tolerance: float = .2
     stable_seconds: float = 1.
@@ -284,7 +284,6 @@ class Engine:
         elif c.steering_source=='pp' and obs.tracking_reason: reason=obs.tracking_reason
         elif not math.isfinite(obs.steering): reason='steering_invalid'
         elif obs.velocity<0.: reason='reverse_motion'
-        elif obs.velocity>c.max_speed+c.speed_overshoot_tolerance: reason='overspeed'
         if reason:
             self.fault(reason); return self._request(now,obs,1)
         if not echo_ok:

@@ -62,7 +62,7 @@ class CalibrationNode(Node):
         self.profile=RCProfile(name=self.get_parameter('rc_profile').value)
         self.receipts={}; self.last_request=Request(0.); self.tracking=None
         self.evidence_error=''; self.results_dirty=False
-        self.tracking_generation=0; self.progress=None; self.progress_time=None
+        self.tracking_generation=0
         self.last_ros=None; self.last_ros_changed=time.monotonic(); self.last_timer=None
         metadata=dict(vehicle_config=str(Path(vehicle_path).resolve()),
             vehicle_sha256=hashlib.sha256(Path(vehicle_path).read_bytes()).hexdigest(),
@@ -271,7 +271,7 @@ class CalibrationNode(Node):
         self.reference_pub.publish(path)
 
     def _begin(self):
-        self.engine.enable(True,now=self._now()); self.progress=None; self.progress_time=None
+        self.engine.enable(True,now=self._now())
         self.obs=Observation(); self.receipts.clear()
         self.last_ros=None; self.last_ros_changed=time.monotonic(); self.last_timer=None
         self.output.reset_observations()
@@ -307,13 +307,9 @@ class CalibrationNode(Node):
             reason=self.tracking.fault_reason or 'localization_validity_withdrawn'
         if reason: return replace(obs,straight=False,tracking_reason=reason)
         try:
-            pose,s,lateral=self.association_runtime.association()
-            if self.progress is not None:
-                delta=(s-self.progress+self.reference.length/2)%self.reference.length-self.reference.length/2
-                dt=steady-self.progress_time
-                if delta<-.05 or abs(delta)>self.engine.config.max_speed*dt+.15:
-                    raise ValueError('reference_progress_discontinuity')
-            self.progress,self.progress_time=s,steady
+            pose,s,_=self.association_runtime.association()
+            # Nearest-point progress can change abruptly on a curve even
+            # with continuous localization; it is not a localization fault.
             target=self.reference.at(s+self.pp.compute_lookahead(pose[3]))
             steering,_=self.pp.compute_steering(pose[:2],pose[2],(target['x'],target['y']),target['yaw'],target['curvature'],pose[3])
             region=self.regions.region(s)

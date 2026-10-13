@@ -206,6 +206,12 @@ reenabling begins preparation and does not resume a partly executed current step
 Normal completion commands zero speed; manual disable/fault publishes zero current
 with the calibration startup substitution off.
 
+PP continues tracking when nearest-point reference progress jumps. A projection
+jump alone is not a localization fault; sampling uses the current projected
+region, while actual localization invalidity still stops acquisition.
+Measured speed overshoot no longer triggers an `overspeed` stop. Hold sampling
+still admits only settled observations within the target speed tolerance.
+
 ## 4. Inspect evidence
 
 `record:=true` creates a new dated session with bag, selected configuration and
