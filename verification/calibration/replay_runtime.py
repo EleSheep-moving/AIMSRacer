@@ -45,8 +45,11 @@ def main():
     p.add_argument('--mode',choices=('pp','calibration'),default='pp')
     p.add_argument('--seconds',type=float,default=60.)
     p.add_argument('--domain',type=int,default=223)
+    p.add_argument('--timing-rearms',type=int,default=0,
+                   help='Explicit virtual service re-arms after faults, for aggregate timing only; never field operation')
     args=p.parse_args()
     if not 1<=args.domain<=230 or args.seconds<=15:p.error('Use isolated domain 1..230 and more than 15 seconds')
+    if not 0<=args.timing_rearms<=100:p.error('timing-rearms must be between zero and 100')
     os.environ.update(ROS_DOMAIN_ID=str(args.domain),ROS_LOCALHOST_ONLY='1')
     args.output=args.output.resolve();args.output.mkdir(parents=True,exist_ok=False)
     from ament_index_python.packages import get_package_prefix, get_package_share_directory
@@ -89,7 +92,11 @@ def main():
     for i in range(1,17):setattr(channels,'ch'+str(i),992)
     channels.ch5=1810;channels.ch6=172;channels.ch7=1810;channels.ch10=1810
     channels.ch8=1810 if args.mode=='calibration' else 172
-    statuses=[];localization={};health_received=0.
+    statuses=[];localization={};health_received=status_received=0.
+    def status_update(msg):
+        nonlocal status_received
+        statuses.extend({kv.key:kv.value for kv in item.values} for item in msg.status)
+        status_received=time.monotonic()
     def health_update(msg):
         nonlocal health_received
         for item in msg.status:
@@ -98,13 +105,14 @@ def main():
                 health_received=time.monotonic()
     node.create_subscription(DiagnosticArray,'/localization/status',health_update,10)
     node.create_subscription(DiagnosticArray,'/'+('pp' if args.mode=='pp' else 'calib')+'/status',
-        lambda msg:statuses.extend({kv.key:kv.value for kv in item.values} for item in msg.status),10)
+        status_update,10)
     service=node.create_client(SetBool,'/'+('pp' if args.mode=='pp' else 'calib')+'/enable')
     until=time.monotonic()+2.
     while time.monotonic()<until:rclpy.spin_once(node,timeout_sec=.02)
     if node.count_publishers('/vesc/command'):
         raise RuntimeError('An existing graph owns commands in this supposedly isolated domain')
     replay=controller=selector=None;enabled=False;future=None;attempts=0;telemetry_count=0;enable_responses=[]
+    rearms=0;last_successful_enable=0.
     try:
         selector=spawn([binary('ackermann_mux','joystick_control_v2'),'--ros-args','-p',
             'channel_profile:=steering_ch1_throttle_ch3_aux_ch5_to_ch10','-p','use_sim_time:=true'],'selector')
@@ -134,10 +142,14 @@ def main():
             if future is not None and future.done():
                 response=future.result()
                 enabled=bool(response and response.success)
+                if enabled:last_successful_enable=now
                 enable_responses.append(dict(ros_ns=ros,success=enabled,message=response.message if response else 'No response'))
                 future=None
             ready=(localization.get('ready')=='true' and localization.get('map_valid')=='true'
                    and now-health_received<.3 and telemetry_count>0)
+            if enabled and statuses and rearms<args.timing_rearms and status_received>last_successful_enable:
+                phase=statuses[-1].get('phase',statuses[-1].get('state'))
+                if phase=='FAULT':enabled=False;rearms+=1
             if not enabled and future is None and now-last_attempt>=1. and service.service_is_ready() and statuses and ready:
                 req=SetBool.Request();req.data=True;future=service.call_async(req);last_attempt=now;attempts+=1
             rclpy.spin_once(node,timeout_sec=.002)
@@ -156,7 +168,9 @@ def main():
     rows=list(csv.DictReader(runtime[0].open()))
     active_count,callbacks,gaps=command_metrics(rows,args.mode)
     summary=dict(mode=args.mode,domain=args.domain,scope='Recorded feedback, virtual authority; timing only, no causal response acceptance',
-        real_driver_started=False,enable_requests=attempts,enable_accepted=enabled,enable_responses=enable_responses,telemetry_count=telemetry_count,
+        real_driver_started=False,timing_rearm_limit=args.timing_rearms,timing_rearms=rearms,
+        enable_requests=attempts,enable_accepted=any(r['success'] for r in enable_responses),
+        last_enable_success=enabled,enable_responses=enable_responses,telemetry_count=telemetry_count,
         active_rows=active_count,callback_ms=callbacks,command_gap_ms=gaps,
         last_status=statuses[-1] if statuses else {},runtime_csv=str(runtime[0]),
         localization_summary=str(args.output/'localization/summary.json'))
