@@ -37,6 +37,24 @@ void verify(const std::filesystem::path &path,const YAML::Node &expected) {
   if(hash(path)!=expected.as<std::string>())throw std::runtime_error("artifact hash mismatch: "+path.string());
 }
 std::vector<double> values(const YAML::Node &node) {std::vector<double> out;for(auto v:node)out.push_back(v.as<double>());return out;}
+// Legacy recordings omit source labels. GUI and recorded references share the
+// same closed rear-axle and exact vehicle geometry qualification.
+bool reference_geometry_matches(const YAML::Node &metadata,const YAML::Node &config) {
+  try {
+    if(!metadata["closed_lap"]||!metadata["closed_lap"].as<bool>()||!metadata["vehicle_geometry"].IsMap())return false;
+    if(metadata["source_frame"]&&metadata["source_frame"].as<std::string>()!="base_link")return false;
+    if(metadata["coordinate_reference"]&&metadata["coordinate_reference"].as<std::string>()!="rear_axle")return false;
+    for(const char *key:{"wheelbase","rear_offset","half_width","half_length","front_extent","rear_extent"}) {
+      const auto actual=metadata["vehicle_geometry"][key],expected=config[key];
+      if(!actual)return false;
+      if(expected.IsNull()) {if(!actual.IsNull())return false;continue;}
+      if(!actual||actual.IsNull())return false;
+      const double value=actual.as<double>(),target=expected.as<double>();
+      if(!std::isfinite(value)||!std::isfinite(target)||std::abs(value-target)>1e-9)return false;
+    }
+    return true;
+  } catch(const YAML::Exception &) {return false;}
+}
 double stopping_rate(double distance,double acceleration,double dt) {
   distance=std::max(0.,distance);double change=acceleration*dt;
   double n=std::floor((std::sqrt(1.+8.*distance/(dt*change))-1.)/2.)+1.;
@@ -165,7 +183,10 @@ Bundle Bundle::load(const std::string &directory,const std::string &config_path,
   r.right_width_=reference["right_width"].as<double>();r.frame_=reference["frame_id"].as<std::string>();
   if(reference["metadata"]["map_sha256"])r.map_hash_=reference["metadata"]["map_sha256"].as<std::string>();
   r.closed_lap_=reference["metadata"]["closed_lap"]&&reference["metadata"]["closed_lap"].as<bool>();
-  r.recording_verified_=r.closed_lap_&&reference["metadata"]["vehicle_geometry"].IsMap();
+  r.reference_verified_=reference_geometry_matches(reference["metadata"],data);
+  if(r.frame_!="odom"&&r.frame_!="map")throw std::runtime_error("invalid reference frame");
+  if(r.frame_=="map"&&(r.map_hash_.size()!=64||r.map_hash_.find_first_not_of("0123456789abcdef")!=std::string::npos))
+    throw std::runtime_error("map reference requires original map SHA-256");
   r.knots_=values(reference["knots"]);r.coefficients_.resize(r.knots_.size()-1);
   if(!reference["speed_profile"]||reference["speed_profile"]["schema_version"].as<int>()!=1)
     throw std::runtime_error("frozen speed profile missing or mismatched");

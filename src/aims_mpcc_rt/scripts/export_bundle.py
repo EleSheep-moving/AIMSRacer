@@ -22,6 +22,7 @@ from aims_mpcc.backend_models import NumericalBackend, interval_symbolic
 from aims_mpcc.io import load_config
 from aims_mpcc.path import ReferencePath
 from aims_mpcc.speed_planner import SpeedPlanner
+from aims_mpcc.reference_export import serialize_reference
 
 
 PIN = '59d93e17d2985fdd73fc58b8a83ed8f83a024171'
@@ -62,11 +63,8 @@ def export(config_path, reference_dir, output, horizon=15, dt=.1, source_only=Fa
     shutil.copyfile(package_root/'NOTICE.md',output/'NOTICE.md')
     shutil.copytree(package_root/'licenses',output/'licenses')
     (output / 'config.json').write_text(json.dumps(asdict(cfg), sort_keys=True, indent=2) + '\n')
-    reference = dict(knots=path.curve.s.tolist(), coefficients=path.curve.coefficients.tolist(),
-                     length=path.length, left_width=path.left_width, right_width=path.right_width,
-                     frame_id=path.frame_id, metadata=path.metadata)
+    reference = serialize_reference(path, cfg)
     planner = SpeedPlanner(path, cfg)
-    reference['speed_profile'] = dict(schema_version=1, positions=planner.positions.tolist(), speeds=planner.speeds.tolist())
     (output / 'reference.json').write_text(json.dumps(reference, sort_keys=True, indent=2) + '\n')
     # _build_ocp is the same OCP constructor used by the tested Python backend.
     solver = AcadosSolver.__new__(AcadosSolver)

@@ -44,12 +44,14 @@ class Reference {
   double left_width() const {return left_width_;}
   double right_width() const {return right_width_;}
   bool closed_lap() const {return closed_lap_;}
-  bool recording_verified() const {return recording_verified_;}
+  bool reference_verified() const {return reference_verified_;}
+  // Compatibility accessor for existing callers; qualification is source-neutral.
+  bool recording_verified() const {return reference_verified();}
  private:
   friend class Bundle;
   double length_{}, left_width_{}, right_width_{};
   std::string frame_, map_hash_;
-  bool closed_lap_{}, recording_verified_{};
+  bool closed_lap_{}, reference_verified_{};
   std::vector<double> knots_;
   std::vector<double> speed_positions_, speeds_;
   std::vector<std::array<std::array<double, 2>, 6>> coefficients_;

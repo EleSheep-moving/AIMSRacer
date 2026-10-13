@@ -78,7 +78,7 @@ class RuntimeNode final:public rclcpp::Node {
     activation_validator_=std::make_unique<Core>(bundle_);
     simulation_=declare_parameter<bool>("simulation",false);
     if(!simulation_&&cfg_.profile!="measured")throw std::invalid_argument("synthetic vehicle profile requires simulation:=true");
-    if(!simulation_&&!bundle_.reference().recording_verified())throw std::invalid_argument("drive requires a closed reference with matching recorded vehicle geometry");
+    if(!simulation_&&!bundle_.reference().reference_verified())throw std::invalid_argument("drive requires a closed reference with matching vehicle geometry");
     repeat_laps_=declare_parameter<bool>("repeat_laps",false);
     auto_start_pending_=declare_parameter<bool>("auto_start",false);
     const double auto_start_timeout=declare_parameter<double>("auto_start_timeout",60.);
