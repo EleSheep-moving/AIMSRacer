@@ -13,6 +13,18 @@ def test_motor_telemetry_never_uses_battery_current_or_iq():
     with pytest.raises(ValueError): motor_telemetry(NS(state=state))
 
 
+def test_current_result_manifest_and_skip_checkpoint_preserve_a_schema(tmp_path):
+    manifest=dict(plan=[dict(plan_index=0,current=15.)],plan_sha256='digest',tracking_configuration={})
+    log=OutputLog(tmp_path,Config(stage='accel_interval',currents=(15.,),start_speed=1.,end_speed=1.5),manifest=manifest)
+    skip=dict(plan_index=0,reason='skipped_unreachable_current',triggering_attempt_id=1)
+    log.trials([],skipped=[skip]);log.close()
+    result=json.loads((log.directory/'trials.json').read_text())
+    assert result['schema_version']==2 and result['plan']==manifest['plan']
+    assert result['skipped']==[skip]
+    a=OutputLog(tmp_path,Config());a.close()
+    assert 'schema_version' not in json.loads((a.directory/'trials.json').read_text())
+
+
 def test_native_command_only_active_field_no_direct_driver_output():
     for request in (Request(2.,0,speed=1.),Request(2.,1,current=9.),Request(2.,1,current=-9.)):
         message=NS(header=NS(stamp=None,frame_id=''),control_mode=9,steering_angle=9.,
@@ -79,6 +91,60 @@ def test_async_log_overflow_is_visible_and_never_silently_drops(tmp_path):
         assert log.dropped_count==1 and log.pending_count==1
     finally:
         release.set(); log.close()
+
+
+def test_overflow_durably_invalidates_previously_queued_success(tmp_path):
+    from dataclasses import asdict
+    from threading import Event
+    from aims_calibration.io import AsyncOutputLog
+    from aims_calibration.operator import canonical_hash,summarize_results
+    config=Config(steering_source='rc',speeds=(1.,),measurement_seconds=.2)
+    metadata=dict(evidence_valid=True,configuration_sha256=canonical_hash(asdict(config)))
+    log=AsyncOutputLog(tmp_path,config,metadata,capacity=1)
+    entered,release=Event(),Event();original=log.writer.observation
+    def blocked(*args):entered.set();release.wait(2.);original(*args)
+    log.writer.observation=blocked
+    try:
+        log.observation(Observation(wheel_stamp=1.,telemetry_stamp=1.),Request(1.),'MEASURE')
+        assert entered.wait(1.)
+        log.trials([dict(trial_id=1,plan_index=0,stage='speed_hold',requested_target=1.,
+                        success=True,evidence_valid=True,duration_s=.25,reason='completed')])
+        with pytest.raises(RuntimeError,match='overflow'):log.runtime(dict(ros_stamp=1.))
+    finally:
+        release.set();log.close()
+    result=json.loads((log.directory/'trials.json').read_text())
+    assert log.error is not None and result['metadata']['evidence_valid'] is False
+    assert not summarize_results(result)['valid']
+
+
+def test_failed_writer_accepts_latest_invalid_snapshot_without_queue_item(tmp_path):
+    from aims_calibration.io import AsyncOutputLog
+    log=AsyncOutputLog(tmp_path,Config())
+    try:
+        log._latch_error(RuntimeError('injected overflow'))
+        with pytest.raises(RuntimeError):log.trials([dict(trial_id=1,success=False,reason='fault')])
+        log.flush()
+        result=json.loads((log.directory/'trials.json').read_text())
+        assert len(result['trials'])==1 and result['metadata']['evidence_valid'] is False
+    finally:log.close()
+
+
+def test_overflow_backlog_cannot_replace_latest_failure_snapshot(tmp_path):
+    from aims_calibration.io import AsyncOutputLog
+    from threading import Event
+    log=AsyncOutputLog(tmp_path,Config(),capacity=2)
+    entered,release=Event(),Event();original=log.writer.runtime
+    def blocked(row):entered.set();release.wait(2.);original(row)
+    log.writer.runtime=blocked
+    rows=[dict(trial_id=i,success=False,reason='fault') for i in range(1,4)]
+    try:
+        log.runtime(dict(stamp=1.));assert entered.wait(1.)
+        log.trials(rows[:1]);log.trials(rows[:2])
+        with pytest.raises(RuntimeError):log.trials(rows)
+        release.set();log.flush()
+        payload=json.loads((log.directory/'trials.json').read_text())
+        assert len(payload['trials'])==3 and payload['metadata']['evidence_valid'] is False
+    finally:release.set();log.close()
 
 
 @pytest.mark.parametrize('damage',['name','duplicate_record','duplicate_key','stale','future'])

@@ -33,6 +33,7 @@ Guides for the current **FAST-LIO2 + rear-axle EKF + NDT + native MPCC** stack. 
 | [Reference and bundle workflow](../src/controller/docs/usage.md) | Map-frame reference, speed planning, export and target-CPU build | English / 简体中文 |
 | [Field command chain: MPCC then PP](operations/field-mpcc-then-pp.md) | Old-map MPCC tuning/ACC, expanded mapping and new-reference PP | English / 简体中文 |
 | [Map editor, PP and calibration](operations/pp-calibration.md) | Browser trajectory drawing, enhanced PP, three longitudinal stages and native command recording | English / 简体中文 |
+| [B/C current sweeps](operations/current-sweep.md) | Explicit A baseline, acceleration, positive-current reduction, coast/braking and coverage | English / 简体中文 |
 | [PP controller](../src/aims_pp/README.md) | Independent enhanced steering, canonical reference and explicit enable | English / 简体中文 |
 | [Longitudinal calibration](../src/aims_calibration/README.md) | Selected-authority trials, current telemetry and source-time evidence | English / 简体中文 |
 | [Map/reference tools](../tools/reference/README.md) | Save a PGO map and recover a matching closed reference | English / 简体中文 |
@@ -61,6 +62,7 @@ Maps, reference inputs, generated bundles and raw bags are external data. A repo
 | --- | --- | --- |
 | [Development verification](../verification/README.md) | Current regression/replay tools, test locations and required bundle inputs | English / 简体中文 |
 | [Acceleration verification](../verification/acceleration/README.md) | Offline comparison tools, shared observer and separate ROS/DDS runtime replay | English / 简体中文 |
+| [B/C calibration verification](reports/2026-10-14-calibration-current-sweep.md) | Host/NX tests, simulated native VESC chain, selected A baseline and remaining field acceptance | English / 简体中文 |
 | [Main-stack integration](reports/2026-10-10-main-field-stack-integration.md) | Field-default parity, NX builds, installed providers and software checks | Chinese |
 | [Latest field review](reports/2026-10-10-mpcc-field-review.md) | Run-by-run motion, speed, tracking, solver timing and joint CPU load | Chinese |
 | [All dated reports](reports/README.md) | Earlier LIO, EKF, gyro bias, vehicle response, control and localization evidence | English / 简体中文 |

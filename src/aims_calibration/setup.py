@@ -14,4 +14,6 @@ setup(name='aims_calibration',version='0.1.0',packages=find_packages(exclude=['t
           'inspect = aims_calibration.cli:inspect_main',
           'start = aims_calibration.cli:start_main',
           'stop = aims_calibration.cli:stop_main',
+          'baseline = aims_calibration.cli:baseline_main',
+          'plan = aims_calibration.cli:plan_main',
           'results = aims_calibration.cli:results_main']})

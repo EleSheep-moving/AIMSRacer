@@ -4,11 +4,11 @@
 
 `aims_calibration` 通过现有整车指令选择器进行纵向标定。节点以 50 Hz 发布 native `vesc_msgs/VescCommand` 到 `/calib/vesc_command`，时间戳为当前 ROS 时间，坐标系为 `base_link`。选择器独占 `/vesc/command`；标定节点不发布 `/drive`。控制与状态定时器采用稳定时钟，因此 `/clock` 停止时仍能检查数据是否过期。
 
-节点可执行文件为 `longitudinal_calibration`，节点 launch 为 `longitudinal_calibration.launch.py`，完整整车入口为 `aims_racer_system/calibration.launch.py`。节点 launch 参数包括 `config`、`reference_directory`、`vehicle_config`、`pp_config`、`log_directory`、`stage`、`steering_source`、`auto_start`。完整入口同时配置整车、定位、录包与加速度估计。默认不启用，必须调用 `/calib/enable`（`std_srvs/SetBool`）；`auto_start: true` 会被拒绝。`/calib/status` 提供状态、原因、实际与请求电流及输出目录。完整启动命令见[操作指南](../../docs/operations/pp-calibration.zh-CN.md)。
+节点可执行文件为 `longitudinal_calibration`，节点 launch 为 `longitudinal_calibration.launch.py`，完整整车入口为 `aims_racer_system/calibration.launch.py`。节点 launch 参数包括 `config`、`reference_directory`、`vehicle_config`、`pp_config`、`log_directory`、`stage`、`steering_source`、`base_current_file`、`auto_start`。完整入口同时配置整车、定位、录包与加速度估计。默认不启用，必须调用 `/calib/enable`（`std_srvs/SetBool`）；`auto_start: true` 会被拒绝。`/calib/status` 提供状态、原因、实际与请求电流及输出目录。完整启动命令见[操作指南](../../docs/operations/pp-calibration.zh-CN.md)。
 
 ## 正式标定命令
 
-四个入口都由仓库内 `aims_calibration/cli.py` 实现；共享检查位于
+六个操作入口都由仓库内 `aims_calibration/cli.py` 实现；共享检查位于
 `operator.py`，采样与控制仍由 `node.py` / `engine.py` 负责。
 不依赖 `field-tests` 下的临时 Python 脚本、固定 PID 或聊天授权文本。
 
@@ -64,21 +64,33 @@ Fixed Frame 为 `map`；位置修正沿用 NDT `/initialpose`。
 程序会显示结果目录和录包会话路径，不把 PID 写死。
 实车停稳后用运行 launch 的终端 Ctrl+C 关闭，并检查该会话的 `bag`。
 
-## 三个阶段
+## 阶段与自动扫描
 
-- `speed_hold`：默认以 `hold_sampling: cumulative` 累计有效直线稳速样本。每次进入直线，连续 1 秒处于目标 ±0.2 m/s 内后才采样；入弯、切换直线区间、速度不稳或采样源有未覆盖的间隔时暂停，保留当前速度档已采集的数据，重新稳速后继续。累计达到采样时长后立即切换下一档，全部速度完成后请求零速度。基础配置仍为 `[1, 2, 3]`、每档 10 秒；九档方案使用下述专用配置。`hold_sampling: continuous` 保留原来的连续窗口方式，离开区间或速度不稳即作废并重采。
-- `accel_interval`：先用速度模式达到 `start_speed`，再依次请求显式配置的正 `currents`，使用 `MODE_CURRENT`。只有最终被选择的指令回显该请求后才开始计算响应。新轮速达到或超过较大的 `end_speed` 时，立即请求零速度；即使电流遥测未更新或尚无电流确认也会退出，并将不完整响应记为失败。
-- `decel_current`：先用速度模式达到正的 `start_speed`，再请求显式配置的负 `currents`，同样使用 `MODE_CURRENT`。新轮速达到或低于正的 `end_speed`（默认 0.5 m/s）时立即请求零速度。边界到达但缺少新的电流遥测时，响应记为失败。不会主动请求倒车。
+| 阶段 | 仓库 profile | 测量 |
+| --- | --- | --- |
+| A `speed_hold` | `speed_hold_1to5` | 九档巡航实际电流，每档累计五秒有效直线样本 |
+| B `accel_interval` | `accel_sweep_1to5` | 相邻 +0.5 m/s 区间，电流 `I0(起速)+5k`，最高 100 A |
+| C `decel_current` | `decel_sweep_1to5` | 低于基准的正电流减速到起速−0.5，再滑行、负电流制动到 1 m/s |
 
-电流阶段的默认列表为空，必须复制 `config/calibration.yaml` 并明确设置带符号电流与速度区间。launch 的 `stage`、`steering_source` 会覆盖 YAML 对应项，选择电流阶段或遥控转向时要同时传入这些参数。格式示例：加速 `currents: [5.0, 10.0]`、`start_speed: 1.0`、`end_speed: 2.0`；减速 `currents: [-3.0, -5.0]`、`start_speed: 2.0`、`end_speed: 0.5`。这仅是配置示例，不是已经实车验证的电流推荐。
+详见 [B/C 操作指南](../../docs/operations/current-sweep.zh-CN.md)。离线
+`baseline`、`plan` 与另外四个操作入口共享 `cli.py`；基准必须明确指定完整
+有效的九档 A 结果，不自动挑选会话。
 
-若准备阶段的稳定轮速已经越过结束速度，例如区间过窄与稳速容差重叠，则直接请求零速度，不发送任何非零电流，记录为未开始。默认响应超时为 8 秒；失败试验不计算平均加速度。电流上限为 100 A；`speed_hold` 请求速度上限为 `min(config.max_speed, vehicle.max_speed, 5)` m/s，正负电流阶段仍至多 4 m/s。专用稳速配置可设置至多 0.2 m/s 的 `speed_overshoot_tolerance`，仅用于实测速度的超速判定，不提高请求速度。不自动推测基础电流或自动扫描；若依据稳速实际电流制定后续列表，应预先计算并确认带符号值。标定入口关闭 VESC 驱动的 40 A 起步替代功能，避免请求电流被该功能替换。
+每项恢复自己的起速，在 ±0.2 m/s 内连续稳速一秒后切换 native 电流模式。
+离开直线同项最多尝试三次，PP 弯道保持 1 m/s 恢复。依据实际电机反馈判断电流
+能力，只跳过对应分组；速度超时本身不触发跳档，新鲜端点成功优先。
+短响应可记录为电流跟踪尚未验证。电流上限 ±100 A，速度至多
+`min(config.max_speed, vehicle.max_speed, 5)` m/s。B/C 冻结结构化计划并保存 v2；A 保留 v1。
+
+手动模式仍接受显式正电流 B、负电流 C 和单个起止区间，默认空列表拒绝电流阶段。
+节点 launch 显式传匹配的 `stage`、`steering_source`，整车 profile 默认用
+`stage:=auto` 自动选择。标定驱动必须关闭起步电流替换；最终请求不是实测电流。
 
 ## 九档巡航电流方案
 
 使用 `config/speed_hold_1to5.yaml`：速度列表为 `[1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]`，每档累计 5 秒，`repeats: 1`，每次恢复采样前连续稳速 1 秒，弯道 `recovery_speed: 1.0`。例如 5 m/s 单条直线不足 5 秒时，可以在后续直线继续累计，不能把这称为连续 5 秒。
 
-该配置明确选择 `max_speed: 5.0`、`speed_overshoot_tolerance: 0.2`，使用 `profile:=speed_hold_1to5` 会选择仓库内车辆与 PP 配置，或者同时传入专用 `vehicle_config`，其 `max_speed` 为 5.0；不修改普通 race 的车辆配置。若仍选择 4 m/s 车辆配置，启动会拒绝九档列表，不静默跳过 4.5 或 5 m/s。诊断包含当前目标速度、累计秒数、段数、计划档数和采样模式。权限、定位或日志故障仍作废当前整档；新 launch/会话从第一档重新开始。
+该配置明确选择 `max_speed: 5.0`；外场补丁不再以实测速度过冲停止，有效样本仍要求稳速容差。使用 `profile:=speed_hold_1to5` 会选择仓库内车辆与 PP 配置，或者同时传入专用 `vehicle_config`，其 `max_speed` 为 5.0；不修改普通 race 的车辆配置。若仍选择 4 m/s 车辆配置，启动会拒绝九档列表，不静默跳过 4.5 或 5 m/s。诊断包含当前目标速度、累计秒数、段数、计划档数和采样模式。权限、定位或日志故障仍作废当前整档；新 launch/会话从第一档重新开始。
 
 ## 转向与有效采样区间
 

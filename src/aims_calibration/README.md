@@ -4,11 +4,11 @@
 
 `aims_calibration` measures longitudinal behavior through the existing vehicle command selector. It publishes only native `vesc_msgs/VescCommand` requests on `/calib/vesc_command`, at 50 Hz, stamped with current ROS time and `base_link`. Command and safety/status timers use steady time so they continue checking freshness when `/clock` pauses. The selector owns `/vesc/command`; this package never publishes `/drive` or the driver topic.
 
-The executable and node-only launch are `longitudinal_calibration` and `longitudinal_calibration.launch.py`. The complete graph is `aims_racer_system/calibration.launch.py`. Package launch arguments: `config`, `reference_directory`, `vehicle_config`, `pp_config`, `log_directory`, `stage`, `steering_source`, and `auto_start`. Use the full system graph to configure vehicle, known-map localization, recording, and acceleration estimation. Defaults are disabled; explicit `/calib/enable` (`std_srvs/SetBool`) starts preparation. `auto_start` must be false; the node rejects true, requiring explicit service enable. `/calib/status` reports state, reason, measured current, requested current, and output directory.
+The executable and node-only launch are `longitudinal_calibration` and `longitudinal_calibration.launch.py`. The complete graph is `aims_racer_system/calibration.launch.py`. Package launch arguments: `config`, `reference_directory`, `vehicle_config`, `pp_config`, `log_directory`, `stage`, `steering_source`, `base_current_file`, and `auto_start`. Use the full system graph to configure vehicle, known-map localization, recording, and acceleration estimation. Defaults are disabled; explicit `/calib/enable` (`std_srvs/SetBool`) starts preparation. `auto_start` must be false; the node rejects true, requiring explicit service enable. `/calib/status` reports state, reason, measured current, requested current, and output directory.
 
 ## Packaged calibration commands
 
-All four executables share `aims_calibration/cli.py`. `operator.py` holds pure
+All six operator executables share `aims_calibration/cli.py`. `operator.py` holds pure
 readiness and result checks; `node.py` and `engine.py` own control and acquisition.
 No temporary `field-tests` Python script, fixed PID or conversation authorization
 string is required.
@@ -70,21 +70,39 @@ display in RViz with Fixed Frame `map`. NDT pose corrections retain `/initialpos
 Use the printed result and bag session paths, not a fixed PID. After physical
 standstill, Ctrl+C in the launch terminal and verify that session's `bag`.
 
-## Stages
+## Stages and generated sweeps
 
-- `speed_hold`: `hold_sampling: cumulative` accumulates valid straight, steady-speed samples. Each straight requires one continuous second within 0.2 m/s of the target. Turns, region changes, unstable speed and uncovered sample-source gaps pause accumulation and require settling again; prior admitted samples remain. Completing a target immediately requests the next speed; the last target requests zero speed. The basic preset still uses `[1, 2, 3]` and ten seconds per target. The nine-target preset is described below. `hold_sampling: continuous` retains the previous uninterrupted-window behavior.
-- `accel_interval`: prepare at configured `start_speed` in speed mode, then apply each explicitly supplied positive `currents` entry in `MODE_CURRENT`. The response starts only after that current request appears in the final selected command. End at or above the configured larger `end_speed`. A fresh wheel-speed crossing immediately requests zero speed even if motor telemetry has not advanced or the requested current has not yet appeared in the final command; those incomplete response records are unsuccessful.
-- `decel_current`: prepare at configured positive `start_speed` in speed mode, then apply explicitly supplied negative `currents` in `MODE_CURRENT`. End at or below the configured positive `end_speed` (default 0.5 m/s), then immediately request zero speed regardless of motor-telemetry uniqueness or current confirmation. If the boundary wheel observation arrives without new current telemetry, stop and mark the result unsuccessful. Never request reverse intentionally.
+| Stage | Packaged profile | Measurement |
+| --- | --- | --- |
+| A `speed_hold` | `speed_hold_1to5` | Actual cruising motor current at nine speeds, five cumulative straight seconds each |
+| B `accel_interval` | `accel_sweep_1to5` | Adjacent +0.5 m/s intervals with currents `I0(start)+5k`, capped at 100 A |
+| C `decel_current` | `decel_sweep_1to5` | Below-baseline positive current to start−0.5, then coast and negative current to 1 m/s |
 
-Current stage defaults have an empty `currents` array and intentionally refuse startup. Copy `config/calibration.yaml`, set an explicit current list and interval, and select the stage and steering source. The package launch uses explicit `stage` and `steering_source` arguments to override those YAML entries; pass both arguments when choosing a current stage or RC steering. Example accel settings: `stage: accel_interval`, `currents: [5.0, 10.0]`, `start_speed: 1.0`, `end_speed: 2.0`. Example decel settings: `stage: decel_current`, `currents: [-3.0, -5.0]`, `start_speed: 2.0`, `end_speed: 0.5`. These are configuration examples, not validated vehicle current recommendations. If a stable preparation speed already reaches the end boundary (for example, a narrow interval overlapping the stable-speed tolerance), the trial stops at zero speed without issuing any nonzero current and is recorded as not started. Trials time out after 8 s by default; unsuccessful responses have no calculated mean acceleration. Bounds are at most 100 A and at most `min(config.max_speed, vehicle.max_speed, 5)` m/s for speed hold; current stages remain limited to 4 m/s. There is no automatic sweep or inferred base-current offset. If using measured base current to choose a list, calculate and review the explicit signed values before startup.
+Use the [B/C operator guide](../../docs/operations/current-sweep.md) for baseline
+export, plan preview, launch and result definitions. `baseline` and `plan` share
+`cli.py` with the other four operator entries and run offline. B/C require an
+explicit accepted nine-speed baseline; no session is selected automatically.
 
-The VESC driver's current startup helper must be false in the calibration vehicle graph. Do not run these trials with the driver's 40 A current substitution enabled: the final requested current is not the measured motor current.
+Each current item restores its own start speed, settles one second within ±0.2 m/s,
+then applies native current mode. Region exit retries the same item at most three
+times; PP curves retain 1 m/s recovery. Current tracking uses measured motor feedback
+and skips only the appropriate stronger/positive group when the capability decision
+is supported. A speed timeout alone does not skip. A fresh successful endpoint takes
+priority; short responses can have unverified current tracking. Current bounds are
+±100 A, speed bounds at most `min(config.max_speed, vehicle.max_speed, 5)` m/s.
+B/C profiles freeze their complete structured plans and use schema v2; A retains v1.
+
+Manual mode still accepts explicit positive B or negative C `currents` and a single
+start/end interval. Its default empty list refuses current-stage startup. Pass
+matching `stage` and `steering_source` to the node-only launch; the system launch
+resolves packaged profiles with `stage:=auto`. Current startup substitution must be
+false: the selected request is not the measured motor current.
 
 ## Nine-target cruising-current preset
 
 `config/speed_hold_1to5.yaml` requests `[1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]`, five effective source seconds per target, one repeat, one second of settling after each pause, and 1.0 m/s recovery outside trial regions. A target may span multiple straights; its five seconds are cumulative, not continuous.
 
-Select `profile:=speed_hold_1to5` to use the packaged vehicle and PP YAML, or pass a separate vehicle YAML with `max_speed: 5.0`. A 4 m/s vehicle config rejects this sweep rather than skipping its last targets. The preset allows 0.2 m/s measured overshoot before faulting; requested speeds remain capped at 5.0. Diagnostics expose current target, accumulated seconds, segment count, plan length and sampling mode. Permission, localization and evidence faults still invalidate the current target; a new launch/session starts again at the first target.
+Select `profile:=speed_hold_1to5` to use the packaged vehicle and PP YAML, or pass a separate vehicle YAML with `max_speed: 5.0`. A 4 m/s vehicle config rejects this sweep rather than skipping its last targets. The field patch removes the measured-overspeed stop; admitted hold samples still require the target tolerance and requested speeds remain capped at 5.0. Diagnostics expose current target, accumulated seconds, segment count, plan length and sampling mode. Permission, localization and evidence faults still invalidate the current target; a new launch/session starts again at the first target.
 
 ## Steering and trial windows
 

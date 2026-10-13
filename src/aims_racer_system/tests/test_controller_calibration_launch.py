@@ -139,3 +139,56 @@ def test_calibration_rviz_uses_packaged_map_reference_and_software_option(tmp_pa
     paths=[d for d in config['Displays'] if d['Class']=='rviz_default_plugins/Path']
     assert paths[0]['Topic']['Value']=='/calib/reference'
     assert paths[0]['Topic']['Durability Policy']=='Transient Local'
+
+
+@pytest.mark.parametrize('profile,stage',[('accel_sweep_1to5','accel_interval'),('decel_sweep_1to5','decel_current')])
+def test_current_profiles_resolve_stage_and_require_baseline_before_recording(tmp_path,profile,stage):
+    module=load('calibration.launch.py')
+    module.get_package_share_directory=lambda package:str(ROOT.parent/package)
+    ctx=context(tmp_path,profile=profile,stage='auto',calibration_config='',vehicle_config='',pp_config='',record='true')
+    with pytest.raises(ValueError,match='base_current_file'):
+        module.build_calibration(ctx)
+    assert not (tmp_path/'session').exists()
+
+
+def test_default_calibration_auto_stage_preserves_a(tmp_path):
+    actions=load('calibration.launch.py').build_calibration(context(tmp_path,stage='auto'))
+    calibration=next(a for a in actions if isinstance(a,dict) and a.get('package')=='aims_calibration')
+    assert calibration['arguments']['stage']=='speed_hold'
+
+
+@pytest.mark.parametrize('steering,pose',[('pp',''),('pp','1,2,0,0,0,0.5'),('rc','')])
+def test_sweep_keeps_initial_pose_separate_from_config(tmp_path,steering,pose):
+    import json
+    from aims_calibration.planner import export_baseline
+    import importlib.util
+    fixture=ROOT.parent/'aims_calibration/tests/test_cli.py'
+    spec=importlib.util.spec_from_file_location('calib_fixture',fixture)
+    source=importlib.util.module_from_spec(spec);spec.loader.exec_module(source)
+    baseline=tmp_path/'baseline.json';baseline.write_text(json.dumps(export_baseline(source.stage_a_payload())))
+    module=load('calibration.launch.py')
+    module.get_package_share_directory=lambda package:str(ROOT.parent/package)
+    actions=module.build_calibration(context(tmp_path,profile='accel_sweep_1to5',stage='auto',
+        calibration_config='',vehicle_config='',pp_config='',base_current_file=str(baseline),
+        steering_source=steering,initial_pose=pose))
+    nodes=[a for a in actions if isinstance(a,dict) and a.get('executable')=='relocalize_known_map.py']
+    assert len(nodes)==bool(pose)
+    if pose:assert nodes[0]['arguments'][3:]==['--x','1.0','--y','2.0','--z','0.0','--roll','0.0','--pitch','0.0','--yaw','0.5']
+
+
+def test_invalid_sweep_tracking_settings_fail_before_recording(tmp_path):
+    import json,yaml
+    from aims_calibration.planner import export_baseline
+    fixture=ROOT.parent/'aims_calibration/tests/test_cli.py'
+    spec=importlib.util.spec_from_file_location('calib_bad_settings_fixture',fixture)
+    source=importlib.util.module_from_spec(spec);spec.loader.exec_module(source)
+    baseline=tmp_path/'baseline.json';baseline.write_text(json.dumps(export_baseline(source.stage_a_payload())))
+    params=yaml.safe_load((ROOT.parent/'aims_calibration/config/accel_sweep_1to5.yaml').read_text())
+    params['longitudinal_calibration']['ros__parameters']['current_min_samples']=0
+    config=tmp_path/'bad.yaml';config.write_text(yaml.safe_dump(params))
+    module=load('calibration.launch.py');module.get_package_share_directory=lambda package:str(ROOT.parent/package)
+    ctx=context(tmp_path,profile='accel_sweep_1to5',stage='auto',calibration_config=str(config),
+        vehicle_config='',pp_config='',base_current_file=str(baseline),record='true')
+    with pytest.raises(ValueError,match='sample'):
+        module.build_calibration(ctx)
+    assert not (tmp_path/'session').exists()

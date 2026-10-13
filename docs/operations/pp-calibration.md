@@ -6,6 +6,8 @@ These are separate workflows: the browser edits a reference offline, PP tracks a
 reference, and calibration owns staged speed/current experiments. The default race
 controller remains the field-tested MPCC. The editor never publishes vehicle commands.
 
+For B/C generated current sweeps, use the [current-sweep guide](current-sweep.md).
+
 For the current field order (old-map MPCC first, then expanded-map PP), use the [command chain](field-mpcc-then-pp.md).
 
 ## Feature overlay
@@ -89,7 +91,7 @@ close launch only after the vehicle is stopped. MPCC and PP must not run togethe
 
 ## Packaged calibration commands
 
-All four executables share `aims_calibration/cli.py`. `operator.py` holds pure
+The four live-operation executables share `aims_calibration/cli.py`. `operator.py` holds pure
 readiness and result checks; `node.py` and `engine.py` own control and acquisition.
 No temporary `field-tests` Python script, fixed PID or conversation authorization
 string is required.
@@ -180,14 +182,14 @@ forwarded driver request is `/vesc/command`.
 | Stage | Experiment | Configuration |
 | --- | --- | --- |
 | `speed_hold` | Stable speed, unique actual motor-current samples on straights | Defaults 1/2/3 m/s, 1 s stability, 10 s sample interval |
-| `accel_interval` | Positive current from start_speed to end_speed | Explicit positive `currents`; end_speed greater than start_speed |
-| `decel_current` | Negative current to a positive ending speed | Explicit negative `currents`; end_speed below start_speed |
+| `accel_interval` | Current acceleration through adjacent speed intervals | `accel_sweep_1to5` with accepted baseline; manual list optional |
+| `decel_current` | Positive below-baseline reduction, coast and negative braking | `decel_sweep_1to5` with accepted baseline; manual list optional |
 
 Copy the installed [calibration YAML](../../src/aims_calibration/config/calibration.yaml)
 outside source, configure the trial, and pass `calibration_config:=/absolute/path.yaml`.
 The default empty current list deliberately refuses current stages. Speed/current
 requests stay within the selected vehicle bounds, with driver limits at ±100 A;
-there is no automatic full-current sweep. Both signed-current stages use
+the packaged B/C profiles generate explicit baseline-bound sweeps. Use the [B/C guide](current-sweep.md) for their commands and acceptance. Both signed-current stages use
 `MODE_CURRENT`, not the disabled brake mode or reserved acceleration mode.
 
 

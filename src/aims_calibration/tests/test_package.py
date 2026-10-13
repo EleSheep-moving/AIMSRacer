@@ -20,3 +20,16 @@ def test_package_launch_and_required_explicit_currents():
         assert arg in launch
     assert "executable='longitudinal_calibration'" in launch
     assert "executable='joystick" not in launch
+
+
+def test_current_sweep_profiles_and_offline_operator_entries():
+    for name,stage in [('accel_sweep_1to5','accel_interval'),('decel_sweep_1to5','decel_current')]:
+        values=yaml.safe_load((ROOT/'config'/f'{name}.yaml').read_text())['longitudinal_calibration']['ros__parameters']
+        assert values['stage']==stage and values['plan_mode']=='sweep'
+        assert values['max_speed']==5. and values['max_current']==100.
+        assert values['current_step']==5. and values['trial_timeout']==8.
+        assert values['stable_seconds']==1. and values['stable_tolerance']==.2
+        assert values['auto_start'] is False and values['repeats']==1
+    setup=(ROOT/'setup.py').read_text()
+    assert 'baseline = aims_calibration.cli:baseline_main' in setup
+    assert 'plan = aims_calibration.cli:plan_main' in setup

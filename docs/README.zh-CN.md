@@ -33,6 +33,7 @@
 | [参考与 bundle 流程](../src/controller/docs/usage.zh-CN.md) | map 参考、速度规划、导出与目标 CPU 编译 | English / 简体中文 |
 | [场地命令链：先 MPCC 后 PP](operations/field-mpcc-then-pp.zh-CN.md) | 旧图调 MPCC 并录 ACC、扩展建图、新轨迹 PP | English / 简体中文 |
 | [地图编辑器、PP 与标定](operations/pp-calibration.zh-CN.md) | 浏览器绘制轨迹、增强 PP、纵向三阶段及 native 指令录制 | English / 简体中文 |
+| [B/C 电流扫描](operations/current-sweep.zh-CN.md) | 明确选择 A 基准，加速、正电流减速、滑行与制动，以及覆盖验收 | English / 简体中文 |
 | [PP 控制器](../src/aims_pp/README.zh-CN.md) | 独立增强转向算法、统一参考与显式启用 | English / 简体中文 |
 | [纵向标定](../src/aims_calibration/README.zh-CN.md) | 选中权限、实际电流与源时间证据 | English / 简体中文 |
 | [地图/参考工具](../tools/reference/README.zh-CN.md) | 保存 PGO 地图，恢复与地图对应的闭环参考 | English / 简体中文 |
@@ -61,6 +62,7 @@
 | --- | --- | --- |
 | [开发验证](../verification/README.zh-CN.md) | 当前回归/重放工具、测试位置与所需 bundle 输入 | English / 简体中文 |
 | [加速度验证](../verification/acceleration/README.zh-CN.md) | 离线比较工具、共用观测器及独立 ROS/DDS 运行期回放 | English / 简体中文 |
+| [B/C 标定验证](reports/2026-10-14-calibration-current-sweep.zh-CN.md) | 主机/NX 测试、模拟 native VESC 链、所选 A 基准与待进行的实车验收 | English / 简体中文 |
 | [main 栈整合](reports/2026-10-10-main-field-stack-integration.md) | 外场默认配置一致性、NX 构建、实际安装来源与软件检查 | 中文 |
 | [最新外场复盘](reports/2026-10-10-mpcc-field-review.md) | 分次运动时间、速度、跟踪、求解耗时与联合 CPU 负载 | 中文 |
 | [全部日期化报告](reports/README.zh-CN.md) | 历史 LIO、EKF、gyro 零偏、车辆响应、控制与定位证据 | English / 简体中文 |

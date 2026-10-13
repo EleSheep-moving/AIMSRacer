@@ -71,7 +71,7 @@ def test_node_uses_bounded_background_writer_and_reports_runtime(node):
     from aims_calibration.io import AsyncOutputLog
     assert isinstance(node.output,AsyncOutputLog)
     assert node.output.queue.maxsize==128
-    node._tick(); node.output.queue.join()
+    node._tick(); node.output.flush()
     assert (node.output.directory/'runtime.csv').read_text().count('\n')==2
 
 
@@ -149,7 +149,7 @@ def test_completion_boundary_enqueue_overflow_revokes_trial_acceptance(node):
         assert node.engine.trials[-1]['response_completed'] and not node.engine.trials[-1]['evidence_valid']
     finally:
         release.set(); node.output.queue.join()
-    node._tick(); node.output.queue.join()
+    node._tick(); node.output.flush()
     payload=json.loads((node.output.directory/'trials.json').read_text())
     assert not payload['trials'][-1]['success'] and payload['metadata']['evidence_valid'] is False
     assert 'queue' in payload['trials'][-1]['evidence_failure']

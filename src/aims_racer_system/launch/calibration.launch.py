@@ -1,5 +1,6 @@
 """Longitudinal trials with one native calibration command publisher."""
 from pathlib import Path
+import yaml
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -10,32 +11,51 @@ from aims_racer_system.launch_support import flag, include, parse_initial_pose, 
 
 def build_calibration(context):
     cfg=context.launch_configurations
-    stage=cfg.get('stage','speed_hold')
+    stage=cfg.get('stage','auto')
     steering=cfg.get('steering_source','pp')
     profile=cfg.get('profile','default')
-    if profile not in ('default','speed_hold_1to5') or (profile=='speed_hold_1to5' and stage!='speed_hold'):
-        raise ValueError('profile must be default or speed_hold_1to5 with stage speed_hold')
+    stages=dict(speed_hold_1to5='speed_hold',accel_sweep_1to5='accel_interval',decel_sweep_1to5='decel_current')
+    if profile not in ('default',*stages):raise ValueError('unknown calibration profile')
+    if stage=='auto':stage=stages.get(profile,'speed_hold')
+    if profile in stages and stage!=stages[profile]:raise ValueError('profile and stage conflict')
+    cfg['stage']=stage
     calibration_share=Path(get_package_share_directory('aims_calibration'))
-    if profile=='speed_hold_1to5':
-        for key,name in (('calibration_config','speed_hold_1to5.yaml'),('vehicle_config','speed_hold_vehicle.yaml'),('pp_config','speed_hold_pp.yaml')):
+    if profile in stages:
+        for key,name in (('calibration_config',profile+'.yaml'),('vehicle_config','speed_hold_vehicle.yaml'),('pp_config','speed_hold_pp.yaml')):
             cfg[key]=cfg.get(key) or str(calibration_share/'config'/name)
     if stage not in ('speed_hold','accel_interval','decel_current'):
         raise ValueError('stage must be speed_hold, accel_interval or decel_current')
     if steering not in ('pp','rc'):raise ValueError('steering_source must be pp or rc')
     if flag(context,'auto_start'):raise ValueError('calibration requires explicit /calib/enable; auto_start must be false')
-    values=parse_initial_pose(cfg.get('initial_pose',''))
+    initial_pose=parse_initial_pose(cfg.get('initial_pose',''))
     map_file=''
     if steering=='pp':
         if not cfg.get('map_file') or not cfg.get('reference_directory'):
             raise ValueError('PP calibration requires map_file and reference_directory')
         map_file=str(Path(cfg['map_file']).expanduser().resolve(strict=True))
         cfg['reference_directory']=str(Path(cfg['reference_directory']).expanduser().resolve(strict=True))
-    elif values:
+    elif initial_pose:
         raise ValueError('initial_pose is only used for PP calibration')
     cfg['calibration_config']=str(Path(cfg.get('calibration_config') or
         Path(get_package_share_directory('aims_calibration'))/'config/calibration.yaml').expanduser().resolve(strict=True))
     cfg['vehicle_config']=cfg.get('vehicle_config') or str(Path(get_package_share_directory('aims_mpcc'))/'config/vehicle.yaml')
     cfg['pp_config']=cfg.get('pp_config') or str(Path(get_package_share_directory('aims_pp'))/'config/pp.yaml')
+    loaded=yaml.safe_load(Path(cfg['calibration_config']).read_text()) or {}
+    params=loaded.get('longitudinal_calibration',{}).get('ros__parameters',{})
+    baseline=cfg.get('base_current_file') or params.get('base_current_file','')
+    if params.get('plan_mode')=='sweep':
+        if not baseline:raise ValueError('B/C sweep requires base_current_file')
+        from dataclasses import fields
+        from aims_calibration.engine import Config
+        from aims_calibration.configuration import prepare_engine,tracking_settings_from_parameters
+        defaults=Config()
+        values={f.name:params.get(f.name,getattr(defaults,f.name)) for f in fields(Config)}
+        values.update(stage=stage,steering_source=steering)
+        vehicle=yaml.safe_load(Path(cfg['vehicle_config']).read_text())
+        values['max_speed']=min(values['max_speed'],float(vehicle['max_speed']))
+        prepare_engine(values,plan_mode='sweep',base_current_file=baseline,current_step=params.get('current_step',5.),
+            tracking_settings=tracking_settings_from_parameters(params))
+    if baseline:cfg['base_current_file']=str(Path(baseline).expanduser().resolve(strict=True))
     cfg['current_startup_enabled']='false'
     share=Path(get_package_share_directory('aims_racer_system'))
     actions=recording_actions(context,share,mode='calibration')
@@ -54,11 +74,12 @@ def build_calibration(context):
         config=cfg['calibration_config'],reference_directory=cfg.get('reference_directory',''),
         vehicle_config=cfg['vehicle_config'],pp_config=cfg['pp_config'],log_directory=log,
         stage=stage,steering_source=steering,auto_start='false',
+        base_current_file=cfg.get('base_current_file',''),
         require_acceleration=str(flag(context,'longitudinal_acceleration')).lower())))
-    if values:
+    if initial_pose:
         actions.append(Node(package='aims_racer_system',executable='relocalize_known_map.py',
             arguments=[map_file,'--pose-frame','base_link',*[arg for key,value in
-                zip(('x','y','z','roll','pitch','yaw'),values) for arg in ('--'+key,str(value))]],output='screen'))
+                zip(('x','y','z','roll','pitch','yaw'),initial_pose) for arg in ('--'+key,str(value))]],output='screen'))
     if flag(context,'rviz'):
         if steering!='pp': raise ValueError('calibration RViz requires PP map tracking')
         env={'LIBGL_ALWAYS_SOFTWARE':'1'} if flag(context,'rviz_software_rendering') else {}
@@ -69,8 +90,9 @@ def build_calibration(context):
 
 def generate_launch_description():
     return LaunchDescription([
-        DeclareLaunchArgument('stage',default_value='speed_hold'),
-        DeclareLaunchArgument('profile',default_value='default',description='Optional speed_hold_1to5 preset with packaged calibration, vehicle and PP settings'),
+        DeclareLaunchArgument('stage',default_value='auto',description='auto selects the profile stage; default profile remains speed_hold'),
+        DeclareLaunchArgument('profile',default_value='default',description='default, speed_hold_1to5, accel_sweep_1to5 or decel_sweep_1to5'),
+        DeclareLaunchArgument('base_current_file',default_value='',description='Validated Stage A baseline_current.json required for B/C sweeps'),
         DeclareLaunchArgument('steering_source',default_value='pp'),
         DeclareLaunchArgument('calibration_config',default_value=''),
         DeclareLaunchArgument('reference_directory',default_value=''),

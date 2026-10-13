@@ -1,0 +1,27 @@
+# Stage B: each speed interval starts at its measured hold current + 5 A.
+longitudinal_calibration:
+  ros__parameters:
+    auto_start: false
+    stage: accel_interval
+    steering_source: pp
+    plan_mode: sweep
+    base_current_file: ''
+    speeds: [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+    currents: []
+    current_step: 5.0
+    max_speed: 5.0
+    max_current: 100.0
+    stable_tolerance: 0.2
+    stable_seconds: 1.0
+    trial_timeout: 8.0
+    freshness: 0.2
+    repeats: 1
+    recovery_speed: 1.0
+    current_settle_seconds: 0.25
+    current_window_seconds: 0.5
+    current_min_samples: 10
+    current_absolute_tolerance: 1.0
+    current_relative_tolerance: 0.1
+    current_failure_fraction: 0.9
+    max_attempts: 3
+    rc_profile: steering_ch1_throttle_ch3_aux_ch5_to_ch10

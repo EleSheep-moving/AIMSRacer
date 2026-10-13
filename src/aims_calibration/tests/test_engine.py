@@ -369,11 +369,11 @@ def test_nine_speed_stages_collect_five_source_seconds_each_then_stop():
     assert step(e,t,v=0.).speed==0 and len(e.trials)==9
 
 
-def test_five_mps_requires_explicit_hold_limit_and_does_not_expand_current_stages():
+def test_five_mps_requires_explicit_hold_limit_and_current_stages_support_same_bound():
     assert config(speeds=(5.,),max_speed=5.).max_speed==5.
     with pytest.raises(ValueError): config(speeds=(5.,))
     with pytest.raises(ValueError): config(speeds=(5.1,),max_speed=5.1)
-    with pytest.raises(ValueError): config('accel_interval',max_speed=5.)
+    assert config('accel_interval',max_speed=5.).max_speed==5.
     with pytest.raises(ValueError): config(hold_sampling='unknown')
 
 
@@ -390,3 +390,291 @@ def test_hold_speed_overshoot_waits_for_settling_without_stopping():
     assert e.state=='COMPLETE' and e.trials[0]['success']
     with pytest.raises(ValueError): config(speed_overshoot_tolerance=.21)
     with pytest.raises(ValueError): config('accel_interval',speed_overshoot_tolerance=.1)
+
+
+def planned_engine(stage='accel_interval', items=None, **kw):
+    from aims_calibration.planner import TrialPlan
+    if items is None:
+        items=[TrialPlan(stage,1.,2.,5.,kind='acceleration',baseline_current=1.)] if stage=='accel_interval' else [TrialPlan(stage,2.,1.,-5.,kind='braking')]
+    c=config(stage,start_speed=items[0].start_speed,end_speed=items[0].end_speed,max_speed=5.,**kw)
+    return Engine(c,trial_plan=items)
+
+
+def prepare_item(e,t=1.):
+    target=e.trial_plan[e.index].start_speed
+    if not e.enabled: e.enable(True)
+    for offset in (0,.01,.05,.16): step(e,round(t+offset,8),v=target)
+    assert e.state=='APPLY'
+    return t+.16
+
+
+def tracking_ticks(e, start, current, v=None, count=17, dt=.05):
+    v=e.trial_plan[e.index].start_speed if v is None else v
+    for i in range(count):
+        t=round(start+.01+i*dt,8)
+        step(e,t,v=v,current=current)
+        if e.state not in ('APPLY','MEASURE'): break
+    return t
+
+
+def test_current_stages_support_five_mps_without_changing_A_config_fields():
+    assert config('accel_interval',max_speed=5.,end_speed=5.).max_speed==5.
+    assert config('decel_current',max_speed=5.,start_speed=5.).max_speed==5.
+    from dataclasses import asdict
+    assert 'tracking_config' not in asdict(config()) and 'trial_plan' not in asdict(config())
+
+
+def test_structured_plans_are_validated_against_stage_and_explicit_config_limits():
+    from aims_calibration.planner import TrialPlan
+    item=TrialPlan('decel_current',2.,1.5,2.,kind='positive_deceleration',baseline_current=7.)
+    with pytest.raises(ValueError): Engine(config('accel_interval'),trial_plan=[item])
+    with pytest.raises(ValueError): Engine(config('decel_current',max_current=1.),trial_plan=[item])
+    with pytest.raises(ValueError): Engine(config(),trial_plan=[item])
+    with pytest.raises(ValueError): Engine(config('decel_current'),trial_plan=[])
+
+
+def test_positive_and_coast_C_use_per_item_speed_recovery_and_current_mode():
+    from aims_calibration.planner import TrialPlan
+    items=[TrialPlan('decel_current',2.,1.5,2.,kind='positive_deceleration',baseline_current=7.),
+           TrialPlan('decel_current',2.5,1.,0.,kind='coast',baseline_current=8.)]
+    e=planned_engine('decel_current',items)
+    prepare_item(e); req=step(e,1.17,v=2.,current=2.)
+    assert req.mode==1 and req.current==2.
+    step(e,1.27,v=1.5,current=2.)
+    assert e.index==1 and e.trials[-1]['success']
+    assert step(e,1.3,v=1.5).speed==2.5
+    for t in (1.31,1.42): step(e,t,v=2.5)
+    assert step(e,1.43,v=2.5,current=9.).mode==1
+    step(e,1.5,v=1.,current=9.)
+    assert e.state=='COMPLETE' and e.trials[-1]['tracking_status']=='not_applicable'
+    assert e.trials[-1]['mean_acceleration']<0
+
+
+def test_short_success_retains_unverified_tracking_and_all_response_timestamps():
+    e=planned_engine(); prepare_item(e)
+    step(e,1.17,current=5.); step(e,1.27,v=2.,current=5.)
+    row=e.trials[-1]
+    assert row['success'] and row['tracking_status']=='unverified'
+    assert row['first_current_request_stamp']==pytest.approx(1.16)
+    assert row['first_current_ack_stamp']==1.17 and row['starting_wheel_observation']['wheel_stamp']==1.17
+    assert row['response_duration_s']==pytest.approx(.11)
+    assert row['duration_s']==pytest.approx(.1) and row['mean_acceleration']==pytest.approx(10.)
+    assert row['attempt_id']==1 and row['repeat']==1 and row['kind']=='acceleration'
+    assert e.serializable_plan[0]['plan_index']==0
+
+
+def test_tracking_waits_for_settle_window_and_unique_telemetry_then_skips_B_interval():
+    from aims_calibration.planner import TrialPlan
+    items=[TrialPlan('accel_interval',1.,1.5,i,baseline_current=1.) for i in (5.,10.,15.)]
+    items+=[TrialPlan('accel_interval',1.5,2.,5.,baseline_current=1.)]
+    e=planned_engine(items=items); prepare_item(e)
+    tracking_ticks(e,1.16,0.,count=15)
+    assert e.index==0 and not e.trials
+    step(e,1.88,v=1.,current=0.,telemetry_stamp=1.87)
+    assert e.index==0
+    step(e,1.92,v=1.,current=0.)
+    assert e.trials[-1]['reason']=='current_tracking_unreachable'
+    assert e.trials[-1]['tracking_evidence']['sample_count']>=10
+    assert len(e.skipped)==2 and e.index==3
+    assert [s['plan_index'] for s in e.skipped]==[1,2]
+    assert all(s['triggering_attempt_id']==1 for s in e.skipped)
+    assert step(e,1.93,v=1.).speed==1.5
+
+
+def test_positive_C_tracking_error_skips_positive_but_preserves_coast_and_negative():
+    from aims_calibration.planner import TrialPlan
+    items=[TrialPlan('decel_current',2.,1.5,i,kind='positive_deceleration',baseline_current=10.) for i in (5.,.104)]
+    items += [TrialPlan('decel_current',2.,1.,0.,kind='coast'),TrialPlan('decel_current',2.,1.,-5.,kind='braking')]
+    e=planned_engine('decel_current',items); prepare_item(e)
+    tracking_ticks(e,1.16,9.)
+    assert e.index==2 and len(e.skipped)==1 and e.skipped[0]['kind']=='positive_deceleration'
+    assert e.trials[-1]['tracking_evidence']['error_side']=='above'
+
+
+def test_negative_C_under_tracking_skips_stronger_brakes_same_speed_only():
+    from aims_calibration.planner import TrialPlan
+    items=[TrialPlan('decel_current',2.,1.,-i,kind='braking') for i in (5.,10.,15.)]
+    items += [TrialPlan('decel_current',2.5,1.,-5.,kind='braking')]
+    e=planned_engine('decel_current',items); prepare_item(e)
+    tracking_ticks(e,1.16,-1.)
+    assert e.index==3 and len(e.skipped)==2
+    assert e.trials[-1]['tracking_status']=='unreachable'
+
+
+def test_matching_current_tracking_and_pure_speed_timeout_continue_next_current():
+    from aims_calibration.planner import TrialPlan
+    items=[TrialPlan('accel_interval',1.,1.5,i,baseline_current=1.) for i in (5.,10.)]
+    e=planned_engine(items=items,trial_timeout=1.)
+    prepare_item(e); t=tracking_ticks(e,1.16,5.)
+    assert not e.trials and e.tracking_status=='verified'
+    for i in range(6): t=round(t+.05,8); step(e,t,v=1.,current=5.)
+    assert e.index==1 and not e.skipped
+    assert e.trials[-1]['reason']=='trial_timeout' and e.trials[-1]['tracking_status']=='verified'
+
+
+def test_straight_exit_retries_same_item_three_attempts_then_advances_uncovered():
+    from aims_calibration.planner import TrialPlan
+    items=[TrialPlan('accel_interval',1.,1.5,i,baseline_current=1.) for i in (5.,10.)]
+    e=planned_engine(items=items)
+    t=1.
+    for attempt in range(1,4):
+        prepare_item(e,t); step(e,t+.17,v=1.,current=5.)
+        req=step(e,t+.18,v=1.,straight=False,current=5.)
+        assert e.trials[-1]['attempt_id']==attempt and e.trials[-1]['attempt_number']==attempt
+        assert req.mode==0
+        assert e.index==(0 if attempt<3 else 1)
+        t=round(t+.3,8)
+    assert e.trials[-1]['uncovered'] is True and not e.skipped
+    assert [r['plan_index'] for r in e.trials]==[0,0,0]
+
+
+def test_vesc_fault_code_immediately_faults_and_zeroes_current():
+    e=prepared('accel_interval'); step(e,1.17)
+    req=step(e,1.18,fault_code=3)
+    assert e.state=='FAULT' and e.reason=='vesc_fault_3' and req.mode==1 and req.current==0
+    assert not e.trials[-1]['success']
+
+
+def test_tracking_settings_are_independent_validated_and_serializable():
+    from aims_calibration.engine import TrackingConfig
+    from dataclasses import asdict
+    settings=TrackingConfig()
+    assert asdict(settings)==dict(settle_seconds=.25,window_seconds=.5,min_samples=10,
+        abs_tolerance=1.,rel_tolerance=.1,failure_fraction=.9,max_attempts=3)
+    e=Engine(config('accel_interval'),tracking_config=settings)
+    assert asdict(e.tracking_config)==asdict(settings)
+    with pytest.raises(ValueError): TrackingConfig(min_samples=0)
+    with pytest.raises(ValueError): TrackingConfig(failure_fraction=1.1)
+
+
+def test_A_ignores_new_BC_fault_code_and_keeps_legacy_sample_fields():
+    e=prepared(); step(e,1.17,fault_code=3)
+    assert e.state=='MEASURE' and e.enabled
+    assert 'fault_code' not in e.samples[-1]
+
+
+def test_disabling_before_first_current_echo_retains_attempt_evidence():
+    e=planned_engine(); prepare_item(e)
+    e.enable(False)
+    assert len(e.trials)==1 and e.trials[0]['attempt_id']==1
+    assert e.trials[0]['first_current_request_stamp']==pytest.approx(1.16)
+    assert e.trials[0]['first_current_ack_stamp'] is None
+    assert e.trials[0]['reason']=='operator_disabled' and not e.trials[0]['success']
+
+
+def test_apply_without_current_ack_times_out_from_first_producer_request():
+    e=planned_engine(trial_timeout=.2); prepare_item(e)
+    speed_request=next(r for r in reversed(e.history) if r.mode==0 and r.speed==1.)
+    for t in (1.17,1.27,1.37):
+        repeated=replace(speed_request,stamp=t)
+        e.sent(repeated)
+        req=e.tick(t,replace(observation(t),final_request=repeated,final_received=t))
+        e.sent(req)
+    assert e.state=='COMPLETE'
+    assert not e.trials[-1]['success'] and e.trials[-1]['reason']=='trial_timeout'
+    assert e.trials[-1]['first_current_ack_stamp'] is None
+    assert e.trials[-1]['response_duration_s']==pytest.approx(.21)
+
+
+def test_unreachable_skip_cannot_skip_a_weaker_manual_current():
+    from aims_calibration.planner import TrialPlan
+    items=[TrialPlan('accel_interval',1.,1.5,i) for i in (10.,5.)]
+    e=planned_engine(items=items); prepare_item(e)
+    tracking_ticks(e,1.16,0.)
+    assert e.index==1 and not e.skipped
+
+
+def test_current_tracking_counts_unique_telemetry_even_if_wheel_source_repeats():
+    e=planned_engine(); prepare_item(e)
+    for i in range(17):
+        t=round(1.17+i*.05,8)
+        # Alternate a repeat wheel observation with a new telemetry observation.
+        wheel=round(1.17+(i-i%2)*.05,8)
+        step(e,t,current=0.,wheel_stamp=wheel)
+        if e.state=='COMPLETE': break
+    assert e.trials[-1]['tracking_status']=='unreachable'
+    assert len(set(r['telemetry_stamp'] for r in e.trials[-1]['tracking_observations']))==len(e.trials[-1]['tracking_observations'])
+
+
+def test_tracking_ignores_duplicate_telemetry_and_small_dense_windows():
+    e=planned_engine(); prepare_item(e)
+    for i in range(81):
+        t=round(1.17+i*.01,8)
+        # Telemetry source advances at 10 Hz, while wheel source advances at100Hz.
+        telemetry=round(1.17+(i//10)*.1,8)
+        step(e,t,current=0.,telemetry_stamp=telemetry)
+    assert not e.trials and e.tracking_status=='unverified'
+    assert e.tracking_evidence['sample_count']<10
+
+
+def test_positive_C_mixed_error_sides_do_not_skip_and_B_over_tracking_is_not_under_magnitude():
+    from aims_calibration.planner import TrialPlan
+    item=TrialPlan('decel_current',2.,1.5,5.,kind='positive_deceleration',baseline_current=10.)
+    e=planned_engine('decel_current',[item]); prepare_item(e)
+    for i in range(17): step(e,round(1.17+i*.05,8),v=2.,current=1. if i%2 else 9.)
+    assert e.tracking_status=='verified' and not e.trials and not e.skipped
+    b=planned_engine(); prepare_item(b); tracking_ticks(b,1.16,20.)
+    assert b.tracking_status=='verified' and not b.trials
+
+
+def test_endpoint_crossing_wins_over_new_under_tracking_window_on_same_tick():
+    e=planned_engine(); prepare_item(e)
+    tracking_ticks(e,1.16,0.,count=15)
+    step(e,1.92,v=2.,current=0.)
+    assert e.trials[-1]['success'] and e.trials[-1]['reason']=='completed'
+    assert not e.skipped and e.trials[-1]['tracking_status']=='unverified'
+
+
+def test_PP_turn_recovery_stays_at_low_speed_then_prepares_item_start_on_straight():
+    from aims_calibration.planner import TrialPlan
+    item=TrialPlan('accel_interval',4.,4.5,10.,baseline_current=5.)
+    e=planned_engine(items=[item],steering_source='pp')
+    prepare_item(e); step(e,1.17,v=4.,current=10.)
+    req=step(e,1.18,v=4.,straight=False,current=10.)
+    assert req.mode==0 and req.speed==1. and e.index==0
+    assert step(e,1.2,v=1.,straight=False).speed==1.
+    assert step(e,1.3,v=1.,straight=True).speed==4.
+
+
+def test_nonfinal_completion_recovers_immediately_to_next_item_speed():
+    from aims_calibration.planner import TrialPlan
+    items=[TrialPlan('accel_interval',1.,1.5,5.),TrialPlan('accel_interval',1.5,2.,5.)]
+    e=planned_engine(items=items); prepare_item(e); step(e,1.17,current=5.)
+    request=step(e,1.27,v=1.5,current=5.)
+    assert e.index==1 and request.mode==0 and request.speed==1.5 and request.current==0
+
+
+def test_nonfinal_unreachable_skip_recovers_immediately_to_next_interval_speed():
+    from aims_calibration.planner import TrialPlan
+    items=[TrialPlan('accel_interval',1.,1.5,i) for i in (5.,10.)]
+    items += [TrialPlan('accel_interval',1.5,2.,5.)]
+    e=planned_engine(items=items); prepare_item(e)
+    tracking_ticks(e,1.16,0.)
+    assert e.index==2 and e.history[-1].mode==0 and e.history[-1].speed==1.5
+
+
+def test_tracking_window_evaluates_irregular_source_timing_without_exact_half_second_span():
+    e=planned_engine(); prepare_item(e)
+    for i in range(20):
+        step(e,round(1.17+i*.047,8),current=0.)
+        if e.state=='COMPLETE': break
+    assert e.state=='COMPLETE' and e.trials[-1]['tracking_status']=='unreachable'
+    evidence=e.trials[-1]['tracking_evidence']
+    assert evidence['window_duration_s']==pytest.approx(.5)
+    assert evidence['sample_count']>=10
+    rows=e.trials[-1]['tracking_observations']
+    window=[r for r in rows if evidence['window_start_stamp']-1e-9<=r['telemetry_stamp']<=evidence['window_end_stamp']]
+    assert len(window)==evidence['sample_count']
+    assert window[-1]['telemetry_stamp']-window[0]['telemetry_stamp']<.5
+
+
+def test_tracking_window_accepts_configured_duration_at_ros_epoch_precision():
+    from aims_calibration.engine import TrackingConfig,Observation
+    e=planned_engine()
+    e.tracking_config=TrackingConfig(settle_seconds=0.,window_seconds=.12,min_samples=5)
+    epoch=1791906320.4279172;e.phase_ack_stamp=epoch
+    for i in range(5):
+        stamp=epoch+i*.03
+        e._track_current(Observation(telemetry_stamp=stamp,wheel_stamp=stamp,current_motor=5.))
+    assert e.tracking_status=='verified'
+    assert e.tracking_evidence['sample_count']==5

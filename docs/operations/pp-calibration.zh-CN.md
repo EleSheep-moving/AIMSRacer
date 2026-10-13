@@ -2,6 +2,8 @@
 
 [English](pp-calibration.md) · **简体中文**
 
+B/C 自动电流扫描、基准导出与验收见 [B/C 操作指南](current-sweep.zh-CN.md)。
+
 三个流程分别负责离线编辑参考轨迹、PP 跟踪和分阶段速度／电流试验。
 整车默认仍是场地验证过的 MPCC；浏览器编辑器不发布车辆控制命令。
 
@@ -79,7 +81,7 @@ PP 保留旧增强几何转向算法，包括航向误差和曲率补偿，见[P
 
 ## 正式标定命令
 
-四个入口都由仓库内 `aims_calibration/cli.py` 实现；共享检查位于
+四个在线操作入口都由仓库内 `aims_calibration/cli.py` 实现；共享检查位于
 `operator.py`，采样与控制仍由 `node.py` / `engine.py` 负责。
 不依赖 `field-tests` 下的临时 Python 脚本、固定 PID 或聊天授权文本。
 
@@ -161,12 +163,12 @@ ros2 service call /calib/enable std_srvs/srv/SetBool '{data: true}'
 | 阶段 | 内容 | 配置 |
 | --- | --- | --- |
 | `speed_hold` | 速度稳定后，在直线采集唯一实际电机电流样本 | 默认 1／2／3 m/s，稳定 1 s，采样 10 s |
-| `accel_interval` | 正电流从起始速度加速到结束速度 | 显式正值 `currents`，结束速度高于起始速度 |
-| `decel_current` | 负电流减速到正向结束速度 | 显式负值 `currents`，结束速度低于起始速度 |
+| `accel_interval` | 相邻速度区间的正电流加速 | `accel_sweep_1to5` 加有效基准；也支持手动列表 |
+| `decel_current` | 低于基准的正电流减速、滑行、负电流制动 | `decel_sweep_1to5` 加有效基准；也支持手动列表 |
 
 将[标定 YAML](../../src/aims_calibration/config/calibration.yaml)复制到源码外，配置试验后通过
 `calibration_config:=/absolute/path.yaml` 传入。默认空电流列表会拒绝电流阶段启动。
-请求受车辆边界约束，驱动限幅仍为 ±100 A；不会自动扫到满电流。
+请求受车辆边界约束，驱动限幅仍为 ±100 A；B/C profile 可从明确指定的基准生成电流扫描，详见 [B/C 流程](current-sweep.zh-CN.md)。
 正负电流试验均使用 `MODE_CURRENT`，不使用默认禁用的 brake 模式或预留 acceleration 模式。
 
 

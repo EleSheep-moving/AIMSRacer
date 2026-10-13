@@ -50,6 +50,8 @@ def recording_actions(context,share,mode='race'):
         selected=context.launch_configurations.get(key,'')
         if selected and Path(selected).expanduser().is_file():
             shutil.copy2(Path(selected).expanduser(),snapshots/(label+'_selected.yaml'))
+    baseline=context.launch_configurations.get('base_current_file','')
+    if baseline:shutil.copy2(Path(baseline).expanduser(),snapshots/'baseline_current.json')
     reference_files={}
     ref=context.launch_configurations.get('reference_directory','')
     if ref:

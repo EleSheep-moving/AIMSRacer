@@ -97,3 +97,94 @@ def test_invalid_metadata_never_counts_a_trial_as_accepted():
 def test_malformed_container_is_reported_not_raised():
     assert not summarize_results([])['valid']
     assert not summarize_results({'configuration':None,'metadata':None})['valid']
+
+
+def test_explicit_unknown_schema_is_rejected_and_legacy_is_retained():
+    assert summarize_results(payload())['valid']
+    data=payload();data['schema_version']=1
+    assert summarize_results(data)['valid']
+    data['schema_version']=3
+    assert not summarize_results(data)['valid']
+
+
+def current_payload():
+    from dataclasses import asdict
+    from aims_calibration.engine import Config,TrackingConfig
+    from aims_calibration.planner import TrialPlan
+    config=asdict(Config(stage='accel_interval',currents=(14.,19.),start_speed=1.,end_speed=1.5))
+    settings=asdict(TrackingConfig())
+    plan=[dict(plan_index=i,**asdict(TrialPlan('accel_interval',1.,1.5,target,baseline_current=9.)))
+          for i,target in enumerate((14.,19.))]
+    def digest(value):return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+    obs=[dict(telemetry_stamp=1.25+.05*i,current_motor=0.) for i in range(11)]
+    evidence=dict(target_current=14.,tolerance=1.4,sample_count=11,
+        window_start_stamp=1.25,window_end_stamp=1.75,window_duration_s=.5,
+        settle_seconds=.25,window_seconds=.5,min_samples=10,failure_fraction=.9,
+        failure_count=11,failure_ratio=1.,under_magnitude_count=11,mean_current_motor=0.)
+    trigger=dict(trial_id=1,attempt_id=1,attempt_number=1,plan_index=0,stage='accel_interval',
+        requested_target=14.,current=14.,repeat=1,kind='acceleration',baseline_current=9.,
+        start_target_speed=1.,end_target_speed=1.5,success=False,evidence_valid=True,
+        reason='current_tracking_unreachable',first_current_request_stamp=.9,first_current_ack_stamp=1.,
+        start_stamp=1.1,end_stamp=1.75,start_speed=1.,end_speed=1.,duration_s=.65,
+        response_duration_s=.85,samples=20,mean_acceleration=None,
+        tracking_status='unreachable',tracking_evidence=evidence,tracking_observations=obs,uncovered=False)
+    skip=dict(**plan[1],success=False,reason='skipped_unreachable_current',triggering_attempt_id=1,evidence=deepcopy(evidence))
+    return dict(schema_version=2,configuration=config,
+        metadata=dict(evidence_valid=True,configuration_sha256=digest(config),tracking_configuration_sha256=digest(settings)),
+        plan=plan,plan_sha256=digest(plan),tracking_configuration=settings,trials=[trigger],skipped=[skip])
+
+
+def test_valid_current_limit_skip_is_resolved_without_becoming_a_measurement():
+    summary=summarize_results(current_payload())
+    assert summary['valid'] and summary['execution_complete'] and summary['coverage_complete']
+    assert summary['accepted']==0 and summary['unreachable']==1 and summary['skipped']==1
+
+
+def test_current_skip_needs_real_feedback_and_matching_scope():
+    data=current_payload();data['trials'][0]['tracking_observations']=[dict(telemetry_stamp=1.25+.05*i,current_motor=14.) for i in range(11)]
+    assert not summarize_results(data)['valid']
+    data=current_payload();data['skipped'][0]['triggering_attempt_id']=[]
+    assert not summarize_results(data)['valid']
+    data=current_payload();data['skipped'][0]['triggering_attempt_id']=99
+    assert not summarize_results(data)['valid']
+    data=current_payload();data['plan'][1]['start_speed']=1.5
+    data['plan'][1]['end_speed']=2.
+    data['plan_sha256']=hashlib.sha256(json.dumps(data['plan'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
+    data['skipped'][0].update(start_speed=1.5,end_speed=2.)
+    assert not summarize_results(data)['valid']
+
+
+def test_successful_retry_resolves_plan_and_timeout_reports_gap():
+    data=current_payload();data['skipped']=[];data['plan']=data['plan'][:1]
+    data['plan_sha256']=hashlib.sha256(json.dumps(data['plan'],sort_keys=True,separators=(',',':')).encode()).hexdigest()
+    first=data['trials'][0];first.update(reason='straight_region_exit',tracking_status='unverified')
+    second=deepcopy(first);second.update(trial_id=2,attempt_id=2,attempt_number=2,success=True,reason='completed',
+        end_speed=1.5,mean_acceleration=.5/.65,tracking_status='unverified')
+    data['trials'].append(second)
+    summary=summarize_results(data)
+    assert summary['valid'] and summary['accepted']==1 and summary['records']==2
+    data['trials']=[first];first['reason']='trial_timeout'
+    summary=summarize_results(data)
+    assert summary['execution_complete'] and not summary['coverage_complete'] and not summary['valid']
+
+
+def test_sweep_result_revalidates_baseline_and_generated_plan(tmp_path):
+    from dataclasses import asdict
+    from aims_calibration.configuration import prepare_engine
+    from aims_calibration.engine import Config
+    from aims_calibration.planner import export_baseline
+    from aims_calibration.operator import canonical_hash
+    from test_cli import stage_a_payload
+    path=tmp_path/'baseline.json';path.write_text(json.dumps(export_baseline(stage_a_payload())))
+    values=asdict(Config());values.update(stage='accel_interval',max_speed=5.,max_current=13.9,speeds=(1.,1.5))
+    engine,metadata,manifest=prepare_engine(values,plan_mode='sweep',base_current_file=str(path))
+    data=current_payload();data['plan']=manifest['plan'];data['plan_sha256']=manifest['plan_sha256']
+    data['baseline']=manifest['baseline'];data['configuration']=asdict(engine.config)
+    data['metadata'].update(metadata,configuration_sha256=canonical_hash(data['configuration']))
+    data['metadata'].update(map_sha256='map',reference_sha256='reference')
+    assert 'baseline_or_sweep_plan_invalid' not in summarize_results(data)['errors']
+    data['baseline']['points'][0]['mean_current_motor']=99.
+    assert 'baseline_or_sweep_plan_invalid' in summarize_results(data)['errors']
+    value=data['baseline'];value['baseline_sha256']=canonical_hash({k:v for k,v in value.items() if k!='baseline_sha256'})
+    data['metadata']['baseline_sha256']=value['baseline_sha256']
+    assert 'baseline_or_sweep_plan_invalid' in summarize_results(data)['errors']

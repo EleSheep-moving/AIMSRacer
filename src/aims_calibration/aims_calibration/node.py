@@ -28,6 +28,7 @@ import yaml
 from .engine import Config, Engine, Observation, Request, RCProfile, Regions
 from .io import motor_telemetry, apply_request, AsyncOutputLog, health_values, _json_safe
 from .operator import check_start
+from .configuration import prepare_engine,tracking_settings_from_parameters
 
 
 def seconds(stamp): return float(stamp.sec)+float(stamp.nanosec)*1e-9
@@ -54,7 +55,14 @@ class CalibrationNode(Node):
         if not vehicle_path: raise ValueError('vehicle_config is required')
         vehicle=yaml.safe_load(Path(vehicle_path).read_text())
         values['max_speed']=min(values['max_speed'],float(vehicle['max_speed']))
-        self.engine=Engine(Config(**values)); self.obs=Observation()
+        extra_defaults=dict(plan_mode='manual',base_current_file='',current_step=5.,
+            current_settle_seconds=.25,current_window_seconds=.5,current_min_samples=10,
+            current_absolute_tolerance=1.,current_relative_tolerance=.1,current_failure_fraction=.9,max_attempts=3)
+        extra={name:self.declare_parameter(name,value).value for name,value in extra_defaults.items()}
+        settings=tracking_settings_from_parameters(extra)
+        self.engine,sweep_metadata,manifest=prepare_engine(values,plan_mode=extra['plan_mode'],
+            base_current_file=extra['base_current_file'],current_step=extra['current_step'],tracking_settings=settings)
+        self.obs=Observation()
         self.require_acceleration=self.declare_parameter('require_acceleration',False).value
         self.enable_count=0; self.driver_startup_disabled=False; self.driver_parameter_received=-math.inf
         self.driver_query=None; self.acceleration_status={}
@@ -71,6 +79,7 @@ class CalibrationNode(Node):
         config_file=self.get_parameter('config_file').value
         if config_file:
             metadata.update(calibration_config=config_file,calibration_config_sha256=hashlib.sha256(Path(config_file).read_bytes()).hexdigest())
+        metadata.update(sweep_metadata)
         if self.engine.config.steering_source=='pp':
             from aims_pp.core import PPConfig, EnhancedPP
             from aims_pp.reference import NumericReference
@@ -89,7 +98,14 @@ class CalibrationNode(Node):
                 effective_pp_configuration=asdict(self.pp_config))
             pp_path=self.get_parameter('pp_config').value
             if pp_path: metadata['pp_config_sha256']=hashlib.sha256(Path(pp_path).read_bytes()).hexdigest()
-        self.output=AsyncOutputLog(self.get_parameter('log_directory').value,self.engine.config,metadata)
+        if manifest is not None and manifest.get('baseline') is not None:
+            source=manifest['baseline']['source']['context']
+            keys=['vehicle_sha256']
+            if self.tracking:keys+=['map_sha256','reference_sha256','calibration_regions_sha256']
+            for key in keys:
+                if source.get(key) is not None and source[key]!=metadata.get(key):
+                    raise ValueError('baseline '+key+' differs from current calibration')
+        self.output=AsyncOutputLog(self.get_parameter('log_directory').value,self.engine.config,metadata,manifest=manifest)
         latest=QoSProfile(depth=1,reliability=ReliabilityPolicy.RELIABLE,lifespan=Duration(seconds=.1))
         self.command_pub=self.create_publisher(VescCommand,'/calib/vesc_command',latest)
         self.status_pub=self.create_publisher(DiagnosticArray,'/calib/status',10)
@@ -134,7 +150,7 @@ class CalibrationNode(Node):
         try: current,voltage,erpm=motor_telemetry(msg)
         except ValueError: current=voltage=erpm=math.nan
         self.obs=replace(self.obs,telemetry_stamp=seconds(msg.header.stamp),
-                         current_motor=current,voltage_input=voltage,erpm=erpm)
+                         current_motor=current,voltage_input=voltage,erpm=erpm,fault_code=int(msg.state.fault_code))
 
     def _rc(self,msg):
         self._receipt('rc')
@@ -220,7 +236,8 @@ class CalibrationNode(Node):
         snapshot=dict(state=self.engine.state,enabled=self.engine.enabled,enable_count=self.enable_count,
             logging_error=str(self.output.error or self.evidence_error),logging_dropped=self.output.dropped_count,
             freshness=self.engine.config.freshness,ages=ages,wheel_speed=obs.velocity,
-            telemetry_valid=all(math.isfinite(v) for v in (obs.current_motor,obs.voltage_input,obs.erpm)) and obs.voltage_input>0,
+            telemetry_valid=all(math.isfinite(v) for v in (obs.current_motor,obs.voltage_input,obs.erpm)) and obs.voltage_input>0
+                and (self.engine.config.stage=='speed_hold' or obs.fault_code==0),
             authority=obs.authority,rc_valid=obs.rc_valid,
             final_zero=obs.final_request is not None and obs.final_request.mode==0 and obs.final_request.speed==0 and obs.final_request.current==0,
             publishers=dict(calibration=self.count_publishers('/calib/vesc_command'),final=self.count_publishers('/vesc/command'),drive=self.count_publishers('/drive')),
@@ -252,7 +269,8 @@ class CalibrationNode(Node):
                         snapshot['artifact_error']=label+' changed after launch'
                 except (OSError,TypeError) as error:
                     snapshot['artifact_error']=label+' unavailable: '+str(error)
-            for key,hash_key in (('vehicle_config','vehicle_sha256'),('calibration_config','calibration_config_sha256'),('pp_config','pp_config_sha256')):
+            for key,hash_key in (('vehicle_config','vehicle_sha256'),('calibration_config','calibration_config_sha256'),
+                                ('pp_config','pp_config_sha256'),('base_current_file','base_current_file_sha256')):
                 path=metadata.get(key)
                 if path: check_file(path,metadata.get(hash_key),key)
             if self.tracking:
@@ -349,8 +367,8 @@ class CalibrationNode(Node):
         self.command_pub.publish(message); self.engine.sent(request); self.last_request=request
         try:
             self.output.observation(obs,request,self.engine.state)
-            if self.results_dirty or self.output.trial_count!=len(self.engine.trials):
-                self.output.trials(self.engine.trials,self.evidence_error); self.results_dirty=False
+            if self.results_dirty or self.output.trial_count!=len(self.engine.trials) or self.output.skipped_count!=len(self.engine.skipped):
+                self.output.trials(self.engine.trials,self.evidence_error,skipped=self.engine.skipped); self.results_dirty=False
             self.output.runtime(dict(ros_stamp=now,callback_ms=(time.monotonic()-callback_start)*1000.,
                 timer_interval_ms=timer_interval*1000.,pending=self.output.pending_count,
                 dropped=self.output.dropped_count,state=self.engine.state))
@@ -358,6 +376,11 @@ class CalibrationNode(Node):
             self.engine.fault(str(exc))
             self.engine.invalidate_evidence(first_new_trial,str(exc))
             self.evidence_error=str(exc); self.results_dirty=True
+            # Keep the writer's failure snapshot current even when its queue
+            # refuses all further jobs. This only copies data; disk I/O stays
+            # on the background writer.
+            try:self.output.trials(self.engine.trials,self.evidence_error,skipped=self.engine.skipped)
+            except RuntimeError:pass
             stop=self.engine.tick(now,obs)
             self.command_pub.publish(apply_request(VescCommand(),stop,ros_stamp.to_msg()))
             self.engine.sent(stop); self.last_request=stop
@@ -388,7 +411,17 @@ class CalibrationNode(Node):
             request_mode=str(self.last_request.mode),request_current=str(self.last_request.current),
             request_speed=str(self.last_request.speed),authority=str(self.obs.authority).lower(),
             logging_pending=str(self.output.pending_count),logging_dropped=str(self.output.dropped_count),
+            logging_committed_trials=str(self.output.writer.trial_count),
+            logging_committed_skips=str(self.output.writer.skipped_count),
             logging_error=str(self.output.error or ''))
+        if self.engine.config.stage!='speed_hold':
+            item=self.engine.trial_plan[self.engine.index] if self.engine.index<len(self.engine.trial_plan) else None
+            values.update(plan_mode=self.get_parameter('plan_mode').value,trial_kind=item.kind if item else '',
+                target_speed=str(item.start_speed) if item else '',target_end_speed=str(item.end_speed) if item else '',
+                target_current=str(item.current) if item else '',skipped_trials=str(len(self.engine.skipped)),
+                current_tracking_status=self.engine.tracking_status,
+                current_tracking_evidence=json.dumps(self.engine.tracking_evidence,allow_nan=False),
+                base_current_file=self.output.writer.metadata.get('base_current_file',''))
         status.values=[KeyValue(key=k,value=v) for k,v in values.items()]; msg.status=[status]
         return msg
 
@@ -397,7 +430,7 @@ class CalibrationNode(Node):
     def destroy_node(self):
         if hasattr(self,'engine'):
             self.engine.enable(False)
-            try: self.output.trials(self.engine.trials,self.evidence_error)
+            try: self.output.trials(self.engine.trials,self.evidence_error,skipped=self.engine.skipped)
             except RuntimeError as exc: self.get_logger().error(str(exc))
             finally: self.output.close()
         return super().destroy_node()
