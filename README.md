@@ -20,6 +20,7 @@ A ROS 2 autonomous racing stack developed at **PolyU AIMS Lab**. AIMSRacer follo
 | Install and build | [Deployment](docs/deployment/README.md) · [Orin NX](docs/deployment/orin.md) · [x86 / NUC](docs/deployment/nuc.md) |
 | Drive, map, or run a saved trajectory | [Launch guide](docs/operations/bringup.md) · [Known-map initialization](docs/operations/known-map-mpcc.md) |
 | Prepare a map-aligned reference and solver bundle | [Reference and bundle workflow](src/controller/docs/usage.md) · [Map/reference tools](tools/reference/README.md) |
+| Draw a smooth map trajectory, run PP or calibrate longitudinal response | [Editor, PP and calibration workflow](docs/operations/pp-calibration.md) |
 | Record and inspect a run | [Recording](docs/operations/recording.md) · [Runtime diagnostics](src/aims_mpcc_rt/README.md) |
 | Observe longitudinal acceleration | [Optional wheel + IMU observer](docs/operations/longitudinal-acceleration.md) |
 | Understand or change the controller | [MPCC implementation](src/controller/docs/implementation.md) · [Native runtime](src/aims_mpcc_rt/README.md) |

@@ -20,6 +20,7 @@
 | 安装与构建 | [部署指南](docs/deployment/README.zh-CN.md) · [Orin NX](docs/deployment/orin.zh-CN.md) · [x86 / NUC](docs/deployment/nuc.zh-CN.md) |
 | 手动驾驶、建图或跟踪保存轨迹 | [启动指南](docs/operations/bringup.zh-CN.md) · [已知地图初始化](docs/operations/known-map-mpcc.zh-CN.md) |
 | 准备地图坐标系参考和求解器 bundle | [参考与 bundle 流程](src/controller/docs/usage.zh-CN.md) · [地图/参考工具](tools/reference/README.zh-CN.md) |
+| 绘制平滑地图轨迹、运行 PP 或标定纵向响应 | [编辑器、PP 与标定流程](docs/operations/pp-calibration.zh-CN.md) |
 | 录制与分析一次运行 | [录制指南](docs/operations/recording.zh-CN.md) · [运行时诊断](src/aims_mpcc_rt/README.zh-CN.md) |
 | 观测纵向加速度 | [可选轮速＋IMU 观测器](docs/operations/longitudinal-acceleration.zh-CN.md) |
 | 理解或修改控制器 | [MPCC 实现](src/controller/docs/implementation.zh-CN.md) · [原生运行时](src/aims_mpcc_rt/README.zh-CN.md) |

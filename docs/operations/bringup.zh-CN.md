@@ -26,7 +26,8 @@ export LD_LIBRARY_PATH="$PWD/dependencies/work/acados/install/lib:${LD_LIBRARY_P
 | --- | --- | --- |
 | `vehicle.launch.py` | MID360、FAST-LIO2、后轴适配、EKF、RC、VESC | 手动驾驶和传感器检查 |
 | `mapping.launch.py` | 车辆传感器、PGO、建图 TF、可选录包 | 手动驾驶建图 |
-| `race.launch.py` | vehicle、NDT、定位 monitor、native MPCC、可选录包 | 已知地图闭环单圈或连续圈 |
+| `race.launch.py` | vehicle、NDT、定位 monitor、MPCC（默认）或 PP、可选录包 | 已知地图闭环单圈或连续圈 |
+| `calibration.launch.py` | vehicle、可选已知地图定位、单个标定发布者 | PP 或遥控转向的纵向三阶段试验 |
 
 ```bash
 ros2 launch aims_racer_system vehicle.launch.py
@@ -55,7 +56,7 @@ ros2 launch aims_racer_system race.launch.py \
   record:=true
 ```
 
-`race` 已包含车辆和定位，无需额外启动。它要求现有地图和完整 native bundle，默认 `auto_start=false`、`repeat_laps=false`、`record=false`。地图初始化、手动启用与一次自动启动见[已知地图指南](known-map-mpcc.zh-CN.md)，参数详见 [MPCC 使用](../../src/controller/docs/usage.zh-CN.md#在线启动参数)。
+`race` 已包含车辆和定位，无需额外启动。默认 MPCC 要求现有地图和完整 native bundle，默认 `auto_start=false`、`repeat_laps=false`、`record=false`。`controller:=pp` 改为读取统一参考 JSON，默认额外速度上限 1 m/s，通过 `/pp/enable` 显式启用，见[编辑器、PP 与标定](pp-calibration.zh-CN.md)。MPCC 的初始化、手动启用与一次自动启动见[已知地图指南](known-map-mpcc.zh-CN.md)，参数详见 [MPCC 使用](../../src/controller/docs/usage.zh-CN.md#在线启动参数)。
 
 <a id="run-and-stop"></a>
 ## 运行与停止

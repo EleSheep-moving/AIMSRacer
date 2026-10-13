@@ -7,6 +7,7 @@ This directory retains two reference-recovery tools that only read original inpu
 
 | Tool | Input and output |
 | --- | --- |
+| [Browser map editor](editor/README.md) | Immutable PCD and vehicle config; draw/edit a closed map/base_link reference, preview quintic geometry and speeds, export canonical reference and trial regions |
 | [recover_closed_lap.py](recover_closed_lap.py) | Recorder `odom/base_link` CSV; select inclusive rows for one lap, correct bounded closure drift, and output a candidate odom-frame CSV and JSON |
 | [recover_pgo_map_lap.py](recover_pgo_map_lap.py) | Saved `poses.txt`, `map.pcd` in the same directory, actual rear-axle/Livox geometry and the recovered CSV for the same lap; select a PGO key-pose interval, and output a candidate `map/base_link` CSV and identity/matching JSON |
 

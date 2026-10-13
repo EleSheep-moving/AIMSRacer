@@ -37,9 +37,9 @@ ros2 launch aims_racer_system race.launch.py \
 | LIO 与后轴数据 | `/fastlio2/lio_odom`、`/fastlio2/body_cloud`、`/rear_axle/lio_odom`、`/rear_axle/imu` |
 | wheel / EKF | `/rear_axle/wheel_odom`、`/odometry/filtered` |
 | 可选加速度 | 已发布的 `/state_estimation/longitudinal_acceleration`、`/state_estimation/longitudinal_acceleration/status` |
-| RC 与执行命令 | `/rc/channels`、`/vesc/command`、`/control/autonomy_speed_enabled`、显式速度/电流/占空比目标与 servo command echo、`/sensors/core` |
+| RC 与执行命令 | `/rc/channels`、原始 `/calib/vesc_command`、最终 `/vesc/command`、`/control/autonomy_speed_enabled`、`/control/calibration_enabled`、显式目标与 servo command echo、`/sensors/core` |
 | TF | `/tf`、`/tf_static`、隔离的 `/fastlio2/tf` |
-| race 定位与控制 | `/localization/status`、anchor/ndt status、map identity/valid、NDT/bridge pose、`/drive`、`/mpcc/status`、reference/prediction |
+| race／标定定位与控制 | `/localization/status`、anchor/ndt status、地图身份与有效性、NDT/bridge pose、`/drive`、`/mpcc/status`、MPCC reference/prediction、`/pp/status` 与参考／前视点、`/calib/status` |
 | mapping | `/pgo/loop_markers` |
 
 完整列表由 [launch_support.py](../../src/aims_racer_system/aims_racer_system/launch_support.py)维护。录包使用 [recording_qos.yaml](../../src/aims_racer_system/params/recording_qos.yaml)：**原始 `/livox/imu` 为 reliable、keep_last、depth=4096、volatile**，保留高频输入；其他 topic 使用 rosbag 的发布者 QoS 适配。保持 `/fastlio2/body_cloud` 与 raw LIO scan-end 时间对应，以便重放 NDT；world cloud 是可选显示输出。

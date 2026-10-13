@@ -26,7 +26,8 @@ For later operation terminals, source `/opt/ros/humble/setup.bash` and `install/
 | --- | --- | --- |
 | `vehicle.launch.py` | MID360, FAST-LIO2, rear axle adaptation, EKF, RC, VESC | Manual driving and sensor checks |
 | `mapping.launch.py` | Vehicle sensors, PGO, mapping TF, optional recording | Mapping while driving manually |
-| `race.launch.py` | vehicle, NDT, localization monitor, native MPCC, optional recording | Known-map closed-loop single or repeated laps |
+| `race.launch.py` | vehicle, NDT, localization monitor, selected MPCC (default) or PP, optional recording | Known-map closed-loop single or repeated laps |
+| `calibration.launch.py` | vehicle, optional known-map localization, one calibration publisher | Three longitudinal stages with PP or RC steering |
 
 ```bash
 ros2 launch aims_racer_system vehicle.launch.py
@@ -55,7 +56,7 @@ ros2 launch aims_racer_system race.launch.py \
   record:=true
 ```
 
-`race` already includes the vehicle and localization, so no additional launch is needed. It requires an existing map and a complete native bundle, with defaults `auto_start=false`, `repeat_laps=false`, and `record=false`. See the [known-map guide](known-map-mpcc.md) for map initialization, manual enable, and one-time auto start, and [MPCC usage](../../src/controller/docs/usage.md#在线启动参数) for parameters.
+`race` already includes the vehicle and localization, so no additional launch is needed. Its default MPCC requires an existing map and complete native bundle, with defaults `auto_start=false`, `repeat_laps=false`, and `record=false`. `controller:=pp` instead reads a canonical reference JSON, has a default 1 m/s cap and requires `/pp/enable`; see [editor, PP and calibration](pp-calibration.md). See the [known-map guide](known-map-mpcc.md) for MPCC initialization, manual enable and one-time auto start, and [MPCC usage](../../src/controller/docs/usage.md#在线启动参数) for parameters.
 
 <a id="运行与停止"></a>
 ## Run and stop

@@ -7,6 +7,7 @@
 
 | 工具 | 输入与输出 |
 | --- | --- |
+| [浏览器地图编辑器](editor/README.zh-CN.md) | 原始 PCD 与车辆配置；绘制／编辑闭合 map/base_link 参考，预览五次曲线及速度，导出统一参考与标定区间 |
 | [recover_closed_lap.py](recover_closed_lap.py) | recorder 的 `odom/base_link` CSV；选择含首尾的一圈 row，校正有限闭合漂移，输出 odom-frame 候选 CSV 与 JSON |
 | [recover_pgo_map_lap.py](recover_pgo_map_lap.py) | 保存的 `poses.txt`、同目录 `map.pcd`、实际后轴/Livox geometry、已恢复的同圈 CSV；选择 PGO key-pose 区间，输出 `map/base_link` 候选 CSV 与身份/匹配 JSON |
 

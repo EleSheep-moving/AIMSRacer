@@ -31,6 +31,9 @@
 | [纵向加速度](operations/longitudinal-acceleration.zh-CN.md) | 可选轮速＋IMU 输出、独立启动、诊断与场地录制 | English / 简体中文 |
 | [车辆检查](operations/vehicle-checklist.zh-CN.md) | 设备、定位、权限与运行检查 | English / 简体中文 |
 | [参考与 bundle 流程](../src/controller/docs/usage.zh-CN.md) | map 参考、速度规划、导出与目标 CPU 编译 | English / 简体中文 |
+| [地图编辑器、PP 与标定](operations/pp-calibration.zh-CN.md) | 浏览器绘制轨迹、增强 PP、纵向三阶段及 native 指令录制 | English / 简体中文 |
+| [PP 控制器](../src/aims_pp/README.zh-CN.md) | 独立增强转向算法、统一参考与显式启用 | English / 简体中文 |
+| [纵向标定](../src/aims_calibration/README.zh-CN.md) | 选中权限、实际电流与源时间证据 | English / 简体中文 |
 | [地图/参考工具](../tools/reference/README.zh-CN.md) | 保存 PGO 地图，恢复与地图对应的闭环参考 | English / 简体中文 |
 | [校准资料](../src/aims_racer_system/docs/calibration.zh-CN.md) | 已有响应证据、当前流程与采集指南归档 | English / 简体中文 |
 

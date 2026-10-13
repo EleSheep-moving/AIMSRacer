@@ -31,6 +31,9 @@ Guides for the current **FAST-LIO2 + rear-axle EKF + NDT + native MPCC** stack. 
 | [Longitudinal acceleration](operations/longitudinal-acceleration.md) | Optional wheel + IMU output, standalone launch, diagnostics and field recording | English / 简体中文 |
 | [Vehicle checklist](operations/vehicle-checklist.md) | Device, localization, authority and run checks | English / 简体中文 |
 | [Reference and bundle workflow](../src/controller/docs/usage.md) | Map-frame reference, speed planning, export and target-CPU build | English / 简体中文 |
+| [Map editor, PP and calibration](operations/pp-calibration.md) | Browser trajectory drawing, enhanced PP, three longitudinal stages and native command recording | English / 简体中文 |
+| [PP controller](../src/aims_pp/README.md) | Independent enhanced steering, canonical reference and explicit enable | English / 简体中文 |
+| [Longitudinal calibration](../src/aims_calibration/README.md) | Selected-authority trials, current telemetry and source-time evidence | English / 简体中文 |
 | [Map/reference tools](../tools/reference/README.md) | Save a PGO map and recover a matching closed reference | English / 简体中文 |
 | [Calibration context](../src/aims_racer_system/docs/calibration.md) | Existing response evidence, current workflows and archived collection guide | English / 简体中文 |
 

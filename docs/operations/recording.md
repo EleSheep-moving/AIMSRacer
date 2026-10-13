@@ -37,9 +37,9 @@ A session contains `bag/`, `session.json`, and system `params/` snapshots; race 
 | LIO and rear axle data | `/fastlio2/lio_odom`, `/fastlio2/body_cloud`, `/rear_axle/lio_odom`, `/rear_axle/imu` |
 | wheel / EKF | `/rear_axle/wheel_odom`, `/odometry/filtered` |
 | Optional acceleration | `/state_estimation/longitudinal_acceleration`, `/state_estimation/longitudinal_acceleration/status` when published |
-| RC and execution commands | `/rc/channels`, `/vesc/command`, `/control/autonomy_speed_enabled`, typed speed/current/duty targets and servo command echo, `/sensors/core` |
+| RC and execution commands | `/rc/channels`, raw `/calib/vesc_command`, selected `/vesc/command`, `/control/autonomy_speed_enabled`, `/control/calibration_enabled`, typed targets and servo command echo, `/sensors/core` |
 | TF | `/tf`, `/tf_static`, isolated `/fastlio2/tf` |
-| race localization and control | `/localization/status`, anchor/ndt status, map identity/valid, NDT/bridge pose, `/drive`, `/mpcc/status`, reference/prediction |
+| race/calibration localization and control | `/localization/status`, anchor/ndt status, map identity/valid, NDT/bridge pose, `/drive`, `/mpcc/status`, MPCC reference/prediction, `/pp/status` and reference/lookahead, `/calib/status` |
 | mapping | `/pgo/loop_markers` |
 
 The complete list is maintained in [launch_support.py](../../src/aims_racer_system/aims_racer_system/launch_support.py). Recording uses [recording_qos.yaml](../../src/aims_racer_system/params/recording_qos.yaml): **raw `/livox/imu` is reliable, keep_last, depth=4096, volatile**, preserving high-frequency inputs; other topics use rosbag's publisher QoS adaptation. Keep `/fastlio2/body_cloud` aligned with raw LIO scan-end time for NDT replay; world cloud is optional display output.
