@@ -27,7 +27,8 @@ def test_node_idle_native_output_default_disabled_and_manual_enable_service(node
     assert node.last_request.stamp>first and not node.engine.enabled
     request=SetBool.Request(); request.data=True
     response=node._enable(request,SetBool.Response())
-    assert response.success and node.engine.state=='PREPARE'
+    assert not response.success and node.engine.state=='IDLE'
+    node._begin(); assert node.engine.state=='PREPARE'
     request.data=False; node._enable(request,SetBool.Response()); node._tick()
     assert node.last_request.mode==1 and node.last_request.current==0
 
@@ -152,3 +153,40 @@ def test_completion_boundary_enqueue_overflow_revokes_trial_acceptance(node):
     payload=json.loads((node.output.directory/'trials.json').read_text())
     assert not payload['trials'][-1]['success'] and payload['metadata']['evidence_valid'] is False
     assert 'queue' in payload['trials'][-1]['evidence_failure']
+
+
+def test_service_cannot_bypass_preflight_and_does_not_reset_running_trial(node):
+    request=SetBool.Request();request.data=True
+    response=node._enable(request,SetBool.Response())
+    assert not response.success and not node.engine.enabled
+    assert node.enable_count==0
+    node.engine.enable(True,now=node._now());node.enable_count=1
+    node.engine.hold_elapsed=2.5
+    response=node._enable(request,SetBool.Response())
+    assert not response.success and node.engine.hold_elapsed==2.5
+    request.data=False
+    response=node._enable(request,SetBool.Response())
+    assert response.success and not node.engine.enabled
+
+
+def test_status_exposes_shared_readiness_without_raw_nan(node):
+    import json
+    values={v.key:v.value for v in node.status_message().status[0].values}
+    snapshot=json.loads(values['preflight_json'])
+    assert snapshot['wheel_speed'] is None
+    assert snapshot['enable_count']==0 and values['start_ready']=='false'
+    assert values['vehicle_config'].endswith('vehicle.yaml')
+
+
+def test_acc_preflight_rejects_stale_underlying_sources_even_with_fresh_estimate(node):
+    from dataclasses import replace
+    node.obs=replace(node.obs,acceleration=0.,acceleration_stamp=node._now())
+    node.receipts.update(acceleration=time.monotonic(),acceleration_quality=time.monotonic())
+    node.acceleration_status=dict(initialized='true',force_valid='true',wheel_age_s='0.01',imu_age_s='0.3',force_age_s='0.3')
+    assert not node.preflight_snapshot()['acceleration_valid']
+
+
+def test_missing_artifact_refuses_preflight_without_faulting_idle_node(node,tmp_path):
+    node.output.writer.metadata['vehicle_config']=str(tmp_path/'missing.yaml')
+    value=node.preflight_snapshot(verify_artifacts=True)
+    assert value['artifact_error'] and node.engine.state=='IDLE'

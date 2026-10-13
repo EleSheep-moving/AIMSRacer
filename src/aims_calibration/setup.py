@@ -10,4 +10,8 @@ setup(name='aims_calibration',version='0.1.0',packages=find_packages(exclude=['t
       maintainer='AIMSRacer maintainers',maintainer_email='maintainers@aimsracer.local',
       description='Selector-controlled longitudinal calibration',license='Apache-2.0',
       tests_require=['pytest'],test_suite='tests',entry_points={'console_scripts':[
-          'longitudinal_calibration = aims_calibration.node:main']})
+          'longitudinal_calibration = aims_calibration.node:main',
+          'inspect = aims_calibration.cli:inspect_main',
+          'start = aims_calibration.cli:start_main',
+          'stop = aims_calibration.cli:stop_main',
+          'results = aims_calibration.cli:results_main']})

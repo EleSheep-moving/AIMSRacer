@@ -1,0 +1,10 @@
+# Effective PP tuning used for the NX straight-trial reference.
+lookahead_gain: 1.0
+min_lookahead: 0.3
+max_lookahead: 4.5
+lateral_error_gain: 1.0
+heading_error_gain: 0.1
+curvature_ff_gain: 0.1
+steering_limit_start_speed: 4.0
+steering_limit_full_speed: 6.0
+high_speed_max_steering: 0.18

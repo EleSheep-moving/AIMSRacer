@@ -77,6 +77,64 @@ PP 保留旧增强几何转向算法，包括航向误差和曲率补偿，见[P
 没有求解器或计划过期门控；定位缺失、状态过期或控制权限撤回后停止，需重新显式启用。
 用 `{data: false}` 或遥控锁车停止，车辆停稳后再关闭 launch。MPCC 与 PP 不能同时运行。
 
+## 正式标定命令
+
+四个入口都由仓库内 `aims_calibration/cli.py` 实现；共享检查位于
+`operator.py`，采样与控制仍由 `node.py` / `engine.py` 负责。
+不依赖 `field-tests` 下的临时 Python 脚本、固定 PID 或聊天授权文本。
+
+车辆链已经启动时，只执行：
+
+```bash
+ros2 run aims_calibration inspect
+# RViz 确认后轴位置与前进方向，遥控解锁并选择 CH8 标定；检查通过后执行一次：
+ros2 run aims_calibration start
+# 人工中止时先遥控锁车，再请求停止；此命令不关闭车辆链或录包：
+ros2 run aims_calibration stop
+# 把 inspect/start 显示的 output_directory 填到这里，离线验收：
+ros2 run aims_calibration results /absolute/path/to/result-directory
+```
+
+`start` 与直接 `/calib/enable` 共用节点中的检查：输入与权限新鲜、车辆
+静止（轮速绝对值 ≤0.1 m/s）、最终请求为零速度、驱动起步电流替换已关闭、
+指令发布者唯一、日志可用；PP 还要求匹配的可信定位、横向距离 ≤0.25 m、
+航向偏差 ≤0.35 rad。开启加速度观测时，也检查加速度可用。
+启动时重新验证车辆、PP、标定配置、参考和直线区间文件哈希。
+未通过检查可以调整后重试；成功开始后拒绝再次启用，避免重置采集。
+完成、故障或中止后，下一次采集需要新的 launch/会话。
+
+`start` 只提交一次启用请求；响应不确定、监控失联或 Ctrl+C 时请求禁用。
+显示结束状态后，还需连续 3 秒新鲜轮速确认停稳。零电流只是滑行请求；
+无法确认停稳时明确提示人工停车，不自动关闭车辆链。
+`results` 检查完整目标覆盖、配置哈希及每条记录的 `success` /
+`evidence_valid`；空记录、重复档位和部分成功均返回非零退出码。
+
+在 NX 本地图形终端可给 launch 追加 `rviz:=true`，它加载仓库内 `calibration.rviz`，显示先验地图与绿色参考线。默认使用软件渲染以适配此次 NX 黑屏问题；可用 `rviz_software_rendering:=false` 切回 GL 渲染。
+
+### 仓库内九档配置
+
+以下是显式可选配置，普通启动默认保持不变。地图、参考目录由场地数据指定，
+脚本、配置、launch 与文档全部随仓库安装。九档配置同时选择仓库内的
+`speed_hold_1to5.yaml`、`speed_hold_vehicle.yaml`、`speed_hold_pp.yaml`，
+不再需要临时 `calib-vehicle-v5.yaml` 或 `pp-v1p8-baseline.yaml`。
+
+**仅在当前没有车辆链运行时**启动一次；已有 launch 时使用上面的命令即可：
+
+```bash
+ros2 launch aims_racer_system calibration.launch.py \
+  profile:=speed_hold_1to5 steering_source:=pp \
+  map_file:=/absolute/path/to/map.pcd \
+  reference_directory:=/absolute/path/to/pp-routev2-straight-trials \
+  record:=true longitudinal_acceleration:=true auto_start:=false
+```
+
+九档 1.0、1.5、…、5.0 m/s，每档重新稳速 1 秒、累计 5 秒有效直线数据；
+弯道以 1 m/s 恢复行驶，弯道与不稳定期间不计入采样时间。
+`/calib/reference` 是 latched `nav_msgs/Path`，RViz 添加 Path 显示并设置
+Fixed Frame 为 `map`；位置修正沿用 NDT `/initialpose`。
+程序会显示结果目录和录包会话路径，不把 PID 写死。
+实车停稳后用运行 launch 的终端 Ctrl+C 关闭，并检查该会话的 `bag`。
+
 ## 3. 纵向标定
 
 整车标定 launch 启动车辆链路及**一个**标定发布者，不启动 MPCC 或独立 PP 输出节点：
@@ -112,7 +170,7 @@ ros2 service call /calib/enable std_srvs/srv/SetBool '{data: true}'
 正负电流试验均使用 `MODE_CURRENT`，不使用默认禁用的 brake 模式或预留 acceleration 模式。
 
 
-九档巡航电流方案使用 [speed_hold_1to5.yaml](../../src/aims_calibration/config/speed_hold_1to5.yaml)，并传入专用 `vehicle_config`（`max_speed: 5.0`）：1–5 m/s、步长 0.5 m/s，每档累计 5 秒有效直线数据；过弯暂停，每次恢复采样前重新稳速 1 秒，完成九档后请求零速度。配置项 `hold_sampling: cumulative`；选择 `continuous` 可保留原连续窗口方式。每个独立采样段都会保留源时间和电流统计，段间时间不计入 5 秒。现场调用追加 `calibration_config:=/absolute/path/speed_hold_1to5.yaml vehicle_config:=/absolute/path/hold-vehicle.yaml`。5 m/s 请求只适用于显式选择该配置的稳速标定，普通 race 参数不变。
+九档巡航电流方案使用 [speed_hold_1to5.yaml](../../src/aims_calibration/config/speed_hold_1to5.yaml)，并传入专用 `vehicle_config`（`max_speed: 5.0`）：1–5 m/s、步长 0.5 m/s，每档累计 5 秒有效直线数据；过弯暂停，每次恢复采样前重新稳速 1 秒，完成九档后请求零速度。配置项 `hold_sampling: cumulative`；选择 `continuous` 可保留原连续窗口方式。每个独立采样段都会保留源时间和电流统计，段间时间不计入 5 秒。现场使用上面的 `profile:=speed_hold_1to5`，或者显式传入仓库内配置。5 m/s 请求只适用于显式选择该配置的稳速标定，普通 race 参数不变。
 
 整车标定 launch 单独关闭本次驱动的 40 A 起步电流替换；普通 vehicle／race 默认值保持不变。
 标定默认开启独立 acc 观察节点，不把它接入电机闭环。

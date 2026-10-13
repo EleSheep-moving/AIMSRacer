@@ -108,3 +108,34 @@ def test_calibration_recording_keeps_requests_results_and_config(tmp_path, monke
             '/calib/status', '/sensors/core', '/state_estimation/longitudinal_acceleration',
             '/localization/status'} <= set(cmd)
     assert (tmp_path/'session/params/calibration_selected.yaml').read_text() == 'test: true\n'
+
+
+def test_nine_speed_profile_resolves_all_tuning_from_installed_packages(tmp_path):
+    module=load('calibration.launch.py')
+    module.get_package_share_directory=lambda package: str(ROOT.parent/package)
+    ctx=context(tmp_path,profile='speed_hold_1to5',calibration_config='',vehicle_config='',pp_config='')
+    actions=module.build_calibration(ctx)
+    assert ctx.launch_configurations['calibration_config'].endswith('/aims_calibration/config/speed_hold_1to5.yaml')
+    assert ctx.launch_configurations['vehicle_config'].endswith('/aims_calibration/config/speed_hold_vehicle.yaml')
+    assert ctx.launch_configurations['pp_config'].endswith('/aims_calibration/config/speed_hold_pp.yaml')
+    calibration=next(a for a in actions if isinstance(a,dict) and a.get('package')=='aims_calibration')
+    assert calibration['arguments']['require_acceleration']=='true'
+
+
+def test_nine_speed_profile_cannot_silently_select_current_stage(tmp_path):
+    with pytest.raises(ValueError,match='profile'):
+        load('calibration.launch.py').build_calibration(context(tmp_path,profile='speed_hold_1to5',stage='accel_interval'))
+
+
+def test_calibration_rviz_uses_packaged_map_reference_and_software_option(tmp_path):
+    module=load('calibration.launch.py')
+    actions=module.build_calibration(context(tmp_path,rviz='true',rviz_software_rendering='true'))
+    rviz=next(a for a in actions if isinstance(a,dict) and a.get('executable')=='rviz2')
+    assert rviz['arguments'][-1].endswith('/rviz/calibration.rviz')
+    assert rviz['additional_env']['LIBGL_ALWAYS_SOFTWARE']=='1'
+    import yaml
+    config=yaml.safe_load((ROOT/'rviz/calibration.rviz').read_text())['Visualization Manager']
+    assert config['Global Options']['Fixed Frame']=='map'
+    paths=[d for d in config['Displays'] if d['Class']=='rviz_default_plugins/Path']
+    assert paths[0]['Topic']['Value']=='/calib/reference'
+    assert paths[0]['Topic']['Durability Policy']=='Transient Local'

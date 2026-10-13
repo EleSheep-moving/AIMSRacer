@@ -87,6 +87,70 @@ expiration gate. Missing localization, stale state or withdrawn control authorit
 stops it and requires explicit re-enable. Stop with `{data: false}` or RC lock;
 close launch only after the vehicle is stopped. MPCC and PP must not run together.
 
+## Packaged calibration commands
+
+All four executables share `aims_calibration/cli.py`. `operator.py` holds pure
+readiness and result checks; `node.py` and `engine.py` own control and acquisition.
+No temporary `field-tests` Python script, fixed PID or conversation authorization
+string is required.
+
+If the vehicle launch is already running, use only these commands:
+
+```bash
+ros2 run aims_calibration inspect
+# Confirm pose/direction in RViz, unlock RC and select CH8 calibration; enable once:
+ros2 run aims_calibration start
+# To abort, lock with RC first; this leaves the vehicle launch and recorder running:
+ros2 run aims_calibration stop
+# Use the output_directory printed by inspect/start for offline acceptance:
+ros2 run aims_calibration results /absolute/path/to/result-directory
+```
+
+The CLI and direct `/calib/enable` use the same node preflight: fresh observations
+and selected authority, stationary wheel speed (absolute value <=0.1 m/s), a final
+zero-speed request, disabled driver current-startup substitution, exclusive command
+publishers and healthy logging. PP additionally requires matching trusted localization,
+lateral distance <=0.25 m and heading error <=0.35 rad. ACC availability is checked
+when the launch enables it. Start rechecks vehicle, PP, calibration, reference and
+region file hashes. Correct a refused preflight and retry; an accepted start cannot
+be repeated or reset. Completion, interruption or fault needs a fresh launch/session
+for the next collection.
+
+`start` submits one enable request. An uncertain response, lost monitor input or
+Ctrl+C requests disable. It checks fresh wheel standstill continuously for 3 seconds
+before reporting a stop. Zero current requests coasting, not guaranteed stopping;
+unverified standstill explicitly requires operator intervention and never closes
+the vehicle launch. `results` checks complete target coverage, configuration hash
+and each record's `success` / `evidence_valid`. Empty, duplicate and partial runs
+return nonzero exit codes.
+
+In an NX graphical terminal, append `rviz:=true` to load the packaged `calibration.rviz` with the prior map and green reference. Software rendering is the default for the observed NX black-screen issue; `rviz_software_rendering:=false` selects GL rendering.
+
+### Repository nine-speed preset
+
+This preset is optional; default vehicle startup is unchanged. Site maps and exported
+references remain data paths. All scripts, launch files, settings and documentation
+are installed from the repository. The preset chooses packaged `speed_hold_1to5.yaml`,
+`speed_hold_vehicle.yaml` and `speed_hold_pp.yaml`; no temporary vehicle/PP YAML is needed.
+
+**Start this once only when no vehicle launch is running**. With an existing launch,
+use the commands above instead:
+
+```bash
+ros2 launch aims_racer_system calibration.launch.py \
+  profile:=speed_hold_1to5 steering_source:=pp \
+  map_file:=/absolute/path/to/map.pcd \
+  reference_directory:=/absolute/path/to/pp-routev2-straight-trials \
+  record:=true longitudinal_acceleration:=true auto_start:=false
+```
+
+Nine targets 1.0, 1.5, ..., 5.0 m/s each settle for 1 second and accumulate 5 seconds
+of eligible straight samples. Turns use 1 m/s recovery; turns and unstable intervals
+add no acquisition time. `/calib/reference` is a latched `nav_msgs/Path`; add a Path
+display in RViz with Fixed Frame `map`. NDT pose corrections retain `/initialpose`.
+Use the printed result and bag session paths, not a fixed PID. After physical
+standstill, Ctrl+C in the launch terminal and verify that session's `bag`.
+
 ## 3. Run longitudinal calibration
 
 The system calibration launch starts the vehicle chain and **one** calibration
@@ -127,7 +191,7 @@ there is no automatic full-current sweep. Both signed-current stages use
 `MODE_CURRENT`, not the disabled brake mode or reserved acceleration mode.
 
 
-The [speed_hold_1to5.yaml](../../src/aims_calibration/config/speed_hold_1to5.yaml) preset requests nine targets from 1 to 5 m/s in 0.5 m/s steps, accumulating five valid straight seconds each, settling for one second after every pause, and stopping after the ninth target. Pass `calibration_config:=/absolute/path/speed_hold_1to5.yaml vehicle_config:=/absolute/path/hold-vehicle.yaml` with a dedicated vehicle YAML containing `max_speed: 5.0`. `hold_sampling: cumulative` retains individually documented segments; inter-segment gaps add no time. `continuous` selects the original uninterrupted-window mode. The dedicated 5 m/s limit does not change ordinary race settings.
+The [speed_hold_1to5.yaml](../../src/aims_calibration/config/speed_hold_1to5.yaml) preset requests nine targets from 1 to 5 m/s in 0.5 m/s steps, accumulating five valid straight seconds each, settling for one second after every pause, and stopping after the ninth target. Select the packaged `profile:=speed_hold_1to5` above, or explicitly supply dedicated repository YAML with `max_speed: 5.0`. `hold_sampling: cumulative` retains individually documented segments; inter-segment gaps add no time. `continuous` selects the original uninterrupted-window mode. The dedicated 5 m/s limit does not change ordinary race settings.
 
 The full calibration launch disables the 40 A current startup substitution **for
 this driver instance**. Regular vehicle/race defaults are preserved. Acceleration

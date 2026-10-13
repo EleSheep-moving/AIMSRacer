@@ -17,14 +17,17 @@ from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy, Rel
 from std_msgs.msg import Bool, String
 from std_srvs.srv import SetBool
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path as RosPath
+from geometry_msgs.msg import PoseStamped
+from rcl_interfaces.srv import GetParameters
 from geometry_msgs.msg import AccelWithCovarianceStamped
 from crsf_receiver_msg.msg import CRSFChannels16
 from vesc_msgs.msg import VescCommand, VescStateStamped
 import yaml
 
 from .engine import Config, Engine, Observation, Request, RCProfile, Regions
-from .io import motor_telemetry, apply_request, AsyncOutputLog, health_values
+from .io import motor_telemetry, apply_request, AsyncOutputLog, health_values, _json_safe
+from .operator import check_start
 
 
 def seconds(stamp): return float(stamp.sec)+float(stamp.nanosec)*1e-9
@@ -52,6 +55,10 @@ class CalibrationNode(Node):
         vehicle=yaml.safe_load(Path(vehicle_path).read_text())
         values['max_speed']=min(values['max_speed'],float(vehicle['max_speed']))
         self.engine=Engine(Config(**values)); self.obs=Observation()
+        self.require_acceleration=self.declare_parameter('require_acceleration',False).value
+        self.enable_count=0; self.driver_startup_disabled=False; self.driver_parameter_received=-math.inf
+        self.driver_query=None; self.acceleration_status={}
+        self.driver_parameters=self.create_client(GetParameters,'/vesc_driver_node/get_parameters')
         self.profile=RCProfile(name=self.get_parameter('rc_profile').value)
         self.receipts={}; self.last_request=Request(0.); self.tracking=None
         self.evidence_error=''; self.results_dirty=False
@@ -104,6 +111,9 @@ class CalibrationNode(Node):
         self.safety_clock=Clock(clock_type=ClockType.STEADY_TIME)
         self.command_timer=self.create_timer(.02,self._tick,clock=self.safety_clock)
         self.status_timer=self.create_timer(.2,self._status,clock=self.safety_clock)
+        if self.tracking:
+            self.reference_pub=self.create_publisher(RosPath,'/calib/reference',durable)
+            self._publish_reference()
         self.get_logger().info(f'Calibration disabled by default; evidence: {self.output.directory}')
 
     def _now(self): return self.get_clock().now().nanoseconds*1e-9
@@ -156,6 +166,7 @@ class CalibrationNode(Node):
 
     def _acceleration_status(self,msg):
         self._receipt('acceleration_quality')
+        self.acceleration_status={v.key:v.value for status in msg.status for v in status.values}
         quality='; '.join(f'{s.level}:{s.message}' for s in msg.status)
         self.obs=replace(self.obs,acceleration_quality=quality or 'unavailable')
 
@@ -184,6 +195,81 @@ class CalibrationNode(Node):
         self.tracking.observe_map_valid(msg.data)
         if not msg.data: self._fault('map_validity_withdrawn')
 
+    def _poll_driver_parameters(self):
+        if self.driver_query is not None:
+            if not self.driver_query.done(): return
+            try:
+                values=self.driver_query.result().values
+                self.driver_startup_disabled=len(values)==1 and values[0].type==1 and not values[0].bool_value
+                self.driver_parameter_received=time.monotonic()
+            except Exception:
+                self.driver_startup_disabled=False
+            self.driver_query=None
+        if time.monotonic()-self.driver_parameter_received>=.5 and self.driver_parameters.service_is_ready():
+            request=GetParameters.Request(); request.names=['current_startup_enabled']
+            self.driver_query=self.driver_parameters.call_async(request)
+
+    def preflight_snapshot(self,verify_artifacts=False):
+        now=self._now(); steady=time.monotonic();obs=self.obs
+        ages={name+'_source':now-stamp for name,stamp in (
+            ('wheel',obs.wheel_stamp),('telemetry',obs.telemetry_stamp),
+            ('final',obs.final_request.stamp if obs.final_request else -math.inf),
+            ('rc',obs.rc_stamp),('authority',obs.authority_stamp))}
+        ages.update({name+'_receipt':steady-self.receipts.get(name,-math.inf)
+                     for name in ('wheel','telemetry','final','rc','authority')})
+        snapshot=dict(state=self.engine.state,enabled=self.engine.enabled,enable_count=self.enable_count,
+            logging_error=str(self.output.error or self.evidence_error),logging_dropped=self.output.dropped_count,
+            freshness=self.engine.config.freshness,ages=ages,wheel_speed=obs.velocity,
+            telemetry_valid=all(math.isfinite(v) for v in (obs.current_motor,obs.voltage_input,obs.erpm)) and obs.voltage_input>0,
+            authority=obs.authority,rc_valid=obs.rc_valid,
+            final_zero=obs.final_request is not None and obs.final_request.mode==0 and obs.final_request.speed==0 and obs.final_request.current==0,
+            publishers=dict(calibration=self.count_publishers('/calib/vesc_command'),final=self.count_publishers('/vesc/command'),drive=self.count_publishers('/drive')),
+            driver_startup_disabled=self.driver_startup_disabled,driver_parameter_age=steady-self.driver_parameter_received,
+            pp=self.tracking is not None,localization_reason='',cross_track=None,heading_error=None,
+            require_acceleration=self.require_acceleration,artifact_error='')
+        try:
+            force_ages=[float(self.acceleration_status[key]) for key in ('wheel_age_s','imu_age_s','force_age_s')]
+        except (KeyError,ValueError,TypeError): force_ages=[math.inf]
+        snapshot['acceleration_valid']=(self.acceleration_status.get('initialized')=='true' and
+            self.acceleration_status.get('force_valid')=='true' and all(math.isfinite(age) and 0<=age<=.1 for age in force_ages) and
+            math.isfinite(obs.acceleration) and 0<=now-obs.acceleration_stamp<=.1 and
+            0<=steady-self.receipts.get('acceleration',-math.inf)<=.1 and
+            0<=steady-self.receipts.get('acceleration_quality',-math.inf)<=2.)
+        if self.tracking:
+            self.tracking.observe_clock(int(now*1e9))
+            snapshot['localization_reason']=self.tracking.localization_reason(int(now*1e9),steady)
+            if not snapshot['localization_reason']:
+                try:
+                    from aims_pp.core import wrap_angle
+                    pose,s,lateral=self.association_runtime.association()
+                    snapshot.update(cross_track=lateral,heading_error=wrap_angle(pose[2]-self.reference.at(s)['yaw']),progress=s)
+                except ValueError as error: snapshot['localization_reason']=str(error)
+        if verify_artifacts:
+            metadata=self.output.writer.metadata
+            def check_file(path,expected,label):
+                try:
+                    if hashlib.sha256(Path(path).read_bytes()).hexdigest()!=expected:
+                        snapshot['artifact_error']=label+' changed after launch'
+                except (OSError,TypeError) as error:
+                    snapshot['artifact_error']=label+' unavailable: '+str(error)
+            for key,hash_key in (('vehicle_config','vehicle_sha256'),('calibration_config','calibration_config_sha256'),('pp_config','pp_config_sha256')):
+                path=metadata.get(key)
+                if path: check_file(path,metadata.get(hash_key),key)
+            if self.tracking:
+                for name,key in (('reference.json','reference_sha256'),('calibration_regions.json','calibration_regions_sha256')):
+                    path=Path(metadata['reference_directory'])/name
+                    check_file(path,metadata[key],name)
+        return _json_safe(snapshot)
+
+    def _publish_reference(self):
+        path=RosPath(); path.header.frame_id='map';path.header.stamp=self.get_clock().now().to_msg()
+        for position in self.reference.sample_positions[::max(1,len(self.reference.sample_positions)//2000)]:
+            at=self.reference.at(position);point=PoseStamped();point.header=path.header
+            point.pose.position.x=at['x'];point.pose.position.y=at['y']
+            point.pose.orientation.z=math.sin(at['yaw']/2);point.pose.orientation.w=math.cos(at['yaw']/2)
+            path.poses.append(point)
+        self.reference_pub.publish(path)
+
     def _begin(self):
         self.engine.enable(True,now=self._now()); self.progress=None; self.progress_time=None
         self.obs=Observation(); self.receipts.clear()
@@ -194,9 +280,19 @@ class CalibrationNode(Node):
 
     def _enable(self,request,response):
         try:
-            if request.data: self._begin()
+            if request.data:
+                snapshot=self.preflight_snapshot(verify_artifacts=True)
+                reasons=check_start(snapshot)
+                if reasons:
+                    response.success=False; response.message='Start refused: '+', '.join(reasons)
+                    return response
+                marker=self.output.directory/'enable-attempt.json'
+                with marker.open('x') as output:
+                    json.dump(dict(requested_at_ns=time.time_ns(),preflight=snapshot),output,allow_nan=False)
+                self.enable_count+=1
+                self._begin()
             else: self.engine.enable(False); self.output.trials(self.engine.trials,self.evidence_error)
-        except RuntimeError as exc:
+        except (RuntimeError,OSError,ValueError) as exc:
             self.engine.fault(str(exc)); response.success=False; response.message=str(exc)
             return response
         response.success=True
@@ -275,7 +371,15 @@ class CalibrationNode(Node):
         status=DiagnosticStatus(); status.name='longitudinal_calibration'; status.hardware_id='vesc_calibration'
         status.level=DiagnosticStatus.ERROR if self.engine.state=='FAULT' else DiagnosticStatus.OK
         status.message=self.engine.reason
+        self._poll_driver_parameters()
+        snapshot=self.preflight_snapshot()
+        reasons=check_start(snapshot)
         values=dict(state=self.engine.state,enabled=str(self.engine.enabled).lower(),
+            enable_count=str(self.enable_count),start_ready=str(not reasons).lower(),
+            start_refusals=json.dumps(reasons),preflight_json=json.dumps(snapshot,allow_nan=False),
+            reason=self.engine.reason,vehicle_config=self.get_parameter('vehicle_config').value,
+            reference_directory=self.get_parameter('reference_directory').value,
+            calibration_config=self.get_parameter('config_file').value,
             stage=self.engine.config.stage,steering_source=self.engine.config.steering_source,
             trial_index=str(self.engine.index),trials=str(len(self.engine.trials)),
             planned_trials=str(len(self.engine.plan)),hold_sampling=self.engine.config.hold_sampling,

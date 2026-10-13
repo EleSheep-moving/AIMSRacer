@@ -12,6 +12,13 @@ def build_calibration(context):
     cfg=context.launch_configurations
     stage=cfg.get('stage','speed_hold')
     steering=cfg.get('steering_source','pp')
+    profile=cfg.get('profile','default')
+    if profile not in ('default','speed_hold_1to5') or (profile=='speed_hold_1to5' and stage!='speed_hold'):
+        raise ValueError('profile must be default or speed_hold_1to5 with stage speed_hold')
+    calibration_share=Path(get_package_share_directory('aims_calibration'))
+    if profile=='speed_hold_1to5':
+        for key,name in (('calibration_config','speed_hold_1to5.yaml'),('vehicle_config','speed_hold_vehicle.yaml'),('pp_config','speed_hold_pp.yaml')):
+            cfg[key]=cfg.get(key) or str(calibration_share/'config'/name)
     if stage not in ('speed_hold','accel_interval','decel_current'):
         raise ValueError('stage must be speed_hold, accel_interval or decel_current')
     if steering not in ('pp','rc'):raise ValueError('steering_source must be pp or rc')
@@ -46,17 +53,24 @@ def build_calibration(context):
     actions.append(include('aims_calibration','longitudinal_calibration.launch.py',dict(
         config=cfg['calibration_config'],reference_directory=cfg.get('reference_directory',''),
         vehicle_config=cfg['vehicle_config'],pp_config=cfg['pp_config'],log_directory=log,
-        stage=stage,steering_source=steering,auto_start='false')))
+        stage=stage,steering_source=steering,auto_start='false',
+        require_acceleration=str(flag(context,'longitudinal_acceleration')).lower())))
     if values:
         actions.append(Node(package='aims_racer_system',executable='relocalize_known_map.py',
             arguments=[map_file,'--pose-frame','base_link',*[arg for key,value in
                 zip(('x','y','z','roll','pitch','yaw'),values) for arg in ('--'+key,str(value))]],output='screen'))
+    if flag(context,'rviz'):
+        if steering!='pp': raise ValueError('calibration RViz requires PP map tracking')
+        env={'LIBGL_ALWAYS_SOFTWARE':'1'} if flag(context,'rviz_software_rendering') else {}
+        actions.append(Node(package='rviz2',executable='rviz2',name='calibration_rviz',
+            arguments=['-d',str(share/'rviz/calibration.rviz')],additional_env=env,output='screen'))
     return actions
 
 
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('stage',default_value='speed_hold'),
+        DeclareLaunchArgument('profile',default_value='default',description='Optional speed_hold_1to5 preset with packaged calibration, vehicle and PP settings'),
         DeclareLaunchArgument('steering_source',default_value='pp'),
         DeclareLaunchArgument('calibration_config',default_value=''),
         DeclareLaunchArgument('reference_directory',default_value=''),
@@ -67,6 +81,8 @@ def generate_launch_description():
         DeclareLaunchArgument('auto_start',default_value='false'),
         DeclareLaunchArgument('longitudinal_acceleration',default_value='true'),
         DeclareLaunchArgument('record',default_value='false'),
+        DeclareLaunchArgument('rviz',default_value='false'),
+        DeclareLaunchArgument('rviz_software_rendering',default_value='true',description='Software rendering for NX displays that render black with GL acceleration'),
         DeclareLaunchArgument('session_directory',default_value=''),
         DeclareLaunchArgument('log_directory',default_value=''),
         OpaqueFunction(function=build_calibration)])

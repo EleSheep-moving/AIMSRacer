@@ -6,6 +6,70 @@
 
 The executable and node-only launch are `longitudinal_calibration` and `longitudinal_calibration.launch.py`. The complete graph is `aims_racer_system/calibration.launch.py`. Package launch arguments: `config`, `reference_directory`, `vehicle_config`, `pp_config`, `log_directory`, `stage`, `steering_source`, and `auto_start`. Use the full system graph to configure vehicle, known-map localization, recording, and acceleration estimation. Defaults are disabled; explicit `/calib/enable` (`std_srvs/SetBool`) starts preparation. `auto_start` must be false; the node rejects true, requiring explicit service enable. `/calib/status` reports state, reason, measured current, requested current, and output directory.
 
+## Packaged calibration commands
+
+All four executables share `aims_calibration/cli.py`. `operator.py` holds pure
+readiness and result checks; `node.py` and `engine.py` own control and acquisition.
+No temporary `field-tests` Python script, fixed PID or conversation authorization
+string is required.
+
+If the vehicle launch is already running, use only these commands:
+
+```bash
+ros2 run aims_calibration inspect
+# Confirm pose/direction in RViz, unlock RC and select CH8 calibration; enable once:
+ros2 run aims_calibration start
+# To abort, lock with RC first; this leaves the vehicle launch and recorder running:
+ros2 run aims_calibration stop
+# Use the output_directory printed by inspect/start for offline acceptance:
+ros2 run aims_calibration results /absolute/path/to/result-directory
+```
+
+The CLI and direct `/calib/enable` use the same node preflight: fresh observations
+and selected authority, stationary wheel speed (absolute value <=0.1 m/s), a final
+zero-speed request, disabled driver current-startup substitution, exclusive command
+publishers and healthy logging. PP additionally requires matching trusted localization,
+lateral distance <=0.25 m and heading error <=0.35 rad. ACC availability is checked
+when the launch enables it. Start rechecks vehicle, PP, calibration, reference and
+region file hashes. Correct a refused preflight and retry; an accepted start cannot
+be repeated or reset. Completion, interruption or fault needs a fresh launch/session
+for the next collection.
+
+`start` submits one enable request. An uncertain response, lost monitor input or
+Ctrl+C requests disable. It checks fresh wheel standstill continuously for 3 seconds
+before reporting a stop. Zero current requests coasting, not guaranteed stopping;
+unverified standstill explicitly requires operator intervention and never closes
+the vehicle launch. `results` checks complete target coverage, configuration hash
+and each record's `success` / `evidence_valid`. Empty, duplicate and partial runs
+return nonzero exit codes.
+
+In an NX graphical terminal, append `rviz:=true` to load the packaged `calibration.rviz` with the prior map and green reference. Software rendering is the default for the observed NX black-screen issue; `rviz_software_rendering:=false` selects GL rendering.
+
+### Repository nine-speed preset
+
+This preset is optional; default vehicle startup is unchanged. Site maps and exported
+references remain data paths. All scripts, launch files, settings and documentation
+are installed from the repository. The preset chooses packaged `speed_hold_1to5.yaml`,
+`speed_hold_vehicle.yaml` and `speed_hold_pp.yaml`; no temporary vehicle/PP YAML is needed.
+
+**Start this once only when no vehicle launch is running**. With an existing launch,
+use the commands above instead:
+
+```bash
+ros2 launch aims_racer_system calibration.launch.py \
+  profile:=speed_hold_1to5 steering_source:=pp \
+  map_file:=/absolute/path/to/map.pcd \
+  reference_directory:=/absolute/path/to/pp-routev2-straight-trials \
+  record:=true longitudinal_acceleration:=true auto_start:=false
+```
+
+Nine targets 1.0, 1.5, ..., 5.0 m/s each settle for 1 second and accumulate 5 seconds
+of eligible straight samples. Turns use 1 m/s recovery; turns and unstable intervals
+add no acquisition time. `/calib/reference` is a latched `nav_msgs/Path`; add a Path
+display in RViz with Fixed Frame `map`. NDT pose corrections retain `/initialpose`.
+Use the printed result and bag session paths, not a fixed PID. After physical
+standstill, Ctrl+C in the launch terminal and verify that session's `bag`.
+
 ## Stages
 
 - `speed_hold`: `hold_sampling: cumulative` accumulates valid straight, steady-speed samples. Each straight requires one continuous second within 0.2 m/s of the target. Turns, region changes, unstable speed and uncovered sample-source gaps pause accumulation and require settling again; prior admitted samples remain. Completing a target immediately requests the next speed; the last target requests zero speed. The basic preset still uses `[1, 2, 3]` and ten seconds per target. The nine-target preset is described below. `hold_sampling: continuous` retains the previous uninterrupted-window behavior.
@@ -20,7 +84,7 @@ The VESC driver's current startup helper must be false in the calibration vehicl
 
 `config/speed_hold_1to5.yaml` requests `[1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]`, five effective source seconds per target, one repeat, one second of settling after each pause, and 1.0 m/s recovery outside trial regions. A target may span multiple straights; its five seconds are cumulative, not continuous.
 
-Pass a separate vehicle YAML with `max_speed: 5.0`. A 4 m/s vehicle config rejects this sweep rather than skipping its last targets. The preset allows 0.2 m/s measured overshoot before faulting; requested speeds remain capped at 5.0. Diagnostics expose current target, accumulated seconds, segment count, plan length and sampling mode. Permission, localization and evidence faults still invalidate the current target; explicit re-enable starts again at the first target.
+Select `profile:=speed_hold_1to5` to use the packaged vehicle and PP YAML, or pass a separate vehicle YAML with `max_speed: 5.0`. A 4 m/s vehicle config rejects this sweep rather than skipping its last targets. The preset allows 0.2 m/s measured overshoot before faulting; requested speeds remain capped at 5.0. Diagnostics expose current target, accumulated seconds, segment count, plan length and sampling mode. Permission, localization and evidence faults still invalidate the current target; a new launch/session starts again at the first target.
 
 ## Steering and trial windows
 
@@ -34,7 +98,7 @@ PP requires `reference_directory/reference.json` and an explicit `calibration_re
 
 While disabled at startup, fresh zero-speed requests let the selector establish calibration selection. Enabling waits for fresh `/control/calibration_enabled == true`, then requires independent RC validity, new wheel/current data, and a fresh final `/vesc/command` corresponding to a recently sent request. The selector restamps commands, so content is matched against a short request history rather than requiring the latest request timestamp. Only the active mode target is populated; positive and negative current both use `MODE_CURRENT`. `MODE_BRAKE_CURRENT` and `MODE_ACCELERATION` are never emitted.
 
-Authority loss, RC lock/mode loss, source/receipt age over 0.2 s, invalid telemetry, foreign final command, map/localization withdrawal, backward ROS/source time, frozen ROS time, timer stall, or another calibration publisher latches `FAULT`, invalidates the current trial, and continuously requests zero motor current until explicit re-enable. Operator disable also invalidates the incomplete trial and requests zero motor current. Re-enable establishes a new ROS-time baseline, clears cached observations and request history, and starts preparation. Authority, RC, wheel, and motor source observations must arrive after the new arm time, and a newly sent zero-speed request must appear in the final command before preparation can move. Runtime clock rollback still latches a fault; explicit re-enable can recover in the new clock domain without waiting for the old timestamp. It never resumes a partial interval. Stage completion requests zero speed. A zero-current request is a coast request, not a physical stop guarantee; the external selector and operator retain control.
+Authority loss, RC lock/mode loss, source/receipt age over 0.2 s, invalid telemetry, foreign final command, map/localization withdrawal, backward ROS/source time, frozen ROS time, timer stall, or another calibration publisher latches `FAULT`, invalidates the current trial, and continuously requests zero motor current until a fresh session is explicitly enabled. Operator disable also invalidates the incomplete trial and requests zero motor current. A fresh-session enable establishes a new ROS-time baseline, clears cached observations and request history, and starts preparation. Authority, RC, wheel, and motor source observations must arrive after the new arm time, and a newly sent zero-speed request must appear in the final command before preparation can move. Runtime clock rollback still latches a fault; a fresh session can recover in the new clock domain without waiting for the old timestamp. It never resumes a partial interval. Stage completion requests zero speed. A zero-current request is a coast request, not a physical stop guarantee; the external selector and operator retain control.
 
 ## Evidence and metric definitions
 

@@ -7,6 +7,7 @@
   <buildtool_depend>ament_python</buildtool_depend>
   <exec_depend>rclpy</exec_depend><exec_depend>std_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend><exec_depend>diagnostic_msgs</exec_depend>
+  <exec_depend>rcl_interfaces</exec_depend>
   <exec_depend>nav_msgs</exec_depend><exec_depend>geometry_msgs</exec_depend>
   <exec_depend>vesc_msgs</exec_depend><exec_depend>crsf_receiver_msg</exec_depend>
   <exec_depend>aims_pp</exec_depend><exec_depend>python3-yaml</exec_depend>

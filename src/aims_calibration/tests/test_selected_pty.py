@@ -15,9 +15,10 @@ import time
 import pytest
 
 
-@pytest.mark.parametrize('stage,loss,hold_speed', [('speed_hold',False,1.),('speed_hold',False,5.),
-    ('accel_interval',False,1.),('decel_current',False,1.),('accel_interval',True,1.)])
-def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_path,monkeypatch,stage,loss,hold_speed):
+@pytest.mark.parametrize('stage,loss,hold_speed,use_cli', [('speed_hold',False,1.,False),('speed_hold',False,5.,False),
+    ('accel_interval',False,1.,False),('decel_current',False,1.,False),('accel_interval',True,1.,False),
+    ('speed_hold',False,1.,True),('speed_hold',False,1.,'interrupt')])
+def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_path,monkeypatch,stage,loss,hold_speed,use_cli):
     monkeypatch.setenv('ROS_DOMAIN_ID',str(196+['speed_hold','accel_interval','decel_current'].index(stage)))
     monkeypatch.setenv('ROS_LOCALHOST_ONLY','1'); monkeypatch.setenv('ROS_LOG_DIR',str(tmp_path/'ros_logs'))
     from ament_index_python.packages import get_package_prefix
@@ -33,7 +34,7 @@ def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_p
     source=Path(__file__).resolve().parents[2]
     spec=importlib.util.spec_from_file_location('calibration_pty_emulator',source/'vesc/vesc_driver/test/test_driver_link.py')
     helper=importlib.util.module_from_spec(spec); spec.loader.exec_module(helper)
-    emulator=helper.VescEmulator(); emulator.rpm=int(1000*hold_speed)
+    emulator=helper.VescEmulator(); emulator.rpm=0
     context=Context(); rclpy.init(context=context)
     peer=rclpy.create_node('calibration_selected_pty_test',context=context)
     executor=SingleThreadedExecutor(context=context); executor.add_node(peer)
@@ -47,7 +48,7 @@ def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_p
     peer.create_subscription(Bool,'/control/calibration_enabled',lambda m:selected.append(m.data),10)
     peer.create_subscription(VescStateStamped,'/sensors/core',lambda m:telemetry.append(m),10)
     enable=peer.create_client(SetBool,'/calib/enable')
-    processes=[]; logs=[]; pump_rc=True; last_rc=0.
+    processes=[]; logs=[]; pump_rc=True; last_rc=0.; operator_process=None
 
     def binary(package,name): return str(Path(get_package_prefix(package))/f'lib/{package}/{name}')
     def spawn(package,name,parameters,extra=()):
@@ -68,7 +69,7 @@ def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_p
                 last_rc=time.monotonic(); rc.publish(channels)
             executor.spin_once(timeout_sec=.001)
             if condition(): return
-        raise AssertionError('timeout, state='+state()+'\n'+'\n'.join(p.read_text() for p in tmp_path.glob('*.log')))
+        raise AssertionError('timeout, state='+state()+'\nstatus='+str({v.key:v.value for v in statuses[-1].status[0].values} if statuses else {})+'\n'+'\n'.join('\n'.join(p.read_text().splitlines()[-12:]) for p in tmp_path.glob('*.log')))
     def trials():
         files=list((tmp_path/'results').glob('*/trials.json'))
         return json.loads(files[0].read_text())['trials'] if files else []
@@ -80,7 +81,7 @@ def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_p
     try:
         spawn('vesc_driver','vesc_driver_node',dict(port=emulator.port,telemetry_rate_hz=100.,
             speed_to_erpm_gain=1000.,speed_to_erpm_offset=0.,current_startup_enabled='false',
-            speed_min=-6000.,speed_max=6000.,current_min=-100.,current_max=100.))
+            speed_min=-6000.,speed_max=6000.,current_min=-100.,current_max=100.),('-r','__node:=vesc_driver_node'))
         spawn('vesc_ackermann','vesc_to_odom_node',dict(speed_to_erpm_gain=1000.,speed_to_erpm_offset=0.,
             use_servo_cmd_to_calc_angular_velocity='false'),('-r','odom:=/rear_axle/wheel_odom'))
         spawn('ackermann_mux','joystick_control_v2',dict(channel_profile='steering_ch1_throttle_ch3_aux_ch5_to_ch10',
@@ -93,15 +94,42 @@ def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_p
             vehicle=tmp_path/'hold_vehicle.yaml'; vehicle.write_text(yaml.safe_dump(values))
         params=dict(vehicle_config=str(vehicle),steering_source='rc',stage=stage,max_speed=5. if stage=='speed_hold' else 4.,
             log_directory=str(tmp_path/'results'),speeds=f'[{hold_speed}]',stable_seconds=.08,
-            measurement_seconds=.25,trial_timeout=2.,start_speed=1.,
+            measurement_seconds=5. if use_cli=='interrupt' else .25,trial_timeout=2.,start_speed=1.,
             end_speed=2. if stage=='accel_interval' else .5)
         if stage!='speed_hold': params['currents']='[5.0]' if stage=='accel_interval' else '[-5.0]'
         spawn('aims_calibration','longitudinal_calibration',params)
-        spin_until(lambda:state()=='IDLE' and selected and selected[-1] and telemetry and enable.service_is_ready())
+        def ready():
+            return statuses and {v.key:v.value for v in statuses[-1].status[0].values}.get('start_ready')=='true'
+        spin_until(lambda:state()=='IDLE' and ready() and selected and selected[-1] and telemetry and enable.service_is_ready())
         assert all(m.control_mode==0 and m.target_speed_mps==0 for m in final[-5:])
         assert any(p[0]==8 and int.from_bytes(p[1:],'big',signed=True)==0 for _,p in emulator.packets)
         assert not trials()
-        call(True)
+        inspector=subprocess.Popen([binary('aims_calibration','inspect')],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+        try:
+            spin_until(lambda:inspector.poll() is not None)
+            output,error=inspector.communicate()
+            assert inspector.returncode==0, error+output
+            assert json.loads(output)['preflight']['driver_startup_disabled'] is True
+        finally:
+            if inspector.poll() is None: inspector.kill();inspector.wait()
+        if use_cli:
+            operator_process=subprocess.Popen([binary('aims_calibration','start'),'--max-seconds','15'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            spin_until(lambda:statuses and {v.key:v.value for v in statuses[-1].status[0].values}.get('enable_count')=='1')
+        else: call(True)
+        duplicate=SetBool.Request();duplicate.data=True
+        future=enable.call_async(duplicate);spin_until(future.done)
+        assert not future.result().success and 'acquisition_already_started' in future.result().message
+        emulator.rpm=int(1000*hold_speed)
+        if use_cli=='interrupt':
+            spin_until(lambda:state()=='MEASURE')
+            operator_process.send_signal(signal.SIGINT)
+            spin_until(lambda:operator_process.poll() is not None)
+            output,error=operator_process.communicate()
+            assert operator_process.returncode==3,error+output
+            spin_until(lambda:state()=='STOPPING' and trials() and wire(0))
+            assert not trials()[0]['success']
+            assert 'Stop request failed' not in output,error+output
+            return
         if stage!='speed_hold':
             wanted=5000 if stage=='accel_interval' else -5000
             spin_until(lambda:wire(wanted) and state()=='MEASURE' and any(m.control_mode==1 and m.target_current==wanted/1000 for m in final),timeout=3.)
@@ -116,6 +144,16 @@ def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_p
                 return
             emulator.rpm=2200 if stage=='accel_interval' else 400
         spin_until(lambda:state()=='COMPLETE' and trials() and final and final[-1].control_mode==0 and final[-1].target_speed_mps==0,timeout=3.)
+        if use_cli:
+            emulator.rpm=0
+            spin_until(lambda:operator_process.poll() is not None,timeout=8.)
+            output,error=operator_process.communicate()
+            assert operator_process.returncode==0,error+output
+            assert '"stationary_verified": true' in output
+        result_file=next((tmp_path/'results').glob('*/trials.json'))
+        report=subprocess.run([binary('aims_calibration','results'),str(result_file)],capture_output=True,text=True,timeout=5.)
+        assert report.returncode==0, report.stderr+report.stdout
+        assert json.loads(report.stdout)['valid'] is True
         result=trials()[0]; assert result['success'] and result['mean_current_motor']==pytest.approx(12.34)
         assert result['start_speed']==pytest.approx(hold_speed)
         if stage=='speed_hold':
@@ -132,9 +170,18 @@ def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_p
         rows=list(csv.DictReader(next((tmp_path/'results').glob('*/observations.csv')).open()))
         stamps=[(r['wheel_stamp'],r['telemetry_stamp']) for r in rows]
         assert len(stamps)==len(set(stamps)) and any(float(r['current_motor'])==pytest.approx(12.34) for r in rows)
-        call(False)
+        if use_cli:
+            operator_process=subprocess.Popen([binary('aims_calibration','stop')],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            spin_until(lambda:operator_process.poll() is not None)
+            output,error=operator_process.communicate()
+            assert operator_process.returncode==0,error+output
+        else: call(False)
         spin_until(lambda:state()=='STOPPING' and wire(0),timeout=2.)
     finally:
+        if operator_process is not None and operator_process.poll() is None:
+            operator_process.send_signal(signal.SIGINT)
+            try: operator_process.wait(timeout=6.)
+            except subprocess.TimeoutExpired: operator_process.kill();operator_process.wait()
         for process in reversed(processes):
             if process.poll() is None: process.send_signal(signal.SIGINT)
         for process in processes:

@@ -36,6 +36,7 @@
   <exec_depend>aims_pp</exec_depend>
   <exec_depend>aims_calibration</exec_depend>
   <exec_depend>ros2bag</exec_depend>
+  <exec_depend>rviz2</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
   <depend>ackermann_msgs</depend>

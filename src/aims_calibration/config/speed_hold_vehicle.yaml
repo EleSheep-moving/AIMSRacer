@@ -1,0 +1,12 @@
+# Optional nine-speed calibration geometry/limits; matches the 2026-10-13 NX setup.
+# This file does not change the MPCC vehicle configuration.
+wheelbase: 0.36
+rear_offset: 0.0
+half_length: null
+front_extent: 0.52
+rear_extent: 0.1
+half_width: 0.16
+geometry_verified: true
+enforce_corridor: false
+max_speed: 5.0
+steer_limit: 0.45
