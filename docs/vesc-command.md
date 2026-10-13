@@ -34,8 +34,11 @@ not measured steering. Wheel speed covariance remains 0.04 (m/s)^2 by default.
 
 RC retains speed/current/duty switches, limits, direction, locks and priorities.
 The vehicle CH10 manual current request range remains **3–100 A**; the driver
-`vesc.yaml` clips the final target to **−80 to +80 A**. These bound the request
+`vesc.yaml` clips the final target to **−100 to +100 A**. These bound the request
 and serial target separately; a 100 A request is not a measured 100 A current.
+The driver submodule's `vesc.yaml` and `vesc_config.yaml` defaults use the same ±100 A
+range. These ROS limits apply to current-mode targets; speed-mode PID current
+limits remain configured in VESC firmware.
 `current_startup_enabled=true` retains the 40 A startup helper
 (`startup_duty_current=40`, `startup_timeout_ms=100`): requested current below
 0.1 A sends zero; otherwise use signed startup current until absolute ERPM > 1

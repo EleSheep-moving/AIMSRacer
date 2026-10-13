@@ -18,8 +18,8 @@
     telemetry_rate_hz: 100.0
     duty_cycle_min: -1.0
     duty_cycle_max: 1.0
-    current_min: -80.0
-    current_max: 80.0
+    current_min: -100.0
+    current_max: 100.0
     brake_min: 0.0
     brake_max: 0.0
     speed_min: -40000.0
