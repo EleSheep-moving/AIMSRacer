@@ -6,7 +6,7 @@ from aims_calibration.engine import Config, Engine, Observation, Request, RCProf
 
 def config(stage='speed_hold', **kw):
     values = dict(stage=stage, steering_source='rc', speeds=(1.,), stable_seconds=.1,
-                  measurement_seconds=.2, currents=(5.,) if stage=='accel_interval' else (-5.,),
+                  measurement_seconds=.2, hold_sampling='continuous', currents=(5.,) if stage=='accel_interval' else (-5.,),
                   start_speed=1., end_speed=2. if stage=='accel_interval' else .5)
     values.update(kw)
     return Config(**values)
@@ -266,3 +266,123 @@ def test_preparing_already_past_end_never_emits_first_current(stage,end_speed,ve
     assert result['start_stamp'] is None and result['start_speed'] is None
     assert result['end_stamp']==1.16 and result['end_speed']==velocity
     assert result['first_current_ack_stamp'] is None and result['mean_acceleration'] is None
+
+
+def test_cumulative_hold_pauses_turn_and_restabilizes_in_another_region():
+    e=prepared(hold_sampling='cumulative')
+    e.region='a'
+    step(e,1.17,current=6.,region='a'); step(e,1.27,current=8.,region='a')
+    assert e.hold_elapsed==pytest.approx(.1) and not e.trials
+    step(e,1.28,straight=False,current=99.)
+    assert e.state=='RECOVER' and len(e.active_samples)==2 and e.hold_elapsed==pytest.approx(.1)
+    for t in (1.4,1.55,1.7,1.85,2.): step(e,t,straight=False,current=99.)
+    step(e,2.02,region='b'); step(e,2.1,region='b')
+    assert e.state=='PREPARE' and len(e.active_samples)==2
+    step(e,2.13,region='b'); step(e,2.14,current=10.,region='b')
+    assert e.hold_elapsed==pytest.approx(.1)
+    req=step(e,2.24,current=12.,region='b')
+    result=e.trials[-1]
+    assert e.state=='COMPLETE' and req.speed==0 and result['success']
+    assert result['samples']==4 and result['mean_current_motor']==9.
+    assert result['duration_s']==pytest.approx(.2) and result['wall_duration_s']==pytest.approx(1.07)
+    assert result['segment_count']==2 and [s['region'] for s in result['segments']]==['a','b']
+    assert [s['duration_s'] for s in result['segments']]==pytest.approx([.1,.1])
+    assert [s['mean_current_motor'] for s in result['segments']]==[7.,11.]
+    assert [r['segment_id'] for r in e.samples]==[1,1,2,2]
+
+
+def test_cumulative_unstable_speed_keeps_only_prior_admitted_samples():
+    e=prepared(hold_sampling='cumulative')
+    step(e,1.17,current=6.); step(e,1.22,current=8.)
+    step(e,1.23,v=1.4,current=99.)
+    assert e.state=='PREPARE' and not e.trials and e.hold_elapsed==pytest.approx(.05)
+    step(e,1.25); step(e,1.36); step(e,1.37,current=10.)
+    step(e,1.47,current=12.); step(e,1.52,current=14.)
+    result=e.trials[-1]
+    assert result['success'] and result['samples']==5 and result['mean_current_motor']==10.
+    assert result['duration_s']==pytest.approx(.2) and result['segment_count']==2
+    assert result['segments'][0]['end_reason']=='speed_unstable'
+
+
+def test_cumulative_duplicate_sources_and_uncovered_gaps_do_not_add_time():
+    e=prepared(hold_sampling='cumulative',measurement_seconds=.15)
+    step(e,1.17,current=6.)
+    step(e,1.19,wheel_stamp=1.17,telemetry_stamp=1.17,current=99.)
+    step(e,1.2,telemetry_stamp=1.17,current=99.)
+    assert e.hold_elapsed==0 and len(e.active_samples)==1
+    step(e,1.22,current=8.)
+    assert e.hold_elapsed==pytest.approx(.05)
+    step(e,1.35,wheel_stamp=1.22,current=99.)
+    step(e,1.4,wheel_stamp=1.22,current=99.)
+    step(e,1.43,current=99.)
+    assert e.state=='PREPARE' and e.reason=='sample_source_gap'
+    assert e.hold_elapsed==pytest.approx(.05) and len(e.active_samples)==2
+    step(e,1.44); step(e,1.55); step(e,1.56,current=10.); step(e,1.66,current=12.)
+    assert e.trials[-1]['success'] and e.trials[-1]['duration_s']==pytest.approx(.15)
+    assert e.trials[-1]['mean_current_motor']==9.
+
+
+def test_cumulative_adjacent_region_change_cannot_bridge_sources():
+    e=prepared(hold_sampling='cumulative')
+    e.region='a'
+    step(e,1.17,region='a'); step(e,1.22,region='a')
+    step(e,1.23,region='b')
+    assert e.state=='RECOVER' and e.hold_elapsed==pytest.approx(.05)
+    step(e,1.24,region='b'); step(e,1.35,region='b'); step(e,1.36,region='b')
+    assert e.hold_elapsed==pytest.approx(.05) and len(e.hold_segments)==2
+
+
+@pytest.mark.parametrize('abort',['disable','fault','rollback'])
+def test_cumulative_abort_while_paused_invalidates_entire_stage_and_reenable_resets(abort):
+    e=prepared(hold_sampling='cumulative')
+    step(e,1.17); step(e,1.22); step(e,1.23,straight=False)
+    if abort=='disable': e.enable(False)
+    elif abort=='fault': step(e,1.24,straight=False,authority=False)
+    else: step(e,1.24,straight=False,wheel_stamp=1.21)
+    assert not e.trials[-1]['success'] and e.trials[-1]['duration_s']==pytest.approx(.05)
+    assert e.trials[-1]['segment_count']==1
+    e.enable(True,now=1.25)
+    assert e.index==0 and e.hold_elapsed==0 and not e.active_samples and not e.hold_segments
+
+
+def test_nine_speed_stages_collect_five_source_seconds_each_then_stop():
+    speeds=tuple(1.+.5*i for i in range(9))
+    e=Engine(config(speeds=speeds,max_speed=5.,hold_sampling='cumulative',measurement_seconds=5.))
+    e.enable(True,now=.9)
+    t=1.
+    next_commands=[]
+    for _ in range(2200):
+        target=e.plan[e.index] if e.index<len(e.plan) else 0.
+        # Each straight supplies less than 5 s; every stage must span turns.
+        straight=int(round(t*20))%80<60
+        before=e.index
+        request=step(e,t,v=target if straight else 1.,straight=straight,
+                     region='a' if int(t/4)%2==0 else 'b',current=target+5. if straight else 99.)
+        if e.index>before: next_commands.append(request.speed)
+        t=round(t+.05,8)
+        if e.state=='COMPLETE': break
+    assert e.state=='COMPLETE' and len(e.trials)==9
+    assert [r['requested_target'] for r in e.trials]==list(speeds)
+    assert all(r['success'] and r['duration_s']==pytest.approx(5.) for r in e.trials)
+    assert all(r['segment_count']>=2 and r['mean_current_motor']==r['requested_target']+5. for r in e.trials)
+    assert next_commands==list(speeds[1:])+[0.]
+    assert step(e,t,v=0.).speed==0 and len(e.trials)==9
+
+
+def test_five_mps_requires_explicit_hold_limit_and_does_not_expand_current_stages():
+    assert config(speeds=(5.,),max_speed=5.).max_speed==5.
+    with pytest.raises(ValueError): config(speeds=(5.,))
+    with pytest.raises(ValueError): config(speeds=(5.1,),max_speed=5.1)
+    with pytest.raises(ValueError): config('accel_interval',max_speed=5.)
+    with pytest.raises(ValueError): config(hold_sampling='unknown')
+
+
+def test_hold_speed_overshoot_margin_is_explicit_and_never_raises_requested_speed():
+    e=Engine(config(speeds=(5.,),max_speed=5.,speed_overshoot_tolerance=.2,hold_sampling='cumulative'))
+    e.enable(True)
+    for t in (1.,1.01,1.05,1.16,1.17): request=step(e,t,v=5.1)
+    assert e.state=='MEASURE' and request.speed==5.
+    step(e,1.18,v=5.21)
+    assert e.state=='FAULT' and e.reason=='overspeed'
+    with pytest.raises(ValueError): config(speed_overshoot_tolerance=.21)
+    with pytest.raises(ValueError): config('accel_interval',speed_overshoot_tolerance=.1)

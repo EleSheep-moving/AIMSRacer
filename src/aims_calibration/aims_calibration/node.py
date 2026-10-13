@@ -278,6 +278,11 @@ class CalibrationNode(Node):
         values=dict(state=self.engine.state,enabled=str(self.engine.enabled).lower(),
             stage=self.engine.config.stage,steering_source=self.engine.config.steering_source,
             trial_index=str(self.engine.index),trials=str(len(self.engine.trials)),
+            planned_trials=str(len(self.engine.plan)),hold_sampling=self.engine.config.hold_sampling,
+            sampled_seconds=str(self.engine.hold_elapsed),measurement_seconds=str(self.engine.config.measurement_seconds),
+            segment_count=str(len(self.engine.hold_segments)),
+            target_speed=str(self.engine.plan[self.engine.index] if self.engine.config.stage=='speed_hold'
+                and self.engine.index<len(self.engine.plan) else ''),
             output_directory=str(self.output.directory),current_motor=str(self.obs.current_motor),
             voltage_input=str(self.obs.voltage_input),erpm=str(self.obs.erpm),velocity=str(self.obs.velocity),
             request_mode=str(self.last_request.mode),request_current=str(self.last_request.current),

@@ -10,6 +10,11 @@ def test_package_launch_and_required_explicit_currents():
     values=yaml.safe_load((ROOT/'config/calibration.yaml').read_text())['longitudinal_calibration']['ros__parameters']
     assert values['currents']==[] and values['auto_start'] is False
     assert values['speeds']==[1.,2.,3.]
+    assert values['hold_sampling']=='cumulative'
+    sweep=yaml.safe_load((ROOT/'config/speed_hold_1to5.yaml').read_text())['longitudinal_calibration']['ros__parameters']
+    assert sweep['speeds']==[1.+.5*i for i in range(9)]
+    assert sweep['measurement_seconds']==5. and sweep['max_speed']==5.
+    assert sweep['hold_sampling']=='cumulative' and sweep['auto_start'] is False and sweep['repeats']==1
     launch=(ROOT/'launch/longitudinal_calibration.launch.py').read_text()
     for arg in ('config','reference_directory','vehicle_config','pp_config','log_directory','stage','steering_source','auto_start'):
         assert arg in launch

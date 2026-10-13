@@ -125,7 +125,7 @@ def test_completion_boundary_enqueue_overflow_revokes_trial_acceptance(node):
     from aims_calibration.engine import Config, Engine, Observation, Request
     import json
     now=node._now(); steady=time.monotonic()
-    node.engine=Engine(Config(steering_source='rc',speeds=(1.,),measurement_seconds=.01))
+    node.engine=Engine(Config(steering_source='rc',speeds=(1.,),measurement_seconds=.01,hold_sampling='continuous'))
     node.engine.enable(True,now=now-.1); node.engine.state='MEASURE'; node.engine.selected=True
     node.engine.started=now-.02; node.engine.start_velocity=1.; node.engine.region=''
     node.engine.phase_started=now-.02

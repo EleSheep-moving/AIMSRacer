@@ -17,10 +17,12 @@ class Config:
     start_speed: float = 1.
     end_speed: float = .5
     max_speed: float = 4.
+    speed_overshoot_tolerance: float = 0.
     max_current: float = 100.
     stable_tolerance: float = .2
     stable_seconds: float = 1.
     measurement_seconds: float = 10.
+    hold_sampling: str = 'cumulative'
     trial_timeout: float = 8.
     freshness: float = .2
     repeats: int = 1
@@ -30,12 +32,18 @@ class Config:
         if self.stage not in ('speed_hold','accel_interval','decel_current'):
             raise ValueError('unknown calibration stage')
         if self.steering_source not in ('pp','rc'): raise ValueError('unknown steering source')
-        numbers=(self.start_speed,self.end_speed,self.max_speed,self.max_current,
+        numbers=(self.start_speed,self.end_speed,self.max_speed,self.speed_overshoot_tolerance,self.max_current,
                  self.stable_tolerance,self.stable_seconds,self.measurement_seconds,
                  self.trial_timeout,self.freshness,self.recovery_speed,*self.speeds,*self.currents)
         if not all(math.isfinite(v) for v in numbers): raise ValueError('nonfinite configuration')
-        if not 0 < self.max_speed <= 4. or not 0 < self.max_current <= 100.:
+        if self.hold_sampling not in ('cumulative','continuous'):
+            raise ValueError('hold_sampling must be cumulative or continuous')
+        speed_bound = 5. if self.stage=='speed_hold' else 4.
+        if not 0 < self.max_speed <= speed_bound or not 0 < self.max_current <= 100.:
             raise ValueError('vehicle speed/current bounds exceeded')
+        if not 0<=self.speed_overshoot_tolerance<=.2 or (
+                self.stage!='speed_hold' and self.speed_overshoot_tolerance!=0.):
+            raise ValueError('speed overshoot tolerance is limited to 0.2 m/s in speed_hold')
         if self.repeats < 1 or int(self.repeats)!=self.repeats: raise ValueError('invalid repeats')
         if any(v<=0 for v in (self.stable_tolerance,self.stable_seconds,
                              self.measurement_seconds,self.trial_timeout,self.freshness)):
@@ -160,6 +168,31 @@ class Engine:
         self.stable_since=None; self.started=None; self.start_velocity=None
         self.active_samples=[]; self.last_pair=None; self.region=None
         self.last_wheel=None; self.last_telemetry=None; self.phase_started=None; self.phase_ack_stamp=None
+        self.hold_elapsed=0.; self.hold_segments=[]; self.hold_previous=None; self.hold_segment=None
+
+    def _pause_hold(self,reason):
+        """Keep admitted samples, but break time integration and require settling."""
+        if self.hold_segment is not None:
+            self.hold_segment['end_reason']=reason
+        self.hold_previous=None; self.hold_segment=None
+        self.stable_since=None; self.phase_started=None; self.region=None
+        self.reason=reason
+
+    def _sample_hold(self,obs,row):
+        if self.hold_segment is None:
+            self.hold_segment=dict(segment_id=len(self.hold_segments)+1,region=obs.region,
+                start_stamp=obs.wheel_stamp,end_stamp=obs.wheel_stamp,
+                start_telemetry_stamp=obs.telemetry_stamp,end_telemetry_stamp=obs.telemetry_stamp,
+                duration_s=0.,sample_offset=len(self.active_samples),samples=0,end_reason='sampling')
+            self.hold_segments.append(self.hold_segment)
+        if self.hold_previous is not None:
+            duration=obs.wheel_stamp-self.hold_previous[0]
+            self.hold_elapsed+=duration
+            self.hold_segment['duration_s']+=duration
+        self.hold_previous=(obs.wheel_stamp,obs.telemetry_stamp)
+        self.hold_segment.update(end_stamp=obs.wheel_stamp,end_telemetry_stamp=obs.telemetry_stamp)
+        self.hold_segment['samples']+=1
+        row['segment_id']=self.hold_segment['segment_id']
 
     def enable(self,value,now=None):
         if self.started is not None or self.active_samples:
@@ -193,14 +226,28 @@ class Engine:
         ended=last.get('wheel_stamp'); velocity=last.get('velocity')
         duration=ended-self.started if ended is not None and self.started is not None else None
         currents=[s['current_motor'] for s in self.active_samples]
-        self.trials.append(dict(trial_id=len(self.trials)+1,plan_index=self.index,stage=c.stage,
+        cumulative=c.stage=='speed_hold' and c.hold_sampling=='cumulative'
+        segments=[]
+        if cumulative:
+            for segment in self.hold_segments:
+                segment=dict(segment)
+                offset=segment.pop('sample_offset')
+                values=currents[offset:offset+segment['samples']]
+                segment.update(mean_current_motor=mean(values),std_current_motor=pstdev(values))
+                if segment['end_reason']=='sampling': segment['end_reason']=reason
+                segments.append(segment)
+        result=dict(trial_id=len(self.trials)+1,plan_index=self.index,stage=c.stage,
             requested_target=self.plan[self.index],region=self.region,success=success,reason=reason,
             first_current_ack_stamp=self.phase_ack_stamp,evidence_valid=True,
             start_stamp=self.started,end_stamp=ended,start_speed=self.start_velocity,end_speed=velocity,
-            duration_s=duration,samples=len(currents),mean_current_motor=mean(currents) if currents else None,
+            duration_s=self.hold_elapsed if cumulative else duration,samples=len(currents),mean_current_motor=mean(currents) if currents else None,
             std_current_motor=pstdev(currents) if currents else None,
             mean_acceleration=(velocity-self.start_velocity)/duration if success and c.stage!='speed_hold'
-                and duration is not None and duration>0 else None))
+                and duration is not None and duration>0 else None)
+        if c.stage=='speed_hold':
+            result.update(hold_sampling=c.hold_sampling,wall_duration_s=duration,
+                segment_count=len(segments),segments=segments)
+        self.trials.append(result)
 
     def _request(self,now,obs,mode=0,speed=0.,current=0.):
         return Request(now,mode,obs.steering if self.state not in ('IDLE','STOPPING','FAULT','COMPLETE') else 0.,speed,current)
@@ -237,7 +284,7 @@ class Engine:
         elif c.steering_source=='pp' and obs.tracking_reason: reason=obs.tracking_reason
         elif not math.isfinite(obs.steering): reason='steering_invalid'
         elif obs.velocity<0.: reason='reverse_motion'
-        elif obs.velocity>c.max_speed: reason='overspeed'
+        elif obs.velocity>c.max_speed+c.speed_overshoot_tolerance: reason='overspeed'
         if reason:
             self.fault(reason); return self._request(now,obs,1)
         if not echo_ok:
@@ -270,6 +317,10 @@ class Engine:
             self.reason=reason
             return self._request(now,obs)
         if not obs.straight or (self.region is not None and self.region!=obs.region):
+            if c.stage=='speed_hold' and c.hold_sampling=='cumulative':
+                self._pause_hold('straight_region_exit')
+                self.state='RECOVER'
+                return self._request(now,obs,speed=c.recovery_speed if c.steering_source=='pp' else target)
             if self.state in ('MEASURE','APPLY'):
                 self._finish(False,'straight_region_exit'); self.reason='straight_region_exit'
             self._reset_trial(); self.state='RECOVER'
@@ -293,23 +344,37 @@ class Engine:
                             self.state='COMPLETE' if self.index==len(self.plan) else 'PREPARE'
                             self.reason=reason
                             return self._request(now,obs)
-                        if c.stage=='speed_hold': self.started=obs.wheel_stamp; self.start_velocity=obs.velocity
+                        if c.stage=='speed_hold' and c.hold_sampling=='continuous':
+                            self.started=obs.wheel_stamp; self.start_velocity=obs.velocity
                 else: self.stable_since=None
             return self._request(now,obs,speed=target) if c.stage=='speed_hold' or self.state=='PREPARE' else self._request(now,obs,1,current=self.plan[self.index])
         if c.stage=='speed_hold' and abs(obs.velocity-target)>c.stable_tolerance:
+            if c.hold_sampling=='cumulative':
+                self._pause_hold('speed_unstable'); self.state='PREPARE'
+                return self._request(now,obs,speed=target)
             self._finish(False,'speed_unstable'); self._reset_trial()
             self.state='PREPARE'; self.reason='speed_unstable'
             return self._request(now,obs,speed=target)
+        if c.stage=='speed_hold' and c.hold_sampling=='cumulative':
+            if not phase_echo:
+                self._pause_hold('waiting_for_target_speed_echo'); self.state='PREPARE'
+                return requested
+            if unique and self.hold_previous is not None and any(
+                    stamp-previous>c.freshness for stamp,previous in zip(pair,self.hold_previous)):
+                self._pause_hold('sample_source_gap'); self.state='PREPARE'
+                return requested
         if unique and phase_echo and (c.stage=='speed_hold' or acknowledged_sources):
             self.last_pair=pair
             row=asdict(obs); row.pop('final_request')
             row.update(trial_id=len(self.trials)+1,plan_index=self.index,stage=c.stage,
                        requested_mode=requested.mode,requested_speed=requested.speed,requested_current=requested.current)
+            if c.stage=='speed_hold' and c.hold_sampling=='cumulative': self._sample_hold(obs,row)
             self.samples.append(row); self.active_samples.append(row)
             if self.started is None: self.started=obs.wheel_stamp; self.start_velocity=obs.velocity
             self.state='MEASURE'
             elapsed=obs.wheel_stamp-self.started
-            reached=elapsed>=c.measurement_seconds if c.stage=='speed_hold' else (
+            hold_duration=self.hold_elapsed if c.hold_sampling=='cumulative' else elapsed
+            reached=hold_duration+1e-9>=c.measurement_seconds if c.stage=='speed_hold' else (
                 obs.velocity>=c.end_speed if c.stage=='accel_interval' else obs.velocity<=c.end_speed)
             timeout=c.stage!='speed_hold' and obs.wheel_stamp-self.phase_started>=c.trial_timeout
             if reached or timeout:
@@ -319,5 +384,7 @@ class Engine:
                 self.index+=1; self._reset_trial()
                 self.state='COMPLETE' if self.index==len(self.plan) else 'PREPARE'
                 self.reason=reason
+                if c.stage=='speed_hold' and self.state=='PREPARE':
+                    return self._request(now,obs,speed=self.plan[self.index])
                 return self._request(now,obs)
         return requested

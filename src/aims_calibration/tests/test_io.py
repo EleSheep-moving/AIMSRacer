@@ -50,6 +50,18 @@ def test_async_log_flushes_evidence_and_runtime_on_shutdown(tmp_path):
     assert json.loads((log.directory/'trials.json').read_text())['trials'][0]['reason']=='test'
 
 
+def test_segment_evidence_round_trips_json_and_csv(tmp_path):
+    log=OutputLog(tmp_path,Config(steering_source='rc'))
+    segments=[dict(segment_id=1,region='a',duration_s=2.,samples=100),
+              dict(segment_id=2,region='b',duration_s=3.,samples=150)]
+    trial=dict(trial_id=1,success=True,hold_sampling='cumulative',duration_s=5.,
+               wall_duration_s=12.,segment_count=2,segments=segments)
+    log.trials([trial]); log.close()
+    assert json.loads((log.directory/'trials.json').read_text())['trials']==[trial]
+    csv_row=list(csv.DictReader((log.directory/'trials.csv').open()))[0]
+    assert json.loads(csv_row['segments'])==segments
+
+
 def test_async_log_overflow_is_visible_and_never_silently_drops(tmp_path):
     from aims_calibration.io import AsyncOutputLog
     from threading import Event

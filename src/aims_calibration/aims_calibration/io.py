@@ -92,7 +92,9 @@ class OutputLog:
             pending=self.directory/'trials.csv.tmp'
             with pending.open('w',newline='') as output:
                 names=list(dict.fromkeys(k for row in trials for k in row))
-                writer=csv.DictWriter(output,fieldnames=names); writer.writeheader(); writer.writerows(trials)
+                writer=csv.DictWriter(output,fieldnames=names); writer.writeheader()
+                writer.writerows({k:json.dumps(_json_safe(v),allow_nan=False) if isinstance(v,(dict,list)) else v
+                                  for k,v in row.items()} for row in trials)
             pending.replace(self.directory/'trials.csv')
         self._publish_json(trials,evidence_error)
         self.trial_count=len(trials)

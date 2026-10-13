@@ -126,13 +126,18 @@ requests stay within the selected vehicle bounds, with driver limits at ±100 A;
 there is no automatic full-current sweep. Both signed-current stages use
 `MODE_CURRENT`, not the disabled brake mode or reserved acceleration mode.
 
+
+The [speed_hold_1to5.yaml](../../src/aims_calibration/config/speed_hold_1to5.yaml) preset requests nine targets from 1 to 5 m/s in 0.5 m/s steps, accumulating five valid straight seconds each, settling for one second after every pause, and stopping after the ninth target. Pass `calibration_config:=/absolute/path/speed_hold_1to5.yaml vehicle_config:=/absolute/path/hold-vehicle.yaml` with a dedicated vehicle YAML containing `max_speed: 5.0`. `hold_sampling: cumulative` retains individually documented segments; inter-segment gaps add no time. `continuous` selects the original uninterrupted-window mode. The dedicated 5 m/s limit does not change ordinary race settings.
+
 The full calibration launch disables the 40 A current startup substitution **for
 this driver instance**. Regular vehicle/race defaults are preserved. Acceleration
 observation defaults on for calibration and remains independent of motor control.
 The node-only package launch assumes this driver override has already been applied.
 
-Leaving a PP trial region, intervention, lost authority, stale inputs or a timeout
-invalidates the affected trial. Invalid trials are retained with their reason;
+Cumulative speed hold pauses at a PP region exit or unstable speed, retaining
+admitted samples and requiring settling again before resuming. Continuous hold
+and current-response trials invalidate interrupted windows. Lost authority,
+stale inputs and faults invalidate the current target with a retained reason;
 reenabling begins preparation and does not resume a partly executed current step.
 Normal completion commands zero speed; manual disable/fault publishes zero current
 with the calibration startup substitution off.

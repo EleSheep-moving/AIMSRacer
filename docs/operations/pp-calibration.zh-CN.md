@@ -111,11 +111,14 @@ ros2 service call /calib/enable std_srvs/srv/SetBool '{data: true}'
 请求受车辆边界约束，驱动限幅仍为 ±100 A；不会自动扫到满电流。
 正负电流试验均使用 `MODE_CURRENT`，不使用默认禁用的 brake 模式或预留 acceleration 模式。
 
+
+九档巡航电流方案使用 [speed_hold_1to5.yaml](../../src/aims_calibration/config/speed_hold_1to5.yaml)，并传入专用 `vehicle_config`（`max_speed: 5.0`）：1–5 m/s、步长 0.5 m/s，每档累计 5 秒有效直线数据；过弯暂停，每次恢复采样前重新稳速 1 秒，完成九档后请求零速度。配置项 `hold_sampling: cumulative`；选择 `continuous` 可保留原连续窗口方式。每个独立采样段都会保留源时间和电流统计，段间时间不计入 5 秒。现场调用追加 `calibration_config:=/absolute/path/speed_hold_1to5.yaml vehicle_config:=/absolute/path/hold-vehicle.yaml`。5 m/s 请求只适用于显式选择该配置的稳速标定，普通 race 参数不变。
+
 整车标定 launch 单独关闭本次驱动的 40 A 起步电流替换；普通 vehicle／race 默认值保持不变。
 标定默认开启独立 acc 观察节点，不把它接入电机闭环。
 只启动包内标定节点时，需要事先对驱动应用这一覆盖参数。
 
-离开 PP 试验区间、人工干预、权限丢失、输入过期或超时，都会将相关试验标为无效并保留原因。
+累计稳速模式在离开 PP 试验区间或速度不稳时暂停采样，保留当前档的有效数据；重新进入直线且稳速后继续。连续稳速及电流响应模式仍作废中断窗口。人工干预导致权限丢失、输入过期或故障时，当前整档作废并保留原因。
 重新启用从准备阶段开始，不继续半途电流试验。正常完成输出零速度；
 手动停用或故障输出零电流，标定模式下起步替换已关闭。
 

@@ -15,9 +15,9 @@ import time
 import pytest
 
 
-@pytest.mark.parametrize('stage,loss', [('speed_hold',False),('accel_interval',False),
-                                      ('decel_current',False),('accel_interval',True)])
-def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_path,monkeypatch,stage,loss):
+@pytest.mark.parametrize('stage,loss,hold_speed', [('speed_hold',False,1.),('speed_hold',False,5.),
+    ('accel_interval',False,1.),('decel_current',False,1.),('accel_interval',True,1.)])
+def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_path,monkeypatch,stage,loss,hold_speed):
     monkeypatch.setenv('ROS_DOMAIN_ID',str(196+['speed_hold','accel_interval','decel_current'].index(stage)))
     monkeypatch.setenv('ROS_LOCALHOST_ONLY','1'); monkeypatch.setenv('ROS_LOG_DIR',str(tmp_path/'ros_logs'))
     from ament_index_python.packages import get_package_prefix
@@ -33,7 +33,7 @@ def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_p
     source=Path(__file__).resolve().parents[2]
     spec=importlib.util.spec_from_file_location('calibration_pty_emulator',source/'vesc/vesc_driver/test/test_driver_link.py')
     helper=importlib.util.module_from_spec(spec); spec.loader.exec_module(helper)
-    emulator=helper.VescEmulator(); emulator.rpm=1000
+    emulator=helper.VescEmulator(); emulator.rpm=int(1000*hold_speed)
     context=Context(); rclpy.init(context=context)
     peer=rclpy.create_node('calibration_selected_pty_test',context=context)
     executor=SingleThreadedExecutor(context=context); executor.add_node(peer)
@@ -80,14 +80,19 @@ def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_p
     try:
         spawn('vesc_driver','vesc_driver_node',dict(port=emulator.port,telemetry_rate_hz=100.,
             speed_to_erpm_gain=1000.,speed_to_erpm_offset=0.,current_startup_enabled='false',
-            speed_min=-4000.,speed_max=4000.,current_min=-100.,current_max=100.))
+            speed_min=-6000.,speed_max=6000.,current_min=-100.,current_max=100.))
         spawn('vesc_ackermann','vesc_to_odom_node',dict(speed_to_erpm_gain=1000.,speed_to_erpm_offset=0.,
             use_servo_cmd_to_calc_angular_velocity='false'),('-r','odom:=/rear_axle/wheel_odom'))
         spawn('ackermann_mux','joystick_control_v2',dict(channel_profile='steering_ch1_throttle_ch3_aux_ch5_to_ch10',
-            channel_deadzone=50,publish_rate_hz=100.,speed_limit_max_speed=4.,command_speed_limit=4.,
+            channel_deadzone=50,publish_rate_hz=100.,speed_limit_max_speed=5.,command_speed_limit=5.,
             current_limit_max_current=100.,command_current_limit=100.))
-        params=dict(vehicle_config=str(source/'controller/config/vehicle.yaml'),steering_source='rc',stage=stage,
-            log_directory=str(tmp_path/'results'),speeds='[1.0]',stable_seconds=.08,
+        vehicle=source/'controller/config/vehicle.yaml'
+        if hold_speed==5.:
+            import yaml
+            values=yaml.safe_load(vehicle.read_text()); values['max_speed']=5.
+            vehicle=tmp_path/'hold_vehicle.yaml'; vehicle.write_text(yaml.safe_dump(values))
+        params=dict(vehicle_config=str(vehicle),steering_source='rc',stage=stage,max_speed=5. if stage=='speed_hold' else 4.,
+            log_directory=str(tmp_path/'results'),speeds=f'[{hold_speed}]',stable_seconds=.08,
             measurement_seconds=.25,trial_timeout=2.,start_speed=1.,
             end_speed=2. if stage=='accel_interval' else .5)
         if stage!='speed_hold': params['currents']='[5.0]' if stage=='accel_interval' else '[-5.0]'
@@ -112,7 +117,11 @@ def test_installed_calibration_selected_signed_current_and_measured_trials(tmp_p
             emulator.rpm=2200 if stage=='accel_interval' else 400
         spin_until(lambda:state()=='COMPLETE' and trials() and final and final[-1].control_mode==0 and final[-1].target_speed_mps==0,timeout=3.)
         result=trials()[0]; assert result['success'] and result['mean_current_motor']==pytest.approx(12.34)
-        assert result['start_speed']==pytest.approx(1.)
+        assert result['start_speed']==pytest.approx(hold_speed)
+        if stage=='speed_hold':
+            assert result['hold_sampling']=='cumulative' and result['duration_s']>=.25
+            assert result['segment_count']==1
+            assert any(p[0]==8 and int.from_bytes(p[1:],'big',signed=True)==int(1000*hold_speed) for _,p in emulator.packets)
         if stage!='speed_hold':
             assert result['end_speed']==pytest.approx(2.2 if stage=='accel_interval' else .4)
             assert result['duration_s']>0 and result['mean_acceleration'] is not None
