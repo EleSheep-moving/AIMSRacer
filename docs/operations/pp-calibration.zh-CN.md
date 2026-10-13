@@ -5,6 +5,8 @@
 三个流程分别负责离线编辑参考轨迹、PP 跟踪和分阶段速度／电流试验。
 整车默认仍是场地验证过的 MPCC；浏览器编辑器不发布车辆控制命令。
 
+本次场地顺序为旧图先调 MPCC，再扩展建图、新轨迹测 PP，直接使用[场地命令链](field-mpcc-then-pp.zh-CN.md)。
+
 ## 功能分支环境
 
 当前功能位于 `feat/pp-calibration-reference-editor`；NX 已编译的目录为：

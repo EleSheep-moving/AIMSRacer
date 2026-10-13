@@ -31,6 +31,7 @@
 | [纵向加速度](operations/longitudinal-acceleration.zh-CN.md) | 可选轮速＋IMU 输出、独立启动、诊断与场地录制 | English / 简体中文 |
 | [车辆检查](operations/vehicle-checklist.zh-CN.md) | 设备、定位、权限与运行检查 | English / 简体中文 |
 | [参考与 bundle 流程](../src/controller/docs/usage.zh-CN.md) | map 参考、速度规划、导出与目标 CPU 编译 | English / 简体中文 |
+| [场地命令链：先 MPCC 后 PP](operations/field-mpcc-then-pp.zh-CN.md) | 旧图调 MPCC 并录 ACC、扩展建图、新轨迹 PP | English / 简体中文 |
 | [地图编辑器、PP 与标定](operations/pp-calibration.zh-CN.md) | 浏览器绘制轨迹、增强 PP、纵向三阶段及 native 指令录制 | English / 简体中文 |
 | [PP 控制器](../src/aims_pp/README.zh-CN.md) | 独立增强转向算法、统一参考与显式启用 | English / 简体中文 |
 | [纵向标定](../src/aims_calibration/README.zh-CN.md) | 选中权限、实际电流与源时间证据 | English / 简体中文 |

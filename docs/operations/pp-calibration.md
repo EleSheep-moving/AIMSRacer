@@ -6,6 +6,8 @@ These are separate workflows: the browser edits a reference offline, PP tracks a
 reference, and calibration owns staged speed/current experiments. The default race
 controller remains the field-tested MPCC. The editor never publishes vehicle commands.
 
+For the current field order (old-map MPCC first, then expanded-map PP), use the [command chain](field-mpcc-then-pp.md).
+
 ## Feature overlay
 
 This feature is on `feat/pp-calibration-reference-editor`. The built NX checkout is:
