@@ -124,7 +124,13 @@ class TrackingInputs:
     def observe_clock(self, ros_now_ns):
         finite(ros_now_ns)
         if self.last_ros_ns is not None and ros_now_ns<self.last_ros_ns-1_000_000:
+            # Map identity is a static, latched artifact identity, not a timed
+            # localization observation. Its publisher may send it only once.
+            # Retain an already confirmed match while clearing every dynamic
+            # authorization input and requiring fresh health plus re-enable.
+            identity = self.map_identity if self.map_identity==self.reference.map_sha256 else ''
             self._clear()
+            self.map_identity = identity
             self.invalidate('ROS clock moved backwards; fresh inputs and explicit re-enable required')
         self.last_ros_ns = ros_now_ns
 

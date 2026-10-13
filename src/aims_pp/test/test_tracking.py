@@ -177,3 +177,47 @@ def test_nominal_widths_gate_footprint_only_when_explicitly_enabled(reference):
     accepted,reason=PPTrackingRuntime(strict,reference).enable(10_000_000_000,10.)
     assert not accepted
     assert 'footprint' in reason.lower()
+
+
+def test_static_map_identity_survives_clock_rollback_but_dynamic_gates_reset(inputs,reference):
+    from aims_pp.tracking import PPTrackingRuntime
+    runtime=PPTrackingRuntime(inputs,reference)
+    assert runtime.enable(10_000_000_000,10.)[0]
+    assert runtime.tick(10_000_000_000,10.)['speed']>0
+    # The map identity was published only during the initial fixture setup.
+    inputs.observe_clock(9_000_000_000)
+    assert inputs.map_identity==reference.map_sha256
+    assert not inputs.map_valid and not inputs.authority
+    assert inputs.pose is None and not inputs.command_valid
+    assert not inputs.health.qualified
+    assert runtime.tick(9_000_000_000,10.01)['speed']==0
+    assert runtime.phase=='FAULT'
+    assert not runtime.enable(9_000_000_000,10.01)[0]
+    # Dynamic streams resume with a new qualified anchor; no new SHA message.
+    inputs.observe_map_valid(True)
+    values=health_values(stamp_ns=9_000_000_000,epoch='after-reset')
+    inputs.observe_health(values,9_000_000_000,10.02)
+    inputs.observe_authority(True,10.02)
+    inputs.observe_command(0,0.,1.,9_000_000_000,9_000_000_000,10.02)
+    inputs.observe_odometry(2.,0.,math.pi/2,1.,9_000_000_000,9_000_000_000,10.02)
+    assert inputs.reason(9_000_000_000,10.02)==''
+    assert runtime.tick(9_000_000_000,10.02)['speed']==0
+    assert runtime.enable(9_000_000_000,10.02)[0]
+    assert runtime.tick(9_000_000_000,10.02)['speed']>0
+
+
+def test_rollback_retained_identity_still_requires_matching_qualified_health(inputs,reference):
+    from aims_pp.tracking import PPTrackingRuntime
+    inputs.observe_clock(9_000_000_000)
+    inputs.observe_map_valid(True)
+    inputs.observe_authority(True,10.02)
+    inputs.observe_command(0,0.,1.,9_000_000_000,9_000_000_000,10.02)
+    values=health_values(stamp_ns=9_000_000_000,epoch='after-reset')
+    values['map_sha256']='b'*64
+    inputs.observe_health(values,9_000_000_000,10.02)
+    inputs.observe_odometry(2.,0.,math.pi/2,1.,9_000_000_000,9_000_000_000,10.02)
+    assert not PPTrackingRuntime(inputs,reference).enable(9_000_000_000,10.02)[0]
+    values['map_sha256']=reference.map_sha256
+    values['alignment_valid']='false'
+    inputs.observe_health(values,9_000_000_000,10.02)
+    assert not PPTrackingRuntime(inputs,reference).enable(9_000_000_000,10.02)[0]

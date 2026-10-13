@@ -6,13 +6,30 @@ These are separate workflows: the browser edits a reference offline, PP tracks a
 reference, and calibration owns staged speed/current experiments. The default race
 controller remains the field-tested MPCC. The editor never publishes vehicle commands.
 
+## Feature overlay
+
+This feature is on `feat/pp-calibration-reference-editor`. The built NX checkout is:
+
+```bash
+cd /home/aims/aimsracer-data/code/pp-calibration-reference-editor
+source /opt/ros/humble/setup.bash
+source /home/aims/AIMSRacer/install/setup.bash
+source "$PWD/install/setup.bash"
+```
+
+The matching host checkout is `/home/elesheep/aimsracer-data/code/pp-calibration-reference-editor`.
+The original main checkout and field bundle are retained. Source the feature overlay
+in each terminal used for vehicle commands.
+
 ## 1. Draw a reference
 
 Follow the [editor setup](../../tools/reference/editor/README.md), then start it
 from the repository environment:
 
 ```bash
-python3 tools/reference/editor/server.py \
+export PYTHONPATH="$PWD/src/controller:$PWD:${PYTHONPATH:-}"
+/home/aims/aimsracer-data/dependencies/reference-editor-venv/bin/python \
+  -m tools.reference.editor.server \
   --map "$HOME/maps/20260928_010503/map.pcd" \
   --config src/controller/config/vehicle.yaml \
   --output "$HOME/aimsracer-data/references/editor"

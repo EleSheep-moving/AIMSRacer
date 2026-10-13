@@ -104,7 +104,7 @@ def main():
     while time.monotonic()<until:rclpy.spin_once(node,timeout_sec=.02)
     if node.count_publishers('/vesc/command'):
         raise RuntimeError('An existing graph owns commands in this supposedly isolated domain')
-    replay=controller=selector=None;enabled=False;future=None;attempts=0;telemetry_count=0
+    replay=controller=selector=None;enabled=False;future=None;attempts=0;telemetry_count=0;enable_responses=[]
     try:
         selector=spawn([binary('ackermann_mux','joystick_control_v2'),'--ros-args','-p',
             'channel_profile:=steering_ch1_throttle_ch3_aux_ch5_to_ch10','-p','use_sim_time:=true'],'selector')
@@ -132,7 +132,10 @@ def main():
             if latest is not None:
                 telemetry.publish(deserialize_message(latest[1],core_type));telemetry_count+=1
             if future is not None and future.done():
-                enabled=bool(future.result() and future.result().success);future=None
+                response=future.result()
+                enabled=bool(response and response.success)
+                enable_responses.append(dict(ros_ns=ros,success=enabled,message=response.message if response else 'No response'))
+                future=None
             ready=(localization.get('ready')=='true' and localization.get('map_valid')=='true'
                    and now-health_received<.3 and telemetry_count>0)
             if not enabled and future is None and now-last_attempt>=1. and service.service_is_ready() and statuses and ready:
@@ -153,7 +156,7 @@ def main():
     rows=list(csv.DictReader(runtime[0].open()))
     active_count,callbacks,gaps=command_metrics(rows,args.mode)
     summary=dict(mode=args.mode,domain=args.domain,scope='Recorded feedback, virtual authority; timing only, no causal response acceptance',
-        real_driver_started=False,enable_requests=attempts,enable_accepted=enabled,telemetry_count=telemetry_count,
+        real_driver_started=False,enable_requests=attempts,enable_accepted=enabled,enable_responses=enable_responses,telemetry_count=telemetry_count,
         active_rows=active_count,callback_ms=callbacks,command_gap_ms=gaps,
         last_status=statuses[-1] if statuses else {},runtime_csv=str(runtime[0]),
         localization_summary=str(args.output/'localization/summary.json'))

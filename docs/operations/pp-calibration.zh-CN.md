@@ -5,12 +5,28 @@
 三个流程分别负责离线编辑参考轨迹、PP 跟踪和分阶段速度／电流试验。
 整车默认仍是场地验证过的 MPCC；浏览器编辑器不发布车辆控制命令。
 
+## 功能分支环境
+
+当前功能位于 `feat/pp-calibration-reference-editor`；NX 已编译的目录为：
+
+```bash
+cd /home/aims/aimsracer-data/code/pp-calibration-reference-editor
+source /opt/ros/humble/setup.bash
+source /home/aims/AIMSRacer/install/setup.bash
+source "$PWD/install/setup.bash"
+```
+
+主机同名工作区位于 `/home/elesheep/aimsracer-data/code/pp-calibration-reference-editor`。
+原有 main 目录与场地 bundle 保持不变。每个运行整车命令的终端都需加载功能 overlay。
+
 ## 1. 绘制参考轨迹
 
 按[编辑器说明](../../tools/reference/editor/README.zh-CN.md)安装依赖，在仓库环境启动：
 
 ```bash
-python3 tools/reference/editor/server.py \
+export PYTHONPATH="$PWD/src/controller:$PWD:${PYTHONPATH:-}"
+/home/aims/aimsracer-data/dependencies/reference-editor-venv/bin/python \
+  -m tools.reference.editor.server \
   --map "$HOME/maps/20260928_010503/map.pcd" \
   --config src/controller/config/vehicle.yaml \
   --output "$HOME/aimsracer-data/references/editor"
