@@ -31,7 +31,8 @@ def build_vehicle(context):
         Node(package='livox_ros_driver2',executable='livox_ros_driver2_node',name='livox_lidar_publisher',
             parameters=[livox],output='screen'),
         Node(package='vesc_driver',executable='vesc_driver_node',name='vesc_driver_node',
-            parameters=[cfg['vesc_config']],output='screen'),
+            parameters=[cfg['vesc_config']]+([{'current_startup_enabled':
+                flag(context,'current_startup_enabled')}] if cfg.get('current_startup_enabled','') else []),output='screen'),
         Node(package='vesc_ackermann',executable='vesc_to_odom_node',name='vesc_to_odom_node',
             parameters=[cfg['vesc_config']],remappings=[('odom','/rear_axle/wheel_odom')]),
         Node(package='fastlio2',namespace='fastlio2',executable='lio_node',name='lio_node',
@@ -53,6 +54,7 @@ def generate_launch_description():
         DeclareLaunchArgument('mapping',default_value='false',description='Mapping TF arrangement; normally selected by mapping.launch.py'),
         DeclareLaunchArgument('longitudinal_acceleration',default_value='false',description='Independent wheel/IMU acceleration estimate for field evaluation'),
         DeclareLaunchArgument('vesc_config',default_value=str(params/'vesc.yaml')),
+        DeclareLaunchArgument('current_startup_enabled',default_value='',description='Optional driver override; empty preserves VESC YAML. Calibration selects false.'),
         DeclareLaunchArgument('lio_config',default_value=str(params/'fastlio_rear.yaml')),
         DeclareLaunchArgument('mid360_config',default_value=str(params/'MID360_config.json')),
         OpaqueFunction(function=build_vehicle),

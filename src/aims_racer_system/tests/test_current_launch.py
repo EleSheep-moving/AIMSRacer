@@ -43,6 +43,7 @@ def test_recording_retains_reliable_imu_and_all_replay_inputs(tmp_path):
  assert {'/livox/lidar','/livox/imu','/odometry/filtered','/mpcc/status','/localization/anchor_status','/tf_static'} <= set(cmd)
  assert not any('localizer/raw_tf' in item for item in cmd)
  assert '/vesc/command' in cmd and '/drive' in cmd
+ assert '/calib/vesc_command' in cmd and '/control/calibration_enabled' in cmd
  assert '/ackermann_cmd' not in cmd and '/commands/motor/speed' not in cmd
  assert (tmp_path/'new-session/session.json').is_file()
  with pytest.raises(FileExistsError):recording_actions(c,ROOT,mode='race')

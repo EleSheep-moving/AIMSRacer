@@ -109,6 +109,8 @@ public:
     command_qos.lifespan(rclcpp::Duration::from_seconds(0.10));
     command_pub_ = create_publisher<vesc_msgs::msg::VescCommand>("/vesc/command", command_qos);
     status_pub_ = create_publisher<std_msgs::msg::Bool>("/control/autonomy_speed_enabled", 10);
+    calibration_status_pub_ = create_publisher<std_msgs::msg::Bool>(
+      "/control/calibration_enabled", rclcpp::QoS(rclcpp::KeepLast(1)).reliable());
     timer_ = create_wall_timer(
       std::chrono::duration_cast<std::chrono::nanoseconds>(
         std::chrono::duration<double>(1.0 / publish_rate)),
@@ -185,6 +187,8 @@ private:
     std_msgs::msg::Bool status;
     status.data = selected.autonomy_speed_enabled;
     status_pub_->publish(status);
+    status.data = selected.state == SelectionState::Calibration;
+    calibration_status_pub_->publish(status);
     vesc_msgs::msg::VescCommand out;
     out.header.stamp = get_clock()->now();
     out.header.frame_id = "base_link";
@@ -213,6 +217,7 @@ private:
   rclcpp::Subscription<vesc_msgs::msg::VescCommand>::SharedPtr calib_sub_;
   rclcpp::Publisher<vesc_msgs::msg::VescCommand>::SharedPtr command_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr status_pub_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr calibration_status_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 };
 }  // namespace ackermann_mux

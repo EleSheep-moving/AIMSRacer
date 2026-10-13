@@ -32,6 +32,9 @@
   <exec_depend>vesc_ackermann</exec_depend>
   <exec_depend>livox_ros_driver2</exec_depend>
   <exec_depend>aims_mpcc_rt</exec_depend>
+  <exec_depend>aims_mpcc</exec_depend>
+  <exec_depend>aims_pp</exec_depend>
+  <exec_depend>aims_calibration</exec_depend>
   <exec_depend>ros2bag</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>ament_index_python</exec_depend>

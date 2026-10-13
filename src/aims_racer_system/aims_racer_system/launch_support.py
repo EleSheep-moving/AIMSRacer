@@ -1,5 +1,7 @@
 """Shared launch recording; no controller authority or runtime polling."""
 from datetime import datetime
+import math
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -20,6 +22,14 @@ def include(package,filename,arguments=None):
         launch_arguments=(arguments or {}).items())
 
 
+def parse_initial_pose(pose):
+    if not pose.strip():return []
+    values=[float(item) for item in pose.replace(',',' ').split()]
+    if len(values)!=6 or not all(math.isfinite(v) for v in values):
+        raise ValueError('initial_pose requires six finite base_link map values: x y z roll pitch yaw')
+    return values
+
+
 def recording_actions(context,share,mode='race'):
     if not flag(context,'record'):return []
     share=Path(share)
@@ -36,15 +46,30 @@ def recording_actions(context,share,mode='race'):
     selected_vesc=context.launch_configurations.get('vesc_config','')
     if selected_vesc and Path(selected_vesc).expanduser().is_file():
         shutil.copy2(Path(selected_vesc).expanduser(),snapshots/'vesc_selected.yaml')
+    for key,label in (('vehicle_config','vehicle'),('pp_config','pp'),('calibration_config','calibration')):
+        selected=context.launch_configurations.get(key,'')
+        if selected and Path(selected).expanduser().is_file():
+            shutil.copy2(Path(selected).expanduser(),snapshots/(label+'_selected.yaml'))
+    reference_files={}
+    ref=context.launch_configurations.get('reference_directory','')
+    if ref:
+        for name in ('metadata.json','reference.json','calibration_regions.json'):
+            path=Path(ref).expanduser()/name
+            if path.is_file():
+                reference_files[name]=hashlib.sha256(path.read_bytes()).hexdigest()
+                shutil.copy2(path,snapshots/name)
     (session/'session.json').write_text(json.dumps(dict(mode=mode,created=datetime.now().astimezone().isoformat(),
-        launch_arguments=dict(context.launch_configurations)),indent=2)+'\n')
+        launch_arguments=dict(context.launch_configurations),reference_files=reference_files),indent=2)+'\n')
     topics=['/livox/lidar','/livox/imu','/livox/imu_bias_corrected','/fastlio2/lio_odom',
         '/fastlio2/body_cloud','/rear_axle/lio_odom','/rear_axle/imu','/rear_axle/wheel_odom',
         '/odometry/filtered','/imu/gyro_bias/status','/sensors/core','/rc/channels',
         '/state_estimation/longitudinal_acceleration','/state_estimation/longitudinal_acceleration/status',
-        '/vesc/command','/control/autonomy_speed_enabled','/sensors/servo_position_command',
+        '/vesc/command','/calib/vesc_command','/control/autonomy_speed_enabled',
+        '/control/calibration_enabled','/sensors/servo_position_command',
         '/sensors/imu','/sensors/imu/raw','/tf','/tf_static','/fastlio2/tf']
-    if mode=='race':topics+=['/drive','/mpcc/status','/mpcc/reference','/mpcc/prediction',
+    if mode in ('race','calibration'):topics+=['/drive','/mpcc/status','/mpcc/reference','/mpcc/prediction',
+        '/pp/status','/pp/reference','/pp/lookahead_point',
+        '/calib/status','/calib/reference','/calib/lookahead_point',
         '/localization/status','/localization/anchor_status','/localization/ndt_status',
         '/localization/map_sha256','/localization/map_valid','/localization/ndt_pose','/localization/odom_bridge_pose']
     else:topics+=['/pgo/loop_markers']

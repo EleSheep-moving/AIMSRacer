@@ -48,6 +48,8 @@ def test_vehicle_pipeline(tmp_path, monkeypatch):
             lambda msg, key=key: samples[key].append((time.monotonic(), msg)), 10)
     authority = []
     node.create_subscription(Bool, '/control/autonomy_speed_enabled', authority.append, 10)
+    calibration_authority = []
+    node.create_subscription(Bool, '/control/calibration_enabled', calibration_authority.append, 10)
     rc = CRSFChannels16()
     for i in range(1, 17):
         setattr(rc, f'ch{i}', 992)
@@ -108,6 +110,7 @@ def test_vehicle_pipeline(tmp_path, monkeypatch):
             pump(.05, send_nav=True)
         assert all(samples.values())
         assert authority[-1].data
+        assert calibration_authority and not calibration_authority[-1].data
         start = time.monotonic()
         pump(3, send_nav=True)
         end = time.monotonic()
@@ -146,13 +149,16 @@ def test_vehicle_pipeline(tmp_path, monkeypatch):
         rc.ch8 = 1810
         pump(.08)
         assert last().target_speed_mps == last().target_current == last().target_duty == 0.
+        assert not calibration_authority[-1].data
         calib = VescCommand(control_mode=VescCommand.MODE_CURRENT, target_current=8.)
         calib.header.frame_id = 'base_link'
         pump(.15, calib=calib)
         assert last().target_current == 8.
+        assert calibration_authority[-1].data
         rc.ch5 = 172
         pump(.08)
         assert last().control_mode == 0 and last().target_speed_mps == 0.
+        assert not calibration_authority[-1].data
         rc.ch5 = 1810
         pump(.08)
         assert last().target_current == 0.  # Cached calibration cannot survive unlock.
@@ -160,6 +166,7 @@ def test_vehicle_pipeline(tmp_path, monkeypatch):
         assert last().target_current == 8.
         pump(.3)
         assert last().control_mode == 0 and last().target_speed_mps == 0.
+        assert not calibration_authority[-1].data
 
         # Driver watchdog protects the final link when the central publisher stalls.
         rc.ch8, rc.ch7, rc.ch6 = 172, 1810, 172

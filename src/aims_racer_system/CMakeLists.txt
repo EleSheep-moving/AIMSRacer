@@ -85,6 +85,7 @@ if(BUILD_TESTING)
         "ROS_LOG_DIR=${CMAKE_CURRENT_BINARY_DIR}/timestamp_test_logs")
   ament_add_pytest_test(gyro_bias tests/test_gyro_bias.py)
   ament_add_pytest_test(current_launch tests/test_current_launch.py)
+  ament_add_pytest_test(controller_calibration_launch tests/test_controller_calibration_launch.py)
   ament_add_pytest_test(longitudinal_observer
     ${CMAKE_CURRENT_SOURCE_DIR}/../../verification/acceleration/test_observer.py)
   ament_add_pytest_test(longitudinal_acceleration tests/test_longitudinal_acceleration.py
