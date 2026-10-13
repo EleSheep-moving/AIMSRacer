@@ -47,6 +47,7 @@
 | [离线参考工具](../src/controller/README.zh-CN.md) | `aims_mpcc` 包及其离线职责 | English / 简体中文 |
 | [定位 monitor](localization_monitor.zh-CN.md) | 可信锚点、新鲜度、epoch 与后台质量诊断 | English / 简体中文 |
 | [RC 选择器](../src/ackermann_mux/README.zh-CN.md) | RC 通道、手动/自主仲裁、命令边界与超时 | English / 简体中文 |
+| [VESC 车辆控制接口](vesc-command.zh-CN.md) | Native 命令模式、单位、转换、watchdog 与 MPCC 执行历史 | English / 简体中文 |
 | [车辆包](../src/aims_racer_system/README.zh-CN.md) | launch 组合与传感器/估计适配 | English / 简体中文 |
 | [已安装系统助手](../src/aims_racer_system/scripts/README.zh-CN.md) | gyro 修正、后轴转换与 NDT 初始化 | English / 简体中文 |
 

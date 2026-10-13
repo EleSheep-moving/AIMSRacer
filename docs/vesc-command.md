@@ -1,4 +1,6 @@
-# VESC vehicle command / 车辆控制接口
+# VESC vehicle command
+
+**English** · [简体中文](vesc-command.zh-CN.md)
 
 `/vesc/command` uses `vesc_msgs/msg/VescCommand`. The RC selector publishes at
 100 Hz; VESC core and IMU polling also run at 100 Hz and 921600 baud. MPCC retains
@@ -31,6 +33,9 @@ The driver sends motor and servo packets together under one serial write mutex.
 not measured steering. Wheel speed covariance remains 0.04 (m/s)^2 by default.
 
 RC retains speed/current/duty switches, limits, direction, locks and priorities.
+The vehicle CH10 manual current request range remains **3–100 A**; the driver
+`vesc.yaml` clips the final target to **−80 to +80 A**. These bound the request
+and serial target separately; a 100 A request is not a measured 100 A current.
 `current_startup_enabled=true` retains the 40 A startup helper
 (`startup_duty_current=40`, `startup_timeout_ms=100`): requested current below
 0.1 A sends zero; otherwise use signed startup current until absolute ERPM > 1

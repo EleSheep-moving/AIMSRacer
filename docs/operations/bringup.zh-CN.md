@@ -6,7 +6,7 @@
 当前流程使用一个 workspace。先按[部署指南](../deployment/README.zh-CN.md)准备 ROS 和硬件，再在根目录准备固定源码与构建：
 
 ```bash
-git submodule update --init src/FASTLIO2_ROS2
+git submodule update --init src/FASTLIO2_ROS2 src/vesc
 python3 tools/setup_dependencies.py --workspace .
 bash tools/setup_acados.sh --workspace . --jobs 2
 source /opt/ros/humble/setup.bash

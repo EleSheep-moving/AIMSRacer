@@ -47,6 +47,7 @@ Maps, reference inputs, generated bundles and raw bags are external data. A repo
 | [Offline reference tools](../src/controller/README.md) | `aims_mpcc` package and its offline responsibilities | English / 简体中文 |
 | [Localization monitor](localization_monitor.md) | Trusted anchors, freshness, epoch handling and background quality diagnostics | English / 简体中文 |
 | [RC selector](../src/ackermann_mux/README.md) | RC channels, manual/autonomous arbitration, command bounds and timeouts | English / 简体中文 |
+| [VESC vehicle command](vesc-command.md) | Native command modes, units, conversion, watchdogs and MPCC execution history | English / 简体中文 |
 | [Vehicle package](../src/aims_racer_system/README.md) | Launch composition and sensor/estimator adapters | English / 简体中文 |
 | [Installed system helpers](../src/aims_racer_system/scripts/README.md) | Gyro correction, rear-axle conversion and NDT initialization | English / 简体中文 |
 

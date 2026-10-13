@@ -15,6 +15,7 @@ from geometry_msgs.msg import AccelWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from rclpy.qos import qos_profile_sensor_data
+from rclpy.impl.implementation_singleton import rclpy_implementation as _rclpy
 
 MODULE = 'aims_racer_system.longitudinal_acceleration'
 if importlib.util.find_spec(MODULE):
@@ -232,12 +233,20 @@ def test_dds_independent_process_outputs_without_lio_tf_or_drive(tmp_path):
                     assert process.poll() is None, (tmp_path / 'runtime.log').read_text()
                     rclpy.spin_once(node, timeout_sec=.01)
             deadline = time.monotonic() + 10.
-            while wp.get_subscription_count() < 1 or ip.get_subscription_count() < 1:
-                assert time.monotonic() < deadline, 'DDS discovery timeout'
+            # Topic endpoint matching may precede the remote node graph entry.
+            # Wait for both rather than treating subscription count as full discovery.
+            while True:
+                if wp.get_subscription_count() >= 1 and ip.get_subscription_count() >= 1:
+                    try:
+                        info = node.get_subscriber_names_and_types_by_node('longitudinal_acceleration', '/')
+                        pubs = node.get_publisher_names_and_types_by_node('longitudinal_acceleration', '/')
+                        if info and pubs:
+                            break
+                    except _rclpy.NodeNameNonExistentError:
+                        pass
+                assert time.monotonic() < deadline, 'DDS endpoint/node graph discovery timeout'
                 spin(.05)
-            info = node.get_subscriber_names_and_types_by_node('longitudinal_acceleration', '/')
             assert {name for name, _ in info} == {'/rear_axle/wheel_odom', '/rear_axle/imu'}
-            pubs = node.get_publisher_names_and_types_by_node('longitudinal_acceleration', '/')
             assert {name for name, _ in pubs} <= {'/rosout', '/parameter_events', '/state_estimation/longitudinal_acceleration', '/state_estimation/longitudinal_acceleration/status'}
             assert not any(node.count_publishers(topic) for topic in ('/tf', '/tf_static', '/drive', '/vesc/command'))
             ns = node.get_clock().now().nanoseconds - 10_000_000

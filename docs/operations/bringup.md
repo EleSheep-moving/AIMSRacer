@@ -6,7 +6,7 @@
 The current workflow uses one workspace. First prepare ROS and hardware according to the [deployment guide](../deployment/README.md), then prepare fixed sources and build from the root:
 
 ```bash
-git submodule update --init src/FASTLIO2_ROS2
+git submodule update --init src/FASTLIO2_ROS2 src/vesc
 python3 tools/setup_dependencies.py --workspace .
 bash tools/setup_acados.sh --workspace . --jobs 2
 source /opt/ros/humble/setup.bash

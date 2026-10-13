@@ -29,7 +29,7 @@ sudo fuser -v /dev/ttyELRS /dev/ttyVESC
 From the workspace root:
 
 ```bash
-git submodule update --init src/FASTLIO2_ROS2
+git submodule update --init src/FASTLIO2_ROS2 src/vesc
 python3 tools/setup_dependencies.py --workspace .
 bash tools/setup_acados.sh --workspace . --jobs 2
 source /opt/ros/humble/setup.bash
