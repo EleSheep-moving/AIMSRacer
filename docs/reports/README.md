@@ -10,6 +10,7 @@ in the [checklist](../operations/vehicle-checklist.md).
 
 | Report | Scope |
 | --- | --- |
+| [2026-10-13 PP/calibration/editor](2026-10-13-pp-calibration-reference-editor.md) | Host/NX implementation, PTY regressions, joint-load timings and replay clock limitations |
 | [2026-10-13 VESC native command](2026-10-13-vesc-native-command.md) | Native message, central/driver/MPCC migration and software-only PTY acceptance |
 | [2026-10-12 acceleration runtime](2026-10-12-longitudinal-acc-runtime.md) | Opt-in installed observer, desktop/NX tests and real-time DDS replay limits |
 | [2026-10-12 acceleration comparison](2026-10-12-longitudinal-acc-observer.md) | Eight recorded runs, causal wheel/IMU observers and held-out forecast evidence |

@@ -3,7 +3,9 @@
 
 **English** · [简体中文](vehicle-checklist.zh-CN.md)
 
-This checklist covers the current native vehicle workflow. Software regression and experimental verification are in `verification/`; consult [bringup](bringup.md) and [known maps](known-map-mpcc.md) for field operation.
+This checklist covers the default native MPCC vehicle workflow. Software regression and experimental verification are in `verification/`; consult [bringup](bringup.md) and [known maps](known-map-mpcc.md) for field operation.
+
+See the [PP and calibration guide](pp-calibration.md) for explicit enable, RC authority, straight intervals and signed-current operation. Low-speed PP and small-current vehicle acceptance remain pending; software tests and scheduling replay do not replace those experiments.
 
 <a id="启动前"></a>
 ## Before launch
@@ -12,7 +14,7 @@ This checklist covers the current native vehicle workflow. Software regression a
 - Verify the identities of the map PCD, reference, and target-platform bundle; launch from the same workspace's install environment.
 - Confirm that `base_link` rear axle location, sensor mounting, and vehicle footprint match the actual vehicle. The default footprint extends 0.52 m ahead of the rear axle, 0.10 m behind, and 0.16 m to each side.
 - Confirm physical clearance in the intended driving area. Currently `enforce_corridor=false`; the 0.5 m widths on either side in the file do not provide real boundary protection.
-- Launch only one of vehicle, mapping, or race; NDT in known-map race and PGO during mapping must not share ownership of map TF.
+- Launch only one of vehicle, mapping, race, or calibration; NDT in known-map race and PGO during mapping must not share ownership of map TF.
 
 <a id="启用前"></a>
 ## Before enable

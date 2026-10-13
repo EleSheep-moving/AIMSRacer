@@ -32,22 +32,22 @@ and provide an offline browser editor over the immutable prior PCD map.
 
 ## Execution checklist
 
-- [ ] Baseline: separate worktree, verify main/NX/submodules, establish desktop test image.
-- [ ] Reference/editor: failing geometry/provenance tests, canonical export, GUI,
+- [x] Baseline: separate worktree, verify main/NX/submodules, establish desktop test image.
+- [x] Reference/editor: failing geometry/provenance tests, canonical export, GUI,
       PCD formats, persistence and browser behavior verification.
-- [ ] PP: failing old algorithm parity/reference/freshness tests, package/core/node,
+- [x] PP: failing old algorithm parity/reference/freshness tests, package/core/node,
       runtime and localization-health parity tests without generated solver.
-- [ ] Calibration: failing selected-authority/sample/timing/state tests, three-stage
+- [x] Calibration: failing selected-authority/sample/timing/state tests, three-stage
       engine/node, RC profile, native commands, results and resume semantics.
-- [ ] Integration: selected-calibration authority topic, race controller selector,
+- [x] Integration: selected-calibration authority topic, race controller selector,
       calibration launch, recording and parameter snapshot tests.
-- [ ] Review: spec compliance followed by code quality; fix concrete findings.
-- [ ] Desktop: compile ROS graph and run existing functional regression + new tests;
+- [x] Review: spec compliance followed by code quality; fix concrete findings.
+- [x] Desktop: compile ROS graph and run existing functional regression + new tests;
       browser smoke on real PCD, check export/native numerical geometry.
-- [ ] Docs: English default and Chinese paired guides/index/launch examples.
-- [ ] Deploy: commit/push feature branch, fast-forward same branch on NX, build,
+- [x] Docs: English default and Chinese paired guides/index/launch examples.
+- [x] Deploy: commit/push feature branch, fast-forward same branch on NX, build,
       source/install checks, isolated recorded-data tests and timing evidence.
-- [ ] Deliver identical branch SHAs, clean working trees, reports and field commands.
+- [x] Deliver identical branch SHAs, clean working trees, reports and field commands.
 
 ## Acceptance
 
@@ -62,3 +62,10 @@ Offline, virtual-serial and isolated ROS evidence is not real driving acceptance
 Use branch `feat/pp-calibration-reference-editor` on host and NX. Keep main intact
 until on-site low-speed and small-current tests pass. Do not overwrite existing
 maps, references, sessions, local patches or generated field bundles.
+
+## Delivery evidence
+
+The implementation, software/NX checks and synchronization are complete. See
+[the dated report](../reports/2026-10-13-pp-calibration-reference-editor.md) for exact
+metrics and the remaining asynchronous replay-clock qualification limit. Field
+low-speed PP/current acceptance and main merge are separate pending work.

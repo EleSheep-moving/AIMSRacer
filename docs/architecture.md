@@ -3,7 +3,7 @@
 
 **English** · [简体中文](architecture.zh-CN.md)
 
-The main workflow uses one ROS 2 Humble workspace. `vehicle.launch.py` runs the sensors, local estimation, and chassis; `mapping.launch.py` runs mapping; `race.launch.py` adds known-map NDT and native acados/C++ MPCC to vehicle. [Bringup](operations/bringup.md) explains how to choose an entry point.
+The main workflow uses one ROS 2 Humble workspace. `vehicle.launch.py` runs the sensors, local estimation, and chassis; `mapping.launch.py` runs mapping; `race.launch.py` adds known-map NDT and default native acados/C++ MPCC (or `controller:=pp`) to vehicle; `calibration.launch.py` runs the separate calibration graph. [Bringup](operations/bringup.md) explains how to choose an entry point.
 
 <a id="数据与命令链"></a>
 ## Data and command chain
@@ -23,17 +23,42 @@ flowchart LR
     LIO --> NDT[NDT known map]
     EKF --> NDT
     NDT --> Health[localization monitor]
-    EKF --> MPCC[native MPCC]
+    EKF --> MPCC[selected MPCC or PP]
     Health --> MPCC
-    Bundle[immutable bundle] --> MPCC
+    Bundle[canonical reference or MPCC bundle] --> MPCC
     MPCC --> Drive[/drive]
     Drive --> RC[RC selector]
     RC --> Applied[/vesc/command]
     Applied --> VESC[VESC driver]
     Applied --> MPCC
+    Cal[alternative calibration] --> CalRequest[/calib/vesc_command]
+    CalRequest --> RC
+    Wheel --> Cal
+    VESC --> Telemetry[motor telemetry]
+    Telemetry --> Cal
+    Applied --> Cal
 ```
 
-MPCC publishes proposals. The RC selector decides whether to forward them and in which mode; the controller uses the actual `/vesc/command` history to predict motion between measurement and execution. Motor/servo commands and measured speed/steering angle are different data. The current control interface uses speed mode; complete longitudinal identification is planned with the future acceleration interface.
+MPCC publishes proposals. The RC selector decides whether to forward them and in which mode; MPCC uses the actual `/vesc/command` history to predict motion between measurement and execution. Motor/servo commands and measured speed/steering angle are different data. The current control interface uses speed mode; complete longitudinal identification is planned with the future acceleration interface.
+
+## Controller selection and calibration
+
+`race.launch.py` starts exactly one controller: `mpcc` by default, or `pp`.
+Enhanced PP shares the canonical reference, trusted map alignment and vehicle geometry,
+publishes `/drive` at 50 Hz, and requires no solver. It defaults to a 1 m/s cap and
+explicit `/pp/enable`; corridor checks follow the vehicle's `enforce_corridor` flag.
+
+`calibration.launch.py` starts `aims_calibration` independently, without MPCC or a
+standalone PP node. It reuses the PP core or accepts RC steering, requesting speed
+hold, positive-current intervals and negative-current deceleration through
+`/calib/vesc_command`. `/control/calibration_enabled` means an actual valid selected
+calibration command, rather than only a switch position. This graph disables the
+driver's startup-current substitution, retains the final ±100 A bounds, and
+requires explicit current lists and `/calib/enable`.
+
+The map editor is an offline tool. It emits a canonical reference and trial regions
+with map identity, geometry and provenance, and publishes no ROS commands. See the
+[map editor, PP and calibration guide](operations/pp-calibration.md).
 
 <a id="坐标与安装约定"></a>
 ## Frame and mounting conventions
@@ -88,7 +113,10 @@ The following rates are configured targets or nominal values driven by inputs; f
 | `/localization/map_sha256` | Monitor | Saved PCD identity, transient-local |
 | `/localization/map_valid` | Monitor | Localization eligibility flag; not an independent accuracy measurement |
 | `/localization/status` | Monitor | Ready state, health, freshness, and map identity; native control eligibility checks |
-| `/drive` | Native MPCC | 50 Hz proposals, at most 20 Hz optimization requests; RC selects execution |
+| `/drive` | Selected MPCC or PP | 50 Hz proposals; only MPCC issues optimization requests; RC selects execution |
+| `/calib/vesc_command` | Calibration | 50 Hz native speed/signed-current proposals; selector owns forwarding |
+| `/control/calibration_enabled` | RC selector | Actual valid selected calibration authority |
+| `/pp/status`, `/calib/status` | Respective producer | Enable phase, failure reason and runtime/evidence diagnostics |
 | `/vesc/command` | RC selector | Selected forwarded command, configured 100 Hz; VESC and MPCC input history |
 | `/control/autonomy_speed_enabled` | RC selector | Permission for autonomous speed mode |
 | `/sensors/core` | VESC driver | Actual ERPM, current, voltage, and other telemetry |

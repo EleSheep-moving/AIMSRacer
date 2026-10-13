@@ -3,7 +3,7 @@
 
 **简体中文** · [English](architecture.md)
 
-主流程使用一个 ROS 2 Humble workspace。`vehicle.launch.py` 运行传感器、本地估计和底盘；`mapping.launch.py` 运行建图；`race.launch.py` 在 vehicle 上增加已知地图 NDT 和 native acados/C++ MPCC。[启动流程](operations/bringup.zh-CN.md)说明如何选择入口。
+主流程使用一个 ROS 2 Humble workspace。`vehicle.launch.py` 运行传感器、本地估计和底盘；`mapping.launch.py` 运行建图；`race.launch.py` 在 vehicle 上增加已知地图 NDT 和 默认 native acados/C++ MPCC（或选择 `controller:=pp`）；`calibration.launch.py` 运行独立标定链。[启动流程](operations/bringup.zh-CN.md)说明如何选择入口。
 
 <a id="data-and-command-chain"></a>
 ## 数据与命令链
@@ -23,17 +23,31 @@ flowchart LR
     LIO --> NDT[NDT known map]
     EKF --> NDT
     NDT --> Health[localization monitor]
-    EKF --> MPCC[native MPCC]
+    EKF --> MPCC[selected MPCC or PP]
     Health --> MPCC
-    Bundle[immutable bundle] --> MPCC
+    Bundle[canonical reference or MPCC bundle] --> MPCC
     MPCC --> Drive[/drive]
     Drive --> RC[RC selector]
     RC --> Applied[/vesc/command]
     Applied --> VESC[VESC driver]
     Applied --> MPCC
+    Cal[alternative calibration] --> CalRequest[/calib/vesc_command]
+    CalRequest --> RC
+    Wheel --> Cal
+    VESC --> Telemetry[motor telemetry]
+    Telemetry --> Cal
+    Applied --> Cal
 ```
 
-MPCC 发布的是提议。RC 选择器决定是否转发、以何种模式转发；控制器使用实际 `/vesc/command` 历史预测测量到执行期间的运动。电机/servo command 与实际速度、转角不是同一种数据。当前控制接口为 speed 模式，完整纵向辨识按后续加速度接口计划进行。
+MPCC 发布的是提议。RC 选择器决定是否转发、以何种模式转发；MPCC 使用实际 `/vesc/command` 历史预测测量到执行期间的运动。电机/servo command 与实际速度、转角不是同一种数据。当前控制接口为 speed 模式，完整纵向辨识按后续加速度接口计划进行。
+
+## 控制器与标定入口
+
+`race.launch.py` 每次只启动一个控制器：默认 `mpcc`，可选择 `pp`。增强 PP 复用统一参考、可信 map→odom 与实际车辆几何，直接发布 50 Hz `/drive`，无需求解器。它默认限制 1 m/s，要求明确 `/pp/enable`；走廊检查遵循车辆 `enforce_corridor` 配置。
+
+`calibration.launch.py` 独立启动 `aims_calibration`，不同时运行 MPCC 或独立 PP。标定节点可复用 PP 核心，或使用遥控转向；通过 `/calib/vesc_command` 请求稳速、正电流区间与负电流减速。`/control/calibration_enabled` 表示选择器实际选中有效标定指令，不是单纯的遥控开关状态。标定入口关闭驱动的起步电流替代，保留 ±100 A 最终限幅；必须配置显式电流列表并调用 `/calib/enable`。
+
+地图编辑器是离线工具，输出带地图 SHA、车辆几何和来源的统一参考及直线区间，不运行 ROS 控制。完整流程见[地图编辑、PP 与标定指南](operations/pp-calibration.zh-CN.md)。
 
 <a id="frame-and-mounting-conventions"></a>
 ## 坐标与安装约定
@@ -88,7 +102,10 @@ VESC 不发布该车辆 TF。PGO 与 NDT 使用不同运行入口，以保持 ma
 | `/localization/map_sha256` | monitor | 保存 PCD 身份，transient-local |
 | `/localization/map_valid` | monitor | 定位资格标志；不是独立精度测量 |
 | `/localization/status` | monitor | ready、健康、新鲜度和 map identity；native 控制资格检查 |
-| `/drive` | native MPCC | 50 Hz 提议，最多 20 Hz 优化请求；RC 选择执行 |
+| `/drive` | 选中的 MPCC 或 PP | 50 Hz 提议；仅 MPCC 发起优化请求；RC 选择执行 |
+| `/calib/vesc_command` | 标定节点 | 50 Hz native 速度/带符号电流请求；选择器统一转发 |
+| `/control/calibration_enabled` | RC selector | 实际已选择的有效标定权限 |
+| `/pp/status`、`/calib/status` | 对应节点 | 启用阶段、失败原因与运行/写盘诊断 |
 | `/vesc/command` | RC selector | 已选择的转发命令，100 Hz 配置；VESC 与 MPCC 输入历史 |
 | `/control/autonomy_speed_enabled` | RC selector | 自主 speed 模式权限 |
 | `/sensors/core` | VESC driver | 实际 ERPM、电流、电压等 telemetry |

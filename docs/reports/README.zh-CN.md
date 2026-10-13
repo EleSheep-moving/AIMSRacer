@@ -7,6 +7,7 @@
 
 | 报告 | 范围 |
 | --- | --- |
+| [2026-10-13 PP/标定/编辑器](2026-10-13-pp-calibration-reference-editor.zh-CN.md) | 主机/NX 实现、虚拟串口回归、联合负载时序与模拟时钟限制 |
 | [2026-10-13 VESC 新控制消息](2026-10-13-vesc-native-command.md) | 中控/驱动/MPCC 迁移、单调时钟保护及仅虚拟串口的软件验收 |
 | [2026-10-12 加速度实时节点](2026-10-12-longitudinal-acc-runtime.zh-CN.md) | 可选安装节点、主机/NX 测试及实时 DDS 回放边界 |
 | [2026-10-12 加速度对照](2026-10-12-longitudinal-acc-observer.zh-CN.md) | 八次录包、因果轮速/IMU 估计器与保留包预测证据 |

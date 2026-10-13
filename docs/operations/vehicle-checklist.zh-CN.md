@@ -3,7 +3,9 @@
 
 **简体中文** · [English](vehicle-checklist.md)
 
-本清单用于当前 native 实车流程。软件回归与实验验证放在 `verification/`；现场操作参考[启动](bringup.zh-CN.md)和[已知地图](known-map-mpcc.zh-CN.md)。
+本清单用于默认 native MPCC 实车流程。软件回归与实验验证放在 `verification/`；现场操作参考[启动](bringup.zh-CN.md)和[已知地图](known-map-mpcc.zh-CN.md)。
+
+PP 与纵向标定的显式启用、遥控权限、直线区间和带符号电流流程见[专项指南](pp-calibration.zh-CN.md)。新功能仍需低速 PP 与小电流实车验收；软件回归和录包时序采样不替代这些试验。
 
 <a id="before-launch"></a>
 ## 启动前
@@ -12,7 +14,7 @@
 - 核对地图 PCD、参考和目标平台 bundle 的身份；从同一 workspace 的 install 环境启动。
 - 确认 `base_link` 后轴位置、传感器安装、车体 footprint 与实际车辆相符。默认 footprint 为后轴前方 0.52 m、后方 0.10 m、左右各 0.16 m。
 - 确认预期行驶区域有物理余量。当前 `enforce_corridor=false`，文件中的左右各 0.5 m 不提供真实边界保护。
-- 只启动 vehicle、mapping、race 之一；已知地图 race 的 NDT 与建图 PGO 不共用 map TF 归属。
+- 只启动 vehicle、mapping、race、calibration 之一；已知地图 race 的 NDT 与建图 PGO 不共用 map TF 归属。
 
 <a id="before-enable"></a>
 ## 启用前
