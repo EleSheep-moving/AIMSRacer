@@ -1,5 +1,7 @@
 # Independent enhanced pure pursuit
 
+[简体中文](README.zh-CN.md)
+
 `aims_pp` runs the enhanced PP equations recovered from the calibration script
 as a standalone controller. It needs NumPy, PyYAML and ROS 2 Humble. Reference
 loading and control do not import CasADi, acados, SciPy or `aims_mpcc`.

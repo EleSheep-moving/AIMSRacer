@@ -12,6 +12,7 @@
 | [localization/fastlio_ndt_replay.py](localization/fastlio_ndt_replay.py) | raw Livox bag 上的 FAST-LIO2/EKF/NDT 隔离重放；不是实车控制反馈 |
 | [localization/evaluate_replay.py](localization/evaluate_replay.py) | 评估已收集 replay 证据，将持续 tracking 与安全失去资格分别判断 |
 | [localization/tf_authority_audit.cpp](localization/tf_authority_audit.cpp) | 记录 TF 发布者身份与源/接收时间，检查唯一归属 |
+| [calibration](calibration/README.zh-CN.md) | PP/标定与原始定位链联合负载回放；不启动驱动、不验证物理响应 |
 | [config](config/) | 开发比较所需的配置快照；生产默认配置在 `src/controller/config/vehicle.yaml` |
 
 包内仍保留当前测试：

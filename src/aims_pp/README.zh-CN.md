@@ -1,5 +1,7 @@
 # 独立增强型 Pure Pursuit
 
+[English](README.md)
+
 `aims_pp` 将恢复的标定脚本增强 PP 公式实现为独立控制器。运行只依赖
 NumPy、PyYAML 与 ROS 2 Humble，不加载 CasADi、acados、SciPy 或 MPCC 求解器。
 车辆几何及硬限幅读取真实车辆 YAML：当前默认轴距 0.36 m，最大转角 0.45 rad。

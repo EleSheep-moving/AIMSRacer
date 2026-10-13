@@ -12,6 +12,7 @@ This directory retains development verification tools and reference configuratio
 | [localization/fastlio_ndt_replay.py](localization/fastlio_ndt_replay.py) | Isolated FAST-LIO2/EKF/NDT replay of raw Livox bags; not vehicle control feedback |
 | [localization/evaluate_replay.py](localization/evaluate_replay.py) | Evaluate collected replay evidence, judging sustained tracking and safe loss of qualification separately |
 | [localization/tf_authority_audit.cpp](localization/tf_authority_audit.cpp) | Record TF publisher identity and source/receipt time to check unique ownership |
+| [calibration](calibration/README.md) | PP/calibration scheduling beside raw localization replay; no driver or causal response acceptance |
 | [config](config/) | Configuration snapshots for development comparisons; production defaults are in `src/controller/config/vehicle.yaml` |
 
 Current tests remain in the packages:
