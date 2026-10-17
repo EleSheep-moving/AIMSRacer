@@ -1,6 +1,8 @@
 # 2026-10-10 旧英文校准采集指南归档
 
-本页保存单 workspace main 整合前的原文，属于历史安装/采集记录。文中版本、工作目录、launch、脚本及链接对应原来的源码布局，部分入口现已移除。当前操作使用[main 部署](../deployment/README.md)、[车辆启动](../operations/bringup.md)与[native MPCC 使用](../../src/controller/docs/usage.md)。完整纵向辨识按后续加速度接口计划进行；本页不作为当前试跑前置流程。
+> Current procedures: [calibration entry](../operations/calibration.md) and [AY/lateral-grip status](../operations/lateral-acceleration-calibration.md). The old automatic grip script is absent from the current NX installation; commands below are historical records.
+
+本页保存单 workspace main 整合前的原文，属于历史安装/采集记录。文中版本、工作目录、launch、脚本及链接对应原来的源码布局，部分入口现已移除。当前操作使用[main 部署](../deployment/README.md)、[车辆启动](../operations/bringup.md)与[native MPCC 使用](../../src/controller/docs/usage.md)。后续 A/B/C 采集和当前模型以标定总入口为准；闭环加速度控制接口仍需单独验证。本页不作为当前运行命令。
 
 原文件位置：`src/aims_racer_system/docs/calibration.en.md`。以下原文保留历史条件与来源。
 
@@ -8,7 +10,7 @@
 
 # Calibration Data Collection Tools (Longitudinal / Lateral)
 
-[中文](calibration.md) · [Vehicle bringup](../../../docs/operations/bringup.md)
+[中文](2026-10-10-calibration-guide-archive.md) · [Vehicle bringup](../operations/bringup.md)
 
 PP workflows default to `/odometry/filtered`; non-PP workflows default to
 `/rear_axle/wheel_odom`. A supplied `calib_config.yaml` or parameter override can
@@ -64,6 +66,7 @@ This repository uses `AckermannDriveStamped.drive.jerk` as a "mode flag" to mult
 
 ---
 
+<a id="historical-lateral-grip"></a>
 ## 0.3) Lateral Grip / Slip Calibration: Fixed-Radius Speed Steps
 
 Script: `src/aims_racer_system/scripts/lateral_grip_calib.py`

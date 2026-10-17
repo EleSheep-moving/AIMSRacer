@@ -68,3 +68,7 @@ ros2 topic echo /state_estimation/planar_acceleration/g --once
 Vehicle/race expose `planar_acceleration:=true`, default false. Keep other driving configuration as usual. `record:=true` records SI/G/status/debug and snapshots parameters. The future Vicon topic must be added under its actual bridge name; see the [Vicon acquisition contract (Chinese)](vicon-observer-validation.zh-CN.md).
 
 Next validation needs clock/extrinsic-calibrated Vicon, particularly rapid reversals and static bias, before changing alpha prediction/alignment. Extra smoothing alone cannot establish compensation accuracy. Lateral velocity is not implemented; in the planar relation `ay=d(vy)/dt+r*vx`, `vx*r` is not independent acceleration truth.
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected results](calibration.md#current-calibration) · [Lateral AY validation and grip status](lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.

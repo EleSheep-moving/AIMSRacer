@@ -67,3 +67,5 @@ ros2 run aims_calibration start
 C 使用新会话，将第一个命令的 `B` 改为 `C`。仍需现场确认定位、轨迹和遥控状态后显式启用；软件验证不代替这一步。完整操作见[恒电流采集](../operations/full-step-current.zh-CN.md)。
 
 NX 回退归档为 `/home/aims/aimsracer-native-calibration-20261016/backup-before-deploy.tgz`，原三个安装前缀还保存在同目录的 `install-before-deploy/`。车辆停稳、结束当前会话后，可将归档解压回 `/home/aims/aimsracer-data/code/calibration-full-step` 并重新加载环境恢复此前源码与安装。完整本机证据位于 `/home/elesheep/aimsracer-data/experiments/native-calibration-port-20261016/`；仓库只保留便携摘要和日志。
+
+[返回电流标定入口](../operations/calibration.zh-CN.md) · [横向加速度标定与校对](../operations/lateral-acceleration-calibration.zh-CN.md)。本报告的日期、数值与证据边界保持原口径。

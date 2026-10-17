@@ -1,5 +1,7 @@
 # Selected experiment results — through 2026-10-18
 
+[Current calibration entry](../operations/calibration.md) · [Lateral-acceleration calibration / AY validation](../operations/lateral-acceleration-calibration.md): procedures, results and retired grip-entry status.
+
 [Evidence index](assets/README.zh-CN.md)：所有已上传附件均可在仓库内浏览；来源记录中的原始路径不作为附件链接。
 
 [简体中文：完整精选与结论](latest-results.zh-CN.md) · [Report archive](README.md)

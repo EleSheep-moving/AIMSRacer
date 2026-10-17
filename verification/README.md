@@ -44,3 +44,7 @@ python3 verification/localization/fastlio_ndt_replay.py \
 `seed.json` contains map/base_link `position: [x,y,z]` and `orientation: [qx,qy,qz,qw]`, filled in from the actual placement; specified inputs must actually exist.
 
 Report evidence separately for source/config inspection, build, software execution, combined load and field behavior. Passing software does not prove untested road grip or higher speeds; recorded field-run motion windows are not flying laps either. Full boundaries are in the [2026-10-10 field review](../docs/reports/2026-10-10-mpcc-field-review.md).
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected results](../docs/operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../docs/operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.

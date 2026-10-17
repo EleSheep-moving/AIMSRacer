@@ -1,5 +1,7 @@
 # 近期实验精选与当前结论（截至 2026-10-18）
 
+[电流标定总入口](../operations/calibration.zh-CN.md) · [横向加速度标定／AY 校对](../operations/lateral-acceleration-calibration.zh-CN.md)：包括现行流程、已完成结果与历史横向附着入口状态。
+
 [附件总索引](assets/README.zh-CN.md)：所有已上传附件均可在仓库内浏览；来源记录中的原始路径不作为附件链接。
 
 [English](latest-results.md) · [完整报告索引](README.zh-CN.md) · [文档首页](../README.zh-CN.md)

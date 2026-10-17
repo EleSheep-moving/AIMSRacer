@@ -1,6 +1,8 @@
 # 2026-10-10 旧中文校准采集指南归档
 
-本页保存单 workspace main 整合前的原文，属于历史安装/采集记录。文中版本、工作目录、launch、脚本及链接对应原来的源码布局，部分入口现已移除。当前操作使用[main 部署](../deployment/README.md)、[车辆启动](../operations/bringup.md)与[native MPCC 使用](../../src/controller/docs/usage.md)。完整纵向辨识按后续加速度接口计划进行；本页不作为当前试跑前置流程。
+> 当前电流流程见[标定总入口](../operations/calibration.zh-CN.md)，AY 校对和横向附着状态见[横向加速度指南](../operations/lateral-acceleration-calibration.zh-CN.md)。本页旧横向自动脚本不在当前 NX 安装中；以下命令保留为历史记录。
+
+本页保存单 workspace main 整合前的原文，属于历史安装/采集记录。文中版本、工作目录、launch、脚本及链接对应原来的源码布局，部分入口现已移除。当前操作使用[main 部署](../deployment/README.md)、[车辆启动](../operations/bringup.md)与[native MPCC 使用](../../src/controller/docs/usage.md)。后续 A/B/C 采集和当前模型以标定总入口为准；闭环加速度控制接口仍需单独验证。本页不作为当前运行命令。
 
 原文件位置：`src/aims_racer_system/docs/calibration.md`。以下原文保留历史条件与来源。
 
@@ -8,7 +10,7 @@
 
 # 标定采集工具（纵向 / 横向）
 
-[English](calibration.en.md) · [整车启动](../../../docs/operations/bringup.md)
+[English](2026-10-10-calibration-guide-en-archive.md) · [整车启动](../operations/bringup.md)
 
 PP 工作流默认使用 `/odometry/filtered`；非 PP 工作流默认使用 `/rear_axle/wheel_odom`。
 加载 `calib_config.yaml` 或传入参数可能覆盖默认值，请检查实际 `odom_topic`。
@@ -63,6 +65,7 @@ source install/setup.zsh
 
 ---
 
+<a id="historical-lateral-grip"></a>
 ## 0.3) 横向附着 / 侧滑标定：固定半径圆逐级升速
 
 脚本：`src/aims_racer_system/scripts/lateral_grip_calib.py`

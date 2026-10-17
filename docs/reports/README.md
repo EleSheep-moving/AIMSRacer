@@ -12,6 +12,8 @@ in the [checklist](../operations/vehicle-checklist.md).
 
 | Report | Scope |
 | --- | --- |
+| [Current and lateral-acceleration calibration](../operations/calibration.md) | Current protocol, AY/Vicon validation and lateral-grip history |
+| [Historical lateral-grip tutorial](2026-10-10-calibration-guide-en-archive.md#historical-lateral-grip) | Archived fixed-radius stepped-speed design; retired automatic entry |
 | [Selected recent results (start here)](latest-results.md) | State outputs, mocap, calibration and localization evidence; detailed recent reports in Chinese |
 | [2026-10-18 VY 质量与图表](2026-10-18-vy-quality.zh-CN.md) | 短静态、共享传感器动态一致性、后轴／质心比较与待验证项 |
 | [2026-10-18 独立估计器 NX 部署](2026-10-18-state-observer-nx-deployment.zh-CN.md) | ARM 安装、回放输出、参考点恒等式、HI13 退役 |

@@ -105,3 +105,7 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 enable 要求 solver ready、新鲜后轴状态、实际转发历史、RC 权限、可信地图锚点、唯一 `/drive` 发布者、车辆静止和参考方向匹配。`auto_start=true` 复用这组条件，在默认 60 s 内成功后只启动一次；显式 stop 取消等待。完成或故障不自动重新启用，fatal 不重启。
 
 `repeat_laps=false` 从实际启用位置计一圈并停车，true 连续圈直到 stop。使用 RC/急停处理现场紧急情况，撤销权限、停稳后关闭 launch。日志内容与计时口径见[录制](../../../docs/operations/recording.zh-CN.md)。
+
+## 电流与横向加速度标定
+
+[电流标定 A/B/C 与当前离线模型](../../../docs/operations/calibration.zh-CN.md) · [横向加速度 AY 校对及附着标定状态](../../../docs/operations/lateral-acceleration-calibration.zh-CN.md)。区间电流拟合与轮胎横向能力分别验证，不由既有系数直接生成新的控制前馈或横向加速度上限。

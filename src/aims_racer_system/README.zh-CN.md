@@ -67,3 +67,7 @@ source install/setup.bash
 ```
 
 固定依赖准备见[根 README](../../README.zh-CN.md)。软件验证放在 `verification/`；本包的[校准说明](docs/calibration.zh-CN.md)和日期化[外场报告](../../docs/reports/2026-10-10-mpcc-field-review.md)保留具体条件。当前默认 v35 bundle 的规划峰值约 2.99 m/s、实车峰值约 2.89 m/s；source、构建、软件检查与实跑证据分别解释。
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](../../docs/operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](../../docs/operations/lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

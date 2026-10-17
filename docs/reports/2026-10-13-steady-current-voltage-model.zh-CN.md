@@ -118,3 +118,5 @@ I_{\rm input}(v,V)\approx\frac{-0.516192+6.918272v+0.476891v^2}{V}\quad[\mathrm 
 查看 [有效试次](assets/2026-10-13-steady-current/accepted_trials.csv)、[重建核验](assets/2026-10-13-steady-current/validation.json)、[模型指标](assets/2026-10-13-steady-current/curve-fit-iq-v2/model_metrics.csv)、已执行 notebook（原始分析附件留在外部实验目录：`docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/steady_iq_curve_fit.ipynb`）、拟合源码（原始分析附件留在外部实验目录：`docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/fit_models.py`） 和 重建源码（原始分析附件留在外部实验目录：`docs/reports/assets/2026-10-13-steady-current/analyze_iq.py`）。
 
 主机原始证据：`/home/elesheep/aimsracer-data/sessions/2026-10-13/constant-speed-current-review`；新派生证据：`/home/elesheep/aimsracer-data/sessions/2026-10-14/iq-current-correction/recomputed`。原始 bag/NPZ 属于外部数据，新克隆仓库不包含它们。复现命令与英文页一致。多项式电流前馈和 B/C 实车验收仍未完成。
+
+[返回电流标定入口](../operations/calibration.zh-CN.md) · [横向加速度标定与校对](../operations/lateral-acceleration-calibration.zh-CN.md)。本报告的日期、数值与证据边界保持原口径。

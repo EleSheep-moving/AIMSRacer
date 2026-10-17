@@ -87,3 +87,5 @@ B 事件的旧目标为 1→1.5 m/s；保留过冲增加了真实观测，也改
 本报告链接的 CSV／JSON 摘要与两张图是仓库内可读证据；[来源清单](assets/2026-10-15-current-response/source-manifest.json)保存源名称、SHA256 和提取规则。计数、每次试验权重及六组 RMSE／覆盖率均与现有 CSV 核对。本次文档审查未重新处理原始录包。
 
 **仓库克隆不包含的外部来源：**分析主机根目录 `$AIMSRACER_DATA/sessions/2026-10-15/stage-bc-review`，重点为 `measured-current-windows/`、其下 `high-current-pooling/`、`wheel-only-model-v1/` 与 `constant-current-acquisition-handoff.zh-CN.md`。本次从 NX 实时取回 `stage-B-summary-20261015.zh-CN.md`、`stage-C-summary-20261015.zh-CN.md` 交叉核查完成计数，清单保存其文件名与哈希。中间模型目录、原始 bags／NPZ、安装包与详细重放历史留在外部数据区。
+
+[返回电流标定入口](../operations/calibration.zh-CN.md) · [横向加速度标定与校对](../operations/lateral-acceleration-calibration.zh-CN.md)。本报告的日期、数值与证据边界保持原口径。

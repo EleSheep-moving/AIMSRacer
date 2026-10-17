@@ -111,3 +111,7 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 Enable requires a ready solver, fresh rear-axle state, actual forwarded history, RC permission, trusted map anchor, a unique `/drive` publisher, a stationary vehicle and matching reference direction. `auto_start=true` reuses these conditions and starts only once after success within the default 60 s window; explicit stop cancels the wait. Completion or faults do not automatically re-enable, and fatal faults do not restart.
 
 `repeat_laps=false` counts one lap from the actual enable position and stops; true runs continuous laps until stop. Use RC/emergency stop for field emergencies, revoke permission, wait until stationary and then close the launch. Log content and timing definitions are in [recording](../../../docs/operations/recording.md).
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected offline models](../../../docs/operations/calibration.md) · [Lateral AY validation and grip status](../../../docs/operations/lateral-acceleration-calibration.md). Interval-current fits and lateral tire capability require separate validation; these reports do not install a new feedforward controller or lateral-acceleration limit.

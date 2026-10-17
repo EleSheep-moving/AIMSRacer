@@ -101,3 +101,7 @@ Read the original methods and qualifications in [speed-mode calibration](reports
 5. After changing a model parameter such as `steering_tau`, **export and build a new solver bundle** and launch with it. Editing source YAML does not change an already running immutable bundle. Record the bundle/configuration with the run; follow the [reference and bundle workflow](../src/controller/docs/usage.md).
 
 [Back to the documentation index](README.md)
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected results](operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.

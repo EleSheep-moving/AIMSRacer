@@ -84,3 +84,7 @@ ros2 topic echo /state_estimation/body_acceleration --once
 离线工具（记录中的工作区路径：`verification/body_acceleration/README.md`）提供原包只读提取、逐轴统计、频谱、Allan 分析、静态标定和原生到达顺序回放。长静止、温漂、多姿态和新场地实验尚需实际采集；短静止段不能代替长时间验证。
 
 后续动捕输入保留采样/接收时间、时钟映射和刚体外参。参考加速度只在离线评估时求导，明确带宽和边界处理；不会输入在线观测器。验证顺序为合成物理真值、延迟/缺口故障、真实录包、NX 隔离 DDS，最后再做现场与动捕验证。
+
+## 电流与横向加速度标定
+
+[电流标定 A/B/C 与当前离线模型](calibration.zh-CN.md) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。区间电流拟合与轮胎横向能力分别验证，不由既有系数直接生成新的控制前馈或横向加速度上限。

@@ -147,3 +147,7 @@ A 基准、跟踪/稳态/交接配置及每次响应。`response_limits` 为 nul
 续跑使用 `sweep_start_index`，保存原冻结计划长度与哈希，并重新从零编号后缀。
 新会话只验收后缀，总体覆盖结合先前真实记录检查。`observations.csv` 保存完整原始
 流程，`trials.csv` 中嵌套对象以 JSON 字符串保存。
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

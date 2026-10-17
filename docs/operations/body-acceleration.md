@@ -128,3 +128,7 @@ and rigid-body extrinsics. Reference acceleration is differentiated offline with
 explicit bandwidth/edge handling and never enters the online observer. Validate
 synthetic physics, timing faults, recorded data and isolated NX DDS before field
 and motion-capture qualification.
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected offline models](calibration.md) · [Lateral AY validation and grip status](lateral-acceleration-calibration.md). Interval-current fits and lateral tire capability require separate validation; these reports do not install a new feedforward controller or lateral-acceleration limit.

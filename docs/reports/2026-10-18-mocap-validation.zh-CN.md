@@ -65,3 +65,5 @@ src/mocap_validation/run.sh record \
 主机对应使用 `src/mocap_validation/host.sh`。提取和分析命令见使用说明。工具不会启动任何车辆动作。
 
 现场还需填写/测量：Vicon 地址与刚体接入、VRPN 与相机采样及 NX 时钟的关系、标记到车体系/后轴/质心的外参、FastLIO 固定世界对齐或指定静态窗口。未完成时可以先录制，不能将未标定结果当成独立验收。响应偏移与消息时间年龄分别报告；当前没有实际舵角反馈，不能把整车转向响应单独解释为舵机机械延迟。本版没有设置未经讨论的实车合格线。
+
+[返回电流标定入口](../operations/calibration.zh-CN.md) · [横向加速度标定与校对](../operations/lateral-acceleration-calibration.zh-CN.md)。本报告的日期、数值与证据边界保持原口径。

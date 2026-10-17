@@ -74,3 +74,7 @@ ros2 run aims_mpcc record_path --ros-args -p output:="$HOME/aimsracer-data/lap.c
 ```
 
 手动前进绕一圈并少量重叠后停止 recorder。建图时可用 `-p odom_topic:=/rear_axle/lio_odom`。CSV 的 odom 原点属于该次定位会话；保存地图后需离线关联地图位姿，形成真正的 `map/base_link` CSV，再准备持久参考。`prepare_path` 不会仅靠 `--map-file` 转换坐标。参考与 bundle 准备见 [MPCC 使用](../../src/controller/docs/usage.zh-CN.md#准备参考)。
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

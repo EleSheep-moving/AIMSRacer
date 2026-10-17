@@ -67,3 +67,7 @@ source install/setup.bash
 ```
 
 See the [root README](../../README.md) for fixed dependency preparation. Software verification is in `verification/`; this package's [calibration notes](docs/calibration.md) and dated [field report](../../docs/reports/2026-10-10-mpcc-field-review.md) preserve specific conditions. The current default v35 bundle's planned peak is approximately 2.99 m/s and the vehicle peak approximately 2.89 m/s; source, build, software checks, and field-run evidence are explained separately.
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected results](../../docs/operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../../docs/operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.

@@ -72,3 +72,7 @@ ros2 topic echo /state_estimation/planar_acceleration/g --once
 vehicle/race 支持 `planar_acceleration:=true`，默认 false；按原驾驶流程传其他配置。`record:=true` 包含 SI/G/status/debug，并快照参数。Vicon 话题名未知，需现场另加实际话题，详见[Vicon 采集要求](vicon-observer-validation.zh-CN.md)。
 
 下一步优先用已同步、已测外参的 Vicon 检查快速换向中的补偿相位与静态偏置，再决定是否增加角加速度预测／对齐。不能仅加大平滑来宣称该问题消失。侧向速度仍未实现；平面近似 `ay=d(vy)/dt+r*vx` 中，`vx*r` 不能替代独立真值。
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

@@ -128,3 +128,7 @@ NDT 的 50 Hz map TF 可持有上次可信修正，不等于 50 Hz 重新配准�
 默认巡航目标 3.5、硬上限 4、加速/制动 1、曲率规划 ay=1；`combined_accel_constraint_enabled=false`、`enforce_corridor=false`。独立输入/状态、有限数、定位和命令归属仍检查。规划 ay 不构成运行时轮胎硬约束；人为参考宽度也不构成真实赛道边界。[实现指南](../src/controller/docs/implementation.zh-CN.md)解释成本、执行历史和认证。
 
 [2026-10-10 实跑](reports/2026-10-10-mpcc-field-review.md)规划峰值 2.99、实测峰值约 2.89 m/s，运动窗口并非 flying lap。这些记录不证明更高抓地能力或其他地图下的运行表现。
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](operations/lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

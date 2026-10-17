@@ -26,3 +26,7 @@ ros2 run aims_racer_system relocalize_known_map.py \
 Replace values with the actual rear axle pose; angles are in rad. RViz can also be used; see [known maps](../../../docs/operations/known-map-mpcc.md) for full details. Localization replay and development audits are in root [verification](../../../verification/README.md) and are not installed as production entry points.
 
 Save maps with [tools/save_map.sh](../../../tools/save_map.sh); associate closed-loop CSV with a saved PGO map using [tools/reference](../../../tools/reference/README.md). Historical calibration collection and response evidence are in [calibration materials](../docs/calibration.md); that page links the archives and current operation guides.
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected results](../../../docs/operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../../../docs/operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.

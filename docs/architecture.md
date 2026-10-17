@@ -128,3 +128,7 @@ The model has six physical states and three controls, plus auxiliary history sta
 The default cruise target is 3.5, hard cap 4, acceleration/braking 1, and curvature planning ay=1; `combined_accel_constraint_enabled=false`, `enforce_corridor=false`. Independent input/state, finite-number, localization, and command ownership checks remain. Planning ay is not a runtime hard tire constraint; manually assigned reference widths are not real track boundaries. The [implementation guide](../src/controller/docs/implementation.md) explains costs, execution history, and certification.
 
 The [2026-10-10 field run](reports/2026-10-10-mpcc-field-review.md) had a planned peak of 2.99 and measured peak of approximately 2.89 m/s; its motion window was not a flying lap. These recordings do not demonstrate higher grip capability or performance on other maps.
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected results](operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.

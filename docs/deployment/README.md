@@ -76,3 +76,7 @@ In every vehicle terminal, source `/opt/ros/humble/setup.bash` and this workspac
 Choose [device rules](../../rules/README.md) according to the actual wiring; rules only provide stable device names and do not start drivers. Confirm that the device and host addresses in [MID360_config.json](../../src/aims_racer_system/params/MID360_config.json) match the field setup.
 
 Launch commands, map initialization, and automatic recording are described in [vehicle bringup](../operations/bringup.md), [known maps](../operations/known-map-mpcc.md), and [recording](../operations/recording.md). Regression checks and replay support development; see [verification](../../verification/README.md).
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected results](../operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.

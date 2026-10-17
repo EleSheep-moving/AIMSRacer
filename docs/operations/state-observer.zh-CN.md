@@ -105,3 +105,7 @@ state_observer:=true record:=true
 随后按用户要求修订的计算链解释、警告优先策略及与 Robot Localization 的对照，见[延迟及发布策略复核](../reports/2026-10-17-state-observer-latency-policy.zh-CN.md)。
 
 计划于 2026-10-19 做 Vicon 测试；MPCC 暂保留原输入。可配置的采集／后轴与质心五量对照程序已准备，见Vicon 工具与现场命令（记录中的工作区路径：`verification/vicon_state/README.zh-CN.md`）。在线核心及发布均为 C++，此处 Python 只负责 launch、测试与离线分析。
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

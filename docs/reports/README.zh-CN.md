@@ -9,6 +9,8 @@
 
 | 报告 | 范围 |
 | --- | --- |
+| [电流与横向加速度标定入口](../operations/calibration.zh-CN.md) | 现行电流协议、AY 动捕校对及横向附着历史状态 |
+| [横向附着旧教程](2026-10-10-calibration-guide-archive.md#historical-lateral-grip) | 固定半径逐级升速设计归档；旧脚本非当前可用入口 |
 | [近期实验精选（先读）](latest-results.zh-CN.md) | 四组重要结论、版本范围、独立精度边界与现场入口 |
 | [2026-10-18 VY 质量与图表](2026-10-18-vy-quality.zh-CN.md) | 短静态、共享传感器动态一致性、后轴／质心比较与待验证项 |
 | [2026-10-18 独立估计器 NX 部署](2026-10-18-state-observer-nx-deployment.zh-CN.md) | ARM 安装、回放输出、参考点恒等式、HI13 退役 |

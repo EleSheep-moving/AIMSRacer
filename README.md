@@ -5,7 +5,7 @@
 <p align="center">
   <strong>English</strong> · <a href="README.zh-CN.md">简体中文</a><br/>
   <a href="#quick-start">Quick start</a> · <a href="#architecture">Architecture</a> ·
-  <a href="#defaults">Default configuration</a> · <a href="#results">Field results</a> · <a href="docs/README.md">Documentation</a>
+  <a href="#calibration">Calibration</a> · <a href="#defaults">Default configuration</a> · <a href="#results">Field results</a> · <a href="docs/README.md">Documentation</a>
 </p>
 
 A ROS 2 autonomous racing stack developed at **PolyU AIMS Lab**. AIMSRacer follows a saved trajectory in a prior LiDAR map, combining continuous local estimation, NDT global localization, and a native acados/C++ MPCC controller.
@@ -21,6 +21,8 @@ A ROS 2 autonomous racing stack developed at **PolyU AIMS Lab**. AIMSRacer follo
 | Drive, map, or run a saved trajectory | [Launch guide](docs/operations/bringup.md) · [Known-map initialization](docs/operations/known-map-mpcc.md) |
 | Prepare a map-aligned reference and solver bundle | [Reference and bundle workflow](src/controller/docs/usage.md) · [Map/reference tools](tools/reference/README.md) |
 | Record and inspect a run | [Recording](docs/operations/recording.md) · [Runtime diagnostics](src/aims_mpcc_rt/README.md) |
+| Calibrate current response / 电流标定 | [A/B/C calibration entry](docs/operations/calibration.md#current-calibration) · [Acquisition protocol (Chinese)](docs/operations/full-step-current.zh-CN.md) · [Selected model (Chinese)](docs/reports/2026-10-17-current-affine-selection.zh-CN.md) |
+| Validate lateral acceleration / 横向加速度标定 | [AY and lateral-grip guide](docs/operations/lateral-acceleration-calibration.md) · [Vicon validation (Chinese)](docs/operations/mocap-validation.zh-CN.md) |
 | Observe longitudinal acceleration | [Optional wheel + IMU observer](docs/operations/longitudinal-acceleration.md) |
 | Understand or change the controller | [MPCC implementation](src/controller/docs/implementation.md) · [Native runtime](src/aims_mpcc_rt/README.md) |
 | Understand steering and speed response | [Vehicle response and model assumptions](docs/vehicle-response.md) |
@@ -28,7 +30,14 @@ A ROS 2 autonomous racing stack developed at **PolyU AIMS Lab**. AIMSRacer follo
 | Review measurements or run regressions | [Field results](docs/reports/2026-10-10-mpcc-field-review.md) · [Development verification](verification/README.md) |
 | Browse all guides | **[Documentation index](docs/README.md)** |
 
-Current guides linked from this overview and the documentation index have full English and Simplified Chinese versions. English is the default; each guide has a language switch. Historical reports retain their original language.
+Core installation, vehicle-operation and calibration-entry guides provide English and Simplified Chinese versions. Some field procedures and dated reports retain their original language, as marked in their links.
+
+<a id="calibration"></a>
+## Current and lateral-acceleration calibration
+
+The [calibration entry](docs/operations/calibration.md) connects Stage-A holding current, B/C acceleration/deceleration acquisition and the selected interval models. The [lateral-acceleration guide](docs/operations/lateral-acceleration-calibration.md) covers AY validation and lateral-grip status. Current-response data and offline models are available; rear/CG AY and Vicon analysis tools are deployed, while independent dynamic accuracy remains pending. The old automatic fixed-radius grip script is historical, not a current NX entry.
+
+Guides identify the actual installation and date; some newer tools are not yet included in main's source. Figures, CSV and JSON are accessible through the [in-repository evidence index](docs/reports/assets/README.zh-CN.md).
 
 <a id="architecture"></a>
 ## How the stack fits together

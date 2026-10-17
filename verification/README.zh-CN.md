@@ -42,3 +42,7 @@ python3 verification/localization/fastlio_ndt_replay.py \
 `seed.json` 包含 map/base_link 的 `position: [x,y,z]` 与 `orientation: [qx,qy,qz,qw]`，按实际摆放填写；指定输入必须实际存在。
 
 检查 source/config、构建、软件运行、联合负载和现场表现时分别报告证据。软件通过不证明未试过的路面抓地或更高速度；实跑记录的运动窗口也不是 flying lap。完整边界见[2026-10-10 外场复盘](../docs/reports/2026-10-10-mpcc-field-review.md)。
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](../docs/operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](../docs/operations/lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

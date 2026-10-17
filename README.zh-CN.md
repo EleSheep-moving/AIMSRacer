@@ -5,7 +5,7 @@
 <p align="center">
   <a href="README.md">English</a> · <strong>简体中文</strong><br/>
   <a href="#quick-start">快速开始</a> · <a href="#architecture">系统架构</a> ·
-  <a href="#defaults">默认配置</a> · <a href="#results">实测结果</a> · <a href="docs/README.zh-CN.md">文档索引</a>
+  <a href="#calibration">电流／横向标定</a> · <a href="#defaults">默认配置</a> · <a href="#results">实测结果</a> · <a href="docs/README.zh-CN.md">文档索引</a>
 </p>
 
 **PolyU AIMS Lab** 开发的 ROS 2 无人赛车栈。在先验 LiDAR 地图中跟踪提前保存的轨迹，结合连续局部估计、NDT 全局定位和原生 acados/C++ MPCC 控制器。
@@ -21,6 +21,8 @@
 | 手动驾驶、建图或跟踪保存轨迹 | [启动指南](docs/operations/bringup.zh-CN.md) · [已知地图初始化](docs/operations/known-map-mpcc.zh-CN.md) |
 | 准备地图坐标系参考和求解器 bundle | [参考与 bundle 流程](src/controller/docs/usage.zh-CN.md) · [地图/参考工具](tools/reference/README.zh-CN.md) |
 | 录制与分析一次运行 | [录制指南](docs/operations/recording.zh-CN.md) · [运行时诊断](src/aims_mpcc_rt/README.zh-CN.md) |
+| 电流标定（A/B/C） | [标定总入口](docs/operations/calibration.zh-CN.md#current-calibration) · [恒流采集](docs/operations/full-step-current.zh-CN.md) · [当前模型](docs/reports/2026-10-17-current-affine-selection.zh-CN.md) |
+| 横向加速度标定／AY 校对 | [AY 与横向附着指南](docs/operations/lateral-acceleration-calibration.zh-CN.md) · [动捕校对](docs/operations/mocap-validation.zh-CN.md) |
 | 观测纵向加速度 | [可选轮速＋IMU 观测器](docs/operations/longitudinal-acceleration.zh-CN.md) |
 | 理解或修改控制器 | [MPCC 实现](src/controller/docs/implementation.zh-CN.md) · [原生运行时](src/aims_mpcc_rt/README.zh-CN.md) |
 | 理解转向与速度响应 | [车辆响应与模型假设](docs/vehicle-response.zh-CN.md) |
@@ -28,7 +30,14 @@
 | 查看实测或执行回归 | [外场结果](docs/reports/2026-10-10-mpcc-field-review.md) · [开发验证](verification/README.zh-CN.md) |
 | 浏览所有指南 | **[完整文档索引](docs/README.zh-CN.md)** |
 
-首页和总索引列出的当前指南均提供完整英文与简体中文版，默认英文，每份指南设有语言切换。历史实验报告保留原语言。
+核心安装、车辆操作和标定总入口提供英文与简体中文版；部分现场操作及日期化报告按链接标注保留原语言。
+
+<a id="calibration"></a>
+## 电流与横向加速度标定
+
+[统一标定入口](docs/operations/calibration.zh-CN.md)串联 A 恒速保持电流、B/C 加减速采集、当前区间模型，以及 [AY 测量校对与横向附着状态](docs/operations/lateral-acceleration-calibration.zh-CN.md)。电流已有实车采集和离线选型；后轴／质心 AY 与动捕分析工具已部署，独立动态精度仍待验证。固定半径横向附着自动脚本仅保存在历史教程，不是当前 NX 可用入口。
+
+操作指南注明实际安装环境和日期；部分新增工具尚未合入 main 源码。图表、CSV、JSON 可从[仓库内附件索引](docs/reports/assets/README.zh-CN.md)直接查看。
 
 <a id="architecture"></a>
 ## 系统如何协作

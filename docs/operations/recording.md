@@ -74,3 +74,7 @@ ros2 run aims_mpcc record_path --ros-args -p output:="$HOME/aimsracer-data/lap.c
 ```
 
 Drive forward manually for one lap with a small overlap, then stop the recorder. During mapping, use `-p odom_topic:=/rear_axle/lio_odom` if needed. The CSV's odom origin belongs to that localization session; after saving the map, associate map poses offline to form a true `map/base_link` CSV before preparing a persistent reference. `prepare_path` does not transform frames merely through `--map-file`. See [MPCC usage](../../src/controller/docs/usage.md#准备参考) for reference and bundle preparation.
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected results](calibration.md#current-calibration) · [Lateral AY validation and grip status](lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.

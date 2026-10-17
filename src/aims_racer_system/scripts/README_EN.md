@@ -7,3 +7,7 @@ Use the [vehicle bringup](../../../docs/operations/bringup.md) and [known-map gu
 The [optional acceleration guide](../../../docs/operations/longitudinal-acceleration.md) describes the observer-only launch and evaluation recording; [verification](../../../verification/acceleration/README.md) covers offline tools and the separate DDS harness.
 
 The [calibration history](../docs/calibration.en.md) links the archived collection workflow and current operating instructions.
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected offline models](../../../docs/operations/calibration.md) · [Lateral AY validation and grip status](../../../docs/operations/lateral-acceleration-calibration.md). Interval-current fits and lateral tire capability require separate validation; these reports do not install a new feedforward controller or lateral-acceleration limit.

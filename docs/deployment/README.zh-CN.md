@@ -76,3 +76,7 @@ Livox 的 ROS 2 edition/distribution 是显式构建参数。该命令选择当�
 [设备规则](../../rules/README.zh-CN.md)按实际连线选择；规则只提供稳定设备名，不启动驱动。确认 [MID360_config.json](../../src/aims_racer_system/params/MID360_config.json)中的设备与主机地址适用于现场。
 
 启动命令、地图初始化与自动录制见[车辆启动](../operations/bringup.zh-CN.md)、[已知地图](../operations/known-map-mpcc.zh-CN.md)、[录制](../operations/recording.zh-CN.md)。回归和重放用于开发，见 [verification](../../verification/README.zh-CN.md)。
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](../operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](../operations/lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

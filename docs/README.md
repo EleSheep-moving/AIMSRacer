@@ -4,7 +4,7 @@
 
 **English** · [简体中文](README.zh-CN.md) · [Project overview](../README.md)
 
-Guides for the current **FAST-LIO2 + rear-axle EKF + NDT + native MPCC** stack. Current guides listed here have full English and Simplified Chinese versions, with English as the default and a language switch on each page. Historical reports and retired design notes retain their original language.
+Guides for the current **FAST-LIO2 + rear-axle EKF + NDT + native MPCC** stack. Core installation, vehicle-operation and calibration-entry guides provide English and Simplified Chinese versions. Field procedures, dated reports and retired design notes retain their original language where marked.
 
 ## Recent experiments and field validation
 
@@ -16,6 +16,7 @@ Guides for the current **FAST-LIO2 + rear-axle EKF + NDT + native MPCC** stack. 
 2. **First known-map run:** [frames and topics](architecture.md) → [map/reference preparation](../src/controller/docs/usage.md) → [initialization and enable](operations/known-map-mpcc.md).
 3. **Controller development:** [implementation](../src/controller/docs/implementation.md) → [native runtime](../src/aims_mpcc_rt/README.md) → [regressions and replay](../verification/README.md).
 4. **Analyze a run:** [recording](operations/recording.md) → [field review](reports/2026-10-10-mpcc-field-review.md) → [dated reports](reports/README.md).
+5. **Current and lateral calibration:** [calibration entry](operations/calibration.md) → [current acquisition](operations/full-step-current.zh-CN.md) or [AY validation](operations/lateral-acceleration-calibration.md) → [results and evidence](reports/assets/README.zh-CN.md).
 
 ## Installation and hardware
 
@@ -34,6 +35,8 @@ Guides for the current **FAST-LIO2 + rear-axle EKF + NDT + native MPCC** stack. 
 | [Launch guide](operations/bringup.md) | Choose vehicle, mapping, race or controller-only launch | English / 简体中文 |
 | [Known-map MPCC](operations/known-map-mpcc.md) | Map and bundle identity, rear-axle initial pose, enable, stop and repeated laps | English / 简体中文 |
 | [Recording](operations/recording.md) | Launch-managed bags, runtime logs, QoS, session layout and timing definitions | English / 简体中文 |
+| [Current calibration A/B/C](operations/calibration.md#current-calibration) | Deployed environment, full-step protocol, selected interval models and evidence | English / 简体中文 |
+| [Lateral-acceleration calibration](operations/lateral-acceleration-calibration.md) | Mounting/sensor status, Vicon validation and historical lateral-grip procedure | English / 简体中文 |
 | [Longitudinal acceleration](operations/longitudinal-acceleration.md) | Optional wheel + IMU output, standalone launch, diagnostics and field recording | English / 简体中文 |
 | [Vehicle checklist](operations/vehicle-checklist.md) | Device, localization, authority and run checks | English / 简体中文 |
 | [Reference and bundle workflow](../src/controller/docs/usage.md) | Map-frame reference, speed planning, export and target-CPU build | English / 简体中文 |

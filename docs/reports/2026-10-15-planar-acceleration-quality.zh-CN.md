@@ -123,3 +123,5 @@ B/C 辅助复核各有 129,880 / 225,598 个输入事件，121,664 / 214,838 个
 脚本入口（记录中的工作区路径：`verification/planar_acceleration/README.md`） · [完整统计](assets/2026-10-15-planar-acceleration/summary.json) · [运行摘要](assets/2026-10-15-planar-acceleration/runtime-summary.json) · [双架构差值](assets/2026-10-15-planar-acceleration/native-parity.json)。测试日志和精简图片在仓库；原包、全部 trace、DDS 输出和二进制保留在外部数据目录 `aimsracer-data/experiments/planar-acceleration-20261015/`，不要求上传 GitHub。
 
 下一步先处理最小 gyro 时间支持／异常时间的可信度门控，再研究角加速度与比力的因果对齐或预测；必须以留出的动态数据验证误差与延迟，避免破坏已接受 ax。用户计划使用 Vicon，先测刚体到后轴外参、确认采样／接收时钟和预测选项，完成静止、直线、左右圆弧与逐步加快换向的重复采集。日期未定不妨碍软件准备。动捕前不发布侧向速度或已验证的侧滑监督量。
+
+[返回电流标定入口](../operations/calibration.zh-CN.md) · [横向加速度标定与校对](../operations/lateral-acceleration-calibration.zh-CN.md)。本报告的日期、数值与证据边界保持原口径。

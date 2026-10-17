@@ -33,3 +33,5 @@
 完整自检数据、报告、真实 ROS 录包自检及配置信息保存在 `aimsracer-data/experiments/vicon-state-preparation-20261017/`；主入口 `demo/report/report.zh-CN.md`。也可在无 ROS 的 NumPy/SciPy/Matplotlib 环境运行 `run.py demo --output 新目录` 重建。
 
 **这里尚无实车 Vicon 数据。** 19 项通过证明对比程序及采集链的软件行为，不能证明估计器已经稳定／精确、满足低延迟指标或已经部署到 NX。当前估计器原有的加速度回归相位、名义几何及共享 IMU/LIO 不确定度边界保留。真实采集后按静止、直线、稳定圆弧、换向及保留验证组分别评估，再决定估计器调参及后续 MPCC 接线。
+
+[返回电流标定入口](../operations/calibration.zh-CN.md) · [横向加速度标定与校对](../operations/lateral-acceleration-calibration.zh-CN.md)。本报告的日期、数值与证据边界保持原口径。

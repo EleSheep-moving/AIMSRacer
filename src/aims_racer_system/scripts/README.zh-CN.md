@@ -26,3 +26,7 @@ ros2 run aims_racer_system relocalize_known_map.py \
 数值须替换为实际后轴位姿，角度为 rad。也可用 RViz；完整说明见[已知地图](../../../docs/operations/known-map-mpcc.zh-CN.md)。定位 replay 与开发审计位于根 [verification](../../../verification/README.zh-CN.md)，不安装为生产入口。
 
 地图保存使用 [tools/save_map.sh](../../../tools/save_map.sh)；闭环 CSV 与保存 PGO 地图的关联使用 [tools/reference](../../../tools/reference/README.zh-CN.md)。历史校准采集和响应证据见[校准资料](../docs/calibration.zh-CN.md)；该页链接归档和当前操作指南。
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](../../../docs/operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](../../../docs/operations/lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

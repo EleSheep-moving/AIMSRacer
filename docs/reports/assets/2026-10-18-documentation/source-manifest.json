@@ -5,6 +5,18 @@
   "self_excluded": true,
   "files": [
     {
+      "published_path": "README.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "01b98d1a3d72c074758d64fc27595ffdfe9fbfd67aa83f9c77a527fc9ea4894b",
+      "bytes": 15547
+    },
+    {
+      "published_path": "README.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "2625c20214685015c4f176230592c120b547acc2737fb9e3707ff99b56614801",
+      "bytes": 14410
+    },
+    {
       "published_path": "docs/.gitattributes",
       "published_sha256": "e1ca4a53c30c742af0cd31d37c761d3e6211ccad35e6cd3220caa60e551d0bdd",
       "bytes": 240,
@@ -12,17 +24,29 @@
     },
     {
       "published_path": "docs/README.md",
-      "published_sha256": "039729e853992ae39df15e79b6d7a589076a022f38180b5008a969bc98dcfa1c",
-      "bytes": 7257,
+      "published_sha256": "a79716e9068e5413909a1b0e24ae5b70a382c64d24dc04313f519ecd017c1450",
+      "bytes": 7914,
       "source": "/home/elesheep/AIMSRacer/docs/README.md",
       "source_sha256": "55b2c85542006368bc9debb90f18bf1d565152d936a2d4d42c6ae4e40ba3f1cb"
     },
     {
       "published_path": "docs/README.zh-CN.md",
-      "published_sha256": "585a674f1f9bb4949885d718bb7d7a23f67a4a808007bcb238163f3c430fd408",
-      "bytes": 6746,
+      "published_sha256": "2b052f4dee4acc354f6cfade56a4c81959af391ba7bbdbb4c7a9d0176346c6bd",
+      "bytes": 7366,
       "source": "/home/elesheep/AIMSRacer/docs/README.zh-CN.md",
       "source_sha256": "9400ba2d7a23d97f1ce4524d6554f4c9527045b89fe74a2f3bd2c3ecbd95345f"
+    },
+    {
+      "published_path": "docs/architecture.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "445a1569c57889230c7c7476e40c7af2d26ded7f9c2e3d4c63572551af63d2f0",
+      "bytes": 12440
+    },
+    {
+      "published_path": "docs/architecture.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "5fab30b9f755bb1a2cc8e37e2bbf6e5b9ea881ada043c2180f021ff511c1abac",
+      "bytes": 10763
     },
     {
       "published_path": "docs/assets/vx-observer-20261015/README.zh-CN.md",
@@ -52,50 +76,110 @@
       "source_sha256": "c044bc4446ccdf65bd464b6dbfca834145e5e8742eeda9ec1a49db534e9b6501"
     },
     {
+      "published_path": "docs/deployment/README.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "b2340de7bac801e667a1ea388291f9b26e0411deec151cd7a8aa92f1f35e962f",
+      "bytes": 7124
+    },
+    {
+      "published_path": "docs/deployment/README.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "b251500efa5d9bf59d68c8b374df6837cc59f86a11a4a07733934ede21c57b07",
+      "bytes": 6214
+    },
+    {
       "published_path": "docs/operations/body-acceleration.md",
-      "published_sha256": "ee0525dd354a236ab8f96d7b299bd570c59031c8a0d483303d0a55d3db057e12",
-      "bytes": 6404,
+      "published_sha256": "229980dd68a042f7947bd892a0b8c9c78309865e467aa11745c3b0d1ae6f03b8",
+      "bytes": 6775,
       "source": "/home/elesheep/AIMSRacer/docs/operations/body-acceleration.md",
       "source_sha256": "7c07fa02d114aa293969f5241df3808110d4738c5f45de891d1d7742a7f40e4a"
     },
     {
       "published_path": "docs/operations/body-acceleration.zh-CN.md",
-      "published_sha256": "ec8d1abedaa57ccd0f2a109cb90020faa88c69e5f706af16805ad46b2c2d84dc",
-      "bytes": 6228,
+      "published_sha256": "9dbee2de75a14de50913b33415ed020c5dc0ddbd8dd743e903a7abc8480482b9",
+      "bytes": 6556,
       "source": "/home/elesheep/AIMSRacer/docs/operations/body-acceleration.zh-CN.md",
       "source_sha256": "5ac1c238e3a0f93025580fbd27a6fbd2b8f3923a08655401bcdf6ef3282b7183"
     },
     {
+      "published_path": "docs/operations/bringup.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "2e9130c4d4152fb39e1de6570073809db94f7178aa210b5dc3ec70da332e8244",
+      "bytes": 4165
+    },
+    {
+      "published_path": "docs/operations/bringup.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "6501ef697628708a3b858a9cd5abaac457bc134922277d4e844b61384c6c51dd",
+      "bytes": 3780
+    },
+    {
+      "published_path": "docs/operations/calibration.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "8655bd621682ae03a4a40a94c22ee7f60fc2e410453c86539deb32a9503bb071",
+      "bytes": 4100
+    },
+    {
+      "published_path": "docs/operations/calibration.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "539e0798fafa670808056cde2ae1967b16b03e357a305b53f323753b4ca6736a",
+      "bytes": 4103
+    },
+    {
       "published_path": "docs/operations/full-step-current.zh-CN.md",
-      "published_sha256": "360da0fb3e1311b995589f5f21787d219586e3e61448dc14b3ca59c57cf2d93b",
-      "bytes": 8739,
+      "published_sha256": "80edad6be3642804d33e142cf02dfd90e38a1f54d4a143fe5d45e116e21c2288",
+      "bytes": 9066,
       "source": "/home/elesheep/AIMSRacer/docs/operations/full-step-current.zh-CN.md",
       "source_sha256": "4c5cd831344ac4407b4222e835c46820135bf8026009fd7ca3e1f99f74a1e21f"
     },
     {
+      "published_path": "docs/operations/lateral-acceleration-calibration.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "14fbfa87ab97e404174d8ae85ae1212a1bf38af701d7c341f2b1b2f075a4d8ff",
+      "bytes": 4328
+    },
+    {
+      "published_path": "docs/operations/lateral-acceleration-calibration.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "ee5f871e9af193e69e7cae1b02cadfa31f8a741b73f1d89e7d4bf60a5595d63e",
+      "bytes": 4283
+    },
+    {
       "published_path": "docs/operations/mocap-validation.zh-CN.md",
-      "published_sha256": "886a8bcbb93aa70c76fb8559eaa66e2f50712ac0c2413f247f5599988cb1ce3a",
-      "bytes": 8500,
+      "published_sha256": "9b2d36297a27a3cde215143d3382c24331a9b02c6f7d334dfa4f611b91b5af22",
+      "bytes": 8827,
       "source": "authored or edited during documentation curation"
     },
     {
       "published_path": "docs/operations/planar-acceleration.md",
-      "published_sha256": "f74c8f7fadbcacab58cc11f393f4dca374f6b467fd7e680c305d8e9446aa25a5",
-      "bytes": 6972,
+      "published_sha256": "7aeef2ad2b81112d1830c444f4af18cad5f5b36d05c01b280ade6781509ca142",
+      "bytes": 7302,
       "source": "/home/elesheep/AIMSRacer/docs/operations/planar-acceleration.md",
       "source_sha256": "1f510e2209eadef4799b0ff181647ff0b376d2a3eefbb249a50d026a1a2c7939"
     },
     {
       "published_path": "docs/operations/planar-acceleration.zh-CN.md",
-      "published_sha256": "b02343bde542c31dde6682e098de394aeafb81284afccf99c32477379131916d",
-      "bytes": 6928,
+      "published_sha256": "d7f1da0b73a35bf3c42f29676f111007d8ee1a1e2ccc64bd73853782599417ca",
+      "bytes": 7255,
       "source": "/home/elesheep/AIMSRacer/docs/operations/planar-acceleration.zh-CN.md",
       "source_sha256": "56796f8dfc9ad0ee0447c8b665337d141d354d7980138d3ff8ec3dd68c6d3bf7"
     },
     {
+      "published_path": "docs/operations/recording.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "5b38a7194602324573399961c43d15e8d7293bc6f6bf0b906b08e938bade5ba9",
+      "bytes": 6100
+    },
+    {
+      "published_path": "docs/operations/recording.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "a4c8dbe88a0094a1511acd873211cd6de7e56cce9756ba3d336b3aa00ae07b6c",
+      "bytes": 5488
+    },
+    {
       "published_path": "docs/operations/state-observer.zh-CN.md",
-      "published_sha256": "ed074d8d79b962d7cc93312ca86f5d0886afbdeec98046887e9ab53c32d4457e",
-      "bytes": 11289,
+      "published_sha256": "101c6164d9db245c6451c49fd84f7f8b8080b0b0c26e635c54fa7c3b7b7721bd",
+      "bytes": 11616,
       "source": "/home/elesheep/AIMSRacer/docs/operations/state-observer.zh-CN.md",
       "source_sha256": "9de92e63ca638e83c6d56e39294abce2b9ef11cf755c262891ad96f3704ecf94"
     },
@@ -135,16 +219,28 @@
       "source_sha256": "ee2e4cdd9ed3923dedd8182120d37b9698cf83278fe7390db2108a53ae1d731a"
     },
     {
+      "published_path": "docs/reports/2026-10-10-calibration-guide-archive.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "3661db6afbfbe8c1815c4d0c2a6b606ebb5360d913b1a09a0de466ab052448d4",
+      "bytes": 36519
+    },
+    {
+      "published_path": "docs/reports/2026-10-10-calibration-guide-en-archive.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "bd154896c4d40b590b224a48cd5322d005120444030dcfb12faeb0304ab0807c",
+      "bytes": 29261
+    },
+    {
       "published_path": "docs/reports/2026-10-13-steady-current-voltage-model.md",
-      "published_sha256": "ddcbd32a00b353e82812eee592768ab6ed88213df04cd082c14db958f24e337a",
-      "bytes": 10689,
+      "published_sha256": "122994cfae6d1fc9e71c4c6bcd3c4ad08bfab338621cab24022aa9e5bef8d82b",
+      "bytes": 10920,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-13-steady-current-voltage-model.md",
       "source_sha256": "3edd268dd1f4a47593369209e0296420981f514624bf93b950878d964e943762"
     },
     {
       "published_path": "docs/reports/2026-10-13-steady-current-voltage-model.zh-CN.md",
-      "published_sha256": "d6aba76050c5dbad746b86af027a848b4a4391e514fb82c50beb43a241f724ac",
-      "bytes": 9213,
+      "published_sha256": "d12ee9829b87e21125f48950fed15e623f6326795f02ed7567016ac5600f4a51",
+      "bytes": 9433,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-13-steady-current-voltage-model.zh-CN.md",
       "source_sha256": "8eae73cc5ca55fe8515081c5ddb272533b2d68c46ad70b6cf4e53568270952b0"
     },
@@ -199,15 +295,15 @@
     },
     {
       "published_path": "docs/reports/2026-10-15-current-response-identification.md",
-      "published_sha256": "0f0edbd935cf955c5a64032fa540078df0284d79443288ea986c2d4711b0cc63",
-      "bytes": 12035,
+      "published_sha256": "b07ac309ac0c7a6a6eb9d3c5eef6e9797beb637ebc3fd3002cb5f0864089f7fa",
+      "bytes": 12266,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-current-response-identification.md",
       "source_sha256": "0f0edbd935cf955c5a64032fa540078df0284d79443288ea986c2d4711b0cc63"
     },
     {
       "published_path": "docs/reports/2026-10-15-current-response-identification.zh-CN.md",
-      "published_sha256": "a63d2c4568c736a65e16d4231259e3dbc17b03d1b5ec2102156cb7aff89ea54c",
-      "bytes": 10434,
+      "published_sha256": "d8b2d29e52d2d29e55cf95608f55119f7feb0eb17745348cdc3e75cdd3f62dfe",
+      "bytes": 10654,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-current-response-identification.zh-CN.md",
       "source_sha256": "a63d2c4568c736a65e16d4231259e3dbc17b03d1b5ec2102156cb7aff89ea54c"
     },
@@ -255,15 +351,15 @@
     },
     {
       "published_path": "docs/reports/2026-10-15-planar-acceleration-quality.md",
-      "published_sha256": "5196b10984c754f058c2ec25f4085302c147b6a66b33ec945b3696b5878b178a",
-      "bytes": 15427,
+      "published_sha256": "09a527ed4e505077210b98d459f675de723725deceeb6be6cc3631664401a52c",
+      "bytes": 15658,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-planar-acceleration-quality.md",
       "source_sha256": "2d018d72ae41f092c183b17c0d7053fe855268e539abbff61e8496852b4f64fa"
     },
     {
       "published_path": "docs/reports/2026-10-15-planar-acceleration-quality.zh-CN.md",
-      "published_sha256": "c6bad61721a739cfc805a8753fb282b66b89f7f6bd4495bd4108f7febf66e988",
-      "bytes": 14722,
+      "published_sha256": "c1398f97ddd95c4069af91bc85a56d65056e3f6785314e6759f08648d3d2d3d2",
+      "bytes": 14942,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-planar-acceleration-quality.zh-CN.md",
       "source_sha256": "8690a3b35713f721a64fe45bf0a9c16285492f5822d344a9b3fb76626a593656"
     },
@@ -290,15 +386,15 @@
     },
     {
       "published_path": "docs/reports/2026-10-16-native-calibration.zh-CN.md",
-      "published_sha256": "fa1ea0b8401bb43a18cdaa1dc17aba5a202b861fd8ca363918975baed28b910f",
-      "bytes": 7153,
+      "published_sha256": "b6ea192b6ae5c4c3788d7cc5095356c0a0bb5aab69c8a52bd34c38c401fa9069",
+      "bytes": 7373,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-16-native-calibration.zh-CN.md",
       "source_sha256": "fd6acd1520bcf05c121911dd0fce1830b148ff0368a3b37dcce33e211fd7da3c"
     },
     {
       "published_path": "docs/reports/2026-10-17-current-affine-selection.zh-CN.md",
-      "published_sha256": "148cccbd4e08ffda3cb96cdf40eddb384fe3a9fc7cc9d117a8450f4d9dce5fae",
-      "bytes": 6558,
+      "published_sha256": "dd7a77a221ddc91677991be0ff765517083d65f5c5981358a4212bdd2cff665c",
+      "bytes": 6778,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-17-current-affine-selection.zh-CN.md",
       "source_sha256": "473ea05b3114a1cd175ec2d20339ff427d6741cedd71ab051f54f70142ae8af8"
     },
@@ -345,15 +441,15 @@
     },
     {
       "published_path": "docs/reports/2026-10-17-vicon-comparison-preparation.zh-CN.md",
-      "published_sha256": "2b24609eff8b67f5680862276866452e8ea52a0367f11a2dcdfc26697336b744",
-      "bytes": 4101,
+      "published_sha256": "c486f9e5c21b02d61a4d7ccfdd908f7519af9e357b462f4ce92bc4841dcca545",
+      "bytes": 4321,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-17-vicon-comparison-preparation.zh-CN.md",
       "source_sha256": "ab0eca53e6d37687ff2505927821af1a7dab64a6a38ada67b8eea9c38e7abbc6"
     },
     {
       "published_path": "docs/reports/2026-10-18-mocap-validation.zh-CN.md",
-      "published_sha256": "80bf1e5e8149b82e128b89d02e3d6b26b90af66a8302bcfd3dbec5d94c972fb4",
-      "bytes": 6671,
+      "published_sha256": "602156394a595564e0e194cbde83b89c1d682c6eee32213172fd1fda92cacad2",
+      "bytes": 6891,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-18-mocap-validation.zh-CN.md",
       "source_sha256": "a16564b24c7bf183acb4ef9ab3a84ab971bb73b58b4026529d4e028f66538889"
     },
@@ -373,15 +469,15 @@
     },
     {
       "published_path": "docs/reports/README.md",
-      "published_sha256": "de33148f58803315800ad40fabe8ce5dcfd988e3a3d9c001eb3e24526dd3ab71",
-      "bytes": 7896,
+      "published_sha256": "b9a10107b3f9fd4f702dea54d0eed612749b3a3dda313d9979c35ebb691660f1",
+      "bytes": 8219,
       "source": "/home/elesheep/AIMSRacer/docs/reports/README.md",
       "source_sha256": "af5b79f08f9b9f56cffa14e818f0ce2c4a619de8bc4b382ebfe1bea66b7a5448"
     },
     {
       "published_path": "docs/reports/README.zh-CN.md",
-      "published_sha256": "2f600c4cf850776343b2f0930f8d69941ba4e6f17c8a53e00b2a13954774c5d6",
-      "bytes": 8060,
+      "published_sha256": "35ad4c36a4f43751d64a881b352a4013420eb47feee8c1e6d0777fe59fbfe584",
+      "bytes": 8370,
       "source": "/home/elesheep/AIMSRacer/docs/reports/README.zh-CN.md",
       "source_sha256": "45123461396dfa778cd54bb92d895ae96ab9471c24c2086d4948e50996963f61"
     },
@@ -1701,8 +1797,8 @@
     {
       "published_path": "docs/reports/assets/2026-10-18-documentation/self-contained-audit.json",
       "source": "generated in-repository evidence index or audit",
-      "published_sha256": "624216bcce57280c5825c5ef8bf590b529674f9507717df334d738914a5be316",
-      "bytes": 715
+      "published_sha256": "39c2313b4c820b746c3886e4906db36eef9d26265bf54e4b5d69f74872c6a0e6",
+      "bytes": 735
     },
     {
       "published_path": "docs/reports/assets/2026-10-18-mocap-validation/README.zh-CN.md",
@@ -2010,15 +2106,15 @@
     },
     {
       "published_path": "docs/reports/latest-results.md",
-      "published_sha256": "7c334775e6e4aa2e7b2a82945493cf723140e145b67670c5fbed9d271fcae3d7",
-      "bytes": 2570,
+      "published_sha256": "96f52ae27e59956c496372635759e1f1f9785f370e70da5b9695cf4646fe7c58",
+      "bytes": 2786,
       "source": "/home/elesheep/AIMSRacer/docs/reports/latest-results.md",
       "source_sha256": "b19e133352c860271bf2e4f5cfd9025e0534ae770ad77ba86f4ca176c1cf7eaf"
     },
     {
       "published_path": "docs/reports/latest-results.zh-CN.md",
-      "published_sha256": "28ba94e2a2928e36c66bc7b444ea5d69ec025b6281ccfb1a8d05181428f904d3",
-      "bytes": 7107,
+      "published_sha256": "f0565c5baf92a0ccdc0b3617b931bc0c785ba486c15e7ff21d4ab182d5380c37",
+      "bytes": 7339,
       "source": "/home/elesheep/AIMSRacer/docs/reports/latest-results.zh-CN.md",
       "source_sha256": "01db86567301a72ff5b83dfd0698bdec9c6969e8c5bfb297eb629b6a9e2703b4"
     },
@@ -2035,7 +2131,92 @@
       "bytes": 32350,
       "source": "/home/elesheep/AIMSRacer/docs/system-latency.zh-CN.md",
       "source_sha256": "f3ab7a9376ba4338620d66e737d45ac12ce2e304115b94598a2607f6e87d8dc0"
+    },
+    {
+      "published_path": "docs/vehicle-response.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "65fbedbf8da3c2aca17d9f89b49b0c12899806a7c8590b875653d545a3d06c03",
+      "bytes": 12395
+    },
+    {
+      "published_path": "docs/vehicle-response.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "51ac49ac56444835466507b14137815a4e9040bd002789275ea421043828cd15",
+      "bytes": 11193
+    },
+    {
+      "published_path": "src/aims_racer_system/README.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "3f1f424e0a2bfffe9b4e5a3858d407a8d0621f99ecf600969e1bed5cdee58b14",
+      "bytes": 5751
+    },
+    {
+      "published_path": "src/aims_racer_system/README.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "2ead6d07173821dfbea7e500b6224e7fd5a62b562cae2198e24746b70c7d4b73",
+      "bytes": 5113
+    },
+    {
+      "published_path": "src/aims_racer_system/docs/calibration.en.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "e7111dcba05d38bad7791e1b81b6eafcef175c46b16e219e1f55e6a68a1a9c4a",
+      "bytes": 1316
+    },
+    {
+      "published_path": "src/aims_racer_system/docs/calibration.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "56d0b592fc1d8b9591801365587e4de783d259ee4f6288bcd94a4b62767cb754",
+      "bytes": 2294
+    },
+    {
+      "published_path": "src/aims_racer_system/docs/calibration.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "8b95b6570cd312aa0a8214bef47fa28db39666ddb5cc62d58d196ebf05bb2a76",
+      "bytes": 2029
+    },
+    {
+      "published_path": "src/aims_racer_system/scripts/README.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "2a0c0ead7b48e7c7ad230112697a923336acc05afbbbaece1ea9eb325a585cb7",
+      "bytes": 2754
+    },
+    {
+      "published_path": "src/aims_racer_system/scripts/README.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "666ed3236f659c30aa6a167ec20ab0dc77c506cd57e1479c94ce84d46da129a5",
+      "bytes": 2499
+    },
+    {
+      "published_path": "src/aims_racer_system/scripts/README_EN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "c728eceded878cbd9afac51374f0021a9911b85631a8fa5a0f46da29a3b42351",
+      "bytes": 1321
+    },
+    {
+      "published_path": "src/controller/docs/usage.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "44a8803bfd80e064ef3071b64b52689951187850c11ac2c0c3c4a2964a176e69",
+      "bytes": 8774
+    },
+    {
+      "published_path": "src/controller/docs/usage.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "fd8362589e38c096e56838e83904746b90e587eecd65177b3ce6e60946475f36",
+      "bytes": 7580
+    },
+    {
+      "published_path": "verification/README.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "c60e810e531d704789dcf335362d8d3c4d98a9a40957a58b447294fb86aaa787",
+      "bytes": 4236
+    },
+    {
+      "published_path": "verification/README.zh-CN.md",
+      "source": "calibration navigation and status clarification; runtime code unchanged",
+      "published_sha256": "a0a0aff54acf9f7b2c9ff5f101c2283e254eb2328bb174a457bb483640b1b0b9",
+      "bytes": 3743
     }
   ],
-  "indexing_update": "All attachments are indexed inside the repository; two host-absolute Markdown links were replaced by published supporting documents."
+  "indexing_update": "All attachments are indexed inside the repository; two host-absolute Markdown links were replaced by published supporting documents.",
+  "calibration_navigation_update": "Project homepages, English/Chinese guide indexes, operation/recording/package/verification notes and historical calibration routes updated together."
 }

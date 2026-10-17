@@ -56,3 +56,5 @@ a_bar ≈ (K_F/m_eff)·I_bar − mean(F_res)/m_eff
 R2期刊卷期为 *Optimal Control Applications and Methods*, 36(5), 628–647（2015）；在线首发为2014，作者公开稿上传于2017。上述页码按已核对的公开稿PDF计数。来源核查日期：2026-10-17。全部本车数值证据来自[重算指标](assets/2026-10-17-current-affine-selection/metrics.json)与[独立复算](assets/2026-10-17-current-affine-selection/numerical-verification.json)，与文献结构性解释分开。
 
 本仓库保留[选型参数及来源](assets/2026-10-17-current-affine-selection/selected-model.json)、[引用定位记录](assets/2026-10-17-current-affine-selection/citation-evidence.json)和[BibTeX](assets/2026-10-17-current-affine-selection/references.bib)。原始包、完整重放与外部重算报告保留在相邻`aimsracer-data`目录；外部报告链接在仅克隆代码仓库时可能不存在。
+
+[返回电流标定入口](../operations/calibration.zh-CN.md) · [横向加速度标定与校对](../operations/lateral-acceleration-calibration.zh-CN.md)。本报告的日期、数值与证据边界保持原口径。

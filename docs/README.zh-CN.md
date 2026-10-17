@@ -4,7 +4,7 @@
 
 [English](README.md) · **简体中文** · [项目首页](../README.zh-CN.md)
 
-当前 **FAST-LIO2 + 后轴 EKF + NDT + 原生 MPCC** 栈的资料导航。本索引列出的当前指南均提供完整英文与简体中文版，默认英文，每页有语言切换。历史实验报告和已退役设计资料保留原语言。
+当前 **FAST-LIO2 + 后轴 EKF + NDT + 原生 MPCC** 栈的资料导航。核心安装、车辆操作和标定总入口提供英文与简体中文版；现场操作、日期化报告和已退役设计资料按标注保留原语言。
 
 ## 近期实验与现场校对
 
@@ -16,6 +16,7 @@
 2. **首次已知地图运行：** [坐标系与话题](architecture.zh-CN.md) → [地图参考准备](../src/controller/docs/usage.zh-CN.md) → [初始化与启用](operations/known-map-mpcc.zh-CN.md)。
 3. **控制器开发：** [实现](../src/controller/docs/implementation.zh-CN.md) → [原生运行时](../src/aims_mpcc_rt/README.zh-CN.md) → [回归与重放](../verification/README.zh-CN.md)。
 4. **分析一次运行：** [录制](operations/recording.zh-CN.md) → [外场复盘](reports/2026-10-10-mpcc-field-review.md) → [日期化报告](reports/README.zh-CN.md)。
+5. **电流与横向标定：** [统一标定入口](operations/calibration.zh-CN.md) → [电流采集](operations/full-step-current.zh-CN.md)或[AY 校对](operations/lateral-acceleration-calibration.zh-CN.md) → [附件与结果](reports/assets/README.zh-CN.md)。
 
 ## 安装与硬件
 
@@ -34,6 +35,8 @@
 | [启动指南](operations/bringup.zh-CN.md) | 选择 vehicle、mapping、race 或单独控制器入口 | English / 简体中文 |
 | [已知地图 MPCC](operations/known-map-mpcc.zh-CN.md) | 地图/bundle 身份、后轴初值、启用、停止与连续圈 | English / 简体中文 |
 | [录制指南](operations/recording.zh-CN.md) | launch 录包、runtime 日志、QoS、会话目录与计时口径 | English / 简体中文 |
+| [电流标定 A/B/C](operations/calibration.zh-CN.md#current-calibration) | 独立标定环境、恒流端点协议、当前区间模型和证据 | English / 简体中文 |
+| [横向加速度标定／AY 校对](operations/lateral-acceleration-calibration.zh-CN.md) | 传感器／外参、动捕精度校对与历史横向附着状态 | English / 简体中文 |
 | [纵向加速度](operations/longitudinal-acceleration.zh-CN.md) | 可选轮速＋IMU 输出、独立启动、诊断与场地录制 | English / 简体中文 |
 | [车辆检查](operations/vehicle-checklist.zh-CN.md) | 设备、定位、权限与运行检查 | English / 简体中文 |
 | [参考与 bundle 流程](../src/controller/docs/usage.zh-CN.md) | map 参考、速度规划、导出与目标 CPU 编译 | English / 简体中文 |

@@ -1,13 +1,13 @@
 {
-  "scope": "documentation published in 176da1e plus this self-contained indexing update",
-  "markdown_files_checked": 90,
-  "repository_links_checked": 970,
+  "scope": "published experiment documentation, evidence indexes and calibration navigation since 176da1e",
+  "markdown_files_checked": 120,
+  "repository_links_checked": 1492,
   "external_local_links": 0,
   "missing_published_targets": 0,
   "evidence_files_including_indexes": 256,
   "evidence_files_reachable_from_index": 256,
   "unindexed_evidence_files": [],
-  "web_citations": 48,
+  "web_citations": 62,
   "checks": [
     "links resolve inside the repository",
     "targets are actually published Git files or tracked directories",

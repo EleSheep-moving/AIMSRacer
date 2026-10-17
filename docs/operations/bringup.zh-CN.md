@@ -73,3 +73,7 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 ```
 
 现场紧急停止依靠 RC/物理急停；停稳并撤销权限后再 Ctrl-C。保存录包、runtime 和地图/bundle 身份，详见[录制](recording.zh-CN.md)。同一次运行只允许一个 `/drive` 发布者。
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

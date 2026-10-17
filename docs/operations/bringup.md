@@ -73,3 +73,7 @@ ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
 ```
 
 Field emergency stopping relies on RC/the physical emergency stop; use Ctrl-C after the vehicle is stationary and permission has been revoked. Preserve the bag, runtime, and map/bundle identity; see [recording](recording.md). Only one `/drive` publisher is permitted in a run.
+
+## Current and lateral-acceleration calibration
+
+[Current calibration A/B/C and selected results](calibration.md#current-calibration) · [Lateral AY validation and grip status](lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.

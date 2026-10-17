@@ -101,3 +101,7 @@ t ≥ D:   y(t) = y0 + (u − y0) [1 − exp(−(t − D)/τ)]
 5. 修改 `steering_tau` 等模型参数后，**重新导出并编译求解器 bundle**，再用它启动。修改源码 YAML 不会改变正在运行的固定 bundle。运行时记录 bundle/配置；流程见[参考与 bundle 指南](../src/controller/docs/usage.zh-CN.md)。
 
 [返回文档索引](README.zh-CN.md)
+
+## 电流与横向加速度标定导航
+
+[电流标定 A/B/C 与当前结果](operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](operations/lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。

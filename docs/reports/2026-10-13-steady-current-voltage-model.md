@@ -123,3 +123,5 @@ python3 docs/reports/assets/2026-10-13-steady-current/plots_iq.py
 ```
 
 The first command reconstructs external raw evidence; the latter commands use checked-in trial means. Polynomial feedforward and B/C physical acceptance remain untested.
+
+[Current calibration entry](../operations/calibration.md) · [Lateral-acceleration calibration and validation](../operations/lateral-acceleration-calibration.md). Original dates, measurements and evidence boundaries are retained.
