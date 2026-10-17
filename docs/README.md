@@ -1,5 +1,7 @@
 # Documentation
 
+[实验附件总索引 / Evidence index](reports/assets/README.zh-CN.md)
+
 **English** · [简体中文](README.zh-CN.md) · [Project overview](../README.md)
 
 Guides for the current **FAST-LIO2 + rear-axle EKF + NDT + native MPCC** stack. Current guides listed here have full English and Simplified Chinese versions, with English as the default and a language switch on each page. Historical reports and retired design notes retain their original language.

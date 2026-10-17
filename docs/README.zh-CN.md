@@ -1,5 +1,7 @@
 # 文档索引
 
+[实验附件总索引 / Evidence index](reports/assets/README.zh-CN.md)
+
 [English](README.md) · **简体中文** · [项目首页](../README.zh-CN.md)
 
 当前 **FAST-LIO2 + 后轴 EKF + NDT + 原生 MPCC** 栈的资料导航。本索引列出的当前指南均提供完整英文与简体中文版，默认英文，每页有语言切换。历史实验报告和已退役设计资料保留原语言。

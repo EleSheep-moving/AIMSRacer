@@ -5,18 +5,30 @@
   "self_excluded": true,
   "files": [
     {
+      "published_path": "docs/.gitattributes",
+      "published_sha256": "e1ca4a53c30c742af0cd31d37c761d3e6211ccad35e6cd3220caa60e551d0bdd",
+      "bytes": 240,
+      "source": "authored during documentation curation to preserve raw exported artifact bytes"
+    },
+    {
       "published_path": "docs/README.md",
-      "published_sha256": "cba436ed323ec9a176bc1e407f893ae3095180a413a14db919a67262ba3ef7e5",
-      "bytes": 7183,
+      "published_sha256": "039729e853992ae39df15e79b6d7a589076a022f38180b5008a969bc98dcfa1c",
+      "bytes": 7257,
       "source": "/home/elesheep/AIMSRacer/docs/README.md",
       "source_sha256": "55b2c85542006368bc9debb90f18bf1d565152d936a2d4d42c6ae4e40ba3f1cb"
     },
     {
       "published_path": "docs/README.zh-CN.md",
-      "published_sha256": "d3f1383c1b17cfc094442990edc9aef9004dcd3de64766863c5006059d63b726",
-      "bytes": 6672,
+      "published_sha256": "585a674f1f9bb4949885d718bb7d7a23f67a4a808007bcb238163f3c430fd408",
+      "bytes": 6746,
       "source": "/home/elesheep/AIMSRacer/docs/README.zh-CN.md",
       "source_sha256": "9400ba2d7a23d97f1ce4524d6554f4c9527045b89fe74a2f3bd2c3ecbd95345f"
+    },
+    {
+      "published_path": "docs/assets/vx-observer-20261015/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "7f2d3412f43f75deb5813f5e0bd629eeca4581383af670776c7b7e7cb9e2bee1",
+      "bytes": 384
     },
     {
       "published_path": "docs/assets/vx-observer-20261015/mpcc-baselines.png",
@@ -173,8 +185,8 @@
     },
     {
       "published_path": "docs/reports/2026-10-14-longitudinal-filter-tuning.zh-CN.md",
-      "published_sha256": "9206c5b88321b50ec3ae61c3472a4157f8f29f4f149a9ffbbae5b78af4a866d2",
-      "bytes": 9502,
+      "published_sha256": "f5c3735ada1e2b078612e1dd189a3989a1dce96af071360f8c03928428b4b408",
+      "bytes": 9420,
       "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-14-longitudinal-filter-tuning.zh-CN.md",
       "source_sha256": "b0e6bb201e0f8da3ff6219f45d86b951bd0156a1b62b28bcaa35dd6fa5404881"
     },
@@ -361,17 +373,41 @@
     },
     {
       "published_path": "docs/reports/README.md",
-      "published_sha256": "85339071a17e505d4c89679686715a2df9d7bb3fdfcc26efdea2367b633b4b3b",
-      "bytes": 7827,
+      "published_sha256": "de33148f58803315800ad40fabe8ce5dcfd988e3a3d9c001eb3e24526dd3ab71",
+      "bytes": 7896,
       "source": "/home/elesheep/AIMSRacer/docs/reports/README.md",
       "source_sha256": "af5b79f08f9b9f56cffa14e818f0ce2c4a619de8bc4b382ebfe1bea66b7a5448"
     },
     {
       "published_path": "docs/reports/README.zh-CN.md",
-      "published_sha256": "7b5cd9bcf0cad72eb59e7a164a1ab686f4af6b6cb163d2423cc526420da61592",
-      "bytes": 7991,
+      "published_sha256": "2f600c4cf850776343b2f0930f8d69941ba4e6f17c8a53e00b2a13954774c5d6",
+      "bytes": 8060,
       "source": "/home/elesheep/AIMSRacer/docs/reports/README.zh-CN.md",
       "source_sha256": "45123461396dfa778cd54bb92d895ae96ab9471c24c2086d4948e50996963f61"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-06/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "0a71eef6e9fcbddc2891f53086efe9252be2f905ecc69d51eaa71e41798f8abd",
+      "bytes": 431
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-10-field-review/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "354e267b67e8f25a55bd39bb121859f7a23b7934fb5fce4a3fc27a746309ba34",
+      "bytes": 623
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-12-longitudinal-acc-observer/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "c5438b03cea5b907591845ed7b9a54dc26cd494f9cd82db7d75464ae448a678d",
+      "bytes": 460
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "49bc21d9258d7adcac7b343a3ce748fe0d0113ffd9830b6371a6fd0ba8bb7af1",
+      "bytes": 1616
     },
     {
       "published_path": "docs/reports/assets/2026-10-13-steady-current/accepted_trials.csv",
@@ -514,6 +550,12 @@
       "source_sha256": "485d870503c6a61bac73cd965eb206e7fcf832d8cbdd6e63b51889a15c4a94cb"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-14-ekf-components/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "da05c854d73aa84f9b15af19fc5d8a033d0ff662b78c0835dd978fed6386742a",
+      "bytes": 302
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-14-ekf-components/pose.png",
       "published_sha256": "4adc7d350df4dd548167b91ec9f26259a0790fc8446734a722d40cf473d8f66d",
       "bytes": 286545,
@@ -526,6 +568,12 @@
       "bytes": 298546,
       "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-ekf-components/response.png",
       "source_sha256": "2dfc2a14e79a4127040d5efb6e0072f3f67fab2822a5eb7c4d5838e33805c244"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "abf546b48f6d06b3c6ac5118d904626712628f25035dd19cdc3e11b3377792b7",
+      "bytes": 760
     },
     {
       "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/artifact-manifest.json",
@@ -598,6 +646,12 @@
       "source_sha256": "a8c28a4eb114ded54647b363e54917e796f198fcbd5e65a415e1aa06d7a84f3d"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "cd09ff3759751d6d517a851a9fbab793441bb440028646cde0fef087f829a1d3",
+      "bytes": 1606
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/baseline_recording_comparison.csv",
       "published_sha256": "c3e97650fc93baffc366bced7e92a5aae442078e01dbfd0f2f675d02dc859256",
       "bytes": 494,
@@ -617,6 +671,20 @@
       "bytes": 9259,
       "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/current-kernel-validation.json",
       "source_sha256": "b22df663d7c38d68c820d2832c7eba8dcb42ac89c93e3d0e20f98e47ff76b74c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/experiment-plan.md",
+      "source": "/home/elesheep/aimsracer-data/sessions/2026-10-13/longitudinal-acceleration-review/filter-tuning/PLAN.md",
+      "source_sha256": "a00ef6f90e90e4e79a21c6aac1a25541d6eb46f3c1f241a2447e0a5407147257",
+      "published_sha256": "a00ef6f90e90e4e79a21c6aac1a25541d6eb46f3c1f241a2447e0a5407147257",
+      "bytes": 3597
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/experiment-readme.md",
+      "source": "/home/elesheep/aimsracer-data/sessions/2026-10-13/longitudinal-acceleration-review/filter-tuning/README.md",
+      "source_sha256": "c9ff8f893a2d99c5348f0250ae0d6bc11c5f25e1ff3272f4a999822bcb7fc43d",
+      "published_sha256": "1bf525f18f1df939c3c192c22b727b5d65bf64ddb81ccd28da9d1cb00e348a9b",
+      "bytes": 1404
     },
     {
       "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/held_out_transients.png",
@@ -745,6 +813,12 @@
       "source_sha256": "3f30c48705ef93041af17228d2757b5ed5e65541969e6d9f25b732515786b7bb"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "15067b6a394224023fed9901fac29bdf416e48dee5a800efcbe35760ccb292ab",
+      "bytes": 786
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-15-body-acceleration/causal-native-stages.png",
       "published_sha256": "594e90f0711a949eae7391bb459d8d2c7e0302d8d3f9e44096f0a1aa60df592f",
       "bytes": 411274,
@@ -815,6 +889,12 @@
       "source_sha256": "41470e5549de228f27c8938cb24176c0aa8b566e446be50e823c7924b87f2f8e"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-15-current-response/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "ef3fcaa74edd42329b07d616fb220c9cca286c8edef964b11cdaf08e08746951",
+      "bytes": 705
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-15-current-response/collection-coverage.csv",
       "published_sha256": "d3efbe1a41092fd119b3d72d94ed7829fdee9f6e2698bbe3ddf4243f9bc634c5",
       "bytes": 287,
@@ -871,6 +951,12 @@
       "source_sha256": "645aaadb04d0464cdc8e83653300661f0820e8827036efeb6a735378536f4672"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-15-estimator-replay/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "0198ff09beef9f2bab12c4f9a15495d8065f02d63eb524536fa56b73be3eb4b0",
+      "bytes": 563
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-15-estimator-replay/ekf-run-metrics.csv",
       "published_sha256": "288fed0803832c320f9d1d75bb32411e4bec8f2607486ed7b9432e1b23d11e9c",
       "bytes": 721,
@@ -913,6 +999,12 @@
       "source_sha256": "f7b707ceea94ea346007da517f39083e5c71dc5511fbc96ba24ff0e571d01649"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-15-mpcc-multilap/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "bcdab959b1583af6038e3b58b537cd441a1d04b03d4c3b20cead8fe8008266e1",
+      "bytes": 411
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-15-mpcc-multilap/artifact-manifest.json",
       "published_sha256": "73b0d524eb0b4da49290644f62d8b42a095869e5db526f4d05efdd69f207e24f",
       "bytes": 3665,
@@ -939,6 +1031,12 @@
       "bytes": 15689,
       "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-mpcc-multilap/summary.json",
       "source_sha256": "670e54258ca03e29c204671e664223e7621de8c845f90bd2dcdd955a4256d6bf"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-native-state-nodes/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "c8930886ee68211a840a676899fc3a44fbf404b4aacf822d36be8f507e8bd066",
+      "bytes": 446
     },
     {
       "published_path": "docs/reports/assets/2026-10-15-native-state-nodes/artifact-manifest.json",
@@ -974,6 +1072,12 @@
       "bytes": 3116,
       "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/B-extreme-event.json",
       "source_sha256": "210250ac400599d47f4b6805eb13cdc71670731af85c7ee433d5f2a071f88f2f"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "015060b694fcef1c3342bc0a5f9b5a2e3a77dc7ca4a3cc1485c1603de16ae6dc",
+      "bytes": 1122
     },
     {
       "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/ax-rate-ay-comparison.png",
@@ -1081,6 +1185,12 @@
       "source_sha256": "a026a547036f268f7d9b51bf91afcf4446decb0c0d161499bb2f8dc3680939df"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-15-yaw-rate/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "9f7581b3e0241bde4d9ad31c7a0f7daab183f3adedf402dabffa8ef2dfb34177",
+      "bytes": 545
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-15-yaw-rate/desktop-ctest.txt",
       "published_sha256": "c9a6f9d3b5f07270f5fd46c8f74b2be760827b17ec5037b4c091da03efd0bd53",
       "bytes": 2892,
@@ -1121,6 +1231,12 @@
       "bytes": 632267,
       "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-yaw-rate/yaw-rate-comparison.png",
       "source_sha256": "838c7d58dbf40136e2de91b1a6baae57b93cf4518f2bd95ec29dc2c8b818dd5c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "7189402ac1ccf7ac69894eef96a774cd76af5c9afd1077e1551a427542775a53",
+      "bytes": 1330
     },
     {
       "published_path": "docs/reports/assets/2026-10-16-native-calibration/calibration-frozen-clock-causality.log",
@@ -1228,6 +1344,12 @@
       "source_sha256": "f3e6b29a4a78cf4ce76e8b054b6f7066ae12daad0ab60db96830dd1e0ae402b2"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "3e5027b6848326a0cf5f64e9ee6d02194daff583b5077ce76ab7e440d6db6e96",
+      "bytes": 698
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/citation-evidence.json",
       "published_sha256": "d0afeb003eb94ba546af0afc0c4d2dd417986232b6bd056f7b71f2fb71e1701e",
       "bytes": 1665,
@@ -1291,6 +1413,12 @@
       "source_sha256": "7d88c9bedb37cf7dc6640d4d79b0f2b651e7845ad2d4543e5e50de46558f0016"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-17-dual-reference-state/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "acf8f110f27b31fefa29ad7cc4876b2bfdcadf12f8b8258818dbea049c6402a4",
+      "bytes": 591
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-17-dual-reference-state/ctest-x86.txt",
       "published_sha256": "c1d27958a09cfe4c8e89fc38b336a7acdd5169a5c9c05de7c99c5419d2775eb3",
       "bytes": 3529,
@@ -1331,6 +1459,12 @@
       "bytes": 7257,
       "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-dual-reference-state/validation-summary.json",
       "source_sha256": "9599588872889d7938ccd29a04a925c1084936cf4dfe591fc0d951578896d8bd"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-fastlio-accel-scale/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "67ecfc01d02a223e174029abfbfe017e312a523fb9efcd5b360adec4fd057994",
+      "bytes": 567
     },
     {
       "published_path": "docs/reports/assets/2026-10-17-fastlio-accel-scale/comparison.png",
@@ -1375,6 +1509,12 @@
       "source_sha256": "218bf6e0b165092177418e88f85b246813126417c5bcec1de008d0fb4db41898"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-17-localization-cpu/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "02bf6d02a8cb56e999040f10ad342e23304b7526250cb79df8d784c15632e0ed",
+      "bytes": 414
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-17-localization-cpu/installed-provenance.json",
       "published_sha256": "3dc6a71d6b22b9aa7067c567dff87412cc560f3c2412de6b9398e94e603e9f2f",
       "bytes": 783,
@@ -1394,6 +1534,12 @@
       "bytes": 2563,
       "source": "nx:/home/aims/aimsracer-data/sessions/2026-10-17/localization-cpu-review/summary.json",
       "source_sha256": "02de540c36bcb2b3e9b22af09edcd65087ba7915736fa74ea7f04a9a98497b53"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-ndt-5hz/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "93fcbc1d1032fb8155dbfc7e9514cb97eda6ccbf3f1faa4a84ee09052f3d610d",
+      "bytes": 461
     },
     {
       "published_path": "docs/reports/assets/2026-10-17-ndt-5hz/installed-binaries.json",
@@ -1424,6 +1570,12 @@
       "source_sha256": "7b8286ac87e22cc5b6f400cc54bc0cb1c7ce63bc7e4c0dc8b0d9103576262e6e"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-17-state-observer-latency-policy/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "01d18a8adf920fb4b7897e797558578c1cb9e5fb1442219e215a57716becec83",
+      "bytes": 468
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-17-state-observer-latency-policy/ctest-x86.txt",
       "published_sha256": "ac2c99cdc8ad34b307b24891458da26b7514a16388f9e58c8c952fe2d0b1e2cf",
       "bytes": 3529,
@@ -1450,6 +1602,12 @@
       "bytes": 2453,
       "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-observer-latency-policy/waveform-comparison.json",
       "source_sha256": "6552241f8165a36f99cbc66c70e315e17c9ce801fd9c5dc8ced9683d85f10cfd"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-output-quality/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "8c8f09ce2949fbf694b3a9f033ea329d14d06da7cdd3bac3347f1bce4ee0a902",
+      "bytes": 517
     },
     {
       "published_path": "docs/reports/assets/2026-10-17-state-output-quality/five-output-overview.png",
@@ -1494,6 +1652,12 @@
       "source_sha256": "e3b750395d03d782854873e361e3f53586b1282bf722c6800bad590a69f347af"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-17-vicon-comparison-preparation/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "73cc5d0e86941e7d8a873a14c5066d50b79627c2ee1ed859f04340891539d292",
+      "bytes": 510
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-17-vicon-comparison-preparation/demo-metrics.json",
       "published_sha256": "2fbce213bbf7ea3edfcd8d9559cea111143f74c4d227608006d2c73e52906813",
       "bytes": 37465,
@@ -1527,6 +1691,24 @@
       "bytes": 4385,
       "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-vicon-comparison-preparation/validation-summary.json",
       "source_sha256": "e129821811a2eb5c7cb80f3b02817eb239800970679c0424b252976b8a1a6fb2"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-documentation/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "a40116c2b9987b76092a8456dfdf667b397db7b26fcc707860f8b64c6803fa2e",
+      "bytes": 353
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-documentation/self-contained-audit.json",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "624216bcce57280c5825c5ef8bf590b529674f9507717df334d738914a5be316",
+      "bytes": 715
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "799c7631b0a0853b4d16fef7cf9da6da5b54902ab380918edfc4689e98e771c9",
+      "bytes": 2101
     },
     {
       "published_path": "docs/reports/assets/2026-10-18-mocap-validation/config.template.json",
@@ -1739,6 +1921,12 @@
       "source_sha256": "862da7cd07eb819b4fb21186783899f9e7560e7efb1379fc23d00d9bfdbf1581"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-18-state-observer-nx/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "66684246116ce233d84e88d08c71852bdb7a1785fe0d1d5ce2b6ce569a25ac13",
+      "bytes": 585
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-18-state-observer-nx/completion.json",
       "published_sha256": "477fda2230a0e2de08196a90a8ad4d44e7e644fae822bd41c4de05e20f4fd572",
       "bytes": 968,
@@ -1781,6 +1969,12 @@
       "source_sha256": "b4c9ecc5bcbd2d3164d55328c4e9de567e589e29fbbed2c4fda312c0ce477aa1"
     },
     {
+      "published_path": "docs/reports/assets/2026-10-18-vy-quality/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "8cc25bc2f02b930b4cf0438075dbc278ef72b66c8f240a601ce8a01d42015be6",
+      "bytes": 413
+    },
+    {
       "published_path": "docs/reports/assets/2026-10-18-vy-quality/metrics.json",
       "published_sha256": "d0aa790b14c3a92f4258c97f392a65b7f36926dd8acfdf022a82f49c23d208be",
       "bytes": 3618,
@@ -1809,16 +2003,22 @@
       "source_sha256": "a3d6b0521f673b48759914e88da29f9b1026a9a884df214568c2faaec96052ad"
     },
     {
+      "published_path": "docs/reports/assets/README.zh-CN.md",
+      "source": "generated in-repository evidence index or audit",
+      "published_sha256": "a7219c7c94a819daa6b45e5ef819acf97cc83c0ba341e87219d2ced343c7812b",
+      "bytes": 3558
+    },
+    {
       "published_path": "docs/reports/latest-results.md",
-      "published_sha256": "64248b529e353f146099f14c17e42a97a773ada95e0303b8835fd0d5cd50108c",
-      "bytes": 2423,
+      "published_sha256": "7c334775e6e4aa2e7b2a82945493cf723140e145b67670c5fbed9d271fcae3d7",
+      "bytes": 2570,
       "source": "/home/elesheep/AIMSRacer/docs/reports/latest-results.md",
       "source_sha256": "b19e133352c860271bf2e4f5cfd9025e0534ae770ad77ba86f4ca176c1cf7eaf"
     },
     {
       "published_path": "docs/reports/latest-results.zh-CN.md",
-      "published_sha256": "ef4640fdd9437a04660272aff868504844bd33ec889eaf8928a00f7530919f92",
-      "bytes": 6959,
+      "published_sha256": "28ba94e2a2928e36c66bc7b444ea5d69ec025b6281ccfb1a8d05181428f904d3",
+      "bytes": 7107,
       "source": "/home/elesheep/AIMSRacer/docs/reports/latest-results.zh-CN.md",
       "source_sha256": "01db86567301a72ff5b83dfd0698bdec9c6969e8c5bfb297eb629b6a9e2703b4"
     },
@@ -1835,12 +2035,7 @@
       "bytes": 32350,
       "source": "/home/elesheep/AIMSRacer/docs/system-latency.zh-CN.md",
       "source_sha256": "f3ab7a9376ba4338620d66e737d45ac12ce2e304115b94598a2607f6e87d8dc0"
-    },
-    {
-      "published_path": "docs/.gitattributes",
-      "published_sha256": "e1ca4a53c30c742af0cd31d37c761d3e6211ccad35e6cd3220caa60e551d0bdd",
-      "bytes": 240,
-      "source": "authored during documentation curation to preserve raw exported artifact bytes"
     }
-  ]
+  ],
+  "indexing_update": "All attachments are indexed inside the repository; two host-absolute Markdown links were replaced by published supporting documents."
 }

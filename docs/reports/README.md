@@ -1,6 +1,8 @@
 <a id="实验报告"></a>
 # Experiment reports
 
+[仓库内附件总索引 / Evidence index](assets/README.zh-CN.md)
+
 **English** · [简体中文](README.zh-CN.md)
 
 These are dated evidence, not current operating instructions. Keep their sample

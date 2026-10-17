@@ -1,5 +1,7 @@
 # Selected experiment results — through 2026-10-18
 
+[Evidence index](assets/README.zh-CN.md)：所有已上传附件均可在仓库内浏览；来源记录中的原始路径不作为附件链接。
+
 [简体中文：完整精选与结论](latest-results.zh-CN.md) · [Report archive](README.md)
 
 This publication collects reports, figures and small evidence files from the host and NX. It changes documentation only. New estimator, motion-capture, calibration and localization implementations still present in the local workspaces are not included in this documentation commit. Deployment claims refer to the dated NX installation snapshots; a fresh clone does not necessarily include those implementations.

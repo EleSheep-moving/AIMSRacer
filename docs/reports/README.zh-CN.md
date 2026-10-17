@@ -1,6 +1,8 @@
 <a id="experiment-reports"></a>
 # 实验报告
 
+[仓库内附件总索引 / Evidence index](assets/README.zh-CN.md)
+
 [English](README.md) · **简体中文**
 
 这些是注明日期的证据，不是当前操作说明。应随结果保留其采样条件、源码假设与局限。当前行为见[架构](../architecture.zh-CN.md)，尚待实车完成的工作见[检查清单](../operations/vehicle-checklist.zh-CN.md)。

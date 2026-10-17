@@ -1,0 +1,18 @@
+{
+  "scope": "documentation published in 176da1e plus this self-contained indexing update",
+  "markdown_files_checked": 90,
+  "repository_links_checked": 970,
+  "external_local_links": 0,
+  "missing_published_targets": 0,
+  "evidence_files_including_indexes": 256,
+  "evidence_files_reachable_from_index": 256,
+  "unindexed_evidence_files": [],
+  "web_citations": 48,
+  "checks": [
+    "links resolve inside the repository",
+    "targets are actually published Git files or tracked directories",
+    "all evidence files are reachable from the in-repository evidence index",
+    "original paths in provenance are text only, not reading dependencies"
+  ],
+  "raw_bags_and_full_replay_environments_published": false
+}

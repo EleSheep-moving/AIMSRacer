@@ -52,7 +52,7 @@
 
 ## 选择、时间与验证边界
 
-- KF 参数只在 21:53 选取，冻结后用 22:29 与六个下午包验证；IMU 组合主搜索同样只在 21:53 选取。目标与约束见 [PLAN.md](/home/elesheep/aimsracer-data/sessions/2026-10-13/longitudinal-acceleration-review/filter-tuning/PLAN.md)。
+- KF 参数只在 21:53 选取，冻结后用 22:29 与六个下午包验证；IMU 组合主搜索同样只在 21:53 选取。目标与约束见 [PLAN.md](assets/2026-10-14-longitudinal-filter-tuning/experiment-plan.md)。
 - 训练目标：0.5×直线移动 200 ms RMSE²＋0.5×高速直线 200 ms RMSE²＋高速直线 100 ms RMSE²；保持段整体/高速合并标准差不超过旧参数 1.25 倍，最大段内均值绝对值不超过 max(0.1,旧参数最大值+0.025) m/s²。这是比较用工程约束，不是物理验收阈值。
 - 按 bag 接收顺序处理输入，源时间更新，晚到输入重放；只在 IMU 到达后发布。全部之前的输入用于初始化，并保留活动结束后 3 s。输入轮速/Iq 不用未来插值；本次未用 Iq。
 - 原参数回放与原录制输出并不完全相同：bag 接收顺序/时刻不同于节点回调，活动段加速度差值 RMSE 约 0.027–0.109 m/s²。表中各方法与原参数在同一重建时序比较，不把回放当作原实车输出的逐条复现。
@@ -73,4 +73,4 @@ ros2 launch aims_racer_system longitudinal_acceleration.launch.py \
 
 候选只需现有节点读取参数文件，无新算法部署。IMU 替代方案目前仅存在离线脚本中。
 
-本机完整目录：[filter-tuning](/home/elesheep/aimsracer-data/sessions/2026-10-13/longitudinal-acceleration-review/filter-tuning/README.md)。用该目录父级 `.venv/bin/python` 依次运行 `tune.py`、`imu_check.py`、`compare_inertial.py`、`slow_only.py`、`verify_inertial.py`、`validate.py`、`build_report.py`。建议新输出目录，保留本次冻结设置与证据。`tune.py`/`compare_inertial.py` 会重新搜索，若需仅复现本次候选，应直接从 JSON 配置调用其 replay 函数。
+本机完整目录：[filter-tuning](assets/2026-10-14-longitudinal-filter-tuning/experiment-readme.md)。用该目录父级 `.venv/bin/python` 依次运行 `tune.py`、`imu_check.py`、`compare_inertial.py`、`slow_only.py`、`verify_inertial.py`、`validate.py`、`build_report.py`。建议新输出目录，保留本次冻结设置与证据。`tune.py`/`compare_inertial.py` 会重新搜索，若需仅复现本次候选，应直接从 JSON 配置调用其 replay 函数。
