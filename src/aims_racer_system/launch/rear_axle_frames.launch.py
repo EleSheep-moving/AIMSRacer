@@ -40,9 +40,9 @@ def build_nodes(context):
     return [
         static('rear_to_livox', 'livox_frame', translation, quaternion),
         static('rear_to_footprint', 'base_footprint', [0., 0., 0.], [0., 0., 0., 1.]),
-        Node(package='aims_racer_system', executable='livox_gyro_bias.py',
+        Node(package='aims_racer_system', executable='livox_gyro_bias',
              parameters=[bias_config], output='screen'),
-        Node(package='aims_racer_system', executable='lio_to_rear_axle.py',
+        Node(package='aims_racer_system', executable='lio_to_rear_axle',
              parameters=[{'livox_translation': translation, 'livox_quaternion': quaternion,
                           'publish_tf': mapping}],
              remappings=[('/livox/imu', '/livox/imu_bias_corrected')], output='screen'),

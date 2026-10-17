@@ -31,7 +31,8 @@ def build_vehicle(context):
         Node(package='livox_ros_driver2',executable='livox_ros_driver2_node',name='livox_lidar_publisher',
             parameters=[livox],output='screen'),
         Node(package='vesc_driver',executable='vesc_driver_node',name='vesc_driver_node',
-            parameters=[cfg['vesc_config']],output='screen'),
+            parameters=[cfg['vesc_config']]+([{'current_startup_enabled':
+                flag(context,'current_startup_enabled')}] if cfg.get('current_startup_enabled','') else []),output='screen'),
         Node(package='vesc_ackermann',executable='vesc_to_odom_node',name='vesc_to_odom_node',
             parameters=[cfg['vesc_config']],remappings=[('odom','/rear_axle/wheel_odom')]),
         Node(package='fastlio2',namespace='fastlio2',executable='lio_node',name='lio_node',
@@ -44,6 +45,19 @@ def build_vehicle(context):
         parameters=[str(share/'params/ekf_rear.yaml')],output='screen'))
     if flag(context,'longitudinal_acceleration'):
         nodes.append(include('aims_racer_system','longitudinal_acceleration.launch.py'))
+    if flag(context,'body_acceleration'):
+        nodes.append(include('aims_racer_system','body_acceleration.launch.py'))
+    if flag(context,'planar_acceleration'):
+        nodes.append(include('aims_racer_system','planar_acceleration.launch.py'))
+    if flag(context,'vx_observer'):
+        nodes.append(include('aims_racer_system','velocity.launch.py'))
+    if flag(context,'yaw_rate'):
+        nodes.append(include('aims_racer_system','yaw_rate.launch.py'))
+    if flag(context,'state_observer'):
+        nodes.append(include('aims_racer_system','state_observer.launch.py',{
+            'config':cfg.get('state_observer_config') or str(share/'params/state_observer.yaml'),
+            'geometry_config':cfg.get('state_geometry_config') or str(share/'params/rear_axle_geometry.yaml'),
+            'cg_geometry_config':cfg.get('cg_geometry_config') or str(share/'params/vehicle_geometry_measurements.yaml')}))
     return nodes
 
 
@@ -51,8 +65,17 @@ def generate_launch_description():
     params=Path(get_package_share_directory('aims_racer_system'))/'params'
     return LaunchDescription([
         DeclareLaunchArgument('mapping',default_value='false',description='Mapping TF arrangement; normally selected by mapping.launch.py'),
+        DeclareLaunchArgument('body_acceleration',default_value='false',description='Independent raw IMU/LIO longitudinal acceleration for field evaluation'),
+        DeclareLaunchArgument('planar_acceleration',default_value='false',description='Independent rear-axle longitudinal/lateral acceleration and G observation'),
+        DeclareLaunchArgument('vx_observer',default_value='false',description='Independent rear-axle Vx observation; no control consumers'),
+        DeclareLaunchArgument('yaw_rate',default_value='false',description='Independent gyro-led yaw rate and angular acceleration observation'),
+        DeclareLaunchArgument('state_observer',default_value='false',description='Independent rear-axle and center-of-mass VX/VY/AX/AY/yaw-rate observation'),
+        DeclareLaunchArgument('state_observer_config',default_value='',description='Optional independent state observer model configuration'),
+        DeclareLaunchArgument('state_geometry_config',default_value='',description='Optional independent observer rear-to-IMU mounting geometry'),
+        DeclareLaunchArgument('cg_geometry_config',default_value='',description='Optional measured/estimated physical IMU-to-CG geometry'),
         DeclareLaunchArgument('longitudinal_acceleration',default_value='false',description='Independent wheel/IMU acceleration estimate for field evaluation'),
         DeclareLaunchArgument('vesc_config',default_value=str(params/'vesc.yaml')),
+        DeclareLaunchArgument('current_startup_enabled',default_value='',description='Optional driver override; calibration explicitly selects false.'),
         DeclareLaunchArgument('lio_config',default_value=str(params/'fastlio_rear.yaml')),
         DeclareLaunchArgument('mid360_config',default_value=str(params/'MID360_config.json')),
         OpaqueFunction(function=build_vehicle),

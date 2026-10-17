@@ -1,0 +1,31 @@
+annotated-types==0.8.0
+anyio==4.15.1
+casadi==3.7.2
+certifi==2026.7.22
+click==8.5.0
+exceptiongroup==1.3.1; python_version < "3.11"
+fastapi==0.115.12
+greenlet==3.5.6
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.20
+iniconfig==2.3.1
+numpy==2.2.6
+packaging==26.3
+playwright==1.52.0
+pluggy==1.6.0
+pydantic==2.14.1
+pydantic_core==2.50.1
+pyee==13.0.1
+pypcd4==1.4.3
+pytest==8.3.5
+python-multipart==0.0.20
+python-neo-lzf==0.3.5
+PyYAML==6.0.2
+scipy==1.15.3
+starlette==0.46.2
+tomli==2.5.0; python_version < "3.11"
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+uvicorn==0.34.2

@@ -119,7 +119,7 @@ def test_acceleration_is_opt_in_and_standalone_has_no_vehicle_drivers():
  standalone=load('longitudinal_acceleration.launch.py').generate_launch_description()
  nodes=[a for a in standalone.entities if isinstance(a,Node)]
  assert len(nodes)==1 and nodes[0].node_package=='aims_racer_system'
- assert nodes[0].node_executable=='longitudinal_acceleration.py'
+ assert nodes[0].node_executable=='longitudinal_acceleration'
 
 def test_race_propagates_acceleration_flag_without_enabling_controller(tmp_path):
  m=load('race.launch.py');seen=[]

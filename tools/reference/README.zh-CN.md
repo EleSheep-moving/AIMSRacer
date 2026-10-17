@@ -26,3 +26,5 @@ bash tools/save_map.sh "$HOME/maps/my-new-map"
 ```
 
 工具要求新地图输出，核对服务成功并检查 `map.pcd` 与 `poses.txt` 实际存在。保留完整地图目录，不覆盖已经绑定参考的 PCD。参考恢复后，按 `prepare_path --map-file` 绑定 map SHA，再 export/build 新 bundle；记录原始 CSV、区间、geometry 和 map 身份。
+
+[离线参考／标定区间编辑器](editor/README.zh-CN.md)：已从实验工作区并入主目录，保留数值导出与浏览器编辑能力。

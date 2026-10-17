@@ -1,6 +1,6 @@
 # 后轴平面加速度与 G 观测
 
-> 2026-10-18 整理范围：本页记录已部署工作区的用法；这次文档提交不包含对应的新运行时代码，命令须在已部署环境执行。当前后轴／质心五量以[统一状态指南](state-observer.zh-CN.md)为准。 本页为较早的单分量分支说明，历史数值与局限保留。
+> 兼容单分量接口说明：当前推荐使用[后轴／质心统一五量节点](state-observer.zh-CN.md)。对应源码保留在 `src/aims_racer_system/`，按当前构建流程生成。
 
 
 [English](planar-acceleration.md) · **简体中文** · [质量报告](../reports/2026-10-15-planar-acceleration-quality.zh-CN.md) · [Vicon 采集](vicon-observer-validation.zh-CN.md)
@@ -75,4 +75,4 @@ vehicle/race 支持 `planar_acceleration:=true`，默认 false；按原驾驶流
 
 ## 电流与横向加速度标定导航
 
-[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。
+[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。源码统一在 `src/calibration/`，横向使用当前 C++ 入口；历史 Python 命令仅供溯源。

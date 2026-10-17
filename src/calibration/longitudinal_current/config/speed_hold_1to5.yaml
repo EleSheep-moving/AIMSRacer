@@ -1,0 +1,19 @@
+# Dedicated Stage A sweep. Pass a matching vehicle_config with max_speed: 5.0.
+longitudinal_calibration:
+  ros__parameters:
+    auto_start: false
+    stage: speed_hold
+    steering_source: pp
+    speeds: [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]
+    currents: []
+    max_speed: 5.0
+    # Legacy compatibility field; measured overshoot no longer stops acquisition.
+    speed_overshoot_tolerance: 0.2
+    stable_tolerance: 0.2
+    stable_seconds: 1.0
+    measurement_seconds: 5.0
+    hold_sampling: cumulative
+    freshness: 0.2
+    repeats: 1
+    recovery_speed: 1.0
+    rc_profile: steering_ch1_throttle_ch3_aux_ch5_to_ch10

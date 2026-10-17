@@ -1,11 +1,11 @@
 # 全速度范围独立恒电流采集
 
-> 2026-10-18 整理范围：本页记录已部署工作区的用法；这次文档提交不包含对应的新运行时代码，命令须在已部署环境执行。当前后轴／质心五量以[统一状态指南](state-observer.zh-CN.md)为准。
+> 当前纵向电流源码为 [`src/calibration/longitudinal_current`](../../src/calibration/longitudinal_current/README.zh-CN.md)，ROS 包名仍为 `aims_calibration`。NX 加载 `~/AIMSRacer/install/setup.bash`，共享现场环境保留地图、参考与冻结基准；当前五量以[统一状态指南](state-observer.zh-CN.md)为准。
 
 
 持续标定、PP 跟踪与 `inspect/start/stop` 操作工具已使用 C++17；启动时的一次性
-Python 参数/冻结计划准备和离线分析继续保留。当前 NX 原标定环境也已更新，
-入口与命令保持兼容，安装核验见[2026-10-16 迁移记录](../reports/2026-10-16-native-calibration.zh-CN.md)。
+Python 参数/冻结计划准备和离线分析继续保留。NX 与主机均从主工作区构建；
+入口与命令保持兼容，安装与归并记录见[当前整合记录](../reports/2026-10-18-calibration-unification.zh-CN.md)。
 
 `full_range_step` 按实测轮速结束恒流：B 到 5 m/s、C 到 1 m/s 时立即请求
 退出；在中途确认自然稳态也可结束。不预测提前撤流，不依赖经验响应表，不要求
@@ -150,4 +150,4 @@ A 基准、跟踪/稳态/交接配置及每次响应。`response_limits` 为 nul
 
 ## 电流与横向加速度标定导航
 
-[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。
+[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。源码统一在 `src/calibration/`，横向使用当前 C++ 入口；历史 Python 命令仅供溯源。

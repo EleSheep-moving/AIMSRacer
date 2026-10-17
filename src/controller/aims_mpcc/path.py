@@ -190,7 +190,7 @@ def prepare_recording(csv_path, output_directory, config, left_width, right_widt
                 lateral=np.dot(along*forward+sy*config.half_width*left,normal)
                 if not -right_width<lateral<left_width: raise ValueError('recorded body heading violates corridor')
     samples=np.linspace(0,path.length,int(np.ceil(path.length/.1)),endpoint=False)
-    metadata=dict(closed_lap=True,
+    metadata=dict(closed_lap=True,source='recorded',
         source_frame='base_link',vehicle_geometry={k:getattr(config,k) for k in ['wheelbase','rear_offset','half_length','front_extent','rear_extent','half_width']},sample_spacing_m=.1,max_spline_displacement_m=deviation,
         rear_offset_m=config.rear_offset,start_time=float(values[0,0]),end_time=float(values[-1,0]))
     if frame_id=='map':

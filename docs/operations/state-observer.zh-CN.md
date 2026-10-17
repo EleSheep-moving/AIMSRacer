@@ -1,6 +1,6 @@
 # 后轴与质心：独立 VX、VY、AX、AY、yaw rate 输出
 
-> 2026-10-18 整理范围：本页记录 NX 已部署的独立估计器。本次仅合入文档，不包含该估计器的新源码；以下编译和启动要求对应工作区已具备这些源文件。动捕校对工具见[统一操作说明](mocap-validation.zh-CN.md)。
+> 本页对应仓库中的 C++ `state_observer`、配置和现场脚本。动捕校对见[统一操作说明](mocap-validation.zh-CN.md)。
 
 
 新增 C++ `state_observer` 节点同时提供后轴和质心两套观测。VX/VY 来自 corrected IMU 推进、LIO 历史位姿约束的三维速度估计；AX/AY 来自重力恢复和刚体参考点补偿；yaw rate 来自 corrected gyro 运动学滤波。只订阅 `/livox/imu_bias_corrected` 与 raw `/fastlio2/lio_odom`，不读取轮速、导航 EKF、LIO twist、电流或控制指令。
@@ -100,12 +100,10 @@ state_observer:=true record:=true
 - 这道门控解决“极小回归跨度仍当作可信计算”的缺口，**没有解决角加速度与当前比力的动态相位不一致**。已有快速换向补偿误差仍需独立验证；质心高度估计也可能影响三维补偿。
 - 当前加速度计固定偏置取默认零，未完成六姿态标定；yaw 滤波不在线估计残余 gyro bias。VY 的新发布也不等于已验证的侧滑状态。
 
-既有 [五量质量报告](../reports/2026-10-17-state-output-quality.zh-CN.md)是本次实现前的审查快照；新的软件验证及真实录包回放见 [双参考点验证报告](../reports/2026-10-17-dual-reference-state-validation.zh-CN.md)。软件通过、原包输出、整车实际运行和独立 Vicon 精度分别报告。
-
 随后按用户要求修订的计算链解释、警告优先策略及与 Robot Localization 的对照，见[延迟及发布策略复核](../reports/2026-10-17-state-observer-latency-policy.zh-CN.md)。
 
-计划于 2026-10-19 做 Vicon 测试；MPCC 暂保留原输入。可配置的采集／后轴与质心五量对照程序已准备，见Vicon 工具与现场命令（记录中的工作区路径：`verification/vicon_state/README.zh-CN.md`）。在线核心及发布均为 C++，此处 Python 只负责 launch、测试与离线分析。
+计划于 2026-10-19 做 Vicon 测试；MPCC 暂保留原输入。可配置的采集／后轴与质心五量对照程序已准备，见 [Vicon 工具](../../verification/vicon_state/README.zh-CN.md)与[主源码中的现场命令](../../src/aims_racer_system/field/README.zh-CN.md)。在线核心及发布均为 C++，此处 Python 只负责 launch、测试与离线分析。
 
 ## 电流与横向加速度标定导航
 
-[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。
+[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。源码统一在 `src/calibration/`，横向使用当前 C++ 入口；历史 Python 命令仅供溯源。

@@ -47,4 +47,4 @@ Report evidence separately for source/config inspection, build, software executi
 
 ## Current and lateral-acceleration calibration
 
-[Current calibration A/B/C and selected results](../docs/operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../docs/operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.
+[Current calibration A/B/C and selected results](../docs/operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../docs/operations/lateral-acceleration-calibration.md). Source is unified under `src/calibration/`; use the restored C++ lateral entry. Historical Python commands are provenance only.

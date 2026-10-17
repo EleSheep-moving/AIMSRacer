@@ -28,3 +28,5 @@ bash tools/save_map.sh "$HOME/maps/my-new-map"
 
 
 The tool requires a new map output; verify service success and the actual existence of `map.pcd` and `poses.txt`. Retain the complete map directory and do not overwrite a PCD already bound to a reference. After reference recovery, bind the map SHA using `prepare_path --map-file`, then export/build a new bundle; record the original CSV, intervals, geometry and map identity.
+
+[Offline reference and calibration-region editor](editor/README.md) is included in the main directory, with numeric export and browser editing.

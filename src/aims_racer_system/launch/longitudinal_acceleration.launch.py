@@ -13,7 +13,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('config', default_value=str(default_config)),
-        Node(package='aims_racer_system', executable='longitudinal_acceleration.py',
+        Node(package='aims_racer_system', executable='longitudinal_acceleration',
              name='longitudinal_acceleration', output='screen',
              parameters=[LaunchConfiguration('config'),
                          {'use_sim_time': ParameterValue(LaunchConfiguration('use_sim_time'), value_type=bool)}]),

@@ -3,10 +3,11 @@
 
 **简体中文** · [English](README.md)
 
-本目录保留当前控制器与定位的开发验证工具和参考配置。它不作为 ROS 生产包安装，车辆运行使用[当前启动指南](../docs/operations/bringup.zh-CN.md)。历史实验代码可通过 Git `5ad071c` 及日期化[报告](../docs/reports/README.zh-CN.md)查阅，不向车辆恢复已移除的实验依赖。
+本目录保留当前控制器与定位的开发验证工具和参考配置。它不作为 ROS 生产包安装，车辆运行使用[当前启动指南](../docs/operations/bringup.zh-CN.md)。当前双参考点验证使用 [dual_reference](dual_reference/)；独立动捕验证使用下表入口。
 
 | 内容 | 用途 / 边界 |
 | --- | --- |
+| [vicon_state](vicon_state/README.zh-CN.md) | 可配置 Vicon 采集、后轴／质心五量参考、误差／连续性／波形偏移与窗口敏感性；独立实车验收仍待采集 |
 | [mpcc/replay_requests.cpp](mpcc/replay_requests.cpp) | 已记录请求的独立冷启动重放，要求 bundle/config/N/dt 匹配；不重建原 warm-start 历史 |
 | [mpcc/replay_runtime.cpp](mpcc/replay_runtime.cpp) | 有顺序的请求重放，比较 frozen/refresh 几何策略；需要匹配 bundle 与捕获 JSON |
 | [localization/fastlio_ndt_replay.py](localization/fastlio_ndt_replay.py) | raw Livox bag 上的 FAST-LIO2/EKF/NDT 隔离重放；不是实车控制反馈 |
@@ -45,4 +46,4 @@ python3 verification/localization/fastlio_ndt_replay.py \
 
 ## 电流与横向加速度标定导航
 
-[电流标定 A/B/C 与当前结果](../docs/operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](../docs/operations/lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。
+[电流标定 A/B/C 与当前结果](../docs/operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](../docs/operations/lateral-acceleration-calibration.zh-CN.md)。源码统一在 `src/calibration/`，横向使用当前 C++ 入口；历史 Python 命令仅供溯源。

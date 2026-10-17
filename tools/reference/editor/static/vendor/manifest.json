@@ -1,0 +1,12 @@
+{
+  "package": "three",
+  "version": "0.176.0",
+  "source": "https://registry.npmjs.org/three/-/three-0.176.0.tgz",
+  "license": "MIT",
+  "files": {
+    "LICENSE.three": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601",
+    "OrbitControls.js": "b97879c748170baadeb3fb84cea1ffdf4674e283dc06042f34e2acb95a76042c",
+    "three.core.min.js": "615ce9d0f24638a04a98e8681dfaaae3f66b29d529d7d86b287703ae8c218be4",
+    "three.module.min.js": "7118161511990dbfa895dcdb0f70bda9899d4238021aa0202fcc462ae6344554"
+  }
+}

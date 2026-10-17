@@ -214,7 +214,7 @@ def test_clock_reversal_resets_history_and_requires_new_pair(runtime):
 
 def test_dds_independent_process_outputs_without_lio_tf_or_drive(tmp_path):
     assert LongitudinalAccelerationNode is not None, 'longitudinal ROS runtime is missing'
-    script = Path(__file__).resolve().parents[1] / 'scripts/longitudinal_acceleration.py'
+    executable = os.environ['NATIVE_ACCELERATION_EXECUTABLE']
     rclpy.init()
     node = rclpy.create_node('longitudinal_dds_contract')
     seen, status = [], []
@@ -225,7 +225,7 @@ def test_dds_independent_process_outputs_without_lio_tf_or_drive(tmp_path):
     wp = node.create_publisher(Odometry, '/rear_axle/wheel_odom', qos_profile_sensor_data)
     ip = node.create_publisher(Imu, '/rear_axle/imu', qos_profile_sensor_data)
     with (tmp_path / 'runtime.log').open('w') as log:
-        process = subprocess.Popen([sys.executable, str(script)], stdout=log, stderr=subprocess.STDOUT)
+        process = subprocess.Popen([executable], stdout=log, stderr=subprocess.STDOUT)
         try:
             def spin(seconds):
                 deadline = time.monotonic() + seconds
@@ -246,7 +246,7 @@ def test_dds_independent_process_outputs_without_lio_tf_or_drive(tmp_path):
                         pass
                 assert time.monotonic() < deadline, 'DDS endpoint/node graph discovery timeout'
                 spin(.05)
-            assert {name for name, _ in info} == {'/rear_axle/wheel_odom', '/rear_axle/imu'}
+            assert {name for name, _ in info} - {'/parameter_events'} == {'/rear_axle/wheel_odom', '/rear_axle/imu'}
             assert {name for name, _ in pubs} <= {'/rosout', '/parameter_events', '/state_estimation/longitudinal_acceleration', '/state_estimation/longitudinal_acceleration/status'}
             assert not any(node.count_publishers(topic) for topic in ('/tf', '/tf_static', '/drive', '/vesc/command'))
             ns = node.get_clock().now().nanoseconds - 10_000_000

@@ -2,15 +2,17 @@
 
 [English](README.md)
 
-本目录包含**离线、因果比较**和独立的 ROS/DDS 运行期回放工具。离线输入为历史轮速、后轴 IMU 比力及可选 LIO 姿态，输出标量估计和比较证据。安装后的轮速＋IMU 节点位于 `aims_racer_system`，共用同一个观测器核心；通过 `longitudinal_acceleration:=true` 显式开启，默认 `false`。见[运行期操作指南](../../docs/operations/longitudinal-acceleration.zh-CN.md)。
+本目录包含**离线、因果比较**和独立的 ROS/DDS 运行期回放工具。离线输入为历史轮速、后轴 IMU 比力及可选 LIO 姿态，输出标量估计和比较证据。安装后的轮速＋IMU 节点位于 `aims_racer_system`，C++ 核心与保留的 Python 数值参考对照；通过 `longitudinal_acceleration:=true` 显式开启，默认 `false`。见[运行期操作指南](../../docs/operations/longitudinal-acceleration.zh-CN.md)。
+
+安装的原生进程由[包内 DDS/数值对照测试](../../src/aims_racer_system/tests)及[15 日迁移报告](../../docs/reports/2026-10-15-native-state-nodes.zh-CN.md)验证。`runtime_replay.py` 对保留的 Python 包装器插桩，历史结果不代表 C++ 进程的测量。
 
 ## 文件索引
 
 | 文件 | 职责 |
 |---|---|
-| [observer.py](observer.py) | 离线兼容导入[安装后的规范核心](../../src/aims_racer_system/aims_racer_system/longitudinal_observer.py)：整数源时间、不可修改的历史输出、延迟观测更新 |
-| [ROS 封装](../../src/aims_racer_system/aims_racer_system/longitudinal_acceleration.py) | 独立轮速＋IMU 节点、加速度/状态消息、初始化与源年龄诊断 |
-| [runtime_replay.py](runtime_replay.py) | 不启动车辆驱动，通过真实 DDS 验证 ROS 封装的交付及接收顺序 oracle 等价性 |
+| [observer.py](observer.py) | 离线兼容导入[保留的 Python 离线参考核心](../../src/aims_racer_system/aims_racer_system/longitudinal_observer.py)：整数源时间、不可修改的历史输出、延迟观测更新 |
+| [C++ ROS 节点](../../src/aims_racer_system/src/longitudinal_acceleration.cpp) | 独立轮速＋IMU 节点、加速度/状态消息、初始化与源年龄诊断 |
+| [runtime_replay.py](runtime_replay.py) | 历史 Python 包装器 DDS/接收顺序 oracle 对照；原生 DDS 测试在系统包内 |
 | [replay.py](replay.py) | 校验输入哈希、按接收顺序回放、仅使用训练录包选参数 |
 | [evaluate.py](evaluate.py) | 独立构造离线参考、指标、图表和已有结果图表重建 |
 | [test_observer.py](test_observer.py) | 数值、时钟、历史、干扰项和合成真值测试 |

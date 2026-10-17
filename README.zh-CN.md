@@ -1,228 +1,59 @@
 # AIMSRacer
 
-![AIMSRacer — Orin NX 上的已知地图定位与轨迹跟踪](docs/assets/aimsracer-banner.svg)
+![AIMSRacer](docs/assets/aimsracer-banner.svg)
 
-<p align="center">
-  <a href="README.md">English</a> · <strong>简体中文</strong><br/>
-  <a href="#quick-start">快速开始</a> · <a href="#architecture">系统架构</a> ·
-  <a href="#calibration">电流／横向标定</a> · <a href="#defaults">默认配置</a> · <a href="#results">实测结果</a> · <a href="docs/README.zh-CN.md">文档索引</a>
-</p>
+[English](README.md) · [简体中文](README.zh-CN.md)
 
-**PolyU AIMS Lab** 开发的 ROS 2 无人赛车栈。在先验 LiDAR 地图中跟踪提前保存的轨迹，结合连续局部估计、NDT 全局定位和原生 acados/C++ MPCC 控制器。
+**PolyU AIMS Lab** 的 ROS 2 无人赛车栈：FAST-LIO2、后轴 EKF、NDT 已知地图定位与原生 acados/C++ MPCC。
 
-**当前平台：** Orin NX 16 GB · Ubuntu 22.04 / ROS 2 Humble · KKPIT ZQR 1/7 底盘 · Livox MID360 · VESC · RadioMaster Pocket ELRS。
+Orin NX 16 GB · Ubuntu 22.04 · ROS 2 Humble · KKPIT ZQR 1/7 · Livox MID360 · VESC · ELRS
 
 <a id="navigation"></a>
-## 按任务查找
+## 当前任务入口
 
-| 我想…… | 从这里开始 |
-| --- | --- |
-| 安装与构建 | [部署指南](docs/deployment/README.zh-CN.md) · [Orin NX](docs/deployment/orin.zh-CN.md) · [x86 / NUC](docs/deployment/nuc.zh-CN.md) |
-| 手动驾驶、建图或跟踪保存轨迹 | [启动指南](docs/operations/bringup.zh-CN.md) · [已知地图初始化](docs/operations/known-map-mpcc.zh-CN.md) |
-| 准备地图坐标系参考和求解器 bundle | [参考与 bundle 流程](src/controller/docs/usage.zh-CN.md) · [地图/参考工具](tools/reference/README.zh-CN.md) |
-| 录制与分析一次运行 | [录制指南](docs/operations/recording.zh-CN.md) · [运行时诊断](src/aims_mpcc_rt/README.zh-CN.md) |
-| 电流标定（A/B/C） | [标定总入口](docs/operations/calibration.zh-CN.md#current-calibration) · [恒流采集](docs/operations/full-step-current.zh-CN.md) · [当前模型](docs/reports/2026-10-17-current-affine-selection.zh-CN.md) |
-| 横向加速度标定／AY 校对 | [AY 与横向附着指南](docs/operations/lateral-acceleration-calibration.zh-CN.md) · [动捕校对](docs/operations/mocap-validation.zh-CN.md) |
-| 观测纵向加速度 | [可选轮速＋IMU 观测器](docs/operations/longitudinal-acceleration.zh-CN.md) |
-| 理解或修改控制器 | [MPCC 实现](src/controller/docs/implementation.zh-CN.md) · [原生运行时](src/aims_mpcc_rt/README.zh-CN.md) |
-| 理解转向与速度响应 | [车辆响应与模型假设](docs/vehicle-response.zh-CN.md) |
-| 查看接口与定位状态 | [坐标系与话题](docs/architecture.zh-CN.md) · [定位健康](docs/localization_monitor.zh-CN.md) |
-| 查看实测或执行回归 | [外场结果](docs/reports/2026-10-10-mpcc-field-review.md) · [开发验证](verification/README.zh-CN.md) |
-| 浏览所有指南 | **[完整文档索引](docs/README.zh-CN.md)** |
-
-核心安装、车辆操作和标定总入口提供英文与简体中文版；部分现场操作及日期化报告按链接标注保留原语言。
-
-<a id="calibration"></a>
-## 电流与横向加速度标定
-
-[统一标定入口](docs/operations/calibration.zh-CN.md)串联 A 恒速保持电流、B/C 加减速采集、当前区间模型，以及 [AY 测量校对与横向附着状态](docs/operations/lateral-acceleration-calibration.zh-CN.md)。电流已有实车采集和离线选型；后轴／质心 AY 与动捕分析工具已部署，独立动态精度仍待验证。固定半径横向附着自动脚本仅保存在历史教程，不是当前 NX 可用入口。
-
-操作指南注明实际安装环境和日期；部分新增工具尚未合入 main 源码。图表、CSV、JSON 可从[仓库内附件索引](docs/reports/assets/README.zh-CN.md)直接查看。
-
-<a id="architecture"></a>
-## 系统如何协作
-
-~~~mermaid
-flowchart TB
-    L["Livox MID360"] --> F["FAST-LIO2"]
-    F --> E["Rear-axle EKF"]
-    W["Wheel speed + corrected IMU"] --> E
-    F -- "Deskewed scan" --> N["NDT + localization monitor"]
-    E -- "Odometry prediction" --> N
-    P["Prior map"] --> N
-    E -- "Local state" --> C["Native acados MPCC"]
-    N -- "Map anchor + health" --> C
-    R["Saved map reference"] --> C
-    C -- "/drive" --> S["RC selector"]
-    S -- "/vesc/command" --> V["VESC"]
-    classDef sensor fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
-    classDef estimation fill:#ecfdf5,stroke:#0f766e,color:#064e3b;
-    classDef controller fill:#0f172a,stroke:#38bdf8,color:#f8fafc;
-    classDef actuator fill:#fff7ed,stroke:#ea580c,color:#7c2d12;
-    classDef data fill:#f1f5f9,stroke:#64748b,color:#334155;
-    class L,W sensor;
-    class F,E,N estimation;
-    class C controller;
-    class S,V actuator;
-    class P,R data;
-~~~
-
-- **FAST-LIO2 + EKF：** 提供连续局部运动与后轴状态。
-- **NDT：** 用保存地图提供全局修正，同时监控可信锚点新鲜度与地图身份。
-- **MPCC：** 在 `odom` 中预测运动，通过可信对齐关联 `map` 中的保存参考。
-- **RC 选择器：** 决定实际转发给车辆的命令。`/drive` 是控制提议，`/vesc/command` 是转发命令。 详见[新控制接口](docs/vesc-command.zh-CN.md)。
-
-TF 链为 **`map → odom → base_link → livox_frame`**。已知地图运行时，NDT 拥有 `map → odom`，EKF 拥有 `odom → base_link`；`base_link` 位于**后轴中点**。[架构指南](docs/architecture.zh-CN.md)说明建图模式的归属、时间戳和全部话题。
+| 任务 | 当前文档／源码 |
+|---|---|
+| 安装与构建 | [Deployment](docs/deployment/README.zh-CN.md) · [NX](docs/deployment/orin.zh-CN.md) |
+| 驾驶、建图、MPCC | [Bringup](docs/operations/bringup.zh-CN.md) · [Known-map operation](docs/operations/known-map-mpcc.zh-CN.md) |
+| 后轴／质心 VX、VY、AX、AY、yaw rate | [计算、话题与启动](docs/operations/state-observer.zh-CN.md) · [现场脚本](src/aims_racer_system/field/README.zh-CN.md) |
+| 纵向电流 A/B/C | [操作指南](docs/operations/calibration.zh-CN.md#current-calibration) · [longitudinal_current](src/calibration/longitudinal_current/README.zh-CN.md) · [离线拟合／查询](src/calibration/longitudinal_current/docs/wheel-current-model.zh-CN.md) |
+| 自动横向附着标定 | [lateral_grip](src/calibration/lateral_grip/README.zh-CN.md) · [AY 校对](docs/operations/lateral-acceleration-calibration.zh-CN.md) |
+| 动捕校对：状态／FastLIO／执行器 | [mocap_validation](src/calibration/mocap_validation/README.zh-CN.md) · [现场配置](docs/operations/mocap-validation.zh-CN.md) |
+| 地图与参考轨迹编辑 | [Reference tools](tools/reference/README.zh-CN.md) · [Editor](tools/reference/editor/README.zh-CN.md) |
+| 录制与软件验证 | [Recording](docs/operations/recording.zh-CN.md) · [Verification](verification/README.zh-CN.md) |
+| 全部当前指南 | [Docs](docs/README.zh-CN.md) |
 
 <a id="quick-start"></a>
-## 快速开始
+## 构建与启动
 
-### 1. 准备 workspace
+先按部署指南安装系统依赖，准备固定源码与 acados。每个终端加载同一工作区：
 
-按[部署指南](docs/deployment/README.zh-CN.md)安装系统依赖并配置硬件。
-
-<details>
-<summary><strong>首次源码准备与构建</strong></summary>
-
-安装 ROS 2 Humble 和列出的系统依赖后，在 Bash 中执行。已有 checkout 可从子模块步骤开始。
-
-~~~bash
-git clone --branch main https://github.com/EleSheep-moving/AIMSRacer.git
-cd AIMSRacer
-git submodule update --init src/FASTLIO2_ROS2 src/vesc
-python3 tools/setup_dependencies.py --workspace .
-bash tools/setup_acados.sh --workspace . --jobs 2
+```bash
 source /opt/ros/humble/setup.bash
 export MAKEFLAGS="-j2 -l2"
 colcon build --packages-up-to aims_racer_system aims_mpcc_rt --executor sequential \
   --cmake-args -DCMAKE_BUILD_TYPE=Release -DROS_EDITION=ROS2 -DDISTRO_ROS=humble
-~~~
-
-源码与补丁固定在[依赖清单](dependencies/manifest.json)中。Make 并发已限制，适用于 NX 构建；acados 安装在 `dependencies/work/acados/install`。
-
-</details>
-
-### 2. 选择启动入口
-
-每个操作终端加载当前 workspace：
-
-~~~bash
-cd "$HOME/AIMSRacer"
-source /opt/ros/humble/setup.bash
+src/calibration/build.sh
 source install/setup.bash
-export LD_LIBRARY_PATH="$PWD/dependencies/work/acados/install/lib:${LD_LIBRARY_PATH:-}"
-~~~
+```
 
-| 用途 | 启动入口 | 内容 |
-| --- | --- | --- |
-| 手动驾驶 / 传感器检查 | `ros2 launch aims_racer_system vehicle.launch.py` | Livox、FAST-LIO2、后轴 EKF、RC 和 VESC |
-| 建图 | `ros2 launch aims_racer_system mapping.launch.py record:=true` | 车辆传感器、PGO 和录制 |
-| 已知地图轨迹跟踪 | 下方 `race.launch.py` 命令 | 车辆、NDT、定位 monitor 和原生 MPCC |
-| 接入已有车辆/定位图，仅启动控制器 | `aims_mpcc_rt/mpcc.launch.py` | 原生 MPCC |
+车辆启动还需实际地图、参考／bundle、设备配置；源码仓库不包含这些现场输入。具体命令见任务入口。
 
-三个整车入口每次选择一个。控制器单独启动方式见[原生运行时指南](src/aims_mpcc_rt/README.zh-CN.md)。
+<a id="calibration"></a>
+## 标定与动捕
 
-使用 NX 当前已部署数据启动已知地图运行：
+三个目录统一在 [src/calibration](src/calibration/README.zh-CN.md)：`longitudinal_current`、`lateral_grip`、`mocap_validation`。在线标定与估计持续节点为 C++；启动配置和离线分析使用 Python。横纵向共用标定指令通道，不同时运行；默认不自动启用。离线轮速电流模型不会自动替换当前 B/C 模型。
 
-~~~bash
-ros2 launch aims_racer_system race.launch.py \
-  map_file:="$HOME/maps/20260928_010503/map.pcd" \
-  artifact_directory:="$HOME/aimsracer-data/bundles/field-v35-20261010" \
-  record:=true
-~~~
+<a id="architecture"></a>
+## 接口与职责
 
-**必需数据：** 已有 PCD 地图，以及在目标 CPU 上编译的完整求解器 bundle，包含参考与配置。数据保存在源码外，clone 仓库不会得到它们。新数据按[参考/bundle 流程](src/controller/docs/usage.zh-CN.md)准备。
-
-### 3. 初始化、启用与停止
-
-按车辆实际后轴位置与朝向，通过 RViz 或[初始化工具](docs/operations/known-map-mpcc.zh-CN.md)设置 **`map/base_link`** 初值。定位就绪、RC 选择自主 speed 模式后启用：
-
-~~~bash
-ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: true}'
-~~~
-
-请求停止：
-
-~~~bash
-ros2 service call /mpcc/enable std_srvs/srv/SetBool '{data: false}'
-~~~
-
-| 可选 race 参数 | 默认 | 行为 |
-| --- | --- | --- |
-| `record` | `false` | 录制 bag、配置快照与 `runtime.csv` |
-| `longitudinal_acceleration` | `false` | 独立发布轮速＋IMU 加速度与诊断供验证，不接入控制或 EKF 融合 |
-| `auto_start` | `false` | 正常就绪条件满足后启用一次 |
-| `repeat_laps` | `false` | 单圈停车；`true` 持续运行直到停止 |
-| `initial_pose` | 空 | `map/base_link` 中的 `x y z roll pitch yaw`；角度 rad |
-
-显式停止会取消等待中的自动启动。完成或故障后不会自动重新启用。录制数据位于 `~/aimsracer-data/sessions/`，详见[录制指南](docs/operations/recording.zh-CN.md)。
+`base_link` 位于后轴中点；TF 为 `map → odom → base_link → livox_frame`。独立五量估计器只读取 corrected IMU 与 raw LIO 位姿，发布后轴和质心两套输出。Robot Localization 与 MPCC 现有输入接线保持原样，MPCC 仍读取导航 VX。详见[架构](docs/architecture.zh-CN.md)及[原生控制器](src/aims_mpcc_rt/README.zh-CN.md)。
 
 <a id="defaults"></a>
-## 当前默认配置
-
-默认参数复现 **2026-10-10 V35 外场配置**。已部署 bundle 决定参考、车辆配置和预测网格。
-
-| 项目 | 数值 |
-| --- | --- |
-| 车辆模型 | 后轴运动学自行车模型，一阶转向响应 |
-| 预测时域 | **15 × 0.1 s = 1.5 s** |
-| 求解器 | 生成 C，acados **SQP-RTI / HPIPM**，至多 **2 次 RTI** |
-| 求解请求 / 命令发布 | 至多 **20 Hz** / **50 Hz** |
-| 完整交付预算 / 接管提前量 | **50 ms** / **20 ms** |
-| EKF 发布 | 配置 **200 Hz**；`odom/base_link` |
-| 巡航目标 / 速度硬上限 | **3.5 / 4.0 m/s** |
-| 加速 / 制动上限 | **1.0 / 1.0 m/s²** |
-| 曲率速度规划参数 | **1.0 m/s²** |
-| 转向响应时间常数 | **0.08 s** |
-| 走廊 / 组合加速度椭圆 | 当前外场配置均关闭 |
-| 手动电流映射 | **CH10：3–100 A**；CH3 油门，死区 **50** |
-
-以上为配置频率和限制值。定时发布不会产生新的测量或地图配准。MPCC 当前使用**速度命令**。全部参数和权重见 [vehicle.yaml](src/controller/config/vehicle.yaml)，求解与运行时细节见[实现指南](src/controller/docs/implementation.zh-CN.md)。
-
-<a id="vehicle-response"></a>
-## 车辆响应
-
-当前转向模型使用 **`steering_tau: 0.08 s`** 集中近似命令到车身的响应，没有单独的纯延迟状态。纵向预测采用 **`dv/dt = a`**，实际车辆通过 **VESC 速度 PID** 接收速度目标。
-
-纵向响应与 PID 整定、电池/母线电压、电流限制、车速和负载有关。历史拟合延迟与时间常数只对应实测工况，不能直接视为所有运行条件下的固定值。
-
-两轮 V35 NX 实测中，请求到候选结果交付 P95 为 **4.00 / 2.66 ms**；无歧义匹配的非零命令，从 EKF 源时间戳到首条转发命令的 P95 为 **50.29 / 46.62 ms**。后者包含调度和 RC 转发，不包含执行器物理响应，详见[计时定义](docs/vehicle-response.zh-CN.md#mpcc-计算与命令交付)。
-
-20 ms 命令周期和接管提前量描述执行调度，不代表执行器延迟。舵机命令回显不是车轮角度实测值。[车辆响应指南](docs/vehicle-response.zh-CN.md)说明历史实测、模型边界，以及修改响应参数后如何重建 bundle。
+实际默认值以 [vehicle.yaml](src/controller/config/vehicle.yaml)、[系统参数](src/aims_racer_system/params/)和当前构建的 launch 为准；NX 的场地配置与已生成 bundle 需要单独核对。
 
 <a id="results"></a>
-## 实测结果与验证
-
-后期两次 V35 运行在 Orin NX 上**同时运行 FAST-LIO2 + EKF + NDT**。
-
-| 外场指标 | V35 第一次 | V35 第二次 |
-| --- | ---: | ---: |
-| EKF 实测速度峰值 | 2.887 m/s | 2.885 m/s |
-| MPCC 请求至候选交付 P95 | 4.001 ms | 2.656 ms |
-| 绝对横向误差 P95 | 8.87 cm | 8.89 cm |
-| 含起步与制动的运动窗口 | 21.65 s | 22.08 s |
-
-规划速度峰值为 **2.990 m/s**，低于 3.5 m/s 的巡航目标。候选交付包含 worker 计算和结果交付等待，不含定时接管与命令发布；它与求解器单独耗时、命令发布周期分别统计。运动窗口包含静止起步和制动，不是 flying lap 圈时。定义、记录编号和完整证据见[外场复盘](docs/reports/2026-10-10-mpcc-field-review.md)。
-
-**main 栈软件验证：** NX 构建完成18个包；原生控制器24/24、系统适配11/11、RC 2/2、FAST-LIO 输入缓冲1/1、启动检查7/7通过。部署检查使用隔离/remap接口，没有发送车辆命令。[整合与验证记录](docs/reports/2026-10-10-main-field-stack-integration.md)说明范围，包括新组合 launch 与可选自动启动的软件检查。
-
-<a id="repository"></a>
-## 仓库目录
-
-| 位置 | 职责 |
-| --- | --- |
-| [src/aims_racer_system](src/aims_racer_system/README.zh-CN.md) | 整车 launch、估计适配与定位健康 |
-| [src/aims_mpcc_rt](src/aims_mpcc_rt/README.zh-CN.md) | 原生 C++ 运行时与生成 bundle 工具 |
-| [src/controller](src/controller/README.zh-CN.md) | 离线参考、模型、速度规划与车辆配置 |
-| [src/ackermann_mux](src/ackermann_mux/README.zh-CN.md) | RC 选择与实际命令转发 |
-| [dependencies/manifest.json](dependencies/manifest.json) · `tools/` | 固定依赖与准备 |
-| [tools/reference](tools/reference/README.zh-CN.md) | 保存地图与闭环参考准备 |
-| [verification](verification/README.zh-CN.md) | 开发回归、重放与审计 |
-| [docs](docs/README.zh-CN.md) | 操作指南、架构与日期化证据 |
-
-地图、生成 bundle 和原始 bag 保存在源码外。在线控制器是 `aims_mpcc_rt`，`aims_mpcc` 提供离线工具。
-
-当前开发和车辆部署使用 **`main`**。**`Ood/…`** 分支保留已退役的开发历史，不作为当前启动配置。正在使用的 FAST-LIO 子模块继续固定在本仓库记录的、已推送的 `perf/serial-lio-worker` 提交。
+[当前相关结果与待验收项](docs/reports/latest-results.zh-CN.md)：五量动态精度和实际摩擦上限仍待独立动捕／实车验证。旧运行时和已替代教程不再作为操作索引。
 
 <a id="credits"></a>
 ## 致谢与许可证

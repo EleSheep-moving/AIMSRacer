@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>aims_calibration</name><version>0.1.0</version>
+  <description>Selector-controlled, source-time longitudinal vehicle calibration.</description>
+  <maintainer email="maintainers@aimsracer.local">AIMSRacer maintainers</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+  <depend>rclcpp</depend>
+  <depend>openssl</depend>
+  <depend>nlohmann-json-dev</depend>
+  <exec_depend>rclpy</exec_depend><depend>std_msgs</depend>
+  <depend>std_srvs</depend><depend>diagnostic_msgs</depend>
+  <depend>rcl_interfaces</depend>
+  <depend>nav_msgs</depend><depend>geometry_msgs</depend>
+  <depend>vesc_msgs</depend><depend>crsf_receiver_msg</depend>
+  <depend>aims_pp</depend><exec_depend>python3-yaml</exec_depend>
+  <exec_depend>launch</exec_depend><exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <test_depend>python3-pytest</test_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>rosgraph_msgs</test_depend>
+  <test_depend>ackermann_mux</test_depend>
+  <test_depend>vesc_driver</test_depend>
+  <test_depend>vesc_ackermann</test_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

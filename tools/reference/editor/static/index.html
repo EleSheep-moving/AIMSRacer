@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AIMSRacer reference editor</title>
+<link rel="stylesheet" href="/static/style.css"><script type="importmap">{"imports":{"three":"/static/vendor/three.module.min.js"}}</script></head>
+<body><header><strong>AIMSRacer · Offline reference editor</strong><span>Map XY · rear axle · forward closed lap</span></header>
+<main><aside>
+<section><h2>1. Original map</h2><label class="file">Load PCD<input id="map-file" type="file" accept=".pcd"></label><p id="map-info">Load the original PCD before export.</p>
+<label>Z minimum (m)<input id="z-min" type="number" step=".1" value="-100"></label><label>Z maximum (m)<input id="z-max" type="number" step=".1" value="100"></label><button id="fit">Fit view</button><button id="view-mode">3D inspect</button></section>
+<section><h2>2. Draw and edit</h2><div class="row"><button id="add" class="active">Add</button><button id="move">Move</button><button id="insert">Insert</button><button id="delete">Delete</button></div>
+<p>Click in XY to add. Move: drag a point. Insert: click a segment. Delete: click a point. Wheel zooms; middle button pans. Editing is enabled in XY view.</p>
+<div class="row"><button id="undo">Undo</button><button id="redo">Redo</button><button id="clear">Clear</button></div>
+<div class="row"><button id="start">Selected → start</button><button id="reverse">Reverse direction</button></div><p id="points-info">0 waypoints</p>
+<label>Left corridor width (m)<input id="left-width" type="number" min=".01" step=".05" value=".5"></label><label>Right corridor width (m)<input id="right-width" type="number" min=".01" step=".05" value=".5"></label>
+<button id="preview" class="primary">Validate and preview</button></section>
+<section><h2>3. Trial intervals</h2><p>Progress uses the reference knot coordinate s. Click two curve locations in Mark mode, or enter s below. Start > end wraps across the startpoint.</p>
+<button id="mark">Mark curve interval</button><label>Name<input id="region-name" value="Straight trial"></label><div class="row"><label>Start s<input id="region-start" type="number" step=".01" value="0"></label><label>End s<input id="region-end" type="number" step=".01" value="1"></label></div><button id="region-add">Add interval</button><ul id="regions"></ul></section>
+<section><h2>4. Save and export</h2><div class="row"><button id="save-project">Save project</button><label class="file">Reopen project<input id="project-file" type="file" accept=".json"></label></div>
+<label class="choice"><input id="replan-speed" type="checkbox"> Replan frozen speed using selected vehicle config</label><label class="file">Load reference ZIP<input id="reference-file" type="file" accept=".zip"></label>
+<label>New bundle name<input id="bundle-name" value="gui-reference"></label><button id="export" class="primary">Export reference bundle</button><a id="download" hidden>Download bundle ZIP</a></section>
+</aside><article><div id="viewport" aria-label="Map and reference drawing view"><div id="view-label">XY top view · +X right · +Y up · metres</div><div id="scale">Scale</div></div>
+<div id="status" role="status">Ready. Load a PCD, then draw at least six unique waypoints.</div><div id="metrics"></div><canvas id="plot" aria-label="Curvature, steering demand and planned speed"></canvas>
+<p class="limit">Validation checks finite points, a periodic seam, sampled curve intersections and steering capability. Corridor widths are chosen by you. PCD display and a valid curve provide no obstacle or footprint clearance guarantee. This app sends no vehicle commands.</p></article></main><script type="module" src="/static/app.js"></script></body></html>

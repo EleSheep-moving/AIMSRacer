@@ -3,13 +3,13 @@
 
 **简体中文** · [English](README.md)
 
-当前车辆通过[单 workspace 启动入口](../../../docs/operations/bringup.zh-CN.md)运行。Python 脚本由包显式安装，下面列出主流程使用的脚本；C++ `imu_to_rear_axle` 和 `localization_monitor` 属于本包编译的节点。
+当前车辆通过[单 workspace 启动入口](../../../docs/operations/bringup.zh-CN.md)运行。下表列出安装的辅助入口。持续运行的 gyro 修正、后轴里程计及加速度观测器已于 2026-10-15 迁移为 C++；`imu_to_rear_axle` 和 `localization_monitor` 原本就是 C++。见[迁移与验证](../../../docs/reports/2026-10-15-native-state-nodes.zh-CN.md)。保留的 Python 参考包装不再安装为运行节点。
 
 | 脚本 | 用途 |
 | --- | --- |
-| `livox_gyro_bias.py` | 输出 gyro bias 修正 IMU 与诊断，原始 IMU 保留 |
-| `lio_to_rear_axle.py` | raw LIO 转为后轴 odometry；mapping 时拥有 odom/base_link TF |
-| `longitudinal_acceleration.py` | 可选轮速＋IMU 加速度/状态发布器，规范观测器位于包 Python 模块中 |
+| `livox_gyro_bias` (C++) | 输出 gyro bias 修正 IMU 与诊断，原始 IMU 保留 |
+| `lio_to_rear_axle` (C++) | raw LIO 转为后轴 odometry；mapping 时拥有 odom/base_link TF |
+| `longitudinal_acceleration` (C++) | 可选轮速＋IMU 加速度/状态发布器，原生观测器保留 Python 数值参考 |
 | `activate_ndt.py` | 配置并激活 NDT lifecycle |
 | `relocalize_known_map.py` | 用明确 map/base_link 六维初值初始化并等待可信新 epoch |
 
@@ -29,4 +29,4 @@ ros2 run aims_racer_system relocalize_known_map.py \
 
 ## 电流与横向加速度标定导航
 
-[电流标定 A/B/C 与当前结果](../../../docs/operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](../../../docs/operations/lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。
+[电流标定 A/B/C 与当前结果](../../../docs/operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](../../../docs/operations/lateral-acceleration-calibration.zh-CN.md)。源码统一在 `src/calibration/`，横向使用当前 C++ 入口；历史 Python 命令仅供溯源。

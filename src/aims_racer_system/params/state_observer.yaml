@@ -1,0 +1,20 @@
+state_observer:
+  ros__parameters:
+    imu_topic: /livox/imu_bias_corrected
+    lio_topic: /fastlio2/lio_odom
+    imu_frame: livox_frame
+    world_frame: odom
+    rear_frame: base_link
+    cg_frame: center_of_mass
+    # Age/quality thresholds warn; finite initialized IMU coasting continues.
+    # Missing source samples, unavailable data and numerical failures remain hard limits.
+    warn_only_quality_gates: true
+    imu_max_age_s: 0.05
+    # Existing 25 ms causal regression; require at least 10 ms time support.
+    # This gate does not remove the known dynamic compensation phase error.
+    min_alpha_span_s: 0.010
+    gyro_variance: 0.0001
+    geometry_calibrated: false
+    cg_height_estimated: true
+    # Mount and IMU-to-CG geometry are loaded from the shared measurement files
+    # by state_observer.launch.py, rather than duplicated here.

@@ -1,0 +1,12 @@
+{
+  "vrpn": {
+    "url": "https://github.com/ros2-gbp/vrpn-release.git",
+    "version": "release/humble/vrpn/7.35.0-11",
+    "commit": "ff688a4507797c35a48710be678c06defc5e6629"
+  },
+  "vrpn_mocap": {
+    "url": "https://github.com/alvinsunyixiao/vrpn_mocap.git",
+    "version": "1.2.0",
+    "commit": "1414a4fdc570c1b5b8c7a17a32a29eaa8bb87895"
+  }
+}

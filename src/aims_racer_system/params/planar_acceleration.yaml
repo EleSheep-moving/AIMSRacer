@@ -1,0 +1,27 @@
+planar_acceleration:
+  ros__parameters:
+    imu_topic: /livox/imu_bias_corrected
+    lio_topic: /rear_axle/lio_odom
+    output_topic: /state_estimation/planar_acceleration
+    imu_frame: livox_frame
+    body_frame: base_link
+    world_frame: odom
+    # Raw corrected Livox acceleration is in g; gyro is rad/s.
+    gravity: 9.80665
+    accel_bias_body: [0.0, 0.0, 0.0]
+    alpha_window_s: 0.025
+    max_gyro_gap_s: 0.03
+    max_lio_age_s: 0.5
+    imu_max_age_s: 0.05
+    history_s: 2.0
+    max_events: 4096
+    filter_enabled: true
+    lateral_enabled: true
+    jerk_psd: 10000.0
+    # Model assumptions, not measured/calibrated accuracy.
+    force_variance: 0.01
+    gyro_variance: 0.0001
+    tilt_std_rad: 0.008726646259971648
+    extrinsics_calibrated: false
+    accelerometer_calibrated: false
+    publish_debug: true

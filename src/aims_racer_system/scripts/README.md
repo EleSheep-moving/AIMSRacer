@@ -3,13 +3,13 @@
 
 **English** · [简体中文](README.zh-CN.md)
 
-The current vehicle runs through [entry points in one workspace](../../../docs/operations/bringup.md). Python scripts are explicitly installed by the package; the table below lists scripts used in the main workflow. C++ `imu_to_rear_axle` and `localization_monitor` are nodes compiled by this package.
+The current vehicle runs through [entry points in one workspace](../../../docs/operations/bringup.md). The table lists installed helper entry points. Persistent gyro correction, rear-axle odometry and the acceleration observer were migrated to C++ on 2026-10-15; `imu_to_rear_axle` and `localization_monitor` were already C++. See [migration and validation](../../../docs/reports/2026-10-15-native-state-nodes.md). Retained Python reference wrappers are not installed as production nodes.
 
 | Script | Purpose |
 | --- | --- |
-| `livox_gyro_bias.py` | Outputs gyro bias corrected IMU and diagnostics, retaining raw IMU |
-| `lio_to_rear_axle.py` | Converts raw LIO to rear axle odometry; owns odom/base_link TF during mapping |
-| `longitudinal_acceleration.py` | Optional wheel + IMU acceleration/status publisher; canonical observer is in the package Python module |
+| `livox_gyro_bias` (C++) | Outputs gyro bias corrected IMU and diagnostics, retaining raw IMU |
+| `lio_to_rear_axle` (C++) | Converts raw LIO to rear axle odometry; owns odom/base_link TF during mapping |
+| `longitudinal_acceleration` (C++) | Optional wheel + IMU acceleration/status publisher; native observer has Python numerical references |
 | `activate_ndt.py` | Configures and activates the NDT lifecycle |
 | `relocalize_known_map.py` | Initializes from an explicit six-dimensional map/base_link pose and waits for a new trusted epoch |
 
@@ -25,8 +25,8 @@ ros2 run aims_racer_system relocalize_known_map.py \
 
 Replace values with the actual rear axle pose; angles are in rad. RViz can also be used; see [known maps](../../../docs/operations/known-map-mpcc.md) for full details. Localization replay and development audits are in root [verification](../../../verification/README.md) and are not installed as production entry points.
 
-Save maps with [tools/save_map.sh](../../../tools/save_map.sh); associate closed-loop CSV with a saved PGO map using [tools/reference](../../../tools/reference/README.md). Historical calibration collection and response evidence are in [calibration materials](../docs/calibration.md); that page links the archives and current operation guides.
+Save maps with [tools/save_map.sh](../../../tools/save_map.sh); associate closed-loop CSV with a saved PGO map using [tools/reference](../../../tools/reference/README.md). Current calibration instructions are in [calibration materials](../docs/calibration.md); that page links the current source and operation guides.
 
 ## Current and lateral-acceleration calibration
 
-[Current calibration A/B/C and selected results](../../../docs/operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../../../docs/operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.
+[Current calibration A/B/C and selected results](../../../docs/operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../../../docs/operations/lateral-acceleration-calibration.md). Source is unified under `src/calibration/`; use the restored C++ lateral entry. Historical Python commands are provenance only.

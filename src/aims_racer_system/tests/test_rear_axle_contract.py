@@ -69,7 +69,7 @@ def test_shared_launch_uses_mount_directly_and_one_livox_frame(mapping):
     static = [n for n in nodes if n['executable']=='static_transform_publisher']
     assert [n['arguments'][-1] for n in static] == ['livox_frame', 'base_footprint']
     assert [float(static[0]['arguments'][i]) for i in (1,3,5)] == [.3,0.,.03]
-    adapters = [n for n in nodes if n['executable'] in ['lio_to_rear_axle.py', 'imu_to_rear_axle']]
+    adapters = [n for n in nodes if n['executable'] in ['lio_to_rear_axle', 'imu_to_rear_axle']]
     for node in adapters:
         assert node['parameters'][0]['livox_translation'] == [.3,0.,.03]
     assert adapters[0]['parameters'][0]['publish_tf'] is mapping
@@ -87,9 +87,9 @@ def test_gyro_correction_is_shared_by_both_rear_adapters():
         lio_config=str(PACKAGE/'params/fastlio_rear.yaml'), gyro_bias_config=str(PACKAGE/'params/gyro_bias.yaml'),
         publish_odom_tf='false')
     nodes=module.build_nodes(context)
-    correctors=[n for n in nodes if n['executable']=='livox_gyro_bias.py']
+    correctors=[n for n in nodes if n['executable']=='livox_gyro_bias']
     assert len(correctors)==1
-    adapters=[n for n in nodes if n['executable'] in ['lio_to_rear_axle.py','imu_to_rear_axle']]
+    adapters=[n for n in nodes if n['executable'] in ['lio_to_rear_axle','imu_to_rear_axle']]
     assert len(adapters)==2
     for n in adapters:
         assert ('/livox/imu','/livox/imu_bias_corrected') in n['remappings']

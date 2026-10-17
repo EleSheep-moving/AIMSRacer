@@ -1,0 +1,4 @@
+#!/usr/bin/env python3
+from aims_calibration.wheel_current_cli import @action@_main
+if __name__ == "__main__":
+    raise SystemExit(@action@_main())

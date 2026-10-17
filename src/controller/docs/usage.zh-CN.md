@@ -109,3 +109,6 @@ enable 要求 solver ready、新鲜后轴状态、实际转发历史、RC 权限
 ## 电流与横向加速度标定
 
 [电流标定 A/B/C 与当前离线模型](../../../docs/operations/calibration.zh-CN.md) · [横向加速度 AY 校对及附着标定状态](../../../docs/operations/lateral-acceleration-calibration.zh-CN.md)。区间电流拟合与轮胎横向能力分别验证，不由既有系数直接生成新的控制前馈或横向加速度上限。
+
+
+[Offline map/reference and calibration-region editor](../../../tools/reference/editor/README.md) · [轮速电流离线工具](../../calibration/longitudinal_current/docs/wheel-current-model.zh-CN.md)

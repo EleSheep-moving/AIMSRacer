@@ -42,3 +42,6 @@ colcon build --packages-up-to aims_racer_system aims_mpcc_rt --executor sequenti
 
 
 Software verification lives under `verification/` and is outside the vehicle startup workflow. Third-party sources and licenses are retained in [NOTICE.md](NOTICE.md), [LICENSE](LICENSE) and [vendor](aims_mpcc/vendor/); the reference and model retain their corresponding attribution.
+
+
+[Offline map/reference and calibration-region editor](../../tools/reference/editor/README.md) · [轮速电流离线工具](../calibration/longitudinal_current/docs/wheel-current-model.zh-CN.md)

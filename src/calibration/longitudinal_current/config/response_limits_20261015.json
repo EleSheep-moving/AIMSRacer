@@ -1,0 +1,4958 @@
+{
+  "schema_version": 1,
+  "current_signal": "avg_iq",
+  "baseline_sha256": "44885e7614d1b12090a299ae92c49bfc1224c09d4dd3fcf4da8f9dd495aa824f",
+  "kind": "empirical_wheel_response_guard",
+  "method": "max positive directional causal 20-40 ms wheel slope from pulse request to observed IQ unload (exit request if unload missing), multiplied by 1.3 plus 0.5 m/s^2; includes failed attempts",
+  "limitations": "Same-car evidence, not a physical acceleration ceiling or a guaranteed stopping deadline. No extrapolation to unseen speed/current pairs. Rebuild for a changed A baseline or operating conditions.",
+  "source_events_sha256": "a1285f9dd2cd656acbb3fd12b5c9c76490949db58bf18175748146b1b6d1dc93",
+  "sources": [
+    {
+      "path": "/home/elesheep/aimsracer-data/sessions/2026-10-15/stage-bc-review/raw-extracts/000720-B-resume-from-2p5mps.npz",
+      "sha256": "c1ad3c5909c32714f81119d3666386de0886c24837795bde1cf916fece9c3bc3"
+    },
+    {
+      "path": "/home/elesheep/aimsracer-data/sessions/2026-10-15/stage-bc-review/raw-extracts/001857-B-resume-from-3p5mps.npz",
+      "sha256": "c0fb0b27dddebb33f8fe92d8fa72718990eb03abe2e131472bad2431a5f82f73"
+    },
+    {
+      "path": "/home/elesheep/aimsracer-data/sessions/2026-10-15/stage-bc-review/raw-extracts/003544-C-full.npz",
+      "sha256": "8e3f2f6ee85b5d220eb112e971a04a1aa50c9a40fecf71f10eb9196a2d0e9cdd"
+    },
+    {
+      "path": "/home/elesheep/aimsracer-data/sessions/2026-10-15/stage-bc-review/raw-extracts/013446-C-descending-groups.npz",
+      "sha256": "b4ddc2b4fb549c5b1a6fddc57fea4d870c0effb4f7a24799f36be6ec6d66cc36"
+    },
+    {
+      "path": "/home/elesheep/aimsracer-data/sessions/2026-10-15/stage-bc-review/raw-extracts/015017-C-resume-minus60A-odom30cm.npz",
+      "sha256": "c6cf93749dda76b63f33cb1154a160de6da06610131106e5bfe76652b553b845"
+    },
+    {
+      "path": "/home/elesheep/aimsracer-data/sessions/2026-10-15/stage-bc-review/raw-extracts/233659-B-full.npz",
+      "sha256": "e2733f50731b939810dfa3dd63bab2bc02b8e45528148702b78daa9c6a4e3825"
+    },
+    {
+      "path": "/home/elesheep/aimsracer-data/sessions/2026-10-15/stage-bc-review/raw-extracts/235350-B-resume-from-2mps.npz",
+      "sha256": "9c72fc7016f6aded8f966857a9af062dae357dfb0776ef738845bda7697fa4e3"
+    }
+  ],
+  "limits": [
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 13.7402769,
+      "acceleration_bound": 1.4526470774049252,
+      "observed_peak": 0.7328054441576347,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 1,
+          "pulse_request_stamp": 1791992688.1812372,
+          "unload_or_exit_stamp": 1791992689.4304187,
+          "samples": 126
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 18.740276899999998,
+      "acceleration_bound": 2.1683074214279667,
+      "observed_peak": 1.2833134010984357,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 2,
+          "pulse_request_stamp": 1791992690.6403303,
+          "unload_or_exit_stamp": 1791992691.4513798,
+          "samples": 82
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 23.740276899999998,
+      "acceleration_bound": 2.9552408939542887,
+      "observed_peak": 1.888646841503299,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 3,
+          "pulse_request_stamp": 1791992692.6409419,
+          "unload_or_exit_stamp": 1791992693.1712666,
+          "samples": 53
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 28.740276899999998,
+      "acceleration_bound": 3.785272114503288,
+      "observed_peak": 2.52713239577176,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 4,
+          "pulse_request_stamp": 1791992694.4305105,
+          "unload_or_exit_stamp": 1791992694.8809369,
+          "samples": 46
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 33.7402769,
+      "acceleration_bound": 4.242764895008953,
+      "observed_peak": 2.879049919237656,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 5,
+          "pulse_request_stamp": 1791992696.5849628,
+          "unload_or_exit_stamp": 1791992696.9811058,
+          "samples": 40
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 38.7402769,
+      "acceleration_bound": 4.900600113544001,
+      "observed_peak": 3.385077010418462,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 6,
+          "pulse_request_stamp": 1791992698.2227209,
+          "unload_or_exit_stamp": 1791992698.5110903,
+          "samples": 29
+        },
+        {
+          "run": "233659-B-full",
+          "trial_id": 7,
+          "pulse_request_stamp": 1791992717.5015152,
+          "unload_or_exit_stamp": 1791992717.8121386,
+          "samples": 32
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 43.7402769,
+      "acceleration_bound": 5.3320722999491785,
+      "observed_peak": 3.716978692268599,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 8,
+          "pulse_request_stamp": 1791992719.5622728,
+          "unload_or_exit_stamp": 1791992719.8723183,
+          "samples": 31
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 48.7402769,
+      "acceleration_bound": 6.327234586255457,
+      "observed_peak": 4.482488143273429,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 9,
+          "pulse_request_stamp": 1791992721.6600037,
+          "unload_or_exit_stamp": 1791992721.962436,
+          "samples": 31
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 53.7402769,
+      "acceleration_bound": 6.72058464564406,
+      "observed_peak": 4.785065112033892,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 10,
+          "pulse_request_stamp": 1791992723.7721803,
+          "unload_or_exit_stamp": 1791992724.042614,
+          "samples": 28
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 58.7402769,
+      "acceleration_bound": 7.967302753055553,
+      "observed_peak": 5.744079040811964,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 11,
+          "pulse_request_stamp": 1791992725.8665369,
+          "unload_or_exit_stamp": 1791992726.1528416,
+          "samples": 29
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 63.7402769,
+      "acceleration_bound": 8.591658325198937,
+      "observed_peak": 6.224352557845336,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 12,
+          "pulse_request_stamp": 1791992728.0290082,
+          "unload_or_exit_stamp": 1791992728.2627296,
+          "samples": 24
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 68.7402769,
+      "acceleration_bound": 10.863447795832423,
+      "observed_peak": 7.971882919871094,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 13,
+          "pulse_request_stamp": 1791992730.0028398,
+          "unload_or_exit_stamp": 1791992730.243121,
+          "samples": 25
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 73.7402769,
+      "acceleration_bound": 11.746544934696226,
+      "observed_peak": 8.651188411304789,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 14,
+          "pulse_request_stamp": 1791992732.1633139,
+          "unload_or_exit_stamp": 1791992732.3443012,
+          "samples": 18
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 78.7402769,
+      "acceleration_bound": 12.72571822068557,
+      "observed_peak": 9.404398631296592,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 15,
+          "pulse_request_stamp": 1791992734.1193857,
+          "unload_or_exit_stamp": 1791992734.273596,
+          "samples": 16
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 83.7402769,
+      "acceleration_bound": 14.36092577721852,
+      "observed_peak": 10.6622505978604,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 16,
+          "pulse_request_stamp": 1791992736.1005492,
+          "unload_or_exit_stamp": 1791992736.3139143,
+          "samples": 22
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 88.7402769,
+      "acceleration_bound": 17.444278851677847,
+      "observed_peak": 13.034060655136805,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 17,
+          "pulse_request_stamp": 1791992738.3201294,
+          "unload_or_exit_stamp": 1791992738.4333315,
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 93.7402769,
+      "acceleration_bound": 29.098783228906445,
+      "observed_peak": 21.999064022235725,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 18,
+          "pulse_request_stamp": 1791992755.6545444,
+          "unload_or_exit_stamp": 1791992755.844356,
+          "samples": 20
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 98.7402769,
+      "acceleration_bound": 30.529920233201107,
+      "observed_peak": 23.099938640923927,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 19,
+          "pulse_request_stamp": 1791992757.9362721,
+          "unload_or_exit_stamp": 1791992758.1445107,
+          "samples": 21
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.0,
+      "current": 100.0,
+      "acceleration_bound": 28.382534632833647,
+      "observed_peak": 21.44810356371819,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 20,
+          "pulse_request_stamp": 1791992760.2509568,
+          "unload_or_exit_stamp": 1791992760.4146707,
+          "samples": 17
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 14.8618696625,
+      "acceleration_bound": 1.6921464902424266,
+      "observed_peak": 0.9170357617249435,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 21,
+          "pulse_request_stamp": 1791992761.7364101,
+          "unload_or_exit_stamp": 1791992763.1547396,
+          "samples": 142
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 19.8618696625,
+      "acceleration_bound": 2.277833524527672,
+      "observed_peak": 1.3675642496366711,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 22,
+          "pulse_request_stamp": 1791992764.377268,
+          "unload_or_exit_stamp": 1791992765.0848565,
+          "samples": 71
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 24.8618696625,
+      "acceleration_bound": 2.793509491977078,
+      "observed_peak": 1.7642380707515983,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 23,
+          "pulse_request_stamp": 1791992766.3147497,
+          "unload_or_exit_stamp": 1791992766.8450248,
+          "samples": 54
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 29.8618696625,
+      "acceleration_bound": 3.6658473927613584,
+      "observed_peak": 2.435267225201045,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 24,
+          "pulse_request_stamp": 1791992768.1029491,
+          "unload_or_exit_stamp": 1791992768.5350938,
+          "samples": 44
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 34.8618696625,
+      "acceleration_bound": 4.432269375666026,
+      "observed_peak": 3.0248225966661737,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 25,
+          "pulse_request_stamp": 1791992770.2650766,
+          "unload_or_exit_stamp": 1791992770.5753934,
+          "samples": 32
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 39.8618696625,
+      "acceleration_bound": 5.253313586997798,
+      "observed_peak": 3.656395066921383,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 26,
+          "pulse_request_stamp": 1791992790.2666116,
+          "unload_or_exit_stamp": 1791992790.5771208,
+          "samples": 31
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 44.8618696625,
+      "acceleration_bound": 5.515533576776846,
+      "observed_peak": 3.858102751366805,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 27,
+          "pulse_request_stamp": 1791992792.3682933,
+          "unload_or_exit_stamp": 1791992792.636514,
+          "samples": 27
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 49.8618696625,
+      "acceleration_bound": 6.766658230817359,
+      "observed_peak": 4.820506331397968,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 28,
+          "pulse_request_stamp": 1791992794.4406826,
+          "unload_or_exit_stamp": 1791992794.7067626,
+          "samples": 27
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 54.8618696625,
+      "acceleration_bound": 7.386942344214576,
+      "observed_peak": 5.297647957088135,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 29,
+          "pulse_request_stamp": 1791992796.5162432,
+          "unload_or_exit_stamp": 1791992796.777854,
+          "samples": 27
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 59.8618696625,
+      "acceleration_bound": 8.589983351553299,
+      "observed_peak": 6.223064116579461,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 30,
+          "pulse_request_stamp": 1791992798.5490408,
+          "unload_or_exit_stamp": 1791992798.7469208,
+          "samples": 20
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 64.8618696625,
+      "acceleration_bound": 9.373063275012564,
+      "observed_peak": 6.825433288471203,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 31,
+          "pulse_request_stamp": 1791992800.5304198,
+          "unload_or_exit_stamp": 1791992800.7376387,
+          "samples": 21
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 69.8618696625,
+      "acceleration_bound": 10.47939525554318,
+      "observed_peak": 7.676457888879369,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 32,
+          "pulse_request_stamp": 1791992802.506166,
+          "unload_or_exit_stamp": 1791992802.7096167,
+          "samples": 21
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 74.8618696625,
+      "acceleration_bound": 15.095665246985694,
+      "observed_peak": 11.22743480537361,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 33,
+          "pulse_request_stamp": 1791992821.3771455,
+          "unload_or_exit_stamp": 1791992821.5582922,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 79.8618696625,
+      "acceleration_bound": 17.533127227726855,
+      "observed_peak": 13.102405559789887,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 34,
+          "pulse_request_stamp": 1791992823.4058638,
+          "unload_or_exit_stamp": 1791992823.5890307,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 84.8618696625,
+      "acceleration_bound": 22.8564971199526,
+      "observed_peak": 17.197305476886616,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 35,
+          "pulse_request_stamp": 1791992825.4052799,
+          "unload_or_exit_stamp": 1791992825.568735,
+          "samples": 17
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 89.8618696625,
+      "acceleration_bound": 29.033685262432265,
+      "observed_peak": 21.948988663409434,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 36,
+          "pulse_request_stamp": 1791992827.3850722,
+          "unload_or_exit_stamp": 1791992827.5686352,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 94.8618696625,
+      "acceleration_bound": 30.45840442601429,
+      "observed_peak": 23.044926481549453,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 37,
+          "pulse_request_stamp": 1791992829.514458,
+          "unload_or_exit_stamp": 1791992829.668722,
+          "samples": 16
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 99.8618696625,
+      "acceleration_bound": 27.797934749052107,
+      "observed_peak": 20.998411345424696,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 38,
+          "pulse_request_stamp": 1791992831.5261114,
+          "unload_or_exit_stamp": 1791992831.6823113,
+          "samples": 16
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 1.5,
+      "current": 100.0,
+      "acceleration_bound": 31.971648325898396,
+      "observed_peak": 24.208960250691074,
+      "evidence": [
+        {
+          "run": "233659-B-full",
+          "trial_id": 39,
+          "pulse_request_stamp": 1791992833.5887241,
+          "unload_or_exit_stamp": 1791992833.7201002,
+          "samples": 14
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 15.7880812,
+      "acceleration_bound": 1.7709295502981595,
+      "observed_peak": 0.9776381156139688,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 1,
+          "pulse_request_stamp": 1791993543.8622262,
+          "unload_or_exit_stamp": 1791993545.0288608,
+          "samples": 116
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 20.7880812,
+      "acceleration_bound": 2.43127846385907,
+      "observed_peak": 1.485598818353131,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 2,
+          "pulse_request_stamp": 1791993546.1635127,
+          "unload_or_exit_stamp": 1791993546.845688,
+          "samples": 69
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 25.7880812,
+      "acceleration_bound": 3.35758889799046,
+      "observed_peak": 2.1981453061465075,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 3,
+          "pulse_request_stamp": 1791993547.9894595,
+          "unload_or_exit_stamp": 1791993548.3256035,
+          "samples": 34
+        },
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 4,
+          "pulse_request_stamp": 1791993567.504663,
+          "unload_or_exit_stamp": 1791993567.965508,
+          "samples": 47
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 30.7880812,
+      "acceleration_bound": 3.4770410234840643,
+      "observed_peak": 2.2900315565262033,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 5,
+          "pulse_request_stamp": 1791993569.684731,
+          "unload_or_exit_stamp": 1791993570.046242,
+          "samples": 37
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 35.7880812,
+      "acceleration_bound": 4.144568501318106,
+      "observed_peak": 2.8035142317831583,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 6,
+          "pulse_request_stamp": 1791993571.8334792,
+          "unload_or_exit_stamp": 1791993572.2060473,
+          "samples": 38
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 40.7880812,
+      "acceleration_bound": 5.216941570964044,
+      "observed_peak": 3.6284165930492644,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 7,
+          "pulse_request_stamp": 1791993574.0043612,
+          "unload_or_exit_stamp": 1791993574.3852403,
+          "samples": 39
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 45.7880812,
+      "acceleration_bound": 5.556821909513695,
+      "observed_peak": 3.889863007318227,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 8,
+          "pulse_request_stamp": 1791993576.1819673,
+          "unload_or_exit_stamp": 1791993576.4560006,
+          "samples": 28
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 50.7880812,
+      "acceleration_bound": 7.089418043077797,
+      "observed_peak": 5.068783110059844,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 9,
+          "pulse_request_stamp": 1791993594.7451606,
+          "unload_or_exit_stamp": 1791993594.9649203,
+          "samples": 22
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 55.7880812,
+      "acceleration_bound": 7.581488473016996,
+      "observed_peak": 5.447298825397689,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 10,
+          "pulse_request_stamp": 1791993596.8177001,
+          "unload_or_exit_stamp": 1791993597.0747933,
+          "samples": 26
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 60.7880812,
+      "acceleration_bound": 8.782868961900153,
+      "observed_peak": 6.371437663000117,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 11,
+          "pulse_request_stamp": 1791993598.8839314,
+          "unload_or_exit_stamp": 1791993599.0848584,
+          "samples": 21
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 65.7880812,
+      "acceleration_bound": 10.035065255246796,
+      "observed_peak": 7.334665580959074,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 12,
+          "pulse_request_stamp": 1791993600.845271,
+          "unload_or_exit_stamp": 1791993601.0047486,
+          "samples": 16
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 70.7880812,
+      "acceleration_bound": 12.133634741143025,
+      "observed_peak": 8.94894980087925,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 13,
+          "pulse_request_stamp": 1791993602.7365394,
+          "unload_or_exit_stamp": 1791993602.9251063,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 75.7880812,
+      "acceleration_bound": 17.618845378645098,
+      "observed_peak": 13.168342598957768,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 14,
+          "pulse_request_stamp": 1791993604.7844465,
+          "unload_or_exit_stamp": 1791993604.9850683,
+          "samples": 21
+        },
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 15,
+          "pulse_request_stamp": 1791993623.7411134,
+          "unload_or_exit_stamp": 1791993623.89568,
+          "samples": 16
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 80.7880812,
+      "acceleration_bound": 11.883025986156115,
+      "observed_peak": 8.756173835504704,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 16,
+          "pulse_request_stamp": 1791993625.6829412,
+          "unload_or_exit_stamp": 1791993625.8057287,
+          "samples": 13
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 85.7880812,
+      "acceleration_bound": 19.700918279222,
+      "observed_peak": 14.769937137863078,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 17,
+          "pulse_request_stamp": 1791993627.001901,
+          "unload_or_exit_stamp": 1791993627.1448598,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 90.7880812,
+      "acceleration_bound": 19.37857091611032,
+      "observed_peak": 14.521977627777169,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 18,
+          "pulse_request_stamp": 1791993628.9662013,
+          "unload_or_exit_stamp": 1791993629.1254144,
+          "samples": 16
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 95.7880812,
+      "acceleration_bound": 27.203201034591878,
+      "observed_peak": 20.54092387276298,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 19,
+          "pulse_request_stamp": 1791993631.0779476,
+          "unload_or_exit_stamp": 1791993631.2346213,
+          "samples": 16
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.0,
+      "current": 100.0,
+      "acceleration_bound": 29.416789456837655,
+      "observed_peak": 22.243684197567426,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 20,
+          "pulse_request_stamp": 1791993633.1834593,
+          "unload_or_exit_stamp": 1791993633.3048017,
+          "samples": 13
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 16.552785937499998,
+      "acceleration_bound": 1.6324553382926206,
+      "observed_peak": 0.8711194909943235,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 21,
+          "pulse_request_stamp": 1791993650.9814198,
+          "unload_or_exit_stamp": 1791993652.1245213,
+          "samples": 115
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 1,
+          "pulse_request_stamp": 1791994134.3288121,
+          "unload_or_exit_stamp": 1791994135.454458,
+          "samples": 111
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 21.552785937499998,
+      "acceleration_bound": 2.486137575301215,
+      "observed_peak": 1.5277981348470884,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 22,
+          "pulse_request_stamp": 1791993653.8696551,
+          "unload_or_exit_stamp": 1791993654.5454037,
+          "samples": 68
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 2,
+          "pulse_request_stamp": 1791994137.0891178,
+          "unload_or_exit_stamp": 1791994137.7546692,
+          "samples": 67
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 26.552785937499998,
+      "acceleration_bound": 3.020557564384062,
+      "observed_peak": 1.938890434141586,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 23,
+          "pulse_request_stamp": 1791993656.2138672,
+          "unload_or_exit_stamp": 1791993656.7045317,
+          "samples": 50
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 3,
+          "pulse_request_stamp": 1791994138.8913198,
+          "unload_or_exit_stamp": 1791994139.074686,
+          "samples": 19
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 4,
+          "pulse_request_stamp": 1791994158.1696188,
+          "unload_or_exit_stamp": 1791994158.575286,
+          "samples": 41
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 31.552785937499998,
+      "acceleration_bound": 4.230819867540603,
+      "observed_peak": 2.869861436569695,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 24,
+          "pulse_request_stamp": 1791993657.8839552,
+          "unload_or_exit_stamp": 1791993658.2847764,
+          "samples": 41
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 5,
+          "pulse_request_stamp": 1791994160.2296774,
+          "unload_or_exit_stamp": 1791994160.6154015,
+          "samples": 39
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 36.5527859375,
+      "acceleration_bound": 4.404008310158376,
+      "observed_peak": 3.0030833155064425,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 25,
+          "pulse_request_stamp": 1791993678.0020442,
+          "unload_or_exit_stamp": 1791993678.3252292,
+          "samples": 33
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 6,
+          "pulse_request_stamp": 1791994162.329674,
+          "unload_or_exit_stamp": 1791994162.655339,
+          "samples": 33
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 41.5527859375,
+      "acceleration_bound": 4.813286927814049,
+      "observed_peak": 3.317913021395422,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 26,
+          "pulse_request_stamp": 1791993680.1216345,
+          "unload_or_exit_stamp": 1791993680.464994,
+          "samples": 35
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 7,
+          "pulse_request_stamp": 1791994164.329698,
+          "unload_or_exit_stamp": 1791994164.595414,
+          "samples": 27
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 46.5527859375,
+      "acceleration_bound": 6.46687359813198,
+      "observed_peak": 4.589902767793831,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 27,
+          "pulse_request_stamp": 1791993682.3229628,
+          "unload_or_exit_stamp": 1791993682.5946379,
+          "samples": 28
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 8,
+          "pulse_request_stamp": 1791994183.0509822,
+          "unload_or_exit_stamp": 1791994183.2560623,
+          "samples": 21
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 51.5527859375,
+      "acceleration_bound": 8.826332985940269,
+      "observed_peak": 6.40487152764636,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 28,
+          "pulse_request_stamp": 1791993684.443574,
+          "unload_or_exit_stamp": 1791993684.704477,
+          "samples": 27
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 9,
+          "pulse_request_stamp": 1791994184.9118624,
+          "unload_or_exit_stamp": 1791994185.1360314,
+          "samples": 23
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 56.5527859375,
+      "acceleration_bound": 6.899892182246259,
+      "observed_peak": 4.922993986343276,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 29,
+          "pulse_request_stamp": 1791993702.8224778,
+          "unload_or_exit_stamp": 1791993703.0047028,
+          "samples": 19
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 10,
+          "pulse_request_stamp": 1791994186.9110074,
+          "unload_or_exit_stamp": 1791994187.096431,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 61.5527859375,
+      "acceleration_bound": 10.202095862684715,
+      "observed_peak": 7.463150663603626,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 30,
+          "pulse_request_stamp": 1791993704.781004,
+          "unload_or_exit_stamp": 1791993705.0045805,
+          "samples": 23
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 11,
+          "pulse_request_stamp": 1791994188.8905632,
+          "unload_or_exit_stamp": 1791994189.0762622,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 66.5527859375,
+      "acceleration_bound": 13.106918207985554,
+      "observed_peak": 9.697629390758118,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 31,
+          "pulse_request_stamp": 1791993706.8024144,
+          "unload_or_exit_stamp": 1791993706.9768643,
+          "samples": 18
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 12,
+          "pulse_request_stamp": 1791994190.810936,
+          "unload_or_exit_stamp": 1791994190.9564214,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 71.5527859375,
+      "acceleration_bound": 14.796600798333609,
+      "observed_peak": 10.99738522948739,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 32,
+          "pulse_request_stamp": 1791993708.7893877,
+          "unload_or_exit_stamp": 1791993708.9046733,
+          "samples": 12
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 13,
+          "pulse_request_stamp": 1791994209.991263,
+          "unload_or_exit_stamp": 1791994210.1369247,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 76.5527859375,
+      "acceleration_bound": 20.89051896702232,
+      "observed_peak": 15.685014590017168,
+      "evidence": [
+        {
+          "run": "235350-B-resume-from-2mps",
+          "trial_id": 33,
+          "pulse_request_stamp": 1791993710.6435015,
+          "unload_or_exit_stamp": 1791993710.8046591,
+          "samples": 17
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 14,
+          "pulse_request_stamp": 1791994211.8912835,
+          "unload_or_exit_stamp": 1791994212.017309,
+          "samples": 13
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 81.5527859375,
+      "acceleration_bound": 15.039553341606313,
+      "observed_peak": 11.184271801235624,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 15,
+          "pulse_request_stamp": 1791994213.7329786,
+          "unload_or_exit_stamp": 1791994213.8370428,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 86.5527859375,
+      "acceleration_bound": 17.028162314511288,
+      "observed_peak": 12.71397101116253,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 16,
+          "pulse_request_stamp": 1791994215.4717422,
+          "unload_or_exit_stamp": 1791994215.5870926,
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 91.5527859375,
+      "acceleration_bound": 19.273868109040517,
+      "observed_peak": 14.441437006954244,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 17,
+          "pulse_request_stamp": 1791994217.2516654,
+          "unload_or_exit_stamp": 1791994217.3572533,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 96.5527859375,
+      "acceleration_bound": 21.129338056556367,
+      "observed_peak": 15.868721581966437,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 18,
+          "pulse_request_stamp": 1791994235.1722689,
+          "unload_or_exit_stamp": 1791994235.2577066,
+          "samples": 9
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 2.5,
+      "current": 100.0,
+      "acceleration_bound": 31.35090367530839,
+      "observed_peak": 23.73146436562184,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 19,
+          "pulse_request_stamp": 1791994236.9134705,
+          "unload_or_exit_stamp": 1791994237.0181644,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 17.189858299999997,
+      "acceleration_bound": 1.671987867396002,
+      "observed_peak": 0.9015291287661553,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 20,
+          "pulse_request_stamp": 1791994238.5723047,
+          "unload_or_exit_stamp": 1791994239.8179917,
+          "samples": 125
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 22.189858299999997,
+      "acceleration_bound": 2.406557893413983,
+      "observed_peak": 1.466582994933833,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 21,
+          "pulse_request_stamp": 1791994241.573386,
+          "unload_or_exit_stamp": 1791994242.098069,
+          "samples": 53
+        },
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 22,
+          "pulse_request_stamp": 1791994260.893534,
+          "unload_or_exit_stamp": 1791994261.4391334,
+          "samples": 55
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 27.189858299999997,
+      "acceleration_bound": 2.8618611129058844,
+      "observed_peak": 1.8168162406968342,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 23,
+          "pulse_request_stamp": 1791994262.6146095,
+          "unload_or_exit_stamp": 1791994263.1208575,
+          "samples": 51
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 32.1898583,
+      "acceleration_bound": 3.9106044901188115,
+      "observed_peak": 2.6235419154760087,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 24,
+          "pulse_request_stamp": 1791994264.2536633,
+          "unload_or_exit_stamp": 1791994264.649445,
+          "samples": 40
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 37.1898583,
+      "acceleration_bound": 4.105076213224198,
+      "observed_peak": 2.7731355486339986,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 25,
+          "pulse_request_stamp": 1791994266.3542366,
+          "unload_or_exit_stamp": 1791994266.6595278,
+          "samples": 31
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 42.1898583,
+      "acceleration_bound": 6.005422597228007,
+      "observed_peak": 4.234940459406159,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 26,
+          "pulse_request_stamp": 1791994284.2148075,
+          "unload_or_exit_stamp": 1791994284.460536,
+          "samples": 25
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 47.1898583,
+      "acceleration_bound": 6.406523232937753,
+      "observed_peak": 4.543479409952117,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 27,
+          "pulse_request_stamp": 1791994286.255009,
+          "unload_or_exit_stamp": 1791994286.4806228,
+          "samples": 23
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 52.1898583,
+      "acceleration_bound": 8.069095304368854,
+      "observed_peak": 5.822381003360657,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 28,
+          "pulse_request_stamp": 1791994288.2157152,
+          "unload_or_exit_stamp": 1791994288.420832,
+          "samples": 21
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 57.1898583,
+      "acceleration_bound": 10.237240411756716,
+      "observed_peak": 7.490184932120551,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 29,
+          "pulse_request_stamp": 1791994290.1555083,
+          "unload_or_exit_stamp": 1791994290.3408685,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 62.1898583,
+      "acceleration_bound": 7.2838582827018925,
+      "observed_peak": 5.218352525155302,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 30,
+          "pulse_request_stamp": 1791994309.6566951,
+          "unload_or_exit_stamp": 1791994309.8219838,
+          "samples": 17
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 67.1898583,
+      "acceleration_bound": 11.946078511943366,
+      "observed_peak": 8.804675778417973,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 31,
+          "pulse_request_stamp": 1791994311.659069,
+          "unload_or_exit_stamp": 1791994311.8019667,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 72.1898583,
+      "acceleration_bound": 14.655062742037082,
+      "observed_peak": 10.888509801566986,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 32,
+          "pulse_request_stamp": 1791994313.5799048,
+          "unload_or_exit_stamp": 1791994313.7621727,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 77.1898583,
+      "acceleration_bound": 16.7957786090687,
+      "observed_peak": 12.535214314668233,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 33,
+          "pulse_request_stamp": 1791994315.5578363,
+          "unload_or_exit_stamp": 1791994315.7026017,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 82.1898583,
+      "acceleration_bound": 17.634365979464828,
+      "observed_peak": 13.180281522665252,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 34,
+          "pulse_request_stamp": 1791994333.1225557,
+          "unload_or_exit_stamp": 1791994333.263455,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 87.1898583,
+      "acceleration_bound": 25.954058666416376,
+      "observed_peak": 19.580045128012596,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 35,
+          "pulse_request_stamp": 1791994335.1178212,
+          "unload_or_exit_stamp": 1791994335.2234313,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 92.1898583,
+      "acceleration_bound": 21.66279714276816,
+      "observed_peak": 16.279074725206275,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 36,
+          "pulse_request_stamp": 1791994336.9929094,
+          "unload_or_exit_stamp": 1791994337.1234963,
+          "samples": 14
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 97.1898583,
+      "acceleration_bound": 23.78942806445004,
+      "observed_peak": 17.914944664961567,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 37,
+          "pulse_request_stamp": 1791994338.9991817,
+          "unload_or_exit_stamp": 1791994339.133558,
+          "samples": 14
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.0,
+      "current": 100.0,
+      "acceleration_bound": 24.05969704029938,
+      "observed_peak": 18.122843877153368,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 38,
+          "pulse_request_stamp": 1791994358.6207771,
+          "unload_or_exit_stamp": 1791994358.7246366,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 17.7331727125,
+      "acceleration_bound": 1.8245543477757555,
+      "observed_peak": 1.0188879598275042,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 39,
+          "pulse_request_stamp": 1791994359.820526,
+          "unload_or_exit_stamp": 1791994361.1447783,
+          "samples": 133
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 1,
+          "pulse_request_stamp": 1791994911.3695598,
+          "unload_or_exit_stamp": 1791994912.4196632,
+          "samples": 105
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 22.7331727125,
+      "acceleration_bound": 2.467853508416007,
+      "observed_peak": 1.5137334680123131,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 40,
+          "pulse_request_stamp": 1791994362.8405328,
+          "unload_or_exit_stamp": 1791994363.5249276,
+          "samples": 69
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 2,
+          "pulse_request_stamp": 1791994932.0074933,
+          "unload_or_exit_stamp": 1791994932.4894345,
+          "samples": 49
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 27.7331727125,
+      "acceleration_bound": 3.3595719237468025,
+      "observed_peak": 2.1996707105744635,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 41,
+          "pulse_request_stamp": 1791994380.9647105,
+          "unload_or_exit_stamp": 1791994381.3662014,
+          "samples": 41
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 3,
+          "pulse_request_stamp": 1791994934.217196,
+          "unload_or_exit_stamp": 1791994934.6695302,
+          "samples": 46
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 32.7331727125,
+      "acceleration_bound": 4.338431099352187,
+      "observed_peak": 2.9526393071939894,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 42,
+          "pulse_request_stamp": 1791994383.1031635,
+          "unload_or_exit_stamp": 1791994383.466137,
+          "samples": 37
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 4,
+          "pulse_request_stamp": 1791994936.3877542,
+          "unload_or_exit_stamp": 1791994936.7496507,
+          "samples": 37
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 37.7331727125,
+      "acceleration_bound": 4.967360119423849,
+      "observed_peak": 3.4364308610952685,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 43,
+          "pulse_request_stamp": 1791994385.1806378,
+          "unload_or_exit_stamp": 1791994385.5062475,
+          "samples": 33
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 5,
+          "pulse_request_stamp": 1791994954.5681362,
+          "unload_or_exit_stamp": 1791994954.840389,
+          "samples": 28
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 42.7331727125,
+      "acceleration_bound": 6.024211671995579,
+      "observed_peak": 4.249393593842753,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 44,
+          "pulse_request_stamp": 1791994404.9655886,
+          "unload_or_exit_stamp": 1791994405.2371972,
+          "samples": 28
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 6,
+          "pulse_request_stamp": 1791994956.5881693,
+          "unload_or_exit_stamp": 1791994956.8505483,
+          "samples": 27
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 47.7331727125,
+      "acceleration_bound": 8.006933074721747,
+      "observed_peak": 5.774563903632114,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 45,
+          "pulse_request_stamp": 1791994407.0634282,
+          "unload_or_exit_stamp": 1791994407.2873623,
+          "samples": 23
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 7,
+          "pulse_request_stamp": 1791994958.5882022,
+          "unload_or_exit_stamp": 1791994958.8506205,
+          "samples": 27
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 52.7331727125,
+      "acceleration_bound": 7.7992964897404855,
+      "observed_peak": 5.614843453646527,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 46,
+          "pulse_request_stamp": 1791994409.1084707,
+          "unload_or_exit_stamp": 1791994409.347446,
+          "samples": 24
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 8,
+          "pulse_request_stamp": 1791994978.1494448,
+          "unload_or_exit_stamp": 1791994978.3114343,
+          "samples": 17
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 57.7331727125,
+      "acceleration_bound": 10.45550752248514,
+      "observed_peak": 7.6580827096039545,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 47,
+          "pulse_request_stamp": 1791994427.1485069,
+          "unload_or_exit_stamp": 1791994427.328197,
+          "samples": 19
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 9,
+          "pulse_request_stamp": 1791994980.0292974,
+          "unload_or_exit_stamp": 1791994980.2116451,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 62.7331727125,
+      "acceleration_bound": 14.477762189039785,
+      "observed_peak": 10.752124760799834,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 48,
+          "pulse_request_stamp": 1791994429.23976,
+          "unload_or_exit_stamp": 1791994429.389419,
+          "samples": 15
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 10,
+          "pulse_request_stamp": 1791994981.9703553,
+          "unload_or_exit_stamp": 1791994982.0916052,
+          "samples": 13
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 67.7331727125,
+      "acceleration_bound": 13.795594595836704,
+      "observed_peak": 10.227380458335926,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 49,
+          "pulse_request_stamp": 1791994431.1915505,
+          "unload_or_exit_stamp": 1791994431.3785083,
+          "samples": 19
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 11,
+          "pulse_request_stamp": 1791995000.1902966,
+          "unload_or_exit_stamp": 1791995000.3224034,
+          "samples": 14
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 72.7331727125,
+      "acceleration_bound": 13.468361424952537,
+      "observed_peak": 9.975662634578875,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 50,
+          "pulse_request_stamp": 1791994451.0680172,
+          "unload_or_exit_stamp": 1791994451.1900785,
+          "samples": 13
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 12,
+          "pulse_request_stamp": 1791995002.133539,
+          "unload_or_exit_stamp": 1791995002.2524705,
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 77.7331727125,
+      "acceleration_bound": 17.50207164548757,
+      "observed_peak": 13.078516650375056,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 51,
+          "pulse_request_stamp": 1791994452.9498804,
+          "unload_or_exit_stamp": 1791994453.0797253,
+          "samples": 14
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 13,
+          "pulse_request_stamp": 1791995003.9308155,
+          "unload_or_exit_stamp": 1791995004.0533915,
+          "samples": 13
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 82.7331727125,
+      "acceleration_bound": 19.12954122191314,
+      "observed_peak": 14.330416324548569,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 52,
+          "pulse_request_stamp": 1791994454.9147449,
+          "unload_or_exit_stamp": 1791994455.0814393,
+          "samples": 17
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 14,
+          "pulse_request_stamp": 1791995024.2525914,
+          "unload_or_exit_stamp": 1791995024.3534524,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 87.7331727125,
+      "acceleration_bound": 22.892085522172046,
+      "observed_peak": 17.224681170901572,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 53,
+          "pulse_request_stamp": 1791994473.6670194,
+          "unload_or_exit_stamp": 1791994473.8206336,
+          "samples": 16
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 15,
+          "pulse_request_stamp": 1791995026.0913622,
+          "unload_or_exit_stamp": 1791995026.213669,
+          "samples": 13
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 92.7331727125,
+      "acceleration_bound": 26.29099502615461,
+      "observed_peak": 19.839226943195854,
+      "evidence": [
+        {
+          "run": "000720-B-resume-from-2p5mps",
+          "trial_id": 54,
+          "pulse_request_stamp": 1791994475.7466671,
+          "unload_or_exit_stamp": 1791994475.8519948,
+          "samples": 12
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 16,
+          "pulse_request_stamp": 1791995028.0114129,
+          "unload_or_exit_stamp": 1791995028.1136956,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 97.7331727125,
+      "acceleration_bound": 22.98646083366508,
+      "observed_peak": 17.297277564357753,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 17,
+          "pulse_request_stamp": 1791995046.7123659,
+          "unload_or_exit_stamp": 1791995046.8144548,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 3.5,
+      "current": 100.0,
+      "acceleration_bound": 29.151223041385887,
+      "observed_peak": 22.039402339527605,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 18,
+          "pulse_request_stamp": 1791995048.5921633,
+          "unload_or_exit_stamp": 1791995048.6952384,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 18.2166036,
+      "acceleration_bound": 1.68546264327116,
+      "observed_peak": 0.9118943409778153,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 19,
+          "pulse_request_stamp": 1791995050.2525115,
+          "unload_or_exit_stamp": 1791995051.2146218,
+          "samples": 97
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 20,
+          "pulse_request_stamp": 1791995069.9532053,
+          "unload_or_exit_stamp": 1791995070.9756322,
+          "samples": 103
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 23.2166036,
+      "acceleration_bound": 2.3370651052851077,
+      "observed_peak": 1.4131270040654673,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 21,
+          "pulse_request_stamp": 1791995072.5731678,
+          "unload_or_exit_stamp": 1791995073.2355645,
+          "samples": 67
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 28.2166036,
+      "acceleration_bound": 3.749810103247436,
+      "observed_peak": 2.499853925574951,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 22,
+          "pulse_request_stamp": 1791995090.933969,
+          "unload_or_exit_stamp": 1791995091.316911,
+          "samples": 39
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 33.2166036,
+      "acceleration_bound": 3.6877188759768367,
+      "observed_peak": 2.452091443059105,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 23,
+          "pulse_request_stamp": 1791995093.042195,
+          "unload_or_exit_stamp": 1791995093.397076,
+          "samples": 36
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 38.2166036,
+      "acceleration_bound": 4.223458749731129,
+      "observed_peak": 2.8641990382547142,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 24,
+          "pulse_request_stamp": 1791995113.6362848,
+          "unload_or_exit_stamp": 1791995113.8773506,
+          "samples": 25
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 43.2166036,
+      "acceleration_bound": 4.703046336379648,
+      "observed_peak": 3.233112566445883,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 25,
+          "pulse_request_stamp": 1791995115.575041,
+          "unload_or_exit_stamp": 1791995115.8373785,
+          "samples": 27
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 48.2166036,
+      "acceleration_bound": 5.824350530900865,
+      "observed_peak": 4.095654254539127,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 26,
+          "pulse_request_stamp": 1791995134.635811,
+          "unload_or_exit_stamp": 1791995134.8181577,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 53.2166036,
+      "acceleration_bound": 7.832019328492572,
+      "observed_peak": 5.6400148680712086,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 27,
+          "pulse_request_stamp": 1791995136.5959902,
+          "unload_or_exit_stamp": 1791995136.7982912,
+          "samples": 21
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 58.2166036,
+      "acceleration_bound": 7.975743458313467,
+      "observed_peak": 5.750571891010359,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 28,
+          "pulse_request_stamp": 1791995157.3375082,
+          "unload_or_exit_stamp": 1791995157.4791427,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 63.2166036,
+      "acceleration_bound": 12.082670004759175,
+      "observed_peak": 8.909746157507056,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 29,
+          "pulse_request_stamp": 1791995159.1970565,
+          "unload_or_exit_stamp": 1791995159.3392866,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 68.2166036,
+      "acceleration_bound": 14.399167536264484,
+      "observed_peak": 10.691667335588065,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 30,
+          "pulse_request_stamp": 1791995161.0011878,
+          "unload_or_exit_stamp": 1791995161.0497196,
+          "samples": 5
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 31,
+          "pulse_request_stamp": 1791995178.3178368,
+          "unload_or_exit_stamp": 1791995178.4401813,
+          "samples": 13
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 73.2166036,
+      "acceleration_bound": 12.89130311605062,
+      "observed_peak": 9.531771627731246,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 32,
+          "pulse_request_stamp": 1791995180.139317,
+          "unload_or_exit_stamp": 1791995180.280128,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 78.2166036,
+      "acceleration_bound": 18.023488632695166,
+      "observed_peak": 13.479606640534744,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 33,
+          "pulse_request_stamp": 1791995182.0780683,
+          "unload_or_exit_stamp": 1791995182.1802437,
+          "samples": 11
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 34,
+          "pulse_request_stamp": 1791995200.8987052,
+          "unload_or_exit_stamp": 1791995201.0013447,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 83.2166036,
+      "acceleration_bound": 19.682162435038254,
+      "observed_peak": 14.755509565414041,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 35,
+          "pulse_request_stamp": 1791995202.7192006,
+          "unload_or_exit_stamp": 1791995202.853072,
+          "samples": 14
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 88.2166036,
+      "acceleration_bound": 21.06816020039095,
+      "observed_peak": 15.821661692608423,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 36,
+          "pulse_request_stamp": 1791995221.8640058,
+          "unload_or_exit_stamp": 1791995222.00201,
+          "samples": 14
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 93.2166036,
+      "acceleration_bound": 17.01157505957683,
+      "observed_peak": 12.70121158428987,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 37,
+          "pulse_request_stamp": 1791995223.879663,
+          "unload_or_exit_stamp": 1791995223.98209,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 98.2166036,
+      "acceleration_bound": 20.673987323491335,
+      "observed_peak": 15.518451787301027,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 38,
+          "pulse_request_stamp": 1791995244.5612378,
+          "unload_or_exit_stamp": 1791995244.6628566,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.0,
+      "current": 100.0,
+      "acceleration_bound": 24.712281534644937,
+      "observed_peak": 18.624831949726875,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 39,
+          "pulse_request_stamp": 1791995246.424224,
+          "unload_or_exit_stamp": 1791995246.5629334,
+          "samples": 14
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 18.6740253875,
+      "acceleration_bound": 1.7097002971051973,
+      "observed_peak": 0.9305386900809209,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 40,
+          "pulse_request_stamp": 1791995247.6848907,
+          "unload_or_exit_stamp": 1791995248.0829895,
+          "samples": 40
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 41,
+          "pulse_request_stamp": 1791995265.3215642,
+          "unload_or_exit_stamp": 1791995266.3337708,
+          "samples": 102
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 23.6740253875,
+      "acceleration_bound": 2.510409836341814,
+      "observed_peak": 1.5464691048783186,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 42,
+          "pulse_request_stamp": 1791995268.0435505,
+          "unload_or_exit_stamp": 1791995268.303921,
+          "samples": 27
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 43,
+          "pulse_request_stamp": 1791995287.3030415,
+          "unload_or_exit_stamp": 1791995287.8446298,
+          "samples": 55
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 28.6740253875,
+      "acceleration_bound": 3.609971399269767,
+      "observed_peak": 2.3922856917459745,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 44,
+          "pulse_request_stamp": 1791995289.6266696,
+          "unload_or_exit_stamp": 1791995290.074772,
+          "samples": 45
+        },
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 45,
+          "pulse_request_stamp": 1791995306.987077,
+          "unload_or_exit_stamp": 1791995307.3455038,
+          "samples": 36
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 33.674025387499995,
+      "acceleration_bound": 4.074747068995267,
+      "observed_peak": 2.7498054376886665,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 46,
+          "pulse_request_stamp": 1791995309.0447776,
+          "unload_or_exit_stamp": 1791995309.4055707,
+          "samples": 37
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 38.674025387499995,
+      "acceleration_bound": 5.262133468414573,
+      "observed_peak": 3.663179591088133,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 47,
+          "pulse_request_stamp": 1791995329.1046424,
+          "unload_or_exit_stamp": 1791995329.3463368,
+          "samples": 25
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 43.674025387499995,
+      "acceleration_bound": 5.20031491034724,
+      "observed_peak": 3.6156268541132617,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 48,
+          "pulse_request_stamp": 1791995331.0641327,
+          "unload_or_exit_stamp": 1791995331.3266654,
+          "samples": 27
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 48.674025387499995,
+      "acceleration_bound": 9.157713673970695,
+      "observed_peak": 6.659779749208227,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 49,
+          "pulse_request_stamp": 1791995349.1875112,
+          "unload_or_exit_stamp": 1791995349.3272107,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 53.674025387499995,
+      "acceleration_bound": 8.46514286249224,
+      "observed_peak": 6.127032971147876,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 50,
+          "pulse_request_stamp": 1791995351.025443,
+          "unload_or_exit_stamp": 1791995351.2073119,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 58.674025387499995,
+      "acceleration_bound": 7.651966674115127,
+      "observed_peak": 5.501512826242405,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 51,
+          "pulse_request_stamp": 1791995370.9661605,
+          "unload_or_exit_stamp": 1791995371.1281376,
+          "samples": 17
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 63.674025387499995,
+      "acceleration_bound": 11.0265589508524,
+      "observed_peak": 8.09735303911723,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 52,
+          "pulse_request_stamp": 1791995372.906046,
+          "unload_or_exit_stamp": 1791995373.0484393,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 68.6740253875,
+      "acceleration_bound": 18.37084665715056,
+      "observed_peak": 13.746805120885048,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 53,
+          "pulse_request_stamp": 1791995391.027858,
+          "unload_or_exit_stamp": 1791995391.138945,
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 73.6740253875,
+      "acceleration_bound": 19.92550780912599,
+      "observed_peak": 14.942698314712299,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 54,
+          "pulse_request_stamp": 1791995392.8475094,
+          "unload_or_exit_stamp": 1791995392.9990833,
+          "samples": 16
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 78.6740253875,
+      "acceleration_bound": 17.480789542320814,
+      "observed_peak": 13.062145801785242,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 55,
+          "pulse_request_stamp": 1791995412.9676776,
+          "unload_or_exit_stamp": 1791995413.0768774,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 83.6740253875,
+      "acceleration_bound": 12.723047748551334,
+      "observed_peak": 9.402344421962564,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 56,
+          "pulse_request_stamp": 1791995414.867864,
+          "unload_or_exit_stamp": 1791995414.99023,
+          "samples": 13
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 88.6740253875,
+      "acceleration_bound": 18.607214089231068,
+      "observed_peak": 13.928626222485438,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 57,
+          "pulse_request_stamp": 1791995433.0290992,
+          "unload_or_exit_stamp": 1791995433.1107314,
+          "samples": 9
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 93.6740253875,
+      "acceleration_bound": 18.02186179046195,
+      "observed_peak": 13.47835522343227,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 58,
+          "pulse_request_stamp": 1791995434.7888618,
+          "unload_or_exit_stamp": 1791995434.891248,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 98.6740253875,
+      "acceleration_bound": 18.041708737782756,
+      "observed_peak": 13.493622105986734,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 59,
+          "pulse_request_stamp": 1791995455.0125797,
+          "unload_or_exit_stamp": 1791995455.1115742,
+          "samples": 10
+        }
+      ]
+    },
+    {
+      "stage": "accel_interval",
+      "start_speed": 4.5,
+      "current": 100.0,
+      "acceleration_bound": 17.9218649169928,
+      "observed_peak": 13.40143455153292,
+      "evidence": [
+        {
+          "run": "001857-B-resume-from-3p5mps",
+          "trial_id": 60,
+          "pulse_request_stamp": 1791995456.8696911,
+          "unload_or_exit_stamp": 1791995456.9816291,
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": 9.139312499999999,
+      "acceleration_bound": 2.434221905845103,
+      "observed_peak": 1.4878630044962329,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 1,
+          "pulse_request_stamp": 1791999300.8021932,
+          "unload_or_exit_stamp": 1791999301.4626834,
+          "samples": 66
+        },
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 2,
+          "pulse_request_stamp": 1791999320.6027167,
+          "unload_or_exit_stamp": 1791999321.7020817,
+          "samples": 110
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": 4.139312499999999,
+      "acceleration_bound": 5.195895341294164,
+      "observed_peak": 3.612227185610895,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 3,
+          "pulse_request_stamp": 1791999339.9219542,
+          "unload_or_exit_stamp": 1791999340.481759,
+          "samples": 56
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": 0.0,
+      "acceleration_bound": 7.003729346797303,
+      "observed_peak": 5.002868728305617,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 4,
+          "pulse_request_stamp": 1791999341.8824916,
+          "unload_or_exit_stamp": 1791999342.3820565,
+          "samples": 50
+        },
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 5,
+          "pulse_request_stamp": 1791999361.9431305,
+          "unload_or_exit_stamp": 1791999365.3819587,
+          "samples": 344
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -5.0,
+      "acceleration_bound": 9.416400748980108,
+      "observed_peak": 6.858769806907775,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 6,
+          "pulse_request_stamp": 1791999383.0820408,
+          "unload_or_exit_stamp": 1791999385.265421,
+          "samples": 219
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -10.0,
+      "acceleration_bound": 11.359246829829988,
+      "observed_peak": 8.353266792176914,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 7,
+          "pulse_request_stamp": 1791999405.3021438,
+          "unload_or_exit_stamp": 1791999406.9655569,
+          "samples": 167
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -15.0,
+      "acceleration_bound": 13.082854503144734,
+      "observed_peak": 9.679118848572871,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 8,
+          "pulse_request_stamp": 1791999425.4028294,
+          "unload_or_exit_stamp": 1791999426.7457378,
+          "samples": 135
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -20.0,
+      "acceleration_bound": 12.910803707553283,
+      "observed_peak": 9.546772082733295,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 9,
+          "pulse_request_stamp": 1791999447.2034676,
+          "unload_or_exit_stamp": 1791999448.3659263,
+          "samples": 117
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -25.0,
+      "acceleration_bound": 13.698960980388907,
+      "observed_peak": 10.153046907991467,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 10,
+          "pulse_request_stamp": 1791999467.103054,
+          "unload_or_exit_stamp": 1791999468.1061342,
+          "samples": 101
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -30.0,
+      "acceleration_bound": 14.287068082517234,
+      "observed_peak": 10.605436986551718,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 11,
+          "pulse_request_stamp": 1791999488.8433106,
+          "unload_or_exit_stamp": 1791999489.7464209,
+          "samples": 91
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -35.0,
+      "acceleration_bound": 15.765973490785928,
+      "observed_peak": 11.74305653137379,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 12,
+          "pulse_request_stamp": 1791999508.6237502,
+          "unload_or_exit_stamp": 1791999509.426612,
+          "samples": 81
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -40.0,
+      "acceleration_bound": 17.994887230287105,
+      "observed_peak": 13.457605561759312,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 13,
+          "pulse_request_stamp": 1791999530.2674978,
+          "unload_or_exit_stamp": 1791999530.9869463,
+          "samples": 73
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -45.0,
+      "acceleration_bound": 21.021568849630775,
+      "observed_peak": 15.785822192023671,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 14,
+          "pulse_request_stamp": 1791999549.9638634,
+          "unload_or_exit_stamp": 1791999550.507226,
+          "samples": 55
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -50.0,
+      "acceleration_bound": 22.621984756716024,
+      "observed_peak": 17.01691135132002,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 15,
+          "pulse_request_stamp": 1791999552.2839913,
+          "unload_or_exit_stamp": 1791999552.7472413,
+          "samples": 47
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -55.0,
+      "acceleration_bound": 52.41942473182848,
+      "observed_peak": 39.938019024483445,
+      "evidence": [
+        {
+          "run": "013446-C-descending-groups",
+          "trial_id": 16,
+          "pulse_request_stamp": 1791999572.70429,
+          "unload_or_exit_stamp": 1791999573.1476371,
+          "samples": 45
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 5.0,
+      "current": -60.0,
+      "acceleration_bound": 58.70499081701682,
+      "observed_peak": 44.773069859243705,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 1,
+          "pulse_request_stamp": 1792000267.3990393,
+          "unload_or_exit_stamp": 1792000267.659591,
+          "samples": 27
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": 8.674025387499999,
+      "acceleration_bound": 1.9369594563882098,
+      "observed_peak": 1.1053534279909305,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 2,
+          "pulse_request_stamp": 1792000286.759702,
+          "unload_or_exit_stamp": 1792000287.8804233,
+          "samples": 113
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": 3.6740253874999986,
+      "acceleration_bound": 5.167398714294258,
+      "observed_peak": 3.590306703303275,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 3,
+          "pulse_request_stamp": 1792000289.2401385,
+          "unload_or_exit_stamp": 1792000289.7200973,
+          "samples": 48
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": 0.0,
+      "acceleration_bound": 6.568682349080194,
+      "observed_peak": 4.668217191600149,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 4,
+          "pulse_request_stamp": 1792000307.1006596,
+          "unload_or_exit_stamp": 1792000310.2410836,
+          "samples": 314
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -5.0,
+      "acceleration_bound": 9.26351939929873,
+      "observed_peak": 6.74116876869133,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 5,
+          "pulse_request_stamp": 1792000330.4617147,
+          "unload_or_exit_stamp": 1792000332.4411993,
+          "samples": 198
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -10.0,
+      "acceleration_bound": 11.973873833430943,
+      "observed_peak": 8.82605679494688,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 6,
+          "pulse_request_stamp": 1792000351.4613867,
+          "unload_or_exit_stamp": 1792000352.9627604,
+          "samples": 151
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -15.0,
+      "acceleration_bound": 12.7724524691279,
+      "observed_peak": 9.440348053175308,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 7,
+          "pulse_request_stamp": 1792000355.2625003,
+          "unload_or_exit_stamp": 1792000355.3618875,
+          "samples": 10
+        },
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 8,
+          "pulse_request_stamp": 1792000374.5442464,
+          "unload_or_exit_stamp": 1792000375.7624054,
+          "samples": 122
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -20.0,
+      "acceleration_bound": 13.294271883246939,
+      "observed_peak": 9.841747602497644,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 9,
+          "pulse_request_stamp": 1792000378.042561,
+          "unload_or_exit_stamp": 1792000378.182104,
+          "samples": 13
+        },
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 10,
+          "pulse_request_stamp": 1792000395.8225222,
+          "unload_or_exit_stamp": 1792000396.8428948,
+          "samples": 103
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -25.0,
+      "acceleration_bound": 13.567817277299438,
+      "observed_peak": 10.052167136384183,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 11,
+          "pulse_request_stamp": 1792000399.1424994,
+          "unload_or_exit_stamp": 1792000399.9929671,
+          "samples": 86
+        },
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 12,
+          "pulse_request_stamp": 1792000419.783167,
+          "unload_or_exit_stamp": 1792000420.6835413,
+          "samples": 91
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -30.0,
+      "acceleration_bound": 15.370641885319476,
+      "observed_peak": 11.438955296399596,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 13,
+          "pulse_request_stamp": 1792000423.025457,
+          "unload_or_exit_stamp": 1792000423.8036432,
+          "samples": 78
+        },
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 14,
+          "pulse_request_stamp": 1792000441.4235127,
+          "unload_or_exit_stamp": 1792000442.224353,
+          "samples": 81
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -35.0,
+      "acceleration_bound": 15.951849837978312,
+      "observed_peak": 11.886038336906394,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 15,
+          "pulse_request_stamp": 1792000444.4836555,
+          "unload_or_exit_stamp": 1792000445.1842113,
+          "samples": 71
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -40.0,
+      "acceleration_bound": 16.91483560530282,
+      "observed_peak": 12.626796619463706,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 16,
+          "pulse_request_stamp": 1792000464.864199,
+          "unload_or_exit_stamp": 1792000465.4846187,
+          "samples": 63
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -45.0,
+      "acceleration_bound": 18.399223916288975,
+      "observed_peak": 13.76863378176075,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 17,
+          "pulse_request_stamp": 1792000467.6442652,
+          "unload_or_exit_stamp": 1792000468.224699,
+          "samples": 59
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -50.0,
+      "acceleration_bound": 26.799501972840847,
+      "observed_peak": 20.230386132954497,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 18,
+          "pulse_request_stamp": 1792000485.9846947,
+          "unload_or_exit_stamp": 1792000486.2851825,
+          "samples": 31
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -55.0,
+      "acceleration_bound": 39.71246343914902,
+      "observed_peak": 30.163433414730015,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 19,
+          "pulse_request_stamp": 1792000488.0647962,
+          "unload_or_exit_stamp": 1792000488.5252085,
+          "samples": 47
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -60.0,
+      "acceleration_bound": 66.26332180909303,
+      "observed_peak": 50.587170622379254,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 20,
+          "pulse_request_stamp": 1792000508.3859544,
+          "unload_or_exit_stamp": 1792000508.806067,
+          "samples": 42
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -65.0,
+      "acceleration_bound": 53.85512709111262,
+      "observed_peak": 41.04240545470201,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 21,
+          "pulse_request_stamp": 1792000510.4453661,
+          "unload_or_exit_stamp": 1792000510.6658082,
+          "samples": 23
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -70.0,
+      "acceleration_bound": 90.75324638608748,
+      "observed_peak": 69.42557414314422,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 22,
+          "pulse_request_stamp": 1792000528.885779,
+          "unload_or_exit_stamp": 1792000529.066296,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.5,
+      "current": -75.0,
+      "acceleration_bound": 105.39553410858619,
+      "observed_peak": 80.68887239122014,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 23,
+          "pulse_request_stamp": 1792000530.9463062,
+          "unload_or_exit_stamp": 1792000531.1361563,
+          "samples": 19
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": 8.2166036,
+      "acceleration_bound": 2.183977186638237,
+      "observed_peak": 1.2953670666447976,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 24,
+          "pulse_request_stamp": 1792000551.926276,
+          "unload_or_exit_stamp": 1792000553.1866264,
+          "samples": 126
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": 3.216603599999999,
+      "acceleration_bound": 4.994036924976751,
+      "observed_peak": 3.456951480751347,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 25,
+          "pulse_request_stamp": 1792000554.5068269,
+          "unload_or_exit_stamp": 1792000555.0263238,
+          "samples": 52
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": 0.0,
+      "acceleration_bound": 6.689169900537472,
+      "observed_peak": 4.760899923490363,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 26,
+          "pulse_request_stamp": 1792000573.086834,
+          "unload_or_exit_stamp": 1792000575.9268293,
+          "samples": 284
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -5.0,
+      "acceleration_bound": 11.232215972943767,
+      "observed_peak": 8.255550748418282,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 27,
+          "pulse_request_stamp": 1792000577.5869122,
+          "unload_or_exit_stamp": 1792000578.7874887,
+          "samples": 121
+        },
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 28,
+          "pulse_request_stamp": 1792000598.167414,
+          "unload_or_exit_stamp": 1792000599.937949,
+          "samples": 178
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -10.0,
+      "acceleration_bound": 9.539766683920591,
+      "observed_peak": 6.953666679938917,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 29,
+          "pulse_request_stamp": 1792000601.5878832,
+          "unload_or_exit_stamp": 1792000602.9280274,
+          "samples": 135
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -15.0,
+      "acceleration_bound": 10.113429296280366,
+      "observed_peak": 7.394945612523358,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 30,
+          "pulse_request_stamp": 1792000620.6482515,
+          "unload_or_exit_stamp": 1792000621.729914,
+          "samples": 109
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -20.0,
+      "acceleration_bound": 13.001640242294688,
+      "observed_peak": 9.616646340226682,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 31,
+          "pulse_request_stamp": 1792000623.388346,
+          "unload_or_exit_stamp": 1792000624.318578,
+          "samples": 94
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -25.0,
+      "acceleration_bound": 13.900813681233764,
+      "observed_peak": 10.308318216333664,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 32,
+          "pulse_request_stamp": 1792000644.4086006,
+          "unload_or_exit_stamp": 1792000645.2090046,
+          "samples": 81
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -30.0,
+      "acceleration_bound": 15.044269721805195,
+      "observed_peak": 11.187899786003996,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 33,
+          "pulse_request_stamp": 1792000646.8686287,
+          "unload_or_exit_stamp": 1792000647.5891323,
+          "samples": 73
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -35.0,
+      "acceleration_bound": 16.023014406515994,
+      "observed_peak": 11.94078031270461,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 34,
+          "pulse_request_stamp": 1792000666.269263,
+          "unload_or_exit_stamp": 1792000666.919541,
+          "samples": 66
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -40.0,
+      "acceleration_bound": 17.95726061806204,
+      "observed_peak": 13.428662013893877,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 35,
+          "pulse_request_stamp": 1792000668.6100059,
+          "unload_or_exit_stamp": 1792000669.189647,
+          "samples": 58
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -45.0,
+      "acceleration_bound": 19.331652498476423,
+      "observed_peak": 14.485886537289556,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 36,
+          "pulse_request_stamp": 1792000670.850596,
+          "unload_or_exit_stamp": 1792000671.4496434,
+          "samples": 60
+        },
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 37,
+          "pulse_request_stamp": 1792000690.870147,
+          "unload_or_exit_stamp": 1792000691.3103783,
+          "samples": 44
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -50.0,
+      "acceleration_bound": 21.37451993801589,
+      "observed_peak": 16.05732302924299,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 38,
+          "pulse_request_stamp": 1792000692.9500082,
+          "unload_or_exit_stamp": 1792000693.2802348,
+          "samples": 34
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -55.0,
+      "acceleration_bound": 54.19079124185282,
+      "observed_peak": 41.30060864757909,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 39,
+          "pulse_request_stamp": 1792000694.9707108,
+          "unload_or_exit_stamp": 1792000695.4904692,
+          "samples": 52
+        },
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 40,
+          "pulse_request_stamp": 1792000713.2902417,
+          "unload_or_exit_stamp": 1792000713.5006735,
+          "samples": 22
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -60.0,
+      "acceleration_bound": 40.621132758367025,
+      "observed_peak": 30.86240981412848,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 41,
+          "pulse_request_stamp": 1792000715.2703643,
+          "unload_or_exit_stamp": 1792000715.6707988,
+          "samples": 41
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -65.0,
+      "acceleration_bound": 76.92485811550584,
+      "observed_peak": 58.788352396542955,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 42,
+          "pulse_request_stamp": 1792000717.2905412,
+          "unload_or_exit_stamp": 1792000717.460957,
+          "samples": 18
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 4.0,
+      "current": -70.0,
+      "acceleration_bound": 74.4462182721993,
+      "observed_peak": 56.881706363230236,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 43,
+          "pulse_request_stamp": 1792000737.8115778,
+          "unload_or_exit_stamp": 1792000738.0014668,
+          "samples": 20
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": 7.7331727125,
+      "acceleration_bound": 1.9958234813713205,
+      "observed_peak": 1.150633447208708,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 44,
+          "pulse_request_stamp": 1792000740.5714567,
+          "unload_or_exit_stamp": 1792000741.891545,
+          "samples": 132
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": 2.7331727125,
+      "acceleration_bound": 4.72068676311002,
+      "observed_peak": 3.2466821254692464,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 45,
+          "pulse_request_stamp": 1792000759.9517803,
+          "unload_or_exit_stamp": 1792000760.551733,
+          "samples": 60
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": 0.0,
+      "acceleration_bound": 6.984631542912836,
+      "observed_peak": 4.98817810993295,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 46,
+          "pulse_request_stamp": 1792000761.9315176,
+          "unload_or_exit_stamp": 1792000764.3356452,
+          "samples": 241
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -5.0,
+      "acceleration_bound": 9.563472702610975,
+      "observed_peak": 6.971902078931518,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 47,
+          "pulse_request_stamp": 1792000765.9124753,
+          "unload_or_exit_stamp": 1792000765.973944,
+          "samples": 6
+        },
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 48,
+          "pulse_request_stamp": 1792000784.812004,
+          "unload_or_exit_stamp": 1792000786.3923633,
+          "samples": 159
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -10.0,
+      "acceleration_bound": 8.98447788121577,
+      "observed_peak": 6.526521447089054,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 49,
+          "pulse_request_stamp": 1792000787.9729593,
+          "unload_or_exit_stamp": 1792000789.1324656,
+          "samples": 117
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -15.0,
+      "acceleration_bound": 9.749973832488715,
+      "observed_peak": 7.1153644865297805,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 50,
+          "pulse_request_stamp": 1792000790.7120621,
+          "unload_or_exit_stamp": 1792000791.662576,
+          "samples": 96
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -20.0,
+      "acceleration_bound": 12.771553531629287,
+      "observed_peak": 9.43965656279176,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 51,
+          "pulse_request_stamp": 1792000809.6931102,
+          "unload_or_exit_stamp": 1792000810.4734151,
+          "samples": 79
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -25.0,
+      "acceleration_bound": 13.638240532375345,
+      "observed_peak": 10.106338871057957,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 52,
+          "pulse_request_stamp": 1792000812.054885,
+          "unload_or_exit_stamp": 1792000812.7535539,
+          "samples": 70
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -30.0,
+      "acceleration_bound": 14.230111390115187,
+      "observed_peak": 10.561624146242451,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 53,
+          "pulse_request_stamp": 1792000814.333254,
+          "unload_or_exit_stamp": 1792000814.9536562,
+          "samples": 63
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -35.0,
+      "acceleration_bound": 14.911614121213336,
+      "observed_peak": 11.08585701631795,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 54,
+          "pulse_request_stamp": 1792000834.3542528,
+          "unload_or_exit_stamp": 1792000834.9147465,
+          "samples": 57
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -40.0,
+      "acceleration_bound": 17.595800125672174,
+      "observed_peak": 13.150615481286286,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 55,
+          "pulse_request_stamp": 1792000836.474513,
+          "unload_or_exit_stamp": 1792000836.98492,
+          "samples": 52
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -45.0,
+      "acceleration_bound": 16.778736141787185,
+      "observed_peak": 12.522104724451681,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 56,
+          "pulse_request_stamp": 1792000838.5344613,
+          "unload_or_exit_stamp": 1792000838.9949176,
+          "samples": 47
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -50.0,
+      "acceleration_bound": 22.87023862257153,
+      "observed_peak": 17.207875863516563,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 57,
+          "pulse_request_stamp": 1792000840.576264,
+          "unload_or_exit_stamp": 1792000840.6145434,
+          "samples": 3
+        },
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 58,
+          "pulse_request_stamp": 1792000858.2165382,
+          "unload_or_exit_stamp": 1792000858.4961915,
+          "samples": 28
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -55.0,
+      "acceleration_bound": 27.809954180903613,
+      "observed_peak": 21.007657062233548,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 59,
+          "pulse_request_stamp": 1792000860.0759134,
+          "unload_or_exit_stamp": 1792000860.2966712,
+          "samples": 23
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -60.0,
+      "acceleration_bound": 38.803111680806985,
+      "observed_peak": 29.46393206215922,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 60,
+          "pulse_request_stamp": 1792000861.9556494,
+          "unload_or_exit_stamp": 1792000862.2861774,
+          "samples": 34
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.5,
+      "current": -65.0,
+      "acceleration_bound": 56.45843890866994,
+      "observed_peak": 43.04495300666918,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 61,
+          "pulse_request_stamp": 1792000882.2784622,
+          "unload_or_exit_stamp": 1792000882.5272062,
+          "samples": 23
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": 7.189858299999999,
+      "acceleration_bound": 2.189682995903632,
+      "observed_peak": 1.2997561506951014,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 62,
+          "pulse_request_stamp": 1792000885.0969236,
+          "unload_or_exit_stamp": 1792000886.4584954,
+          "samples": 137
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": 2.189858299999999,
+      "acceleration_bound": 4.789968565992764,
+      "observed_peak": 3.2999758199944336,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 63,
+          "pulse_request_stamp": 1792000887.7789176,
+          "unload_or_exit_stamp": 1792000888.3380206,
+          "samples": 56
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": 0.0,
+      "acceleration_bound": 6.590113943488099,
+      "observed_peak": 4.684703033452384,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 64,
+          "pulse_request_stamp": 1792000906.238798,
+          "unload_or_exit_stamp": 1792000908.2383378,
+          "samples": 199
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -5.0,
+      "acceleration_bound": 8.382326016788685,
+      "observed_peak": 6.063327705222066,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 65,
+          "pulse_request_stamp": 1792000909.7782094,
+          "unload_or_exit_stamp": 1792000911.0886047,
+          "samples": 132
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -10.0,
+      "acceleration_bound": 11.149422691476698,
+      "observed_peak": 8.191863608828228,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 66,
+          "pulse_request_stamp": 1792000912.5982177,
+          "unload_or_exit_stamp": 1792000913.5588229,
+          "samples": 97
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -15.0,
+      "acceleration_bound": 12.102179054391414,
+      "observed_peak": 8.924753118762625,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 67,
+          "pulse_request_stamp": 1792000933.2593832,
+          "unload_or_exit_stamp": 1792000934.0596933,
+          "samples": 81
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -20.0,
+      "acceleration_bound": 11.360330470935361,
+      "observed_peak": 8.35410036225797,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 68,
+          "pulse_request_stamp": 1792000935.5601132,
+          "unload_or_exit_stamp": 1792000936.2197986,
+          "samples": 66
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -25.0,
+      "acceleration_bound": 12.892680320995067,
+      "observed_peak": 9.532831016150052,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 69,
+          "pulse_request_stamp": 1792000937.7195766,
+          "unload_or_exit_stamp": 1792000938.3100104,
+          "samples": 60
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -30.0,
+      "acceleration_bound": 13.513496908345338,
+      "observed_peak": 10.010382237188722,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 70,
+          "pulse_request_stamp": 1792000939.8195672,
+          "unload_or_exit_stamp": 1792000940.340001,
+          "samples": 53
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -35.0,
+      "acceleration_bound": 13.590872961532511,
+      "observed_peak": 10.069902278101932,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 71,
+          "pulse_request_stamp": 1792000957.962113,
+          "unload_or_exit_stamp": 1792000958.4456298,
+          "samples": 48
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -40.0,
+      "acceleration_bound": 16.044210777256232,
+      "observed_peak": 11.957085213274024,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 72,
+          "pulse_request_stamp": 1792000959.9606526,
+          "unload_or_exit_stamp": 1792000960.3409653,
+          "samples": 39
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -45.0,
+      "acceleration_bound": 20.172446853111367,
+      "observed_peak": 15.132651425470282,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 73,
+          "pulse_request_stamp": 1792000961.841102,
+          "unload_or_exit_stamp": 1792000962.1209996,
+          "samples": 29
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -50.0,
+      "acceleration_bound": 19.079655557140132,
+      "observed_peak": 14.292042736261639,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 74,
+          "pulse_request_stamp": 1792000963.6210835,
+          "unload_or_exit_stamp": 1792000963.8711622,
+          "samples": 25
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -55.0,
+      "acceleration_bound": 18.28827131820696,
+      "observed_peak": 13.68328562938997,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 75,
+          "pulse_request_stamp": 1792000984.0617466,
+          "unload_or_exit_stamp": 1792000984.3620758,
+          "samples": 31
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -60.0,
+      "acceleration_bound": 35.15653661230576,
+      "observed_peak": 26.658874317158272,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 76,
+          "pulse_request_stamp": 1792000985.8816438,
+          "unload_or_exit_stamp": 1792000986.042132,
+          "samples": 17
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -65.0,
+      "acceleration_bound": 85.93092202593314,
+      "observed_peak": 65.71609386610241,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 77,
+          "pulse_request_stamp": 1792000987.6030474,
+          "unload_or_exit_stamp": 1792000987.7522998,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -70.0,
+      "acceleration_bound": 53.290251960072304,
+      "observed_peak": 40.60788612313254,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 78,
+          "pulse_request_stamp": 1792000989.4022388,
+          "unload_or_exit_stamp": 1792000989.552285,
+          "samples": 16
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -75.0,
+      "acceleration_bound": 53.722693627452934,
+      "observed_peak": 40.94053355957918,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 79,
+          "pulse_request_stamp": 1792001008.0638213,
+          "unload_or_exit_stamp": 1792001008.2331903,
+          "samples": 17
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 3.0,
+      "current": -80.0,
+      "acceleration_bound": 93.32600139111797,
+      "observed_peak": 71.40461645470613,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 80,
+          "pulse_request_stamp": 1792001009.842792,
+          "unload_or_exit_stamp": 1792001009.9736075,
+          "samples": 14
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": 6.552785937499998,
+      "acceleration_bound": 2.422779898000108,
+      "observed_peak": 1.4790614600000829,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 81,
+          "pulse_request_stamp": 1792001012.4428906,
+          "unload_or_exit_stamp": 1792001013.782957,
+          "samples": 134
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": 1.5527859374999977,
+      "acceleration_bound": 4.850231387805386,
+      "observed_peak": 3.3463318367733734,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 82,
+          "pulse_request_stamp": 1792001015.10303,
+          "unload_or_exit_stamp": 1792001015.6631713,
+          "samples": 56
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": 0.0,
+      "acceleration_bound": 6.019071355513128,
+      "observed_peak": 4.245439504240867,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 83,
+          "pulse_request_stamp": 1792001035.3443508,
+          "unload_or_exit_stamp": 1792001036.9842308,
+          "samples": 164
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -5.0,
+      "acceleration_bound": 8.082921015768925,
+      "observed_peak": 5.833016165976095,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 84,
+          "pulse_request_stamp": 1792001038.4474943,
+          "unload_or_exit_stamp": 1792001039.4446478,
+          "samples": 100
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -10.0,
+      "acceleration_bound": 9.420609952298403,
+      "observed_peak": 6.862007655614156,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 85,
+          "pulse_request_stamp": 1792001040.90416,
+          "unload_or_exit_stamp": 1792001041.6647165,
+          "samples": 77
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -15.0,
+      "acceleration_bound": 9.287452395350975,
+      "observed_peak": 6.759578765654596,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 86,
+          "pulse_request_stamp": 1792001043.0844355,
+          "unload_or_exit_stamp": 1792001043.7149265,
+          "samples": 64
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -20.0,
+      "acceleration_bound": 10.664400083318933,
+      "observed_peak": 7.818769294860717,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 87,
+          "pulse_request_stamp": 1792001061.9451468,
+          "unload_or_exit_stamp": 1792001062.485532,
+          "samples": 55
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -25.0,
+      "acceleration_bound": 11.592004403045967,
+      "observed_peak": 8.532311079266128,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 88,
+          "pulse_request_stamp": 1792001063.9473836,
+          "unload_or_exit_stamp": 1792001064.435621,
+          "samples": 49
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -30.0,
+      "acceleration_bound": 13.777759067850988,
+      "observed_peak": 10.213660821423836,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 89,
+          "pulse_request_stamp": 1792001065.9064803,
+          "unload_or_exit_stamp": 1792001066.3256967,
+          "samples": 42
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -35.0,
+      "acceleration_bound": 14.146048445544245,
+      "observed_peak": 10.496960342726343,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 90,
+          "pulse_request_stamp": 1792001067.7853675,
+          "unload_or_exit_stamp": 1792001068.1657925,
+          "samples": 39
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -40.0,
+      "acceleration_bound": 16.683627849015206,
+      "observed_peak": 12.448944499242465,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 91,
+          "pulse_request_stamp": 1792001069.6257505,
+          "unload_or_exit_stamp": 1792001069.9459634,
+          "samples": 33
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -45.0,
+      "acceleration_bound": 16.017570148404673,
+      "observed_peak": 11.936592421849749,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 92,
+          "pulse_request_stamp": 1792001090.1489778,
+          "unload_or_exit_stamp": 1792001090.4667943,
+          "samples": 32
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -50.0,
+      "acceleration_bound": 18.171749846950153,
+      "observed_peak": 13.593653728423195,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 93,
+          "pulse_request_stamp": 1792001091.8868876,
+          "unload_or_exit_stamp": 1792001092.13682,
+          "samples": 25
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -55.0,
+      "acceleration_bound": 44.22825504788349,
+      "observed_peak": 33.637119267602685,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 94,
+          "pulse_request_stamp": 1792001093.5671115,
+          "unload_or_exit_stamp": 1792001093.71692,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -60.0,
+      "acceleration_bound": 27.20765301756783,
+      "observed_peak": 20.544348475052175,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 95,
+          "pulse_request_stamp": 1792001095.2469187,
+          "unload_or_exit_stamp": 1792001095.387032,
+          "samples": 14
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -65.0,
+      "acceleration_bound": 54.6712293006887,
+      "observed_peak": 41.670176385145155,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 96,
+          "pulse_request_stamp": 1792001096.907642,
+          "unload_or_exit_stamp": 1792001097.0570645,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -70.0,
+      "acceleration_bound": 72.43338234423804,
+      "observed_peak": 55.333371034029255,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 97,
+          "pulse_request_stamp": 1792001098.626692,
+          "unload_or_exit_stamp": 1792001098.7270997,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.5,
+      "current": -75.0,
+      "acceleration_bound": 72.27791247409364,
+      "observed_peak": 55.21377882622587,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 98,
+          "pulse_request_stamp": 1792001116.2074313,
+          "unload_or_exit_stamp": 1792001116.3277967,
+          "samples": 13
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": 5.788081200000001,
+      "acceleration_bound": 1.9986267671986564,
+      "observed_peak": 1.1527898209220433,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 99,
+          "pulse_request_stamp": 1792001118.7682877,
+          "unload_or_exit_stamp": 1792001120.0888398,
+          "samples": 132
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": 0.7880812000000006,
+      "acceleration_bound": 4.988542182556167,
+      "observed_peak": 3.452724755812436,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 100,
+          "pulse_request_stamp": 1792001121.4087577,
+          "unload_or_exit_stamp": 1792001122.0077019,
+          "samples": 59
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": 0.0,
+      "acceleration_bound": 5.745778319068748,
+      "observed_peak": 4.035214091591344,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 101,
+          "pulse_request_stamp": 1792001123.348149,
+          "unload_or_exit_stamp": 1792001124.5091171,
+          "samples": 116
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -5.0,
+      "acceleration_bound": 7.9430739737828615,
+      "observed_peak": 5.725441518294509,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 102,
+          "pulse_request_stamp": 1792001125.9342957,
+          "unload_or_exit_stamp": 1792001126.6693287,
+          "samples": 74
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -10.0,
+      "acceleration_bound": 8.289782578309982,
+      "observed_peak": 5.992140444853831,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 103,
+          "pulse_request_stamp": 1792001146.7489853,
+          "unload_or_exit_stamp": 1792001147.3091383,
+          "samples": 57
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -15.0,
+      "acceleration_bound": 9.686211446856612,
+      "observed_peak": 7.06631649758201,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 104,
+          "pulse_request_stamp": 1792001148.6715105,
+          "unload_or_exit_stamp": 1792001149.1291568,
+          "samples": 46
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -20.0,
+      "acceleration_bound": 9.553609589028841,
+      "observed_peak": 6.9643150684837245,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 105,
+          "pulse_request_stamp": 1792001150.5089524,
+          "unload_or_exit_stamp": 1792001150.9192395,
+          "samples": 42
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -25.0,
+      "acceleration_bound": 11.363693438449188,
+      "observed_peak": 8.356687260345529,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 106,
+          "pulse_request_stamp": 1792001152.3088746,
+          "unload_or_exit_stamp": 1792001152.6593227,
+          "samples": 36
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -30.0,
+      "acceleration_bound": 12.609108106834123,
+      "observed_peak": 9.314698543718556,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 107,
+          "pulse_request_stamp": 1792001154.0289135,
+          "unload_or_exit_stamp": 1792001154.329394,
+          "samples": 31
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -35.0,
+      "acceleration_bound": 13.176043292822913,
+      "observed_peak": 9.750802532940702,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 108,
+          "pulse_request_stamp": 1792001155.7293098,
+          "unload_or_exit_stamp": 1792001156.0095482,
+          "samples": 29
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -40.0,
+      "acceleration_bound": 15.295449990358362,
+      "observed_peak": 11.38111537719874,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 109,
+          "pulse_request_stamp": 1792001157.3895767,
+          "unload_or_exit_stamp": 1792001157.629497,
+          "samples": 24
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -45.0,
+      "acceleration_bound": 18.155632033740208,
+      "observed_peak": 13.58125541056939,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 110,
+          "pulse_request_stamp": 1792001175.40998,
+          "unload_or_exit_stamp": 1792001175.630991,
+          "samples": 23
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -50.0,
+      "acceleration_bound": 30.23547003456521,
+      "observed_peak": 22.873438488127086,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 111,
+          "pulse_request_stamp": 1792001177.0299728,
+          "unload_or_exit_stamp": 1792001177.170287,
+          "samples": 15
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -55.0,
+      "acceleration_bound": 36.297790480466816,
+      "observed_peak": 27.536761908051396,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 112,
+          "pulse_request_stamp": 1792001178.5300236,
+          "unload_or_exit_stamp": 1792001178.6303413,
+          "samples": 11
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -60.0,
+      "acceleration_bound": 46.13629658010126,
+      "observed_peak": 35.10484352315481,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 113,
+          "pulse_request_stamp": 1792001180.0523968,
+          "unload_or_exit_stamp": 1792001180.130509,
+          "samples": 8
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -65.0,
+      "acceleration_bound": 56.76892494206816,
+      "observed_peak": 43.283788416975504,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 114,
+          "pulse_request_stamp": 1792001181.510279,
+          "unload_or_exit_stamp": 1792001181.5705662,
+          "samples": 7
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -70.0,
+      "acceleration_bound": 65.08584009420396,
+      "observed_peak": 49.681415457079964,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 115,
+          "pulse_request_stamp": 1792001182.9500751,
+          "unload_or_exit_stamp": 1792001183.100533,
+          "samples": 16
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -75.0,
+      "acceleration_bound": 86.56512232588622,
+      "observed_peak": 66.20394025068171,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 116,
+          "pulse_request_stamp": 1792001184.5102293,
+          "unload_or_exit_stamp": 1792001184.6006606,
+          "samples": 10
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 2.0,
+      "current": -80.0,
+      "acceleration_bound": 76.71870231193046,
+      "observed_peak": 58.629771009177276,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 117,
+          "pulse_request_stamp": 1792001186.0717103,
+          "unload_or_exit_stamp": 1792001186.1606748,
+          "samples": 9
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": 4.8618696625,
+      "acceleration_bound": 1.9465158311751087,
+      "observed_peak": 1.1127044855193144,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 118,
+          "pulse_request_stamp": 1792001206.0123992,
+          "unload_or_exit_stamp": 1792001207.3518531,
+          "samples": 134
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": 0.0,
+      "acceleration_bound": 4.65641487547617,
+      "observed_peak": 3.1972422119047454,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 119,
+          "pulse_request_stamp": 1792001208.6529176,
+          "unload_or_exit_stamp": 1792001209.2731586,
+          "samples": 62
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -5.0,
+      "acceleration_bound": 8.35019877957389,
+      "observed_peak": 6.038614445826069,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 120,
+          "pulse_request_stamp": 1792001210.5919611,
+          "unload_or_exit_stamp": 1792001211.041612,
+          "samples": 45
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -10.0,
+      "acceleration_bound": 8.623879978248677,
+      "observed_peak": 6.2491384448066745,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 121,
+          "pulse_request_stamp": 1792001212.35132,
+          "unload_or_exit_stamp": 1792001212.691764,
+          "samples": 35
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -15.0,
+      "acceleration_bound": 9.785338639276533,
+      "observed_peak": 7.142568184058871,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 122,
+          "pulse_request_stamp": 1792001214.03144,
+          "unload_or_exit_stamp": 1792001214.3435023,
+          "samples": 32
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -20.0,
+      "acceleration_bound": 10.02637922865768,
+      "observed_peak": 7.327984022044369,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 123,
+          "pulse_request_stamp": 1792001215.6915228,
+          "unload_or_exit_stamp": 1792001215.9418328,
+          "samples": 26
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -25.0,
+      "acceleration_bound": 17.145608030488788,
+      "observed_peak": 12.804313869606759,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 124,
+          "pulse_request_stamp": 1792001217.273092,
+          "unload_or_exit_stamp": 1792001217.4718926,
+          "samples": 20
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -30.0,
+      "acceleration_bound": 25.52194292547562,
+      "observed_peak": 19.247648404212015,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 125,
+          "pulse_request_stamp": 1792001218.7918293,
+          "unload_or_exit_stamp": 1792001218.8521512,
+          "samples": 7
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -35.0,
+      "acceleration_bound": 25.586577650053762,
+      "observed_peak": 19.297367423118278,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 126,
+          "pulse_request_stamp": 1792001219.954243,
+          "unload_or_exit_stamp": 1792001220.0320168,
+          "samples": 8
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -40.0,
+      "acceleration_bound": 39.71939681925971,
+      "observed_peak": 30.16876678404593,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 127,
+          "pulse_request_stamp": 1792001221.2719734,
+          "unload_or_exit_stamp": 1792001221.3320343,
+          "samples": 7
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -45.0,
+      "acceleration_bound": 36.85938165222869,
+      "observed_peak": 27.968755117098993,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 128,
+          "pulse_request_stamp": 1792001238.5724158,
+          "unload_or_exit_stamp": 1792001238.632696,
+          "samples": 7
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -50.0,
+      "acceleration_bound": 64.08365774016224,
+      "observed_peak": 48.910505953970954,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 129,
+          "pulse_request_stamp": 1792001239.8533666,
+          "unload_or_exit_stamp": 1792001239.9532611,
+          "samples": 10
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -55.0,
+      "acceleration_bound": 64.7767499298398,
+      "observed_peak": 49.443653792184456,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 130,
+          "pulse_request_stamp": 1792001241.3125577,
+          "unload_or_exit_stamp": 1792001241.3828914,
+          "samples": 8
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -60.0,
+      "acceleration_bound": 64.79189010729867,
+      "observed_peak": 49.455300082537434,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 131,
+          "pulse_request_stamp": 1792001242.7525573,
+          "unload_or_exit_stamp": 1792001242.8428528,
+          "samples": 10
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -65.0,
+      "acceleration_bound": 62.80466726085027,
+      "observed_peak": 47.92666712373098,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 132,
+          "pulse_request_stamp": 1792001244.2128334,
+          "unload_or_exit_stamp": 1792001244.292923,
+          "samples": 9
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -70.0,
+      "acceleration_bound": 51.80630254013269,
+      "observed_peak": 39.46638656933284,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 133,
+          "pulse_request_stamp": 1792001245.6734438,
+          "unload_or_exit_stamp": 1792001245.763571,
+          "samples": 9
+        }
+      ]
+    },
+    {
+      "stage": "decel_current",
+      "start_speed": 1.5,
+      "current": -75.0,
+      "acceleration_bound": 59.93865842780238,
+      "observed_peak": 45.72204494446337,
+      "evidence": [
+        {
+          "run": "015017-C-resume-minus60A-odom30cm",
+          "trial_id": 134,
+          "pulse_request_stamp": 1792001247.1327713,
+          "unload_or_exit_stamp": 1792001247.1929965,
+          "samples": 7
+        }
+      ]
+    }
+  ]
+}

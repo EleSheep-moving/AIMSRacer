@@ -10,9 +10,9 @@
 |---|---|---|
 | IMU 与安装标定 | 偏置、比例、轴向、IMU 到后轴／质心的外参 | 完整六姿态与三维外参未完成；IMU 比质心高约 3 cm，高差仍为估计值 |
 | AY 输出质量校对 | 后轴／质心惯性加速度的 bias、动态误差、覆盖率与响应 | 独立五量已部署，可发布；Vicon 采集分析工具已准备，独立实车动态验收待测 |
-| 横向附着／侧滑标定 | 左右转弯能力、侧滑临界与路面／轮胎附着 | 固定半径逐级升速流程仅有历史教程；旧自动脚本不是当前可用工具，不能认定附着上限已标定 |
+| 横向附着／侧滑标定 | 左右转弯能力、侧滑临界与路面／轮胎附着 | C++ 自动横向工具已恢复，位于 `src/calibration/lateral_grip/`；附着上限仍待实测 |
 
-[五量 NX 部署](../reports/2026-10-18-state-observer-nx-deployment.zh-CN.md)证明安装与输出链可用；[历史 AY 质量报告](../reports/2026-10-15-planar-acceleration-quality.zh-CN.md)记录单分量实现的相位和时间支持问题，两者不能替代独立动态误差测量。本页只整理现有用法和状态，没有恢复横向自动驾驶程序。
+当前输出定义和限制见[后轴／质心五量指南](state-observer.zh-CN.md)；安装或软件输出可用不能替代独立动态误差测量。自动横向程序与现场参数见[当前 C++ 横向源码指南](../../src/calibration/lateral_grip/README.zh-CN.md)。
 
 ## 选择正确的 AY
 
@@ -36,11 +36,9 @@
 工具与测试见[交付报告](../reports/2026-10-18-mocap-validation.zh-CN.md)，[合成示例](../reports/assets/2026-10-18-mocap-validation/demo/report.zh-CN.md)仅演示输出，不是实车标定结果。
 
 <a id="lateral-grip"></a>
-## 横向附着标定：历史入口与限制
+## 横向附着标定：当前工具
 
-[历史中文教程](../reports/2026-10-10-calibration-guide-archive.md#historical-lateral-grip)和[英文教程](../reports/2026-10-10-calibration-guide-en-archive.md#historical-lateral-grip)保存固定半径圆、左右方向、逐级升速的设计，以及历史结果文件说明。
-
-2026-10-18 核查：当前 NX 主安装没有 `lateral_grip_calib` 可用 launch／可执行入口。源码树残留的 Python 字节码缓存不等于可部署工具。旧教程中出现的自动启动命令是历史记录，不能作为已验证的当前流程。
+当前 [C++ 横向工具](../../src/calibration/lateral_grip/README.zh-CN.md)接入 `/calib/vesc_command`，默认不启用；左右换向前需要新鲜轮速确认停稳。原 Python／Ackermann 命令只保留作历史记录。固定转角只给名义半径，实际半径另行统计；源码与[纵向电流及动捕](../../src/calibration/README.zh-CN.md)统一管理。
 
 在独立 AY／VX／VY／yaw rate、几何与同步尚未验证前，不根据 IMU 峰值或 `v_x*r` 直接填写新的 `mu_safe` 或横向加速度上限。当前没有新增横向附着系数，也没有因这些报告改动 MPCC 速度规划或约束。
 

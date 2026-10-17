@@ -2,15 +2,17 @@
 
 [简体中文](README.zh-CN.md)
 
-This directory contains the **offline, causal comparison** and a separate ROS/DDS runtime replay harness. Offline replay consumes archived wheel speed, corrected rear-axle IMU specific force and optional LIO attitude, producing scalar estimates and evidence. The installed wheel + IMU runtime lives in `aims_racer_system`, uses the same observer core, and is opt-in through `longitudinal_acceleration:=true` (default `false`). See the [runtime operation guide](../../docs/operations/longitudinal-acceleration.md).
+This directory contains the **offline, causal comparison** and a separate ROS/DDS runtime replay harness. Offline replay consumes archived wheel speed, corrected rear-axle IMU specific force and optional LIO attitude, producing scalar estimates and evidence. The installed wheel + IMU runtime lives in `aims_racer_system`, uses a C++ core checked against the retained Python numerical reference, and is opt-in through `longitudinal_acceleration:=true` (default `false`). See the [runtime operation guide](../../docs/operations/longitudinal-acceleration.md).
+
+The installed native process is verified by [package DDS/parity tests](../../src/aims_racer_system/tests) and the [Oct 15 migration report](../../docs/reports/2026-10-15-native-state-nodes.md). `runtime_replay.py` instruments the retained Python wrapper; its historical results do not measure the C++ process.
 
 ## Files
 
 | File | Responsibility |
 |---|---|
-| [observer.py](observer.py) | Offline compatibility import of the [canonical installed core](../../src/aims_racer_system/aims_racer_system/longitudinal_observer.py): integer source times, immutable emitted estimates and delayed historical updates |
-| [ROS wrapper](../../src/aims_racer_system/aims_racer_system/longitudinal_acceleration.py) | Dedicated wheel + IMU node, acceleration/status messages, initialization and source-age diagnostics |
-| [runtime_replay.py](runtime_replay.py) | Actual DDS delivery and receipt-order oracle comparison using the ROS wrapper, without vehicle drivers |
+| [observer.py](observer.py) | Offline compatibility import of the [Python offline reference core](../../src/aims_racer_system/aims_racer_system/longitudinal_observer.py): integer source times, immutable emitted estimates and delayed historical updates |
+| [Native ROS node](../../src/aims_racer_system/src/longitudinal_acceleration.cpp) | Dedicated wheel + IMU node, acceleration/status messages, initialization and source-age diagnostics |
+| [runtime_replay.py](runtime_replay.py) | Historical Python-wrapper DDS/receipt-order oracle comparison; native DDS tests are in the system package |
 | [replay.py](replay.py) | Hash-verified input loading, receipt-order replay, training-only parameter selection |
 | [evaluate.py](evaluate.py) | Separate offline references, metrics, plots and artifact-only plot regeneration |
 | [test_observer.py](test_observer.py) | Numerical, clock, history, nuisance and synthetic-truth tests |

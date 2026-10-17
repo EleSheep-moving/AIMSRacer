@@ -1,0 +1,25 @@
+name: rolling build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rolling_build:
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-resolute-ros-rolling-ros-base-latest
+    steps:
+      - name: ROS2 build and test
+        uses: ros-tooling/action-ros-ci@v0.4
+        with:
+          package-name: vrpn_mocap
+          target-ros2-distro: rolling

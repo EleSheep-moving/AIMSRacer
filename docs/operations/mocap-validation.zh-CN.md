@@ -17,7 +17,7 @@
 ```bash
 source /opt/ros/humble/setup.bash
 cd ~/AIMSRacer
-src/mocap_validation/build.sh
+src/calibration/mocap_validation/build.sh
 source install/setup.bash
 colcon test --packages-select aims_mocap_validation --event-handlers console_direct+
 colcon test-result --verbose
@@ -46,14 +46,14 @@ NX 的 CMake 4 需要构建脚本中的最低策略版本参数，以及编译�
 
 ```bash
 cd ~/AIMSRacer
-src/mocap_validation/run.sh inspect --config /绝对路径/config.json
-src/mocap_validation/run.sh record --config /绝对路径/config.json \
+src/calibration/mocap_validation/run.sh inspect --config /绝对路径/config.json
+src/calibration/mocap_validation/run.sh record --config /绝对路径/config.json \
   --output ~/aimsracer-data/sessions/2026-10-19/mocap/run01
 # Ctrl-C 结束并落盘；也支持 --seconds 60
-src/mocap_validation/run.sh extract --config /绝对路径/config.json \
+src/calibration/mocap_validation/run.sh extract --config /绝对路径/config.json \
   --bag ~/aimsracer-data/sessions/2026-10-19/mocap/run01/bag \
   --output ~/aimsracer-data/sessions/2026-10-19/mocap/run01-extracted
-src/mocap_validation/run.sh analyze --config /绝对路径/config.json \
+src/calibration/mocap_validation/run.sh analyze --config /绝对路径/config.json \
   --input ~/aimsracer-data/sessions/2026-10-19/mocap/run01-extracted \
   --task all --output ~/aimsracer-data/sessions/2026-10-19/mocap/run01-report
 ```
@@ -61,7 +61,7 @@ src/mocap_validation/run.sh analyze --config /绝对路径/config.json \
 `analyze --task state|fastlio|actuator` 可单独分析。`extract` 自动读取 bag 同级 `timing.csv`、健康文件和采集清单；另行保存时用 `--timing` 指定。支持 SQLite 分片包及外部 Vicon CSV（列见旧 Vicon 文档）。
 
 ```bash
-src/mocap_validation/run.sh demo --output /绝对路径/全新合成示例目录
+src/calibration/mocap_validation/run.sh demo --output /绝对路径/全新合成示例目录
 ```
 
 合成示例只验证软件，所有报告显式标注合成。`inspect` 的缺话题/类型不匹配返回 2；分析任务配置不足返回 2 并生成原因报告。录制允许尚未出现的话题，已有类型冲突则拒绝，以免误解消息。
@@ -91,4 +91,4 @@ C++ 记录每条消息源时间、可用的 DDS 发布时间/接收时间、回�
 
 ## 电流与横向加速度标定导航
 
-[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。
+[电流标定 A/B/C 与当前结果](calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](lateral-acceleration-calibration.zh-CN.md)。源码统一在 `src/calibration/`，横向使用当前 C++ 入口；历史 Python 命令仅供溯源。

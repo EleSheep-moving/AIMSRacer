@@ -115,3 +115,6 @@ Enable requires a ready solver, fresh rear-axle state, actual forwarded history,
 ## Current and lateral-acceleration calibration
 
 [Current calibration A/B/C and selected offline models](../../../docs/operations/calibration.md) · [Lateral AY validation and grip status](../../../docs/operations/lateral-acceleration-calibration.md). Interval-current fits and lateral tire capability require separate validation; these reports do not install a new feedforward controller or lateral-acceleration limit.
+
+
+[Offline map/reference and calibration-region editor](../../../tools/reference/editor/README.md) · [轮速电流离线工具](../../calibration/longitudinal_current/docs/wheel-current-model.zh-CN.md)

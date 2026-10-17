@@ -8,9 +8,9 @@
 |---|---|---|
 | IMU and mounting calibration | Bias, scale, axes and IMU-to-rear/CG extrinsics | Complete six-position and 3D extrinsic calibration pending; the IMU is approximately 3 cm above the CG, with that height difference estimated |
 | AY output validation | Rear/CG inertial acceleration bias, dynamic errors, coverage and response | Independent outputs deployed on NX; Vicon acquisition/analysis ready, independent vehicle accuracy pending |
-| Lateral grip and slip | Left/right turning capability, slip onset and tire/surface grip | Stepped-speed fixed-radius procedure is historical; its old automatic script is not a current usable tool |
+| Lateral grip and slip | Left/right turning capability, slip onset and tire/surface grip | Restored C++ stepped-speed nominal-steering tool; physical grip limits pending |
 
-[State deployment evidence (Chinese)](../reports/2026-10-18-state-observer-nx-deployment.zh-CN.md) establishes installation and software outputs. The [historical AY report](../reports/2026-10-15-planar-acceleration-quality.md) records phase and time-support issues in the earlier scalar branch. Neither establishes independent dynamic accuracy. This page adds no automatic lateral driving program.
+Use the [unified state guide (Chinese)](state-observer.zh-CN.md) for current output definitions and limitations. Installation and software output checks do not establish independent dynamic accuracy. See the [current C++ lateral package](../../src/calibration/lateral_grip/README.md) for commands and field parameters.
 
 ## Choose the correct AY
 
@@ -32,11 +32,9 @@ At a common point in planar motion, `a_y=dot(v_y)+v_x*r`. The `v_x*r` approximat
 [Delivery and tests (Chinese)](../reports/2026-10-18-mocap-validation.zh-CN.md) · [Explicitly synthetic demonstration](../reports/assets/2026-10-18-mocap-validation/demo/report.zh-CN.md)
 
 <a id="lateral-grip"></a>
-## Lateral-grip calibration: historical entry
+## Lateral-grip calibration: current tool and history
 
-The [English](../reports/2026-10-10-calibration-guide-en-archive.md#historical-lateral-grip) and [Chinese](../reports/2026-10-10-calibration-guide-archive.md#historical-lateral-grip) archives preserve fixed-radius left/right stepped-speed designs and historical output definitions.
-
-The 2026-10-18 inspection found no usable `lateral_grip_calib` launch/executable in the current NX main installation. Residual Python bytecode is not a deployed tool. Historical launch commands are not a validated current procedure.
+The restored [C++ lateral package](../../src/calibration/lateral_grip/README.md) uses the existing VESC selector and explicit enable. Fixed steering specifies a nominal radius; measured radius is retained separately. Historical Python/Ackermann commands remain provenance only.
 
 Independent state accuracy, geometry and synchronization remain to be validated. No new `mu_safe` or lateral limit is inferred from raw IMU peaks or `v_x*r`; MPCC planning and constraints are unchanged.
 

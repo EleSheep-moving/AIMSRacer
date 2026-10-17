@@ -1,0 +1,25 @@
+vx_observer:
+  ros__parameters:
+    imu_topic: /livox/imu_bias_corrected
+    lio_topic: /fastlio2/lio_odom
+    output_topic: /state_estimation/vx
+    imu_frame: livox_frame
+    world_frame: odom
+    body_frame: base_link
+    gravity: 9.80665
+    position_std: 0.03
+    bias_psd: 0.0001
+    force_variance: 0.01
+    tilt_std: 0.00872664626
+    initial_bias_std: 0.2
+    initialization_span: 0.2
+    position_gate: 16.266
+    angle_gate: 0.35
+    max_gap: 0.03
+    degraded_age: 0.3
+    max_age: 0.5
+    history: 2.0
+    max_events: 4096
+    imu_max_age_s: 0.05
+    # Effective, uncalibrated covariance. LIO and IMU share information.
+    # Geometry comes from rear_axle_geometry.yaml through velocity.launch.py.

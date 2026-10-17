@@ -2,6 +2,8 @@
 
 [English](longitudinal-acceleration.md) · **简体中文**
 
+独立 IMU＋延迟 LIO 的惯性加速度观测见[车体加速度](body-acceleration.zh-CN.md)。新节点使用单独话题和物理定义；本页轮速融合节点继续保留。
+
 选定的轮速＋IMU 观测器提供独立纵向加速度估计，用于录制和下游参考。场地验证时显式开启；不改变导航 EKF、TF、MPCC、VESC 或驾驶权限，加速度反馈控制尚未接入。
 
 ## 输入与输出
@@ -52,7 +54,7 @@ ros2 launch aims_racer_system longitudinal_acceleration.launch.py
 
 首次输出需要有效轮速和比力。初始化之后，无效比力被跳过，其默认零值不会融合；IMU 心跳仍可触发模型/轮速估计。源年龄告警只是诊断，不冻结输出。ROS 时间回退时重置状态、历史及初始化。无效坐标系、非有限数据、未来时间戳、历史保留失败都有计数。
 
-独立进程串行处理输入与状态回调，数学核心与离线比较共用。没有额外输出低通滤波、LIO 预测或 LIO 年龄依赖。
+独立 C++ 进程串行处理输入与状态回调，三状态核心与保留的 Python 离线参考做数值一致性对照；见[原生迁移](../reports/2026-10-15-native-state-nodes.zh-CN.md)。没有额外输出低通滤波、LIO 预测或 LIO 年龄依赖。
 
 ## 检查与录制两圈
 
@@ -69,6 +71,8 @@ ros2 topic echo /state_estimation/longitudinal_acceleration/status --once
 ## 参数和证据
 
 安装参数位于 `params/longitudinal_acceleration.yaml`：jerk PSD 30、干扰 PSD 0.1、轮速方差 0.01、比力方差 16、历史 2 秒/4,096 条。这些是六次训练、两次保留录包选出的有效调参值，运行期 B 节点没有启用重力/LIO 观测。
+
+2026-10-14 的[离线调参对照](../reports/2026-10-14-longitudinal-filter-tuning.zh-CN.md)另提供可选 `params/longitudinal_acceleration_tuned_20261014.yaml`：干扰 PSD 0.01、轮速方差 0.0025，其余参数沿用上述值。默认仍使用原文件。独立 launch 可通过 `config:=/absolute/path/to/longitudinal_acceleration_tuned_20261014.yaml` 显式选择候选；只运行一个节点。候选仅经过离线回放，尚未部署 NX 或完成新场地验证。
 
 [离线比较](../reports/2026-10-12-longitudinal-acc-observer.zh-CN.md)建立录制输入上的效果，[验证工具](../../verification/acceleration/README.zh-CN.md)提供复现。安装软件、合成 DDS 回放、车辆联合负载和真实场地驾驶属于不同证据阶段。确认场地响应和数据质量前，加速度输出用于观测。
 

@@ -1,0 +1,25 @@
+name: jazzy build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  jazzy_build:
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-noble-ros-jazzy-ros-base-latest
+    steps:
+      - name: ROS2 build and test
+        uses: ros-tooling/action-ros-ci@v0.4
+        with:
+          package-name: vrpn_mocap
+          target-ros2-distro: jazzy

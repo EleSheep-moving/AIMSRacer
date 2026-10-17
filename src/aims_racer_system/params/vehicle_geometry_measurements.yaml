@@ -1,0 +1,32 @@
+# Measurement record. state_observer.launch.py consumes the IMU-to-CG estimate.
+# Existing rear-axle launches/controllers do not consume this file.
+# Dates record when the owner supplied the values, not when measurements were made.
+schema_version: 1
+reported_on: "2026-10-15"
+updated_on: "2026-10-17"
+source: user_reported_geometry
+axes: "ROS vehicle body axes: x forward, y left, z up"
+
+wheelbase:
+  value_m: 0.365
+  uncertainty_m: null
+
+imu_to_center_of_mass:
+  from_point: mid360_internal_imu
+  to_point: vehicle_center_of_mass
+  expressed_in: vehicle_body_axes
+  definition: "position(center_of_mass) - position(imu)"
+  x_m: -0.09
+  y_m: -0.03
+  z_m: -0.03
+  z_estimated: true
+  z_estimate_reported_on: "2026-10-17"
+  z_sign: negative
+  z_evidence: "Owner estimates IMU is 3 cm above center of mass; exact height and uncertainty unknown."
+  uncertainty_m: null
+
+# The current rear_axle_geometry.yaml uses an approximate common external Livox
+# origin. Do not derive an exact rear-axle-to-CG position from it without checking
+# the physical IMU origin, lidar internal offset and actual mounting measurement.
+complete_3d_offset_available: true
+complete_3d_offset_measured: false

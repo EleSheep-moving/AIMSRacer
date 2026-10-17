@@ -1,6 +1,6 @@
 # Body longitudinal acceleration from IMU and delayed LIO
 
-> Publication scope (2026-10-18): this records the deployed workspace. This documentation commit does not include the associated new runtime sources. Commands require that deployed environment. For current rear/CG outputs, see [the state guide (Chinese)](state-observer.zh-CN.md). This is the historical standalone branch.
+> 兼容单分量接口说明：当前推荐使用[后轴／质心统一五量节点](state-observer.zh-CN.md)。对应源码保留在 `src/aims_racer_system/`，按当前构建流程生成。
 
 
 **English** · [简体中文](body-acceleration.zh-CN.md) · Implementation plan（recorded workspace path：`docs/plans/2026-10-15-body-acceleration.md`）

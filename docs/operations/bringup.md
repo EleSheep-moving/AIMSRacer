@@ -76,4 +76,4 @@ Field emergency stopping relies on RC/the physical emergency stop; use Ctrl-C af
 
 ## Current and lateral-acceleration calibration
 
-[Current calibration A/B/C and selected results](calibration.md#current-calibration) · [Lateral AY validation and grip status](lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.
+[Current calibration A/B/C and selected results](calibration.md#current-calibration) · [Lateral AY validation and grip status](lateral-acceleration-calibration.md). Source is unified under `src/calibration/`; use the restored C++ lateral entry. Historical Python commands are provenance only.

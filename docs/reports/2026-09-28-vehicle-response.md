@@ -1,5 +1,7 @@
 # Vehicle speed and steering response — 2026-09-28 analysis
 
+Storage update (2026-10-13): the original bag was removed from NX after a SHA-256-verified copy to `/home/elesheep/aimsracer-data/archive/nx-bag-cleanup-2026-10-13/data/sessions/2026-09-27/calibration-234227/bag/mpcc-calib-20260927-234227_0.db3`. The source paths below describe the original analysis location.
+
 Source: local bag `mpcc-calib-20260927-234227_0.db3` in
 `/home/aims/mpcc-calib-20260927-234227/` (233.87 s, recorded 2026-09-27).
 The bag is not checked into the repository. Tests used V2 on the Orin NX with

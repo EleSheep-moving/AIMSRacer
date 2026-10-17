@@ -1,0 +1,26 @@
+lateral_grip_calib:
+  ros__parameters:
+    use_sim_time: false
+    physical_configuration_selected: false
+    wheelbase: 0.0
+    nominal_radius: 0.0
+    speed_steps: [0.0]
+    speed_limit: 0.0
+    steering_limit: 0.0
+    max_motor_current: 0.0
+    min_voltage: 0.0
+    max_temperature: 0.0
+    ramp_rate: 0.0
+    speed_tolerance: 0.1
+    settle_seconds: 1.0
+    hold_seconds: 3.0
+    stage_timeout: 30.0
+    minimum_hold_samples: 10
+    stop_seconds: 1.0
+    stop_timeout: 15.0
+    standstill_speed: 0.05
+    freshness_seconds: 0.25
+    max_command_latency: 0.1
+    rc_profile: steering_ch1_throttle_ch3_aux_ch5_to_ch10
+    output_root: ""
+    source_revision: unrecorded

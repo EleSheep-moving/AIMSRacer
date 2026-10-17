@@ -12,7 +12,9 @@
 
 ## 2. 测量口径与数据位置
 
-原始数据保留在 NX：`/home/aims/aimsracer-data/sessions/2026-10-10/mpcc-acados/`（约 20 GB）。本地主证据目录：`/home/elesheep/aimsracer-data/sessions/2026-10-10/mpcc-field-review/`，含源文件快照/哈希、原始轻量日志、只读 bag 提取、可复现分析脚本、完整回归日志。
+分析时原始数据位于 NX：`/home/aims/aimsracer-data/sessions/2026-10-10/mpcc-acados/`（约 20 GB）。本地主证据目录：`/home/elesheep/aimsracer-data/sessions/2026-10-10/mpcc-field-review/`，含源文件快照/哈希、原始轻量日志、只读 bag 提取、可复现分析脚本、完整回归日志。
+
+2026-10-13 存储清理更新：按用户要求，该日期目录中的 11 个旧原始 bag 数据文件已从 NX 删除；两轮 V35（`192955_v35_n15_accel1_cap4_lap01`、`193524_v35_n15_accel1_cap4_lap02`）仍保留原始 bag。配置、metadata、runtime 和既有分析记录保留，已删除的原始 bag 无法直接回放。逐文件清单位于 NX 的 `/home/aims/aimsracer-data/maintenance/2026-10-13-bag-cleanup/cleanup-result.json`，本机副本为 `/home/elesheep/aimsracer-data/archive/nx-bag-cleanup-2026-10-13/cleanup-result.json`。
 
 - **运动窗口**：首次 RUNNING 后，滤波里程计 `abs(vx)>0.05 m/s` 的首末时刻差；排除之后手动移动。它是本次从静止出发、终点制动测试的近似运动时间，不是独立计时的 flying lap。
 - **状态完成时间**：首次 RUNNING 到首次 COMPLETE 的 bag 接收时间差，约有 0.1 s 状态采样误差。另列终点等待，避免混入圈速。

@@ -20,6 +20,9 @@ flowchart LR
     Wheel --> Acc[optional acceleration observer]
     RearIMU --> Acc
     Acc --> AccOut[acceleration / dedicated status / recording]
+    Bias --> BodyAcc[optional body acceleration]
+    RearLIO --> BodyAcc
+    BodyAcc --> BodyOut[inertial ax / source stamp / diagnostics]
     LIO --> NDT[NDT known map]
     EKF --> NDT
     NDT --> Health[localization monitor]
@@ -37,6 +40,8 @@ MPCC 发布的是提议。RC 选择器决定是否转发、以何种模式转发
 
 <a id="frame-and-mounting-conventions"></a>
 ## 坐标与安装约定
+
+持续运行的 `livox_gyro_bias`、`lio_to_rear_axle` 和可选 `longitudinal_acceleration` 现均为 C++，IMU 适配器原本就是原生节点。[15 日迁移](reports/2026-10-15-native-state-nodes.zh-CN.md)保留源时间与标定契约，并记录本机/NX 软件验证。
 
 `base_link` 位于后轴中点，x 向前、y 向左、z 向上。`rear_offset=0`，默认 footprint 相对该点前 0.52 m、后 0.10 m、左右 0.16 m。
 
@@ -80,6 +85,8 @@ VESC 不发布该车辆 TF。PGO 与 NDT 使用不同运行入口，以保持 ma
 | `/rear_axle/wheel_odom` | VESC | 后轴 wheel vx，100 Hz 配置；EKF |
 | `/state_estimation/longitudinal_acceleration` | 可选轮速＋IMU 观测器 | `AccelWithCovarianceStamped`，`base_link`，linear.x=`d(body_vx)/dt`，ROS 估计时间戳；录制/下游参考，不输入导航 EKF |
 | `/state_estimation/longitudinal_acceleration/status` | 同一独立观测器 | 初始化、源年龄、比力有效性、计数与回调耗时；年龄告警只用于诊断 |
+| `/state_estimation/body_acceleration` | 可选修正后原始 IMU＋延迟 LIO 观测器 | 后轴 `base_link` 处车体前向投影的惯性加速度，IMU 源时间；用于独立观测 |
+| `/state_estimation/body_acceleration/status` 和 `/debug` | 同一车体观测器 | 分量时间支持、有效性、标定标志、分级数值和回放/回调计数 |
 | `/odometry/filtered` | EKF | `odom/base_link`，200 Hz 配置；MPCC、scan-time TF 预测 |
 | `/localization/ndt_pose` | NDT | 配准输出 pose |
 | `/localization/odom_bridge_pose` | NDT | 连续本地运动与地图锚点桥接 pose |
@@ -118,6 +125,8 @@ Vehicle/race 提供 `longitudinal_acceleration:=true`，默认 `false`。独立 
 
 保存参考在 `map` 中，绑定准确 PCD hash。控制状态和模型传播保持连续 `odom/base_link`；可信 `map ← odom` 对齐用于参考投影、误差与可选边界计算。初值是 **base_link 在 map 中的六维 pose**，详见[已知地图流程](operations/known-map-mpcc.zh-CN.md)。
 
+NDT 配置为 **5 Hz 匹配、2 个匹配线程**（`registration_frequency_hz: 5.0`）；原始点云与 LIO 仍保持原频率。该选择用地图校正新鲜度换取约 35% 的 NDT CPU 节省，依据与回退方法见[定位监控文档](localization_monitor.zh-CN.md)。
+
 NDT 的 50 Hz map TF 可持有上次可信修正，不等于 50 Hz 重新配准。monitor 与 native 同时检查 epoch、sequence、源与接收年龄、地图身份及一致的可信对齐载荷。TF 单独新鲜不能授予自主控制。
 
 <a id="native-mpcc-and-current-limits"></a>
@@ -129,6 +138,8 @@ NDT 的 50 Hz map TF 可持有上次可信修正，不等于 50 Hz 重新配准�
 
 [2026-10-10 实跑](reports/2026-10-10-mpcc-field-review.md)规划峰值 2.99、实测峰值约 2.89 m/s，运动窗口并非 flying lap。这些记录不证明更高抓地能力或其他地图下的运行表现。
 
+另一次[15 日连续圈实验](reports/2026-10-15-mpcc-multilap-review.zh-CN.md)使用巡航/上限 4.5/5.0、加减速 2.4/4.0、ay=3.0，并在线修改目标/权重；其配置与结果不替代上述源码默认值。
+
 ## 电流与横向加速度标定导航
 
-[电流标定 A/B/C 与当前结果](operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](operations/lateral-acceleration-calibration.zh-CN.md)。操作按各指南注明的已部署环境执行；横向附着旧自动流程不作为当前启动入口。
+[电流标定 A/B/C 与当前结果](operations/calibration.zh-CN.md#current-calibration) · [横向加速度 AY 校对及附着标定状态](operations/lateral-acceleration-calibration.zh-CN.md)。源码统一在 `src/calibration/`，横向使用当前 C++ 入口；历史 Python 命令仅供溯源。

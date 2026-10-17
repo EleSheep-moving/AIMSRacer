@@ -1,13 +1,13 @@
-# Calibration history and current operation
+# 当前标定源码与操作入口
 
-Current instructions are maintained in [current and lateral-acceleration calibration](../../../docs/operations/calibration.md), [main deployment](../../../docs/deployment/README.md), and [vehicle bringup](../../../docs/operations/bringup.md). A/B/C collection and offline models are available; the acceleration-control interface remains separate.
+[English](calibration.md) · [简体中文](calibration.zh-CN.md)
 
-The previous English collection guide is preserved in the [2026-10-10 archive](../../../docs/reports/2026-10-10-calibration-guide-en-archive.md). Its scripts, launch files and external workspaces describe historical source layouts; some entry points have been removed. Use the current deployment, known-map and recording guides for vehicle operation.
+纵向电流、自动横向标定与动捕校对源码统一在 [src/calibration](../../calibration/README.zh-CN.md)，在线状态机／PP 和采集节点使用 C++。现场加载本工作区 `install/setup.bash`。
 
-Calibration now uses `/calib/vesc_command` (`vesc_msgs/msg/VescCommand`). Publishers
-must use current ROS time and `base_link`, fill only the selected mode's target,
-and send a new command after RC unlock/arming. Mode 4 is reserved; nonzero braking
-is disabled by default. The historical Ackermann calibration schema cannot be
-connected with a topic remap. See the [native command contract](../../../docs/vesc-command.md).
+- [纵向 A/B/C 恒流协议](../../../docs/operations/full-step-current.zh-CN.md)：准备基准、地图与参考，启动和显式启用分开。
+- [轮速电流离线拟合／查询](../../calibration/longitudinal_current/docs/wheel-current-model.zh-CN.md)：输出离线模型，不替换控制器。
+- [自动横向附着标定](../../calibration/lateral_grip/README.zh-CN.md)：左右转逐级升速，与纵向共享指令通道，不同时运行。
+- [动捕校对](../../../docs/operations/mocap-validation.zh-CN.md)：五量／FastLIO／执行器三项，只采集分析。
+- [参考轨迹与标定区域编辑](../../../tools/reference/editor/README.zh-CN.md)：离线编辑与导出。
 
-[Lateral AY validation and grip status](../../../docs/operations/lateral-acceleration-calibration.md) · [Canonical package notes](calibration.md)
+标定命令使用 `/calib/vesc_command`（`vesc_msgs/msg/VescCommand`），最终命令由现有选择器发布到 `/vesc/command`。状态与权限见[当前接口](../../../docs/vesc-command.zh-CN.md)。

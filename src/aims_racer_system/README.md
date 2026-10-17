@@ -34,12 +34,12 @@ ros2 run aims_racer_system relocalize_known_map.py \
 
 Replace example values with the actual rear axle placement. The [known-map guide](../../docs/operations/known-map-mpcc.md) explains epoch, map identity, and eligibility. `auto_start=false` defaults to manual enable; true lets the native node enable once when ready, and explicit stop cancels waiting. `repeat_laps=false` defaults to stopping after one lap; true continues lapping until stop. Completion/fault does not trigger automatic restart or re-enabling.
 
-<a id="录制与估计"></a>
+
 ## Recording and estimation
 
 `record=true` automatically records raw/corrected IMU, LIO, wheel/EKF, TF, NDT/MPCC status, and the optional acceleration estimate/status when published; race also saves runtime. An empty `session_directory` generates a dated session automatically; an explicitly specified directory must be new. See [recording](../../docs/operations/recording.md) for the complete list and raw IMU reliable/depth=4096 QoS.
 
-`base_link` is the rear axle midpoint. C++ `imu_to_rear_axle` retains the IMU source stamp and unavailability information, converts units, and compensates the lever arm; `lio_to_rear_axle.py` provides odometry at the same point. The EKF fuses LIO, wheel vx, and IMU yaw rate, retaining 2 s of delayed history. Gyro correction retains separate raw and corrected topics.
+`base_link` is the rear axle midpoint. C++ `imu_to_rear_axle` retains the IMU source stamp and unavailability information, converts units, and compensates the lever arm; `lio_to_rear_axle` provides odometry at the same point. The EKF fuses LIO, wheel vx, and IMU yaw rate, retaining 2 s of delayed history. Gyro correction retains separate raw and corrected topics. `livox_gyro_bias`, `lio_to_rear_axle` and the optional `longitudinal_acceleration` now run in C++; see the [2026-10-15 migration and NX tests](../../docs/reports/2026-10-15-native-state-nodes.md).
 
 `/rear_axle/lio_odom` keeps the LIO scan-end stamp and uses gyro matched/interpolated at that source time. `/rear_axle/imu` stays current with incoming IMU and has no dependency on LIO latency; it supplies specific force `f = a − g` and marks orientation unavailable. In a z-up world `g = [0,0,−9.80665] m/s²`; restoring inertial acceleration uses `a = f + g` in the same frame. There is no attitude extrapolation or additional aligned-IMU topic. See [the timestamp correction report](../../docs/reports/2026-10-11-rear-imu-source-time.md).
 
@@ -68,6 +68,10 @@ source install/setup.bash
 
 See the [root README](../../README.md) for fixed dependency preparation. Software verification is in `verification/`; this package's [calibration notes](docs/calibration.md) and dated [field report](../../docs/reports/2026-10-10-mpcc-field-review.md) preserve specific conditions. The current default v35 bundle's planned peak is approximately 2.99 m/s and the vehicle peak approximately 2.89 m/s; source, build, software checks, and field-run evidence are explained separately.
 
+Optional planar G: `planar_acceleration:=true` (default false); see [operations and known quality limits](../../docs/operations/planar-acceleration.md).
+
 ## Current and lateral-acceleration calibration
 
-[Current calibration A/B/C and selected results](../../docs/operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../../docs/operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.
+[Current calibration A/B/C and selected results](../../docs/operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../../docs/operations/lateral-acceleration-calibration.md). Source is unified under `src/calibration/`; use the restored C++ lateral entry. Historical Python commands are provenance only.
+
+[当前标定包](../calibration/README.zh-CN.md) · [独立状态／Vicon 现场入口](field/README.zh-CN.md)

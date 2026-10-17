@@ -1,6 +1,6 @@
 # IMU 与延迟 LIO 的车体纵向加速度观测
 
-> 2026-10-18 整理范围：本页记录已部署工作区的用法；这次文档提交不包含对应的新运行时代码，命令须在已部署环境执行。当前后轴／质心五量以[统一状态指南](state-observer.zh-CN.md)为准。 本页为较早的单分量分支说明，历史数值与局限保留。
+> 兼容单分量接口说明：当前推荐使用[后轴／质心统一五量节点](state-observer.zh-CN.md)。对应源码保留在 `src/aims_racer_system/`，按当前构建流程生成。
 
 
 [English](body-acceleration.md) · **简体中文** · 实现计划（记录中的工作区路径：`docs/plans/2026-10-15-body-acceleration.md`）

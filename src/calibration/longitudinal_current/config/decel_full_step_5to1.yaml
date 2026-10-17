@@ -1,0 +1,41 @@
+# Full-range independent current step: wheel-primary response, no automatic enable.
+longitudinal_calibration:
+  ros__parameters:
+    auto_start: false
+    stage: decel_current
+    steering_source: pp
+    plan_mode: sweep
+    sweep_protocol: full_range_step
+    start_speed: 5.0
+    end_speed: 1.0
+    require_acceleration: false
+    base_current_file: ''
+    speeds: [5.0, 1.0]
+    currents: []
+    current_step: 5.0
+    max_speed: 5.0
+    max_current: 100.0
+    stable_tolerance: 0.2
+    stable_seconds: 1.0
+    trial_timeout: 8.0
+    freshness: 0.2
+    repeats: 1
+    recovery_speed: 2.0
+    predictive_exit: false
+    measured_current_handoff: true
+    protection_reverse_guard_enabled: false
+    steady_window_seconds: 1.0
+    steady_confirm_seconds: 1.0
+    steady_max_abs_acceleration: 0.1
+    steady_max_speed_span: 0.15
+    steady_min_samples: 40
+    straight_exit_margin_m: 1.0
+    response_limits_file: ''
+    current_settle_seconds: 0.25
+    current_window_seconds: 0.5
+    current_min_samples: 10
+    current_absolute_tolerance: 1.0
+    current_relative_tolerance: 0.1
+    current_failure_fraction: 0.9
+    max_attempts: 3
+    rc_profile: steering_ch1_throttle_ch3_aux_ch5_to_ch10

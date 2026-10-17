@@ -1,0 +1,14 @@
+yaw_rate:
+  ros__parameters:
+    imu_topic: /livox/imu_bias_corrected
+    output_topic: /state_estimation/yaw_rate
+    acceleration_topic: /state_estimation/yaw_acceleration
+    imu_frame: livox_frame
+    body_frame: base_link
+    process_psd: 4.0
+    measurement_variance: 0.0001
+    initial_alpha_variance: 100.0
+    max_gap_s: 0.03
+    imu_max_age_s: 0.05
+    # Shared mounting rotation is supplied by launch. Gyro bias removed upstream.
+    # q/R are effective model tuning; output covariance is not calibrated accuracy.

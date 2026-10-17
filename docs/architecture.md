@@ -20,6 +20,9 @@ flowchart LR
     Wheel --> Acc[optional acceleration observer]
     RearIMU --> Acc
     Acc --> AccOut[acceleration / dedicated status / recording]
+    Bias --> BodyAcc[optional body acceleration]
+    RearLIO --> BodyAcc
+    BodyAcc --> BodyOut[inertial ax / source stamp / diagnostics]
     LIO --> NDT[NDT known map]
     EKF --> NDT
     NDT --> Health[localization monitor]
@@ -37,6 +40,8 @@ MPCC publishes proposals. The RC selector decides whether to forward them and in
 
 <a id="坐标与安装约定"></a>
 ## Frame and mounting conventions
+
+Persistent `livox_gyro_bias`, `lio_to_rear_axle` and optional `longitudinal_acceleration` are now C++ executables, alongside the already-native IMU adapter. [The Oct 15 migration](reports/2026-10-15-native-state-nodes.md) preserves source-time and calibration contracts and records desktop/NX software checks.
 
 `base_link` is at the rear axle midpoint, with x forward, y left, and z up. `rear_offset=0`; the default footprint extends 0.52 m forward, 0.10 m rearward, and 0.16 m to either side of this point.
 
@@ -80,6 +85,8 @@ The following rates are configured targets or nominal values driven by inputs; f
 | `/rear_axle/wheel_odom` | VESC | Rear axle wheel vx, configured 100 Hz; EKF |
 | `/state_estimation/longitudinal_acceleration` | Optional wheel + IMU observer | `AccelWithCovarianceStamped`, `base_link`, linear.x=`d(body_vx)/dt`, ROS estimate-time stamp; recording/downstream reference, no navigation EKF fusion |
 | `/state_estimation/longitudinal_acceleration/status` | Same dedicated observer | Initialization, source ages, force validity, counters and callback timing; age warnings are diagnostic only |
+| `/state_estimation/body_acceleration` | Optional corrected raw IMU + delayed-LIO observer | Body-projected inertial longitudinal acceleration at rear `base_link`, IMU source stamp; observation only |
+| `/state_estimation/body_acceleration/status` and `/debug` | Same body observer | Per-component temporal support, validity, calibration flags, stage values and replay/callback counters |
 | `/odometry/filtered` | EKF | `odom/base_link`, configured 200 Hz; MPCC, scan-time TF prediction |
 | `/localization/ndt_pose` | NDT | Pose output from registration |
 | `/localization/odom_bridge_pose` | NDT | Pose bridging continuous local motion and the map anchor |
@@ -118,6 +125,8 @@ The scalar model estimates `[v,a,d]` using wheel speed and longitudinal specific
 
 The saved reference is in `map`, bound to the exact PCD hash. Control state and model propagation stay in continuous `odom/base_link`; trusted `map ← odom` alignment is used for reference projection, errors, and optional boundary calculations. The initial value is the **six-dimensional pose of base_link in map**; see the [known-map workflow](operations/known-map-mpcc.md).
 
+NDT uses **5 Hz registration with 2 matching threads** (`registration_frequency_hz: 5.0`), preserving raw cloud and LIO rates. This trades correction freshness for approximately 35% less NDT CPU; see [localization monitoring](localization_monitor.md) for evidence and rollback.
+
 NDT's 50 Hz map TF may hold the last trusted correction; it does not mean registration is repeated at 50 Hz. Both the monitor and native controller check epoch, sequence, source and receive ages, map identity, and a consistent trusted alignment payload. Fresh TF alone cannot grant autonomous control.
 
 <a id="native-mpcc-与当前边界"></a>
@@ -129,6 +138,8 @@ The default cruise target is 3.5, hard cap 4, acceleration/braking 1, and curvat
 
 The [2026-10-10 field run](reports/2026-10-10-mpcc-field-review.md) had a planned peak of 2.99 and measured peak of approximately 2.89 m/s; its motion window was not a flying lap. These recordings do not demonstrate higher grip capability or performance on other maps.
 
+The separate [Oct 15 multilap experiment](reports/2026-10-15-mpcc-multilap-review.md) used cruise/cap 4.5/5.0, acceleration/braking 2.4/4.0 and ay=3.0, with online target/weight changes. These settings and results do not redefine the source defaults above.
+
 ## Current and lateral-acceleration calibration
 
-[Current calibration A/B/C and selected results](operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.
+[Current calibration A/B/C and selected results](operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](operations/lateral-acceleration-calibration.md). Source is unified under `src/calibration/`; use the restored C++ lateral entry. Historical Python commands are provenance only.

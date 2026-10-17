@@ -1,0 +1,4 @@
+#!/usr/bin/env python3
+from aims_calibration.cli import @command@_main
+if __name__ == '__main__':
+    @command@_main()

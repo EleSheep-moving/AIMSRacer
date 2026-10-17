@@ -58,9 +58,10 @@ def test_joystick_pipeline(tmp_path, monkeypatch, paused_clock):
             nav_pub = node.create_publisher(AckermannDriveStamped, '/drive', qos)
             calib_pub = node.create_publisher(VescCommand, '/calib/vesc_command', qos)
             clock_pub = node.create_publisher(Clock, '/clock', 10)
-            commands, statuses = [], []
+            commands, statuses, calibration_statuses = [], [], []
             node.create_subscription(VescCommand, '/vesc/command', commands.append, 10)
             node.create_subscription(Bool, '/control/autonomy_speed_enabled', statuses.append, 10)
+            node.create_subscription(Bool, '/control/calibration_enabled', calibration_statuses.append, 10)
             rc = CRSFChannels16()
             for i in range(1, 17):
                 setattr(rc, f'ch{i}', 992)
@@ -147,9 +148,11 @@ def test_joystick_pipeline(tmp_path, monkeypatch, paused_clock):
             assert commands[-1].control_mode == VescCommand.MODE_CURRENT
             assert commands[-1].target_current == 8.0
             assert not statuses[-1].data
+            assert calibration_statuses and calibration_statuses[-1].data
             commands.clear()
             pump(.35)  # RC remains alive, calibration producer disappears.
             stopped()
+            assert not calibration_statuses[-1].data
             assert any(msg.target_current == 8.0 for msg in commands)
             assert any(msg.target_current == 0.0 for msg in commands)
             if not paused_clock:

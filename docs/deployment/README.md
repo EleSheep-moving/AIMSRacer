@@ -15,7 +15,7 @@ sudo apt update
 sudo apt install \
   build-essential git cmake pkg-config python3-pip python3-colcon-common-extensions \
   python3-numpy python3-scipy python3-yaml python3-pytest \
-  libpcl-dev libeigen3-dev libyaml-cpp-dev libssl-dev \
+  libpcl-dev libeigen3-dev libyaml-cpp-dev libssl-dev nlohmann-json3-dev \
   libgflags-dev libgoogle-glog-dev libfmt-dev libasio-dev \
   ros-humble-ros-base ros-humble-gtsam \
   ros-humble-pcl-conversions ros-humble-pcl-ros \
@@ -79,4 +79,4 @@ Launch commands, map initialization, and automatic recording are described in [v
 
 ## Current and lateral-acceleration calibration
 
-[Current calibration A/B/C and selected results](../operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../operations/lateral-acceleration-calibration.md). Use each guide's stated deployed environment; the retired automatic grip procedure is not a current launch entry.
+[Current calibration A/B/C and selected results](../operations/calibration.md#current-calibration) · [Lateral AY validation and grip status](../operations/lateral-acceleration-calibration.md). Source is unified under `src/calibration/`; use the restored C++ lateral entry. Historical Python commands are provenance only.

@@ -40,3 +40,6 @@ colcon build --packages-up-to aims_racer_system aims_mpcc_rt --executor sequenti
 ```
 
 软件验证位于 `verification/`，不属于车辆启动流程。第三方来源与许可保存在 [NOTICE.md](NOTICE.zh-CN.md)、[LICENSE](LICENSE) 和 [vendor](aims_mpcc/vendor/)；参考与模型继续保留相应归属。
+
+
+[Offline map/reference and calibration-region editor](../../tools/reference/editor/README.md) · [轮速电流离线工具](../calibration/longitudinal_current/docs/wheel-current-model.zh-CN.md)

@@ -2,6 +2,10 @@
 
 **English** · [简体中文](longitudinal-acceleration.zh-CN.md)
 
+For the independent IMU + delayed-LIO inertial-acceleration observer, see
+[body acceleration](body-acceleration.md). It has a separate topic and physical
+definition; the wheel-fused observer described below remains available.
+
 The selected wheel + IMU observer supplies an independent longitudinal acceleration estimate for recording and downstream reference. Enable it explicitly for field evaluation. It does not alter navigation EKF, TF, MPCC, VESC or driving authority. Acceleration feedback control is not connected.
 
 ## Inputs and outputs
@@ -52,7 +56,7 @@ Source stamps enter the observer as exact integer nanoseconds when callbacks arr
 
 The first output requires valid wheel and force observations. After initialization, unavailable force is skipped, not fused as its default zero; an IMU heartbeat may still trigger a model/wheel estimate. Source-age warnings are diagnostics, not output-freeze gates. If ROS time jumps backwards, state/history and initialization are reset. Invalid frames, nonfinite data, future stamps and historical retention failures are counted.
 
-The dedicated process serializes input/status callbacks. The two-state/three-state mathematics is shared with the offline comparison. There is no extra output low-pass filter, LIO prediction or LIO-age dependency.
+The dedicated C++ process serializes input/status callbacks. Its three-state core is checked against the retained Python offline reference; this is numerical parity, rather than one shared runtime implementation. See [native migration](../reports/2026-10-15-native-state-nodes.md). There is no extra output low-pass filter, LIO prediction or LIO-age dependency.
 
 ## Inspect and record two laps
 
@@ -69,6 +73,8 @@ For field validation, record a stationary interval, then two ordinary laps at lo
 ## Settings and evidence
 
 Installed settings are in `params/longitudinal_acceleration.yaml`: jerk PSD 30, disturbance PSD 0.1, wheel variance 0.01, force variance 16, history 2 s / 4,096 observations. These are frozen effective tuning values from six training runs and two held-out runs. Gravity/LIO observations are disabled in the runtime B node.
+
+The [2026-10-14 offline comparison](../reports/2026-10-14-longitudinal-filter-tuning.md) provides an optional `params/longitudinal_acceleration_tuned_20261014.yaml`: disturbance PSD 0.01 and wheel variance 0.0025, with other settings preserved. The default still uses the original file. The independent launch accepts `config:=/absolute/path/to/longitudinal_acceleration_tuned_20261014.yaml`; run only one observer instance. This candidate has offline replay evidence and has not been deployed to NX or accepted in a new field trial.
 
 The [offline comparison](../reports/2026-10-12-longitudinal-acc-observer.md) establishes recorded-input behavior; [verification tools](../../verification/acceleration/README.md) reproduce it. Installed software, synthetic DDS replay, vehicle joint-load testing and real field driving are distinct evidence stages. Keep the acceleration output observational until field response and data quality are established.
 

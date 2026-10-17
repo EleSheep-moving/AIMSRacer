@@ -1,0 +1,18 @@
+longitudinal_acceleration:
+  ros__parameters:
+    wheel_topic: /rear_axle/wheel_odom
+    imu_topic: /rear_axle/imu
+    output_topic: /state_estimation/longitudinal_acceleration
+    status_topic: /state_estimation/longitudinal_acceleration/status
+    base_frame_id: base_link
+    # Offline candidate: tune on 2026-10-13 21:53, validate on 22:29 and MPCC.
+    # Effective tuning values, not independently calibrated sensor variances.
+    # Explicit config selection; the production default file is unchanged.
+    jerk_psd: 30.0
+    disturbance_psd: 0.01
+    speed_variance: 0.0025
+    force_variance: 16.0
+    history_seconds: 2.0
+    max_history_measurements: 4096
+    wheel_warning_age_s: 0.2
+    imu_warning_age_s: 0.05

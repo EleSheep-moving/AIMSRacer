@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "description": "Verbatim numeric helper and PurePursuitController class extracted from the recovered calibration source; no ROS code or hardware imports.",
+  "recovered_source": "/home/elesheep/aimsracer-data/sessions/2026-10-13/calibration-recovery-audit/longitudinal_calib.py",
+  "recovered_on": "2026-10-13",
+  "matching_git_commit": "9275aa5e27c4bc2522daf26018be8d5a84988463",
+  "matching_git_commit_date": "2026-09-21T17:04:27+08:00",
+  "git_source_path": "src/aims_racer_system/scripts/longitudinal_calib.py",
+  "git_blob_sha1": "cc5b7e26576e382f1279b5fa48118d18d3587384",
+  "git_blob_matches_recovered_source": true,
+  "git_provenance_note": "This local commit contains a byte-identical source blob, verified by git rev-parse/hash-object and SHA-256. The exact commit originally used by the recovery audit is not recorded.",
+  "source_sha256": "4eddb2a8504b5365669765a1d3b92095b0b2f29937188c6c09a50732ed55ebc8",
+  "class_lines": [310, 390],
+  "helper_lines": [101, 102],
+  "class_sha256": "c5b81141845d8dd317e2a850e24760ac326447be3cda1c6bad79c6245f01c4c3",
+  "fixture_sha256": "2dc160442afd8e2eb9d8729ef2dcdb46acfe23044f653beca10bb0b6892cbe28",
+  "fixture_additions": ["Module docstring", "math and numpy imports"],
+  "runtime_access": "The recovered_source path is provenance only. Tests read the bundled fixture and this JSON exclusively.",
+  "parity_settings": "The recovered default max_steering is 0.4751; parity instantiates it with max_steering=0.45 to match the actual vehicle hard limit. No old algorithm or helper is changed."
+}

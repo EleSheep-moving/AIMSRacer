@@ -1,0 +1,79 @@
+{
+  "runtime_cpp_checked": 57,
+  "runtime_cpp_changed": [],
+  "source_files_checked": 34,
+  "host_nx_mismatches": [],
+  "source_sha256": {
+    "src/aims_racer_system/field/README.zh-CN.md": "c281e7f1d04489c654249903eb8abd9cf54dde4bb506487a4f0380bc54ec5f24",
+    "src/aims_racer_system/field/run_state_observer.sh": "f246bda386f9b50e2b6dc0025fabe3b5f91e3e649fdd6048828cbc16638454c4",
+    "src/aims_racer_system/field/state_observer_env.bash": "05951bce9089a6b90f63535d2506ea4984d466dc687238c867f24934f6a173b6",
+    "src/aims_racer_system/field/vicon_state.sh": "5964df3592239379ee30376e0052cc87dca556f909d96c53cdf03c6f7a46eb32",
+    "src/calibration/longitudinal_current/CMakeLists.txt": "ad7ed7c508d792b216e1cff4c7dca1c7ee9c7fb988c84c2b21dea246a23d37dd",
+    "src/calibration/longitudinal_current/aims_calibration/wheel_current_cli.py": "9b1c90bfc727fe183d7fd39dba0918ce0ca29404be84394f811394da62da5846",
+    "src/calibration/longitudinal_current/aims_calibration/wheel_current_fit.py": "969aabe6039c72a9a19d770ba6f384acfd61f8f2dee5c715296835cc4ff34ef3",
+    "src/calibration/longitudinal_current/aims_calibration/wheel_current_model.py": "041dcaf94c1e73ba11e4670287f2676454968e4302b9652917499cbceb51d7c5",
+    "src/calibration/longitudinal_current/docs/wheel-current-model.zh-CN.md": "31ff5d892cc1c051432132301392541841e8bc50f9cfced2c34b7feecb33c03b",
+    "src/calibration/longitudinal_current/scripts/wheel_cli.in": "1ec18bdcf139d0438679828b24499f893e262dad591f6de992af741b961cf21d",
+    "src/calibration/longitudinal_current/setup.py": "1ea1eec343af2e2e6e962b59a7a7041d597989b6b9f10935e8ff8a782d3218bc",
+    "src/calibration/longitudinal_current/tests/test_wheel_current_cli.py": "dee8a7015e007f3a068ba342bcc6e8e07d335292d187c062acf6dcffe0ac2f09",
+    "src/calibration/longitudinal_current/tests/test_wheel_current_fit.py": "8cfbabcfebad8cefa76baab3ad4fcf2ea2b4f22ce0ae21062b689eb9d1379d69",
+    "src/calibration/longitudinal_current/tests/test_wheel_current_model.py": "02742566af65d093af042ed20f61dc046f5bf1014a30a48f40bc2b569fb555d8",
+    "src/calibration/run.sh": "cb8d98b534cdf39d424d5260986fa6cce9ce049c72af6eedaaf721ab2875d1bc",
+    "src/controller/aims_mpcc/gui_reference.py": "1b24cedd31e9ce7fe0a50cd6d545fdc0cb46d83dbf2f87e4074056399bf7c251",
+    "src/controller/aims_mpcc/path.py": "9b9a3ecf68a980b49d76cbd5ff3c2f9c4f9ebc044a2a3470ccbf070ceb4de278",
+    "src/controller/aims_mpcc/reference_export.py": "af5324219db10d7e7d46ef25871f698d84f08cd33ae874f1963f4419e13d0e0c",
+    "src/controller/tests/test_reference_export.py": "fa0a5aebc8520ab29ec4762b52e331482d937a8fb425d78d0247a43e4fd89f65",
+    "tools/reference/editor/README.md": "85f51df8d02e05786519b45f9705f0517dcb5ed6c1213e420cd19170b9b7a83a",
+    "tools/reference/editor/README.zh-CN.md": "6f8a95722fc1b06a90a06f040a9ab5ffafc919a7bd4bb19119438865c19adb20",
+    "tools/reference/editor/backend.py": "79fd15ca5f5a15437a6214b0ef55b0b033133dd616dbabc2dd999d3fe5251781",
+    "tools/reference/editor/requirements.lock": "551524591bc37fe37349b989cb3847ebe4b6bf756df548d0a9ac17a3eae6bb50",
+    "tools/reference/editor/server.py": "528755929363a67bca2bcbec421826f5f834095d085e450a6c29d0ca4d2c05bc",
+    "tools/reference/editor/static/app.js": "92524355df63ca21977e8a55d82c77b2f3d73a3c8f1ffffaf48e9c8a08b557d3",
+    "tools/reference/editor/static/index.html": "dc803a1c202070f6fcf79bb028ede313b3182bec3eb1845f82a4f0e7faa05f72",
+    "tools/reference/editor/static/style.css": "87ebefe531f15469ba7d73a54f5db391ffbb588f9471c78cac2c7cce38221001",
+    "tools/reference/editor/static/vendor/LICENSE.three": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601",
+    "tools/reference/editor/static/vendor/OrbitControls.js": "b97879c748170baadeb3fb84cea1ffdf4674e283dc06042f34e2acb95a76042c",
+    "tools/reference/editor/static/vendor/manifest.json": "1be73d02e1290f9d75a951876648df391cd3be65c88058b64ed262853162aa5b",
+    "tools/reference/editor/static/vendor/three.core.min.js": "615ce9d0f24638a04a98e8681dfaaae3f66b29d529d7d86b287703ae8c218be4",
+    "tools/reference/editor/static/vendor/three.module.min.js": "7118161511990dbfa895dcdb0f70bda9899d4238021aa0202fcc462ae6344554",
+    "tools/reference/editor/tests/test_browser.py": "b3226d46097ddb1d73a8ceb03eb333edd0f26485ad4687d83a8a27f66e1d820e",
+    "tools/reference/editor/tests/test_editor.py": "742d3d199c5df0b203742d2d4ed2bfc785a7ae44bbcb4225d90d34638595f39f"
+  },
+  "tests": {
+    "wheel_host": 77,
+    "wheel_nx": 77,
+    "editor_host": 21,
+    "editor_nx": 21,
+    "browser_host": 1
+  },
+  "git_publication": "Approved tools and required existing source dependencies included in this commit; identify publication by Git history.",
+  "excluded": [
+    "tools/diagnostics (CPU capture)",
+    "vehicle tuning",
+    "NDT patch/frequency changes",
+    "local-only paths"
+  ],
+  "publication_validation": {
+    "baseline_commit": "c43e1fea8d75fb695167e849b81f4975bdfc2334",
+    "source_wheel_tests": {
+      "passed": 77
+    },
+    "source_editor_tests": {
+      "passed": 22,
+      "includes_chromium": true
+    },
+    "colcon_results": {
+      "aims_pp": 71,
+      "aims_calibration": 430,
+      "aims_lateral_grip": 18,
+      "aims_mocap_validation": 52,
+      "aims_racer_system": 222
+    },
+    "selector_functional_ctest_groups": 3,
+    "changed_markdown_missing_links": 0,
+    "external_data_hyperlinks": 0,
+    "build_scope": "8 selected packages plus aims_racer_system; uses existing ROS/driver underlay; unchanged aims_mpcc_rt and crsf_receiver runtime packages are not rebuilt",
+    "known_baseline_lint": "ackermann_mux aggregate lint is not green; functional selector/PTY groups separately pass. Upstream VRPN whitespace is preserved."
+  },
+  "runtime_baseline_semantics": "57 C++ files compared to the pre-consolidation working-source snapshot, not origin/main. Publication adds the previously uncommitted implementations."
+}
