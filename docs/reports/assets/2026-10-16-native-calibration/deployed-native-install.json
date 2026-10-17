@@ -1,0 +1,38 @@
+{
+  "prefix": "/home/aims/aimsracer-data/code/calibration-full-step/install",
+  "targets": {
+    "aims_racer_system/livox_gyro_bias": {
+      "path": "/home/aims/aimsracer-data/code/calibration-full-step/install/aims_racer_system/lib/aims_racer_system/livox_gyro_bias",
+      "elf_machine": 183
+    },
+    "aims_racer_system/lio_to_rear_axle": {
+      "path": "/home/aims/aimsracer-data/code/calibration-full-step/install/aims_racer_system/lib/aims_racer_system/lio_to_rear_axle",
+      "elf_machine": 183
+    },
+    "aims_racer_system/longitudinal_acceleration": {
+      "path": "/home/aims/aimsracer-data/code/calibration-full-step/install/aims_racer_system/lib/aims_racer_system/longitudinal_acceleration",
+      "elf_machine": 183
+    },
+    "aims_calibration/longitudinal_calibration": {
+      "path": "/home/aims/aimsracer-data/code/calibration-full-step/install/aims_calibration/lib/aims_calibration/longitudinal_calibration",
+      "elf_machine": 183
+    },
+    "aims_calibration/inspect": {
+      "path": "/home/aims/aimsracer-data/code/calibration-full-step/install/aims_calibration/lib/aims_calibration/inspect",
+      "elf_machine": 183
+    },
+    "aims_calibration/start": {
+      "path": "/home/aims/aimsracer-data/code/calibration-full-step/install/aims_calibration/lib/aims_calibration/start",
+      "elf_machine": 183
+    },
+    "aims_calibration/stop": {
+      "path": "/home/aims/aimsracer-data/code/calibration-full-step/install/aims_calibration/lib/aims_calibration/stop",
+      "elf_machine": 183
+    },
+    "aims_pp/pp_node": {
+      "path": "/home/aims/aimsracer-data/code/calibration-full-step/install/aims_pp/lib/aims_pp/pp_node",
+      "elf_machine": 183
+    }
+  },
+  "launches": "native"
+}

@@ -10,6 +10,26 @@ in the [checklist](../operations/vehicle-checklist.md).
 
 | Report | Scope |
 | --- | --- |
+| [Selected recent results (start here)](latest-results.md) | State outputs, mocap, calibration and localization evidence; detailed recent reports in Chinese |
+| [2026-10-18 VY 质量与图表](2026-10-18-vy-quality.zh-CN.md) | 短静态、共享传感器动态一致性、后轴／质心比较与待验证项 |
+| [2026-10-18 独立估计器 NX 部署](2026-10-18-state-observer-nx-deployment.zh-CN.md) | ARM 安装、回放输出、参考点恒等式、HI13 退役 |
+| [2026-10-18 动捕校对工具](2026-10-18-mocap-validation.zh-CN.md) | 状态／FastLIO／执行器三项工具、测试、时间边界与配置 |
+| [2026-10-17 五量计算与发布策略](2026-10-17-state-observer-latency-policy.zh-CN.md) | 三维惯导、位置约束、源时间重放和警告优先 |
+| [2026-10-17 双参考点首次验证](2026-10-17-dual-reference-state-validation.zh-CN.md) | 首次后轴／质心五量软件证据；严格停发是历史策略 |
+| [2026-10-17 五量质量历史快照](2026-10-17-state-output-quality.zh-CN.md) | 新双参考点实现前的统计、PSD、计算与精度边界 |
+| [2026-10-17 Vicon 比较准备](2026-10-17-vicon-comparison-preparation.zh-CN.md) | 独立参考、时间、外参与求导验证；后续工具见 18 日 |
+| [2026-10-17 B/C 当前模型选型](2026-10-17-current-affine-selection.zh-CN.md) | 未补偿带截距、B 十档／C 九档与有限支持域 |
+| [2026-10-17 FastLIO 加速度比例](2026-10-17-fastlio-accel-scale.zh-CN.md) | 完整多圈包缩放 A/B、重复性、计算时间与非真值边界 |
+| [2026-10-17 NDT 5 Hz 部署](2026-10-17-ndt-5hz.zh-CN.md) | CPU 与观测新鲜度折中、实际加载安装 |
+| [2026-10-17 NX 定位 CPU](2026-10-17-localization-cpu.zh-CN.md) | 线程与 OpenMP 等待策略实测；调整频率前历史快照 |
+| [2026-10-16 原生标定链](2026-10-16-native-calibration.zh-CN.md) | 实际标定安装、C++ 状态机／PP／监控与隔离测试 |
+| [2026-10-15 多圈 MPCC](2026-10-15-mpcc-multilap-review.zh-CN.md) | 15 完整圈、跟踪偏差、原生计划与命令计时 |
+| [2026-10-15 电流响应辨识](2026-10-15-current-response-identification.zh-CN.md) | 覆盖、轮速模型、留出与打滑；当前系数见 17 日 |
+| [2026-10-15 估计器回放对照](2026-10-15-estimator-replay-comparison.zh-CN.md) | 协方差／FIR 负结果与保留生产默认值 |
+| [2026-10-15 原生状态节点](2026-10-15-native-state-nodes.zh-CN.md) | 传感器适配与观测器的 C++ 迁移软件证据 |
+| [2026-10-14 EKF 分量响应](2026-10-14-ekf-component-latency.zh-CN.md) | 位置／yaw／速度波形响应与时间口径 |
+| [2026-10-14 IMU 转向辨识](2026-10-14-imu-steering-model.zh-CN.md) | yaw-rate 留出预测、τ/K 与闭环证据边界 |
+| [2026-10-13 恒速电流／电压](2026-10-13-steady-current-voltage-model.zh-CN.md) | Stage A 锚点、avg_iq 与电压能力分开 |
 | [2026-10-13 VESC native command](2026-10-13-vesc-native-command.md) | Native message, central/driver/MPCC migration and software-only PTY acceptance |
 | [2026-10-12 acceleration runtime](2026-10-12-longitudinal-acc-runtime.md) | Opt-in installed observer, desktop/NX tests and real-time DDS replay limits |
 | [2026-10-12 acceleration comparison](2026-10-12-longitudinal-acc-observer.md) | Eight recorded runs, causal wheel/IMU observers and held-out forecast evidence |

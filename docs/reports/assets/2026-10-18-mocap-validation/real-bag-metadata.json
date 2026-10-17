@@ -1,0 +1,383 @@
+{
+  "source": "/home/aims/aimsracer-data/sessions/2026-10-15/022604_194643_race/bag",
+  "synthetic": false,
+  "bag_files_sha256": {
+    "/home/aims/aimsracer-data/sessions/2026-10-15/022604_194643_race/bag/bag_0.db3": "14d3b82f1635c791cc74c583e80a0b84443322039b5644086fa4e3b896cc127f"
+  },
+  "file_metadata": {
+    "/home/aims/aimsracer-data/sessions/2026-10-15/022604_194643_race/bag/bag_0.db3": {
+      "bytes": 1361657856,
+      "mtime_ns": 1792002589590427480
+    }
+  },
+  "counts": {
+    "own_rear_velocity": 0,
+    "own_rear_acceleration": 0,
+    "own_rear_yaw": 0,
+    "own_rear_status": 0,
+    "own_cg_velocity": 0,
+    "own_cg_acceleration": 0,
+    "own_cg_yaw": 0,
+    "own_cg_status": 0,
+    "robot_localization": 44604,
+    "lio": 2115,
+    "wheel": 22403,
+    "corrected_gyro": 42315,
+    "raw_fastlio": 2229,
+    "commands": 22405,
+    "telemetry": 22407,
+    "raw_gyro": 42315,
+    "vicon": 0
+  },
+  "missing_topics": [
+    "/state_estimation/center_of_mass/acceleration",
+    "/state_estimation/center_of_mass/status",
+    "/state_estimation/center_of_mass/velocity",
+    "/state_estimation/center_of_mass/yaw_rate",
+    "/state_estimation/rear_axle/acceleration",
+    "/state_estimation/rear_axle/status",
+    "/state_estimation/rear_axle/velocity",
+    "/state_estimation/rear_axle/yaw_rate",
+    "/vicon/unconfigured/pose"
+  ],
+  "selected_cdr_sha256": "5f067b06629ad93db8f386cb9991b8dc57381fb3cdf449d799ecd2d39d163bff",
+  "hash_protocol": "receipt,file-index,row-id merge; index:id:receipt:topic newline then CDR",
+  "selected_topics": {
+    "/state_estimation/rear_axle/velocity": {
+      "name": "own_rear_velocity",
+      "topic": "/state_estimation/rear_axle/velocity",
+      "kind": "velocity",
+      "reference": "rear_axle",
+      "message_type": "geometry_msgs/msg/TwistWithCovarianceStamped"
+    },
+    "/state_estimation/rear_axle/acceleration": {
+      "name": "own_rear_acceleration",
+      "topic": "/state_estimation/rear_axle/acceleration",
+      "kind": "acceleration",
+      "reference": "rear_axle",
+      "message_type": "geometry_msgs/msg/AccelWithCovarianceStamped"
+    },
+    "/state_estimation/rear_axle/yaw_rate": {
+      "name": "own_rear_yaw",
+      "topic": "/state_estimation/rear_axle/yaw_rate",
+      "kind": "yaw_rate",
+      "reference": "rear_axle",
+      "message_type": "sensor_msgs/msg/Imu"
+    },
+    "/state_estimation/rear_axle/status": {
+      "name": "own_rear_status",
+      "topic": "/state_estimation/rear_axle/status",
+      "kind": "status",
+      "reference": "rear_axle",
+      "message_type": "diagnostic_msgs/msg/DiagnosticArray"
+    },
+    "/state_estimation/center_of_mass/velocity": {
+      "name": "own_cg_velocity",
+      "topic": "/state_estimation/center_of_mass/velocity",
+      "kind": "velocity",
+      "reference": "center_of_mass",
+      "message_type": "geometry_msgs/msg/TwistWithCovarianceStamped"
+    },
+    "/state_estimation/center_of_mass/acceleration": {
+      "name": "own_cg_acceleration",
+      "topic": "/state_estimation/center_of_mass/acceleration",
+      "kind": "acceleration",
+      "reference": "center_of_mass",
+      "message_type": "geometry_msgs/msg/AccelWithCovarianceStamped"
+    },
+    "/state_estimation/center_of_mass/yaw_rate": {
+      "name": "own_cg_yaw",
+      "topic": "/state_estimation/center_of_mass/yaw_rate",
+      "kind": "yaw_rate",
+      "reference": "center_of_mass",
+      "message_type": "sensor_msgs/msg/Imu"
+    },
+    "/state_estimation/center_of_mass/status": {
+      "name": "own_cg_status",
+      "topic": "/state_estimation/center_of_mass/status",
+      "kind": "status",
+      "reference": "center_of_mass",
+      "message_type": "diagnostic_msgs/msg/DiagnosticArray"
+    },
+    "/odometry/filtered": {
+      "name": "robot_localization",
+      "topic": "/odometry/filtered",
+      "kind": "odometry",
+      "reference": "rear_axle",
+      "message_type": "nav_msgs/msg/Odometry"
+    },
+    "/rear_axle/lio_odom": {
+      "name": "lio",
+      "topic": "/rear_axle/lio_odom",
+      "kind": "odometry",
+      "reference": "rear_axle",
+      "max_gap_s": 0.25,
+      "message_type": "nav_msgs/msg/Odometry",
+      "fastlio_stream": "rear_fastlio"
+    },
+    "/rear_axle/wheel_odom": {
+      "name": "wheel",
+      "topic": "/rear_axle/wheel_odom",
+      "kind": "odometry",
+      "reference": "rear_axle",
+      "message_type": "nav_msgs/msg/Odometry"
+    },
+    "/rear_axle/imu": {
+      "name": "corrected_gyro",
+      "topic": "/rear_axle/imu",
+      "kind": "yaw_rate",
+      "reference": "rear_axle",
+      "message_type": "sensor_msgs/msg/Imu"
+    },
+    "/fastlio2/lio_odom": {
+      "name": "raw_fastlio",
+      "topic": "/fastlio2/lio_odom",
+      "kind": "odometry",
+      "reference": "rear_axle",
+      "message_type": "nav_msgs/msg/Odometry",
+      "raw_only": true,
+      "fastlio_stream": "raw_fastlio"
+    },
+    "/vesc/command": {
+      "name": "commands",
+      "topic": "/vesc/command",
+      "kind": "command",
+      "message_type": "vesc_msgs/msg/VescCommand"
+    },
+    "/sensors/core": {
+      "name": "telemetry",
+      "topic": "/sensors/core",
+      "kind": "telemetry",
+      "message_type": "vesc_msgs/msg/VescStateStamped"
+    },
+    "/livox/imu_bias_corrected": {
+      "name": "raw_gyro",
+      "topic": "/livox/imu_bias_corrected",
+      "kind": "gyro",
+      "message_type": "sensor_msgs/msg/Imu"
+    },
+    "/vicon/unconfigured/pose": {
+      "name": "vicon",
+      "topic": "/vicon/unconfigured/pose",
+      "kind": "pose",
+      "message_type": "geometry_msgs/msg/PoseStamped"
+    }
+  },
+  "config": {
+    "schema_version": 1,
+    "planned_test_date": "2026-10-19",
+    "vicon": {
+      "topic": "/vicon/unconfigured/pose",
+      "message_type": "geometry_msgs/msg/PoseStamped",
+      "position_unit": "m",
+      "tracking_semantics": null,
+      "camera_rate_hz": null,
+      "bridge_timestamp_semantics": null,
+      "prediction_or_retiming_enabled": null
+    },
+    "clock": {
+      "source_anchor_ns": null,
+      "ros_anchor_ns": null,
+      "scale": 1.0,
+      "uncertainty_ns": null,
+      "verified": false
+    },
+    "body_orientation_in_marker_xyzw": null,
+    "body_orientation_measured": false,
+    "references": {
+      "rear_axle": {
+        "origin_in_marker_m": null,
+        "measured": false,
+        "frame_id": "base_link"
+      },
+      "center_of_mass": {
+        "origin_in_marker_m": null,
+        "measured": false,
+        "frame_id": "center_of_mass"
+      }
+    },
+    "differentiation": {
+      "windows_s": [
+        0.08,
+        0.12,
+        0.18
+      ],
+      "primary_window_s": 0.12,
+      "polyorder": 3,
+      "max_gap_s": 0.04,
+      "max_rotation_span_rad": 2.8
+    },
+    "comparison": {
+      "estimate_max_gap_s": 0.04,
+      "lag_limit_s": 0.5,
+      "lag_step_s": 0.005,
+      "min_dynamic_std": {
+        "vx": 0.05,
+        "vy": 0.03,
+        "ax": 0.2,
+        "ay": 0.2,
+        "yaw_rate": 0.05
+      }
+    },
+    "evaluation_windows": [],
+    "extra_topics": [],
+    "streams": [
+      {
+        "name": "own_rear_velocity",
+        "topic": "/state_estimation/rear_axle/velocity",
+        "kind": "velocity",
+        "reference": "rear_axle"
+      },
+      {
+        "name": "own_rear_acceleration",
+        "topic": "/state_estimation/rear_axle/acceleration",
+        "kind": "acceleration",
+        "reference": "rear_axle"
+      },
+      {
+        "name": "own_rear_yaw",
+        "topic": "/state_estimation/rear_axle/yaw_rate",
+        "kind": "yaw_rate",
+        "reference": "rear_axle"
+      },
+      {
+        "name": "own_rear_status",
+        "topic": "/state_estimation/rear_axle/status",
+        "kind": "status",
+        "reference": "rear_axle"
+      },
+      {
+        "name": "own_cg_velocity",
+        "topic": "/state_estimation/center_of_mass/velocity",
+        "kind": "velocity",
+        "reference": "center_of_mass"
+      },
+      {
+        "name": "own_cg_acceleration",
+        "topic": "/state_estimation/center_of_mass/acceleration",
+        "kind": "acceleration",
+        "reference": "center_of_mass"
+      },
+      {
+        "name": "own_cg_yaw",
+        "topic": "/state_estimation/center_of_mass/yaw_rate",
+        "kind": "yaw_rate",
+        "reference": "center_of_mass"
+      },
+      {
+        "name": "own_cg_status",
+        "topic": "/state_estimation/center_of_mass/status",
+        "kind": "status",
+        "reference": "center_of_mass"
+      },
+      {
+        "name": "robot_localization",
+        "topic": "/odometry/filtered",
+        "kind": "odometry",
+        "reference": "rear_axle"
+      },
+      {
+        "name": "lio",
+        "topic": "/rear_axle/lio_odom",
+        "kind": "odometry",
+        "reference": "rear_axle",
+        "max_gap_s": 0.25
+      },
+      {
+        "name": "wheel",
+        "topic": "/rear_axle/wheel_odom",
+        "kind": "odometry",
+        "reference": "rear_axle"
+      },
+      {
+        "name": "corrected_gyro",
+        "topic": "/rear_axle/imu",
+        "kind": "yaw_rate",
+        "reference": "rear_axle"
+      }
+    ],
+    "vrpn": {
+      "server": null,
+      "port": 3883,
+      "tracker": null,
+      "update_freq": 200.0,
+      "start_bridge": false,
+      "use_vrpn_timestamps": true
+    },
+    "capture": {
+      "queue_capacity": 4096
+    },
+    "fastlio": {
+      "streams": [
+        {
+          "name": "raw_fastlio",
+          "topic": "/fastlio2/lio_odom",
+          "pose_reference": "imu",
+          "velocity_frame": "world",
+          "angular_velocity_valid": false
+        },
+        {
+          "name": "rear_fastlio",
+          "topic": "/rear_axle/lio_odom",
+          "pose_reference": "rear_axle",
+          "velocity_frame": "body",
+          "angular_velocity_valid": true
+        }
+      ],
+      "world_alignment": {
+        "rotation_xyzw": null,
+        "translation_m": null,
+        "static_window_s": null
+      },
+      "rear_to_imu_body_m": [
+        0.3,
+        0.0,
+        0.03
+      ],
+      "imu_mount_body_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "max_gap_s": 0.25,
+      "geometry_measured": false
+    },
+    "actuator": {
+      "baseline_s": 0.4,
+      "response_s": 1.0,
+      "min_hold_s": 0.1,
+      "confirmation_s": 0.02,
+      "min_confirm_samples": 3,
+      "noise_multiplier": 4.0,
+      "step_thresholds": {
+        "speed": 0.1,
+        "current": 5.0,
+        "brake": 5.0,
+        "duty": 0.02,
+        "steering": 0.03
+      },
+      "response_floors": {
+        "erpm": 100.0,
+        "vx": 0.05,
+        "ax": 0.3,
+        "yaw_rate": 0.05,
+        "ay": 0.3
+      },
+      "max_gap_s": 0.04,
+      "event_windows": []
+    }
+  },
+  "extractor_sha256": "fc5ca0d01e1b0a4b4fa98171f818891f221306dedfd2e45bebd8c7dc9394454c",
+  "data_sha256": {
+    "poses.csv": "3b8406ec0d905e40649262c01128b3b907d1bc972ec4157aefecba76dd86cdfb",
+    "estimates.csv": "365fe71602b5c30f4be586156b742976f58625197a0a21651881a930097b7589",
+    "status.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "odometry.csv": "41a66841e8af88d6534b3db0d157e4620bda198c92d1ea4780e13c92606981f6",
+    "commands.csv": "30c544bef1e3dbc8ced0ea0073641e0b47c08a2b9545e6dd75423a5fca398a98",
+    "telemetry.csv": "19c02805a09dd98bb5cc1901df9d0bf4a69732f03f6b726799f1dd01ba944d46",
+    "gyro.csv": "f334fb0ca6ec2fa18aa4dc3f3be00d9709c6846d799609f7c68c52c751a299fa"
+  },
+  "external_vicon_csv_sha256": null,
+  "tracking_note": "pose numerical validity only; bridge occlusion semantics must be declared or external CSV validity supplied"
+}

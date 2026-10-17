@@ -1,0 +1,16 @@
+[
+  {
+    "path": "/home/aims/AIMSRacer/install/aims_racer_system/share/aims_racer_system/params/ndt_fastlio.yaml",
+    "resolved": "/home/aims/AIMSRacer/install/aims_racer_system/share/aims_racer_system/params/ndt_fastlio.yaml",
+    "sha256": "5d2ad2ed82a76a7501c9b1ff31fa66f24c6a731f0cd8f946fcc2e1275f20b475",
+    "registration_frequency_hz": 5.0,
+    "ndt_num_threads": 2
+  },
+  {
+    "path": "/home/aims/aimsracer-data/code/calibration-full-step/install/aims_racer_system/share/aims_racer_system/params/ndt_fastlio.yaml",
+    "resolved": "/home/aims/aimsracer-data/code/calibration-full-step/install/aims_racer_system/share/aims_racer_system/params/ndt_fastlio.yaml",
+    "sha256": "5d2ad2ed82a76a7501c9b1ff31fa66f24c6a731f0cd8f946fcc2e1275f20b475",
+    "registration_frequency_hz": 5.0,
+    "ndt_num_threads": 2
+  }
+]

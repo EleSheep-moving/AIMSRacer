@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-16",
+  "created": "2026-10-16T02:40:06.978124+08:00",
+  "local_source": "/home/elesheep/AIMSRacer/src",
+  "nx_build_workspace": "/home/aims/aimsracer-data/code/calibration-native-20261016",
+  "nx_installed_workspace": "/home/aims/aimsracer-data/code/calibration-full-step",
+  "source_files_verified": 190,
+  "elf_machine": 183,
+  "installed_native_entries": 8,
+  "desktop": {
+    "calibration_registered_groups": 17,
+    "pp_pytest": 70,
+    "main_launch_pytest": 29,
+    "oracle_traces": 113,
+    "oracle_public_events": 6382,
+    "oracle_excluded_internal_mutation_or_empty": 32
+  },
+  "nx": {
+    "tool_summary": {
+      "tests": 583,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "postinstall_calibration_process_pytest": 15,
+    "postinstall_pp_process_pytest": 5
+  },
+  "rollback_archive": "/home/aims/aimsracer-native-calibration-20261016/backup-before-deploy.tgz",
+  "old_install_prefixes": "/home/aims/aimsracer-native-calibration-20261016/install-before-deploy",
+  "checks": "Isolated software processes, synthetic ROS input and artifact acceptance. No vehicle launch or driving acceptance. Counts span wrapper/reference layers and must not be added.",
+  "evidence_sha256": {
+    "calibration-registered-ctest.log": "44bf362b32a28eb24b2b344e3b16fb6095e81fa18a5765564b3b582fcdd01f40",
+    "pp-native-tests.txt": "df9c7777218405dcb9cd32269cb6981791c3607bb9ba87122da308ec67bbdd6a",
+    "native_engine_parity_console.log": "b4e7e5b8282fe4f4d1745a3144a3a368751852cc1be38a3f85831f92f2e235de",
+    "main-calibration-launch-tests.log": "5851eafcb168e30414eeefd996c2b92bbb8debffb6fa3d7992f601c24b4c11c7",
+    "nx-test-result-final.log": "d0ec751b455dac11c71851a9c9e1ab4090f2ad03639fbedf23d1be1b27bb8f10",
+    "nx-stage-build.log": "8fa650363190bf199ea5770418d3732eaadcb746f9d40871266c2758d854efe2",
+    "deployed-calibration-process-tests.log": "3c64d049d1c8c203420ee15f39d2c32dd3b3706e9d161b633d2263eff574701f",
+    "deployed-pp-process-tests.log": "0c752b238a8ae9b11a67ce71882038852baea83fef9023de810506420f374853",
+    "deployed-native-install.json": "dfa756eb074e4a611dbcfa9e29318cdc92ba3f1cbd2abbc53957a08fd8ffdfca",
+    "deployed-source-verification.json": "583fdf85c80cd4255c2f983a08d9983c5c6dcd7db8a57ffd47ac6604a273cadf",
+    "deployed-source-sha256.json": "9c3af170befda33eef40f4777e2f12d64c4f40f40ae93005b664ff279b1c5454",
+    "calibration-frozen-clock-causality.log": "a4701b2a9bc0a139d4429a56263a85a23a9889f74e615adefc4c2d4ac75697bc",
+    "deployed-library-resolution.txt": "a8d51aec851d6005beb25215a65a58f27ccc312aa4a427c6b108a6c69bd28380",
+    "deployed-binary-sha256.json": "91380bc685bf7b3c0468e2526baeb53c1bba2dcc1257f3669ef6d42568b5411a"
+  }
+}

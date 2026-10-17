@@ -1,0 +1,15 @@
+{
+  "training": "215303_268004918-pp-speed-hold-1to5-new-battery",
+  "selected": {
+    "tau_s": 0.04,
+    "wheel_hz": 50,
+    "speed_variance": 0.0025,
+    "bias_psd": 0.01,
+    "acceleration_psd": 0.32,
+    "history_ns": 2000000000,
+    "max_history": 4096
+  },
+  "any_candidate_passed_noise_guard": false,
+  "selection_timing": "Supplemental rate restriction after unrestricted validation; minimum training score only.",
+  "selected_training_score": 0.03539953193871855
+}

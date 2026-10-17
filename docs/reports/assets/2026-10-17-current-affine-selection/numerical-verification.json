@@ -1,0 +1,17 @@
+{
+  "independent_closed_form_fits_checked": 120,
+  "dense_intervals_checked": 42,
+  "dense_points_per_interval": 200001,
+  "maximum_coefficient_or_prediction_error": 6.217248937900877e-15,
+  "maximum_metric_error": 5.329070518200751e-15,
+  "maximum_dense_iq_error_A": 7.938233181903342e-09,
+  "maximum_dense_basic_error_A": 8.481571001084376e-10,
+  "maximum_acceleration_error_mps2": 0.0,
+  "matching_prior_cohort_maximum_difference": 0.0,
+  "input_hashes_checked": 13,
+  "prior_artifacts_unchanged": 408,
+  "fixed_speed_endpoints_checked": true,
+  "baseline_extrapolation": false,
+  "complete_current_setting_held_out": true,
+  "report_links_valid": true
+}

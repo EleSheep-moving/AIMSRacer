@@ -1,0 +1,18 @@
+{
+  "rows": 44544,
+  "max_absolute_difference": {
+    "vx": 0.0,
+    "variance": 0.0,
+    "px": 0.0,
+    "py": 0.0,
+    "pz": 0.0,
+    "vwx": 0.0,
+    "vwy": 0.0,
+    "vwz": 0.0,
+    "bix": 0.0,
+    "biy": 0.0,
+    "biz": 0.0
+  },
+  "discrete_exact": true,
+  "tolerance": 1e-08
+}

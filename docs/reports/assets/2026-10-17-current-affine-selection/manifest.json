@@ -1,0 +1,10 @@
+{
+  "citation-evidence.json": "d0afeb003eb94ba546af0afc0c4d2dd417986232b6bd056f7b71f2fb71e1701e",
+  "interval-features.csv": "fa7374c46c859ab0a4ddc7683cfdc4bc3b6bc562670be129aef5361e537b7fdc",
+  "metrics.json": "cedefcf73814a2116813f059ba959eafac02988d3dc7364fe2bf57cb8b7fcea9",
+  "model-metrics.csv": "a51f13b0f1979548a51f5abd5acaec5ed9a3528d8d866b103014efd45b7fee76",
+  "numerical-verification.json": "39c223f2f64195a3640217ba4ec4184a47fe7065429ad4eca9db1a735bf61fc4",
+  "references.bib": "7f04eba4368d850e71e2b13cba48465e0fcf6926e8f0432ce77f43071e908fdd",
+  "selected-model.json": "7b1e4e637c9a348a972ecffae337441d17143bff1990007b70ab368020227828",
+  "selection.csv": "7d88c9bedb37cf7dc6640d4d79b0f2b651e7845ad2d4543e5e50de46558f0016"
+}

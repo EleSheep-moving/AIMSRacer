@@ -1,0 +1,3683 @@
+{
+  "synthetic": true,
+  "independent_sensor_reference": "Vicon pose differentiation",
+  "physical_acceptance": false,
+  "source_time_errors_without_curve_shift": true,
+  "derivative_uses_future_samples": true,
+  "common_error_support_across_derivative_windows": true,
+  "reference_origin_mapped_ns": 1800000000000000000,
+  "primary_window_s": 0.12,
+  "evaluation_windows": [
+    {
+      "name": "whole",
+      "start_s": null,
+      "end_s": null,
+      "role": "evaluation"
+    },
+    {
+      "name": "regime_static",
+      "regime": "static",
+      "role": "descriptive_reference_regime"
+    },
+    {
+      "name": "regime_straight",
+      "regime": "straight",
+      "role": "descriptive_reference_regime"
+    },
+    {
+      "name": "regime_turn",
+      "regime": "turn",
+      "role": "descriptive_reference_regime"
+    },
+    {
+      "name": "regime_s_turn",
+      "regime": "s_turn",
+      "role": "descriptive_reference_regime"
+    }
+  ],
+  "regime_classification": {
+    "source": "primary_rear_axle_vicon_reference_only",
+    "thresholds_are_acceptance_limits": false,
+    "settings": {
+      "static_speed_max_mps": 0.05,
+      "static_yaw_rate_max_rad_s": 0.03,
+      "static_acceleration_max_mps2": 0.2,
+      "moving_speed_min_mps": 0.2,
+      "straight_yaw_rate_max_rad_s": 0.05,
+      "turn_yaw_rate_min_rad_s": 0.1,
+      "s_turn_min_lobe_s": 0.2,
+      "s_turn_max_transition_s": 0.5,
+      "s_turn_max_pair_span_s": 4.0,
+      "min_samples": 20,
+      "min_supported_span_s": 0.2,
+      "max_gap_s": 0.04
+    },
+    "runs": [
+      {
+        "regime": "static",
+        "start_ns": 1800000000060000000,
+        "end_ns": 1800000002180000000,
+        "samples": 213
+      },
+      {
+        "regime": "straight",
+        "start_ns": 1800000002530000000,
+        "end_ns": 1800000008160000000,
+        "samples": 564
+      },
+      {
+        "regime": "turn",
+        "start_ns": 1800000008190000000,
+        "end_ns": 1800000011210000000,
+        "samples": 303
+      },
+      {
+        "regime": "straight",
+        "start_ns": 1800000011240000000,
+        "end_ns": 1800000011940000000,
+        "samples": 71
+      }
+    ],
+    "support": {
+      "static": {
+        "status": "available",
+        "samples": 213,
+        "contiguous_runs": 1,
+        "supported_span_s": 2.12
+      },
+      "straight": {
+        "status": "available",
+        "samples": 635,
+        "contiguous_runs": 2,
+        "supported_span_s": 6.330000000000001
+      },
+      "turn": {
+        "status": "available",
+        "samples": 303,
+        "contiguous_runs": 1,
+        "supported_span_s": 3.02
+      },
+      "s_turn": {
+        "status": "missing",
+        "samples": 0,
+        "contiguous_runs": 0,
+        "supported_span_s": 0.0
+      }
+    },
+    "unclassified_samples": 38,
+    "unavailable_reference_grid_samples": 12,
+    "valid_reference_grid_samples": 1189,
+    "label_sampling": "closed first-to-last grid-sample intervals within each contiguous same-label run; no extrapolation across transitions or gaps",
+    "s_turn_definition": "two sustained opposite-sign moving yaw lobes, bounded transition and pair span; full pair has contiguous moving reference support"
+  },
+  "reference_qualification": {
+    "rear_axle": {
+      "qualified": false,
+      "warnings": [
+        "synthetic_data"
+      ],
+      "clock_uncertainty_ns": 500000
+    },
+    "center_of_mass": {
+      "qualified": false,
+      "warnings": [
+        "synthetic_data"
+      ],
+      "clock_uncertainty_ns": 500000
+    }
+  },
+  "comparisons": {
+    "whole/own_rear_axle/rear_axle/vx": {
+      "published_samples": 2401,
+      "matched_samples": 2365,
+      "matched_fraction_of_published": 0.985006247396918,
+      "windows": {
+        "0.08": {
+          "n": 2365,
+          "bias": 0.0494926152791964,
+          "rmse": 0.04964225515157045,
+          "mae": 0.0494926152791964,
+          "abs_p95": 0.05599999999995464,
+          "abs_max": 0.056255050505006454
+        },
+        "0.12": {
+          "n": 2365,
+          "bias": 0.04949261630965412,
+          "rmse": 0.04964200815460228,
+          "mae": 0.04949261630965412,
+          "abs_p95": 0.05599999999998312,
+          "abs_max": 0.05637331418580577
+        },
+        "0.18": {
+          "n": 2365,
+          "bias": 0.04949262087592323,
+          "rmse": 0.04964179649925809,
+          "mae": 0.04949262087592323,
+          "abs_p95": 0.055999999999979046,
+          "abs_max": 0.05655136504360864
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.0003174587189029936,
+      "reference_grid_coverage": {
+        "covered": 1189,
+        "total": 1189,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": true,
+        "n": 2177,
+        "best_waveform_offset_ms": 20.0,
+        "best_rmse": 0.05000024921336001,
+        "zero_offset_rmse_same_support": 0.049610971745249366,
+        "method": "maximum demeaned normalized correlation; demeaning used for offset only",
+        "peak_correlation": 0.9999997205686129,
+        "ambiguous_periodic_peak": false,
+        "raw_rmse_minimum_offset_ms": -15.0,
+        "boundary_optimum": false,
+        "larger_than_clock_uncertainty": true,
+        "interpretation": "waveform offset, not isolated physical/filter latency"
+      }
+    },
+    "regime_static/own_rear_axle/rear_axle/vx": {
+      "published_samples": 425,
+      "matched_samples": 419,
+      "matched_fraction_of_published": 0.9858823529411764,
+      "windows": {
+        "0.08": {
+          "n": 419,
+          "bias": 0.0500028627564427,
+          "rmse": 0.050002873446880244,
+          "mae": 0.0500028627564427,
+          "abs_p95": 0.05,
+          "abs_max": 0.05051010101009963
+        },
+        "0.12": {
+          "n": 419,
+          "bias": 0.050008371103836484,
+          "rmse": 0.050008416845849335,
+          "mae": 0.050008371103836484,
+          "abs_p95": 0.05,
+          "abs_max": 0.05074662837162713
+        },
+        "0.18": {
+          "n": 419,
+          "bias": 0.05001838866434653,
+          "rmse": 0.05001854087890213,
+          "mae": 0.05001838866434653,
+          "abs_p95": 0.05,
+          "abs_max": 0.05110273008724972
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 425,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 424,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 2.363009088976403e-05,
+      "reference_grid_coverage": {
+        "covered": 213,
+        "total": 213,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_straight/own_rear_axle/rear_axle/vx": {
+      "published_samples": 1268,
+      "matched_samples": 1262,
+      "matched_fraction_of_published": 0.9952681388012619,
+      "windows": {
+        "0.08": {
+          "n": 1262,
+          "bias": 0.04965372441354679,
+          "rmse": 0.0498647896415448,
+          "mae": 0.04965372441354679,
+          "abs_p95": 0.05599999999996307,
+          "abs_max": 0.056255050505006454
+        },
+        "0.12": {
+          "n": 1262,
+          "bias": 0.04965372528263503,
+          "rmse": 0.04986451286546848,
+          "mae": 0.04965372528263503,
+          "abs_p95": 0.05599999999999114,
+          "abs_max": 0.05637331418580577
+        },
+        "0.18": {
+          "n": 1262,
+          "bias": 0.04965372650477462,
+          "rmse": 0.04986427201562002,
+          "mae": 0.04965372650477462,
+          "abs_p95": 0.055999999999985776,
+          "abs_max": 0.05655136504360864
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 1268,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 1266,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.0007803651043910543,
+      "reference_grid_coverage": {
+        "covered": 635,
+        "total": 635,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_turn/own_rear_axle/rear_axle/vx": {
+      "published_samples": 605,
+      "matched_samples": 605,
+      "matched_fraction_of_published": 1.0,
+      "windows": {
+        "0.08": {
+          "n": 605,
+          "bias": 0.050000060123067645,
+          "rmse": 0.050000060123222945,
+          "mae": 0.050000060123067645,
+          "abs_p95": 0.05000010226243112,
+          "abs_max": 0.05000110016361953
+        },
+        "0.12": {
+          "n": 605,
+          "bias": 0.050000069271369706,
+          "rmse": 0.05000006927245817,
+          "mae": 0.050000069271369706,
+          "abs_p95": 0.05000010330907475,
+          "abs_max": 0.05000235837826911
+        },
+        "0.18": {
+          "n": 605,
+          "bias": 0.05000010739734333,
+          "rmse": 0.05000010740692331,
+          "mae": 0.05000010739734333,
+          "abs_p95": 0.05000018888056042,
+          "abs_max": 0.05000580627176743
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 605,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 604,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -6.211305312755934e-08,
+      "reference_grid_coverage": {
+        "covered": 303,
+        "total": 303,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_s_turn/own_rear_axle/rear_axle/vx": {
+      "published_samples": 0,
+      "matched_samples": 0,
+      "matched_fraction_of_published": 0.0,
+      "windows": {
+        "0.08": {
+          "n": 0
+        },
+        "0.12": {
+          "n": 0
+        },
+        "0.18": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing",
+      "source_gaps_above_threshold": 0,
+      "reference_grid_coverage": {
+        "covered": 0,
+        "total": 0,
+        "fraction": 0.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "whole/own_rear_axle/rear_axle/vy": {
+      "published_samples": 2401,
+      "matched_samples": 2365,
+      "matched_fraction_of_published": 0.985006247396918,
+      "windows": {
+        "0.08": {
+          "n": 2365,
+          "bias": 8.238614226790037e-06,
+          "rmse": 0.0006200906527500505,
+          "mae": 0.0004866103336483245,
+          "abs_p95": 0.0007999231007241067,
+          "abs_max": 0.001944418608473939
+        },
+        "0.12": {
+          "n": 2365,
+          "bias": 8.23876084861651e-06,
+          "rmse": 0.0006197320009959084,
+          "mae": 0.0004866420777283984,
+          "abs_p95": 0.0007999397325404089,
+          "abs_max": 0.001929369229316164
+        },
+        "0.18": {
+          "n": 2365,
+          "bias": 8.239440403210596e-06,
+          "rmse": 0.0006194693841766727,
+          "mae": 0.00048683325806320063,
+          "abs_p95": 0.0007999882257786109,
+          "abs_max": 0.001982325670620986
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 9.793136098026953e-06,
+      "reference_grid_coverage": {
+        "covered": 1189,
+        "total": 1189,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": true,
+        "n": 2177,
+        "best_waveform_offset_ms": 20.0,
+        "best_rmse": 2.0939294456096686e-05,
+        "zero_offset_rmse_same_support": 0.0006246155383572128,
+        "method": "maximum demeaned normalized correlation; demeaning used for offset only",
+        "peak_correlation": 0.9999997792318526,
+        "ambiguous_periodic_peak": false,
+        "raw_rmse_minimum_offset_ms": 20.0,
+        "boundary_optimum": false,
+        "larger_than_clock_uncertainty": true,
+        "interpretation": "waveform offset, not isolated physical/filter latency"
+      }
+    },
+    "regime_static/own_rear_axle/rear_axle/vy": {
+      "published_samples": 425,
+      "matched_samples": 419,
+      "matched_fraction_of_published": 0.9858823529411764,
+      "windows": {
+        "0.08": {
+          "n": 419,
+          "bias": 4.6755182728389255e-07,
+          "rmse": 5.359280614758839e-06,
+          "mae": 4.6755182728389255e-07,
+          "abs_p95": 0.0,
+          "abs_max": 8.32590757954993e-05
+        },
+        "0.12": {
+          "n": 419,
+          "bias": 1.363539370445543e-06,
+          "rmse": 1.1098832142861873e-05,
+          "mae": 1.363539370445543e-06,
+          "abs_p95": 0.0,
+          "abs_max": 0.00012169411112251889
+        },
+        "0.18": {
+          "n": 419,
+          "bias": 2.978671127798713e-06,
+          "rmse": 2.0267821595419015e-05,
+          "mae": 3.1139751440702544e-06,
+          "abs_p95": 0.0,
+          "abs_max": 0.00017906265270523008
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 425,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 424,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 3.848932071453859e-06,
+      "reference_grid_coverage": {
+        "covered": 213,
+        "total": 213,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_straight/own_rear_axle/rear_axle/vy": {
+      "published_samples": 1268,
+      "matched_samples": 1262,
+      "matched_fraction_of_published": 0.9952681388012619,
+      "windows": {
+        "0.08": {
+          "n": 1262,
+          "bias": 0.00013675858321478244,
+          "rmse": 0.000664247331091903,
+          "mae": 0.0006088643304973941,
+          "abs_p95": 0.0007998442886994733,
+          "abs_max": 0.0015843158009785328
+        },
+        "0.12": {
+          "n": 1262,
+          "bias": 0.00013675910183901554,
+          "rmse": 0.0006638328917774859,
+          "mae": 0.0006082756984025053,
+          "abs_p95": 0.0007998537037525173,
+          "abs_max": 0.0015843131937703682
+        },
+        "0.18": {
+          "n": 1262,
+          "bias": 0.0001367615144410159,
+          "rmse": 0.0006630644672623359,
+          "mae": 0.0006070342366467567,
+          "abs_p95": 0.0007998536422167285,
+          "abs_max": 0.0015843007198707883
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 1268,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 1266,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -3.561574939156395e-05,
+      "reference_grid_coverage": {
+        "covered": 635,
+        "total": 635,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_turn/own_rear_axle/rear_axle/vy": {
+      "published_samples": 605,
+      "matched_samples": 605,
+      "matched_fraction_of_published": 1.0,
+      "windows": {
+        "0.08": {
+          "n": 605,
+          "bias": -6.276219551663952e-05,
+          "rmse": 0.00048431557781143143,
+          "mae": 0.00042903195374393736,
+          "abs_p95": 0.0007423831303233076,
+          "abs_max": 0.0007781099161124853
+        },
+        "0.12": {
+          "n": 605,
+          "bias": -6.27610734536873e-05,
+          "rmse": 0.00048439126826604477,
+          "mae": 0.0004290642141060179,
+          "abs_p95": 0.0007376501298691988,
+          "abs_max": 0.0007927547641646219
+        },
+        "0.18": {
+          "n": 605,
+          "bias": -6.275578652211494e-05,
+          "rmse": 0.0004851675121015908,
+          "mae": 0.00042944064418118356,
+          "abs_p95": 0.0007410013051385639,
+          "abs_max": 0.0008278506479077463
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 605,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 604,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.0005484555494868204,
+      "reference_grid_coverage": {
+        "covered": 303,
+        "total": 303,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_s_turn/own_rear_axle/rear_axle/vy": {
+      "published_samples": 0,
+      "matched_samples": 0,
+      "matched_fraction_of_published": 0.0,
+      "windows": {
+        "0.08": {
+          "n": 0
+        },
+        "0.12": {
+          "n": 0
+        },
+        "0.18": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing",
+      "source_gaps_above_threshold": 0,
+      "reference_grid_coverage": {
+        "covered": 0,
+        "total": 0,
+        "fraction": 0.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "whole/own_rear_axle/rear_axle/ax": {
+      "published_samples": 2401,
+      "matched_samples": 2365,
+      "matched_fraction_of_published": 0.985006247396918,
+      "windows": {
+        "0.08": {
+          "n": 2365,
+          "bias": -0.00012715199345584115,
+          "rmse": 0.030481292848235978,
+          "mae": 0.0033844549369078315,
+          "abs_p95": 0.00022292740866390682,
+          "abs_max": 0.5227272727268066
+        },
+        "0.12": {
+          "n": 2365,
+          "bias": -0.00012748905425942906,
+          "rmse": 0.030072820164018,
+          "mae": 0.0039978026601616805,
+          "abs_p95": 0.0010327078415224293,
+          "abs_max": 0.46393606393569903
+        },
+        "0.18": {
+          "n": 2365,
+          "bias": -0.00012822420358026104,
+          "rmse": 0.03150876309466082,
+          "mae": 0.005168571526211024,
+          "abs_p95": 0.005263157892824199,
+          "abs_max": 0.4154798761607251
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.00011727508244540724,
+      "reference_grid_coverage": {
+        "covered": 1189,
+        "total": 1189,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "insufficient_common_dynamic_support",
+        "n": 2177
+      }
+    },
+    "regime_static/own_rear_axle/rear_axle/ax": {
+      "published_samples": 425,
+      "matched_samples": 419,
+      "matched_fraction_of_published": 0.9858823529411764,
+      "windows": {
+        "0.08": {
+          "n": 419,
+          "bias": -0.000363419396830882,
+          "rmse": 0.004546810385749892,
+          "mae": 0.000363419396830882,
+          "abs_p95": 0.0,
+          "abs_max": 0.07727272727244987
+        },
+        "0.12": {
+          "n": 419,
+          "bias": -0.001009253276553677,
+          "rmse": 0.00961134764967431,
+          "mae": 0.001009253276553677,
+          "abs_p95": 0.0,
+          "abs_max": 0.13606393606364034
+        },
+        "0.18": {
+          "n": 419,
+          "bias": -0.002164965973824439,
+          "rmse": 0.016051849323107173,
+          "mae": 0.002164965973824439,
+          "abs_p95": 0.0,
+          "abs_max": 0.18452012383876776
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 425,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 424,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -0.0028614918410387415,
+      "reference_grid_coverage": {
+        "covered": 213,
+        "total": 213,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_straight/own_rear_axle/rear_axle/ax": {
+      "published_samples": 1268,
+      "matched_samples": 1262,
+      "matched_fraction_of_published": 0.9952681388012619,
+      "windows": {
+        "0.08": {
+          "n": 1262,
+          "bias": 0.0018997819728211838,
+          "rmse": 0.030639402171404952,
+          "mae": 0.0039918576255660605,
+          "abs_p95": 3.4859934418936316e-06,
+          "abs_max": 0.47305194805038153
+        },
+        "0.12": {
+          "n": 1262,
+          "bias": 0.0019018188008049293,
+          "rmse": 0.030641627095627448,
+          "mae": 0.004803179131825347,
+          "abs_p95": 0.0032967032836694445,
+          "abs_max": 0.4249750249724812
+        },
+        "0.18": {
+          "n": 1262,
+          "bias": 0.0019060033432523492,
+          "rmse": 0.032578646711915134,
+          "mae": 0.0063014025024445645,
+          "abs_p95": 0.026625386999448608,
+          "abs_max": 0.38726227333019647
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 1268,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 1266,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -0.0009022326201806799,
+      "reference_grid_coverage": {
+        "covered": 635,
+        "total": 635,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_turn/own_rear_axle/rear_axle/ax": {
+      "published_samples": 605,
+      "matched_samples": 605,
+      "matched_fraction_of_published": 1.0,
+      "windows": {
+        "0.08": {
+          "n": 605,
+          "bias": 6.951695797666443e-06,
+          "rmse": 0.00029836392549620664,
+          "mae": 0.00017466301762016092,
+          "abs_p95": 0.00038335669586850486,
+          "abs_max": 0.001723082868270824
+        },
+        "0.12": {
+          "n": 605,
+          "bias": -6.19951541308928e-07,
+          "rmse": 0.0003157306173691246,
+          "mae": 0.0001794911478560408,
+          "abs_p95": 0.0004908951111723781,
+          "abs_max": 0.0019002523994393113
+        },
+        "0.18": {
+          "n": 605,
+          "bias": -1.6328377644295982e-05,
+          "rmse": 0.00035372753465714063,
+          "mae": 0.00018974497428535624,
+          "abs_p95": 0.0006589829052832836,
+          "abs_max": 0.002225447746297198
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 605,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 604,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -0.0002637945075278477,
+      "reference_grid_coverage": {
+        "covered": 303,
+        "total": 303,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_s_turn/own_rear_axle/rear_axle/ax": {
+      "published_samples": 0,
+      "matched_samples": 0,
+      "matched_fraction_of_published": 0.0,
+      "windows": {
+        "0.08": {
+          "n": 0
+        },
+        "0.12": {
+          "n": 0
+        },
+        "0.18": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing",
+      "source_gaps_above_threshold": 0,
+      "reference_grid_coverage": {
+        "covered": 0,
+        "total": 0,
+        "fraction": 0.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "whole/own_rear_axle/rear_axle/ay": {
+      "published_samples": 2401,
+      "matched_samples": 2365,
+      "matched_fraction_of_published": 0.985006247396918,
+      "windows": {
+        "0.08": {
+          "n": 2365,
+          "bias": 2.9234751799360533e-05,
+          "rmse": 0.004780115885993365,
+          "mae": 0.00100051169679737,
+          "abs_p95": 0.0015841553691186927,
+          "abs_max": 0.08487576463511005
+        },
+        "0.12": {
+          "n": 2365,
+          "bias": 2.9522414685068615e-05,
+          "rmse": 0.004720933031715067,
+          "mae": 0.0010675339909315888,
+          "abs_p95": 0.001844164281329178,
+          "abs_max": 0.07516620671853226
+        },
+        "0.18": {
+          "n": 2365,
+          "bias": 3.014818814258936e-05,
+          "rmse": 0.0049347875239532935,
+          "mae": 0.001215403480780321,
+          "abs_p95": 0.002869620303240626,
+          "abs_max": 0.06706974490312123
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 8.435295795772264e-05,
+      "reference_grid_coverage": {
+        "covered": 1189,
+        "total": 1189,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "insufficient_common_dynamic_support",
+        "n": 2177
+      }
+    },
+    "regime_static/own_rear_axle/rear_axle/ay": {
+      "published_samples": 425,
+      "matched_samples": 419,
+      "matched_fraction_of_published": 0.9858823529411764,
+      "windows": {
+        "0.08": {
+          "n": 419,
+          "bias": -5.937659822279895e-05,
+          "rmse": 0.0007427728098469454,
+          "mae": 5.937659822279895e-05,
+          "abs_p95": 0.0,
+          "abs_max": 0.012622201600012954
+        },
+        "0.12": {
+          "n": 419,
+          "bias": -0.0001646502173085773,
+          "rmse": 0.0015674714627610018,
+          "mae": 0.0001646502173085773,
+          "abs_p95": 0.0,
+          "abs_max": 0.022180679005655655
+        },
+        "0.18": {
+          "n": 419,
+          "bias": -0.0003523568914774801,
+          "rmse": 0.0026108367459326625,
+          "mae": 0.0003523568914774801,
+          "abs_p95": 0.0,
+          "abs_max": 0.029981077788491822
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 425,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 424,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -0.0004668227612338593,
+      "reference_grid_coverage": {
+        "covered": 213,
+        "total": 213,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_straight/own_rear_axle/rear_axle/ay": {
+      "published_samples": 1268,
+      "matched_samples": 1262,
+      "matched_fraction_of_published": 0.9952681388012619,
+      "windows": {
+        "0.08": {
+          "n": 1262,
+          "bias": 0.00012136923066242473,
+          "rmse": 0.003618547925892542,
+          "mae": 0.0007177216139752158,
+          "abs_p95": 0.0006398596525534878,
+          "abs_max": 0.06635200721048981
+        },
+        "0.12": {
+          "n": 1262,
+          "bias": 8.591898698683616e-05,
+          "rmse": 0.0036404013298983883,
+          "mae": 0.0007788553721797824,
+          "abs_p95": 0.0006399734628661062,
+          "abs_max": 0.05947741703078067
+        },
+        "0.18": {
+          "n": 1262,
+          "bias": 1.5379445274430456e-05,
+          "rmse": 0.0039108749572523225,
+          "mae": 0.000907301772913921,
+          "abs_p95": 0.0019030245408676284,
+          "abs_max": 0.0538928576080019
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 1268,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 1266,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -0.00015816158345488383,
+      "reference_grid_coverage": {
+        "covered": 635,
+        "total": 635,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_turn/own_rear_axle/rear_axle/ay": {
+      "published_samples": 605,
+      "matched_samples": 605,
+      "matched_fraction_of_published": 1.0,
+      "windows": {
+        "0.08": {
+          "n": 605,
+          "bias": 0.0004623772501484603,
+          "rmse": 0.0035208508533841505,
+          "mae": 0.0012319279114413487,
+          "abs_p95": 0.0024693980754476193,
+          "abs_max": 0.019070772634984696
+        },
+        "0.12": {
+          "n": 605,
+          "bias": 0.00055579715823523,
+          "rmse": 0.0035271080156448953,
+          "mae": 0.0012504809056870464,
+          "abs_p95": 0.003443161818071487,
+          "abs_max": 0.020879738787633426
+        },
+        "0.18": {
+          "n": 605,
+          "bias": 0.0007439070982423233,
+          "rmse": 0.003679068230420804,
+          "mae": 0.0013213798755926207,
+          "abs_p95": 0.005161070618471572,
+          "abs_max": 0.024315526955260833
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 605,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 604,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.0014805056060496918,
+      "reference_grid_coverage": {
+        "covered": 303,
+        "total": 303,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_s_turn/own_rear_axle/rear_axle/ay": {
+      "published_samples": 0,
+      "matched_samples": 0,
+      "matched_fraction_of_published": 0.0,
+      "windows": {
+        "0.08": {
+          "n": 0
+        },
+        "0.12": {
+          "n": 0
+        },
+        "0.18": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing",
+      "source_gaps_above_threshold": 0,
+      "reference_grid_coverage": {
+        "covered": 0,
+        "total": 0,
+        "fraction": 0.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "whole/own_rear_axle/rear_axle/yaw_rate": {
+      "published_samples": 2401,
+      "matched_samples": 2365,
+      "matched_fraction_of_published": 0.985006247396918,
+      "windows": {
+        "0.08": {
+          "n": 2365,
+          "bias": -2.3779897477975448e-15,
+          "rmse": 0.0074623857399404156,
+          "mae": 0.0010275161765564025,
+          "abs_p95": 1.875166688591888e-14,
+          "abs_max": 0.06255050504995585
+        },
+        "0.12": {
+          "n": 2365,
+          "bias": -2.3554566800673088e-15,
+          "rmse": 0.007395907323893823,
+          "mae": 0.0010444608245783237,
+          "abs_p95": 1.451061493185075e-14,
+          "abs_max": 0.06373314185759432
+        },
+        "0.18": {
+          "n": 2365,
+          "bias": -2.4148876462058056e-15,
+          "rmse": 0.007320857634067803,
+          "mae": 0.0010826444297441127,
+          "abs_p95": 9.547918011776346e-15,
+          "abs_max": 0.06225824420623871
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.00013063224199646341,
+      "reference_grid_coverage": {
+        "covered": 1189,
+        "total": 1189,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": true,
+        "n": 2177,
+        "best_waveform_offset_ms": 20.0,
+        "best_rmse": 0.0009617007874022904,
+        "zero_offset_rmse_same_support": 0.007708640963563795,
+        "method": "maximum demeaned normalized correlation; demeaning used for offset only",
+        "peak_correlation": 0.9999738795909783,
+        "ambiguous_periodic_peak": false,
+        "raw_rmse_minimum_offset_ms": 20.0,
+        "boundary_optimum": false,
+        "larger_than_clock_uncertainty": true,
+        "interpretation": "waveform offset, not isolated physical/filter latency"
+      }
+    },
+    "regime_static/own_rear_axle/rear_axle/yaw_rate": {
+      "published_samples": 425,
+      "matched_samples": 419,
+      "matched_fraction_of_published": 0.9858823529411764,
+      "windows": {
+        "0.08": {
+          "n": 419,
+          "bias": 0.0,
+          "rmse": 0.0,
+          "mae": 0.0,
+          "abs_p95": 0.0,
+          "abs_max": 0.0
+        },
+        "0.12": {
+          "n": 419,
+          "bias": 0.0,
+          "rmse": 0.0,
+          "mae": 0.0,
+          "abs_p95": 0.0,
+          "abs_max": 0.0
+        },
+        "0.18": {
+          "n": 419,
+          "bias": 0.0,
+          "rmse": 0.0,
+          "mae": 0.0,
+          "abs_p95": 0.0,
+          "abs_max": 0.0
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 425,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 424,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.0,
+      "reference_grid_coverage": {
+        "covered": 213,
+        "total": 213,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_straight/own_rear_axle/rear_axle/yaw_rate": {
+      "published_samples": 1268,
+      "matched_samples": 1262,
+      "matched_fraction_of_published": 0.9952681388012619,
+      "windows": {
+        "0.08": {
+          "n": 1262,
+          "bias": 0.000158708719523643,
+          "rmse": 0.003253444025316809,
+          "mae": 0.00026151971377537473,
+          "abs_p95": 0.0,
+          "abs_max": 0.060164141413480005
+        },
+        "0.12": {
+          "n": 1262,
+          "bias": 0.00014308096815904216,
+          "rmse": 0.0031056963625074015,
+          "mae": 0.00027739692953348036,
+          "abs_p95": 0.0,
+          "abs_max": 0.05680944055886026
+        },
+        "0.18": {
+          "n": 1262,
+          "bias": 0.00011729808697067482,
+          "rmse": 0.0029548947536959204,
+          "mae": 0.00031317514911249775,
+          "abs_p95": 0.0,
+          "abs_max": 0.050715944271913636
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 1268,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 1266,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.00015049365415102035,
+      "reference_grid_coverage": {
+        "covered": 635,
+        "total": 635,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_turn/own_rear_axle/rear_axle/yaw_rate": {
+      "published_samples": 605,
+      "matched_samples": 605,
+      "matched_fraction_of_published": 1.0,
+      "windows": {
+        "0.08": {
+          "n": 605,
+          "bias": -0.00038016528926100275,
+          "rmse": 0.011772647602492983,
+          "mae": 0.0025041948409547025,
+          "abs_p95": 0.002550505050487861,
+          "abs_max": 0.06255050504995585
+        },
+        "0.12": {
+          "n": 605,
+          "bias": -0.0003635001362320849,
+          "rmse": 0.011691397250082433,
+          "mae": 0.0025373139257229217,
+          "abs_p95": 0.0037331418581229682,
+          "abs_max": 0.06373314185759432
+        },
+        "0.18": {
+          "n": 605,
+          "bias": -0.0002646012100170371,
+          "rmse": 0.011598458562722418,
+          "mae": 0.0026119455176369234,
+          "abs_p95": 0.008529974669128233,
+          "abs_max": 0.06225824420623871
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 605,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 604,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.004812690781366852,
+      "reference_grid_coverage": {
+        "covered": 303,
+        "total": 303,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_s_turn/own_rear_axle/rear_axle/yaw_rate": {
+      "published_samples": 0,
+      "matched_samples": 0,
+      "matched_fraction_of_published": 0.0,
+      "windows": {
+        "0.08": {
+          "n": 0
+        },
+        "0.12": {
+          "n": 0
+        },
+        "0.18": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing",
+      "source_gaps_above_threshold": 0,
+      "reference_grid_coverage": {
+        "covered": 0,
+        "total": 0,
+        "fraction": 0.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "whole/own_center_of_mass/center_of_mass/vx": {
+      "published_samples": 2401,
+      "matched_samples": 2365,
+      "matched_fraction_of_published": 0.985006247396918,
+      "windows": {
+        "0.08": {
+          "n": 2365,
+          "bias": 0.04949261529974418,
+          "rmse": 0.049642758931691074,
+          "mae": 0.04949261529974418,
+          "abs_p95": 0.05599999999995482,
+          "abs_max": 0.05625505050499224
+        },
+        "0.12": {
+          "n": 2365,
+          "bias": 0.049492616404158724,
+          "rmse": 0.04964250032302656,
+          "mae": 0.049492616404158724,
+          "abs_p95": 0.05599999999999061,
+          "abs_max": 0.05637331418579511
+        },
+        "0.18": {
+          "n": 2365,
+          "bias": 0.04949262129135479,
+          "rmse": 0.049642269784557706,
+          "mae": 0.04949262129135479,
+          "abs_p95": 0.055999999999985284,
+          "abs_max": 0.05655136504360697
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.0003213775251868958,
+      "reference_grid_coverage": {
+        "covered": 1189,
+        "total": 1189,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": true,
+        "n": 2177,
+        "best_waveform_offset_ms": 20.0,
+        "best_rmse": 0.05000025768992691,
+        "zero_offset_rmse_same_support": 0.04961150675030039,
+        "method": "maximum demeaned normalized correlation; demeaning used for offset only",
+        "peak_correlation": 0.9999997088289764,
+        "ambiguous_periodic_peak": false,
+        "raw_rmse_minimum_offset_ms": -15.0,
+        "boundary_optimum": false,
+        "larger_than_clock_uncertainty": true,
+        "interpretation": "waveform offset, not isolated physical/filter latency"
+      }
+    },
+    "regime_static/own_center_of_mass/center_of_mass/vx": {
+      "published_samples": 425,
+      "matched_samples": 419,
+      "matched_fraction_of_published": 0.9858823529411764,
+      "windows": {
+        "0.08": {
+          "n": 419,
+          "bias": 0.05000286275644226,
+          "rmse": 0.050002873446879814,
+          "mae": 0.05000286275644226,
+          "abs_p95": 0.04999999999999956,
+          "abs_max": 0.05051010101010052
+        },
+        "0.12": {
+          "n": 419,
+          "bias": 0.050008371103838614,
+          "rmse": 0.05000841684585144,
+          "mae": 0.050008371103838614,
+          "abs_p95": 0.05000000000000211,
+          "abs_max": 0.05074662837162976
+        },
+        "0.18": {
+          "n": 419,
+          "bias": 0.05001838866434843,
+          "rmse": 0.050018540878904005,
+          "mae": 0.05001838866434843,
+          "abs_p95": 0.05000000000000189,
+          "abs_max": 0.05110273008725129
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 425,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 424,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 2.363009088979024e-05,
+      "reference_grid_coverage": {
+        "covered": 213,
+        "total": 213,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_straight/own_center_of_mass/center_of_mass/vx": {
+      "published_samples": 1268,
+      "matched_samples": 1262,
+      "matched_fraction_of_published": 0.9952681388012619,
+      "windows": {
+        "0.08": {
+          "n": 1262,
+          "bias": 0.04965848567175486,
+          "rmse": 0.049869659236704146,
+          "mae": 0.04965848567175486,
+          "abs_p95": 0.05599999999996274,
+          "abs_max": 0.05625505050499224
+        },
+        "0.12": {
+          "n": 1262,
+          "bias": 0.049658017688399975,
+          "rmse": 0.04986890438965539,
+          "mae": 0.049658017688399975,
+          "abs_p95": 0.055999999999995664,
+          "abs_max": 0.05637331418579511
+        },
+        "0.18": {
+          "n": 1262,
+          "bias": 0.04965724527133191,
+          "rmse": 0.0498678812535303,
+          "mae": 0.04965724527133191,
+          "abs_p95": 0.055999999999989836,
+          "abs_max": 0.05655136504360697
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 1268,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 1266,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.0007848915887549402,
+      "reference_grid_coverage": {
+        "covered": 635,
+        "total": 635,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_turn/own_center_of_mass/center_of_mass/vx": {
+      "published_samples": 605,
+      "matched_samples": 605,
+      "matched_fraction_of_published": 1.0,
+      "windows": {
+        "0.08": {
+          "n": 605,
+          "bias": 0.04998865528531545,
+          "rmse": 0.04998989755648591,
+          "mae": 0.04998865528531545,
+          "abs_p95": 0.050000102343083386,
+          "abs_max": 0.051799794392255905
+        },
+        "0.12": {
+          "n": 605,
+          "bias": 0.04998916484968633,
+          "rmse": 0.04999037839360983,
+          "mae": 0.04998916484968633,
+          "abs_p95": 0.05000010298265008,
+          "abs_max": 0.0518706773474254
+        },
+        "0.18": {
+          "n": 605,
+          "bias": 0.04999217205489485,
+          "rmse": 0.04999332747944607,
+          "mae": 0.04999217205489485,
+          "abs_p95": 0.0500001067416608,
+          "abs_max": 0.051843043721731596
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 605,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 604,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.00014408414987031215,
+      "reference_grid_coverage": {
+        "covered": 303,
+        "total": 303,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_s_turn/own_center_of_mass/center_of_mass/vx": {
+      "published_samples": 0,
+      "matched_samples": 0,
+      "matched_fraction_of_published": 0.0,
+      "windows": {
+        "0.08": {
+          "n": 0
+        },
+        "0.12": {
+          "n": 0
+        },
+        "0.18": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing",
+      "source_gaps_above_threshold": 0,
+      "reference_grid_coverage": {
+        "covered": 0,
+        "total": 0,
+        "fraction": 0.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "whole/own_center_of_mass/center_of_mass/vy": {
+      "published_samples": 2401,
+      "matched_samples": 2365,
+      "matched_fraction_of_published": 0.985006247396918,
+      "windows": {
+        "0.08": {
+          "n": 2365,
+          "bias": 8.23875805953913e-06,
+          "rmse": 0.001777244425455295,
+          "mae": 0.0006997181566645603,
+          "abs_p95": 0.0015282959170746034,
+          "abs_max": 0.013911408134747463
+        },
+        "0.12": {
+          "n": 2365,
+          "bias": 8.239422360464838e-06,
+          "rmse": 0.0017659292501447268,
+          "mae": 0.0006998590187427307,
+          "abs_p95": 0.001528864404924416,
+          "abs_max": 0.014170788591833433
+        },
+        "0.18": {
+          "n": 2365,
+          "bias": 8.242348411124253e-06,
+          "rmse": 0.0017559642238273389,
+          "mae": 0.0007030726839305857,
+          "abs_p95": 0.0016347663247923278,
+          "abs_max": 0.013908671730151631
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 3.7226144248737045e-05,
+      "reference_grid_coverage": {
+        "covered": 1189,
+        "total": 1189,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": true,
+        "n": 2177,
+        "best_waveform_offset_ms": 20.0,
+        "best_rmse": 0.0002030478875350494,
+        "zero_offset_rmse_same_support": 0.0018332271672195726,
+        "method": "maximum demeaned normalized correlation; demeaning used for offset only",
+        "peak_correlation": 0.9999931282967298,
+        "ambiguous_periodic_peak": false,
+        "raw_rmse_minimum_offset_ms": 20.0,
+        "boundary_optimum": false,
+        "larger_than_clock_uncertainty": true,
+        "interpretation": "waveform offset, not isolated physical/filter latency"
+      }
+    },
+    "regime_static/own_center_of_mass/center_of_mass/vy": {
+      "published_samples": 425,
+      "matched_samples": 419,
+      "matched_fraction_of_published": 0.9858823529411764,
+      "windows": {
+        "0.08": {
+          "n": 419,
+          "bias": 4.675518273943228e-07,
+          "rmse": 5.359280614762602e-06,
+          "mae": 4.675518273943228e-07,
+          "abs_p95": 1.1102230246251565e-16,
+          "abs_max": 8.32590757955387e-05
+        },
+        "0.12": {
+          "n": 419,
+          "bias": 1.3635393701664486e-06,
+          "rmse": 1.1098832142817138e-05,
+          "mae": 1.3635393707109614e-06,
+          "abs_p95": 2.7755575615628914e-16,
+          "abs_max": 0.00012169411112210315
+        },
+        "0.18": {
+          "n": 419,
+          "bias": 2.978671127530959e-06,
+          "rmse": 2.026782159537884e-05,
+          "mae": 3.113975144320925e-06,
+          "abs_p95": 2.6747267595217394e-16,
+          "abs_max": 0.00017906265270496865
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 425,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 424,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 3.848932071449544e-06,
+      "reference_grid_coverage": {
+        "covered": 213,
+        "total": 213,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_straight/own_center_of_mass/center_of_mass/vy": {
+      "published_samples": 1268,
+      "matched_samples": 1262,
+      "matched_fraction_of_published": 0.9952681388012619,
+      "windows": {
+        "0.08": {
+          "n": 1262,
+          "bias": 0.00017008739066581193,
+          "rmse": 0.0009927227886498793,
+          "mae": 0.0006612796455440741,
+          "abs_p95": 0.0007999522576382123,
+          "abs_max": 0.013371956684906823
+        },
+        "0.12": {
+          "n": 1262,
+          "bias": 0.00016680594217149025,
+          "rmse": 0.0009715413865834181,
+          "mae": 0.0006607108143145147,
+          "abs_p95": 0.0007999783757253326,
+          "abs_max": 0.012679836652221423
+        },
+        "0.18": {
+          "n": 1262,
+          "bias": 0.00016139288032535038,
+          "rmse": 0.0009503070396518491,
+          "mae": 0.0006618187299780536,
+          "abs_p95": 0.0007999868088997312,
+          "abs_max": 0.011418764303864022
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 1268,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 1266,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -4.013850818003505e-06,
+      "reference_grid_coverage": {
+        "covered": 635,
+        "total": 635,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_turn/own_center_of_mass/center_of_mass/vy": {
+      "published_samples": 605,
+      "matched_samples": 605,
+      "matched_fraction_of_published": 1.0,
+      "windows": {
+        "0.08": {
+          "n": 605,
+          "bias": -0.00014259605977895142,
+          "rmse": 0.002669027649948269,
+          "mae": 0.0009496960717193846,
+          "abs_p95": 0.0012553558141643593,
+          "abs_max": 0.013911408134747463
+        },
+        "0.12": {
+          "n": 605,
+          "bias": -0.00013909202525675172,
+          "rmse": 0.002654918318178386,
+          "mae": 0.0009501157610139153,
+          "abs_p95": 0.0014970291874037752,
+          "abs_max": 0.014170788591833433
+        },
+        "0.18": {
+          "n": 605,
+          "bias": -0.0001183031836667799,
+          "rmse": 0.0026441394590000626,
+          "mae": 0.0009574112983663104,
+          "abs_p95": 0.002451447955954453,
+          "abs_max": 0.013908671730151631
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 605,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 604,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.0015591541079330714,
+      "reference_grid_coverage": {
+        "covered": 303,
+        "total": 303,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_s_turn/own_center_of_mass/center_of_mass/vy": {
+      "published_samples": 0,
+      "matched_samples": 0,
+      "matched_fraction_of_published": 0.0,
+      "windows": {
+        "0.08": {
+          "n": 0
+        },
+        "0.12": {
+          "n": 0
+        },
+        "0.18": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing",
+      "source_gaps_above_threshold": 0,
+      "reference_grid_coverage": {
+        "covered": 0,
+        "total": 0,
+        "fraction": 0.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "whole/own_center_of_mass/center_of_mass/ax": {
+      "published_samples": 2401,
+      "matched_samples": 2365,
+      "matched_fraction_of_published": 0.985006247396918,
+      "windows": {
+        "0.08": {
+          "n": 2365,
+          "bias": -0.00013137336017552087,
+          "rmse": 0.031014836615046115,
+          "mae": 0.004072823504667046,
+          "abs_p95": 0.004527895992182547,
+          "abs_max": 0.5227272727272627
+        },
+        "0.12": {
+          "n": 2365,
+          "bias": -0.00013605043220053724,
+          "rmse": 0.03059336726317959,
+          "mae": 0.004792676925951555,
+          "abs_p95": 0.014148851587946347,
+          "abs_max": 0.4639360639370196
+        },
+        "0.18": {
+          "n": 2365,
+          "bias": -0.00014548522786773043,
+          "rmse": 0.03206319428628667,
+          "mae": 0.00617010320148183,
+          "abs_p95": 0.029420602351257853,
+          "abs_max": 0.4154798761605356
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.00011620524223881046,
+      "reference_grid_coverage": {
+        "covered": 1189,
+        "total": 1189,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": true,
+        "n": 2177,
+        "best_waveform_offset_ms": 20.0,
+        "best_rmse": 0.023202386277049614,
+        "zero_offset_rmse_same_support": 0.031886998277600845,
+        "method": "maximum demeaned normalized correlation; demeaning used for offset only",
+        "peak_correlation": 0.9934564694430532,
+        "ambiguous_periodic_peak": false,
+        "raw_rmse_minimum_offset_ms": 20.0,
+        "boundary_optimum": false,
+        "larger_than_clock_uncertainty": true,
+        "interpretation": "waveform offset, not isolated physical/filter latency"
+      }
+    },
+    "regime_static/own_center_of_mass/center_of_mass/ax": {
+      "published_samples": 425,
+      "matched_samples": 419,
+      "matched_fraction_of_published": 0.9858823529411764,
+      "windows": {
+        "0.08": {
+          "n": 419,
+          "bias": -0.0003634193973425986,
+          "rmse": 0.0045468103857920815,
+          "mae": 0.0003634193973425986,
+          "abs_p95": 5.115907697472721e-13,
+          "abs_max": 0.07727272727298029
+        },
+        "0.12": {
+          "n": 419,
+          "bias": -0.001009253277871721,
+          "rmse": 0.009611347649813277,
+          "mae": 0.001009253277871721,
+          "abs_p95": 1.3180567748349858e-12,
+          "abs_max": 0.13606393606497136
+        },
+        "0.18": {
+          "n": 419,
+          "bias": -0.002164965973641418,
+          "rmse": 0.0160518493230821,
+          "mae": 0.0021649659739951207,
+          "abs_p95": 1.829647544582258e-13,
+          "abs_max": 0.18452012383857586
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 425,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 424,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -0.00286149184103871,
+      "reference_grid_coverage": {
+        "covered": 213,
+        "total": 213,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_straight/own_center_of_mass/center_of_mass/ax": {
+      "published_samples": 1268,
+      "matched_samples": 1262,
+      "matched_fraction_of_published": 0.9952681388012619,
+      "windows": {
+        "0.08": {
+          "n": 1262,
+          "bias": 0.0014722479326124776,
+          "rmse": 0.030997531351591105,
+          "mae": 0.004453083034020087,
+          "abs_p95": 0.0013675609148769902,
+          "abs_max": 0.4730519480498131
+        },
+        "0.12": {
+          "n": 1262,
+          "bias": 0.001478631001719589,
+          "rmse": 0.030990104667917566,
+          "mae": 0.005323220678850944,
+          "abs_p95": 0.0158989570091398,
+          "abs_max": 0.42497502497116313
+        },
+        "0.18": {
+          "n": 1262,
+          "bias": 0.0014941305436258277,
+          "rmse": 0.03291998013445078,
+          "mae": 0.0069238861220620495,
+          "abs_p95": 0.04019045261011952,
+          "abs_max": 0.3872622733304363
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 1268,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 1266,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -0.0011416770147416153,
+      "reference_grid_coverage": {
+        "covered": 635,
+        "total": 635,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_turn/own_center_of_mass/center_of_mass/ax": {
+      "published_samples": 605,
+      "matched_samples": 605,
+      "matched_fraction_of_published": 1.0,
+      "windows": {
+        "0.08": {
+          "n": 605,
+          "bias": 0.0011787296920931082,
+          "rmse": 0.007952826619298069,
+          "mae": 0.0015516663917471904,
+          "abs_p95": 0.005164307497882364,
+          "abs_max": 0.07168293775540488
+        },
+        "0.12": {
+          "n": 605,
+          "bias": 0.0011311337599457273,
+          "rmse": 0.007809840843270946,
+          "mae": 0.001779665068971426,
+          "abs_p95": 0.009333706520961238,
+          "abs_max": 0.06297914945415689
+        },
+        "0.18": {
+          "n": 605,
+          "bias": 0.0010337020571207054,
+          "rmse": 0.008468650745204932,
+          "mae": 0.00229131690505245,
+          "abs_p95": 0.022752899406458665,
+          "abs_max": 0.0552757170538065
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 605,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 604,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -0.0004548594488989743,
+      "reference_grid_coverage": {
+        "covered": 303,
+        "total": 303,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_s_turn/own_center_of_mass/center_of_mass/ax": {
+      "published_samples": 0,
+      "matched_samples": 0,
+      "matched_fraction_of_published": 0.0,
+      "windows": {
+        "0.08": {
+          "n": 0
+        },
+        "0.12": {
+          "n": 0
+        },
+        "0.18": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing",
+      "source_gaps_above_threshold": 0,
+      "reference_grid_coverage": {
+        "covered": 0,
+        "total": 0,
+        "fraction": 0.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "whole/own_center_of_mass/center_of_mass/ay": {
+      "published_samples": 2401,
+      "matched_samples": 2365,
+      "matched_fraction_of_published": 0.985006247396918,
+      "windows": {
+        "0.08": {
+          "n": 2365,
+          "bias": 2.9837804190389274e-05,
+          "rmse": 0.040910621962582994,
+          "mae": 0.005354299546610289,
+          "abs_p95": 0.0018007741566787156,
+          "abs_max": 0.5689039282154377
+        },
+        "0.12": {
+          "n": 2365,
+          "bias": 3.074546867793904e-05,
+          "rmse": 0.04037281225813009,
+          "mae": 0.0061242506590213925,
+          "abs_p95": 0.0036190342976187818,
+          "abs_max": 0.5090661718854269
+        },
+        "0.18": {
+          "n": 2365,
+          "bias": 3.261404875587356e-05,
+          "rmse": 0.04276204618643676,
+          "mae": 0.007913712055193083,
+          "abs_p95": 0.019184219057755775,
+          "abs_max": 0.45936255004268634
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.00015441469132597516,
+      "reference_grid_coverage": {
+        "covered": 1189,
+        "total": 1189,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "insufficient_common_dynamic_support",
+        "n": 2177
+      }
+    },
+    "regime_static/own_center_of_mass/center_of_mass/ay": {
+      "published_samples": 425,
+      "matched_samples": 419,
+      "matched_fraction_of_published": 0.9858823529411764,
+      "windows": {
+        "0.08": {
+          "n": 419,
+          "bias": -5.937659814906208e-05,
+          "rmse": 0.0007427728098407314,
+          "mae": 5.937659829509218e-05,
+          "abs_p95": 7.37188088351104e-14,
+          "abs_max": 0.012622201599932659
+        },
+        "0.12": {
+          "n": 419,
+          "bias": -0.00016465021711896657,
+          "rmse": 0.0015674714627411884,
+          "mae": 0.00016465021749097766,
+          "abs_p95": 1.8962609260597674e-13,
+          "abs_max": 0.022180679005466164
+        },
+        "0.18": {
+          "n": 419,
+          "bias": -0.00035235689150369266,
+          "rmse": 0.002610836745936216,
+          "mae": 0.00035235689150369266,
+          "abs_p95": 2.6201263381153694e-14,
+          "abs_max": 0.029981077788517663
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 425,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 424,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -0.00046682276123390267,
+      "reference_grid_coverage": {
+        "covered": 213,
+        "total": 213,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_straight/own_center_of_mass/center_of_mass/ay": {
+      "published_samples": 1268,
+      "matched_samples": 1262,
+      "matched_fraction_of_published": 0.9952681388012619,
+      "windows": {
+        "0.08": {
+          "n": 1262,
+          "bias": -0.002873927581749354,
+          "rmse": 0.03287950741451232,
+          "mae": 0.003869204787335112,
+          "abs_p95": 0.000639971737964228,
+          "abs_max": 0.49366156948661044
+        },
+        "0.12": {
+          "n": 1262,
+          "bias": -0.002909998717030509,
+          "rmse": 0.03300614152568764,
+          "mae": 0.0043986851916358715,
+          "abs_p95": 0.001926005064874832,
+          "abs_max": 0.44540346092495176
+        },
+        "0.18": {
+          "n": 1262,
+          "bias": -0.002982154687240946,
+          "rmse": 0.03472502226714937,
+          "mae": 0.005343108245432468,
+          "abs_p95": 0.0030114702141132107,
+          "abs_max": 0.40965343653063746
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 1268,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 1266,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": -0.0018484830792945047,
+      "reference_grid_coverage": {
+        "covered": 635,
+        "total": 635,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_turn/own_center_of_mass/center_of_mass/ay": {
+      "published_samples": 605,
+      "matched_samples": 605,
+      "matched_fraction_of_published": 1.0,
+      "windows": {
+        "0.08": {
+          "n": 605,
+          "bias": 0.008795570712204052,
+          "rmse": 0.05696011190645806,
+          "mae": 0.009749574517006735,
+          "abs_p95": 0.018398074938052254,
+          "abs_max": 0.5689039282154377
+        },
+        "0.12": {
+          "n": 605,
+          "bias": 0.008894708375287535,
+          "rmse": 0.056198459056108756,
+          "mae": 0.011048552421794896,
+          "abs_p95": 0.03158409777357099,
+          "abs_max": 0.5090661718854269
+        },
+        "0.18": {
+          "n": 605,
+          "bias": 0.009094493069124897,
+          "rmse": 0.060205074146030844,
+          "mae": 0.01508135890122418,
+          "abs_p95": 0.10511453652713153,
+          "abs_max": 0.45936255004268634
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 605,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 604,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.003065926687524905,
+      "reference_grid_coverage": {
+        "covered": 303,
+        "total": 303,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_s_turn/own_center_of_mass/center_of_mass/ay": {
+      "published_samples": 0,
+      "matched_samples": 0,
+      "matched_fraction_of_published": 0.0,
+      "windows": {
+        "0.08": {
+          "n": 0
+        },
+        "0.12": {
+          "n": 0
+        },
+        "0.18": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing",
+      "source_gaps_above_threshold": 0,
+      "reference_grid_coverage": {
+        "covered": 0,
+        "total": 0,
+        "fraction": 0.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "whole/own_center_of_mass/center_of_mass/yaw_rate": {
+      "published_samples": 2401,
+      "matched_samples": 2365,
+      "matched_fraction_of_published": 0.985006247396918,
+      "windows": {
+        "0.08": {
+          "n": 2365,
+          "bias": -2.3779897477975448e-15,
+          "rmse": 0.0074623857399404156,
+          "mae": 0.0010275161765564025,
+          "abs_p95": 1.875166688591888e-14,
+          "abs_max": 0.06255050504995585
+        },
+        "0.12": {
+          "n": 2365,
+          "bias": -2.3554566800673088e-15,
+          "rmse": 0.007395907323893823,
+          "mae": 0.0010444608245783237,
+          "abs_p95": 1.451061493185075e-14,
+          "abs_max": 0.06373314185759432
+        },
+        "0.18": {
+          "n": 2365,
+          "bias": -2.4148876462058056e-15,
+          "rmse": 0.007320857634067803,
+          "mae": 0.0010826444297441127,
+          "abs_p95": 9.547918011776346e-15,
+          "abs_max": 0.06225824420623871
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.00013063224199646341,
+      "reference_grid_coverage": {
+        "covered": 1189,
+        "total": 1189,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": true,
+        "n": 2177,
+        "best_waveform_offset_ms": 20.0,
+        "best_rmse": 0.0009617007874022904,
+        "zero_offset_rmse_same_support": 0.007708640963563795,
+        "method": "maximum demeaned normalized correlation; demeaning used for offset only",
+        "peak_correlation": 0.9999738795909783,
+        "ambiguous_periodic_peak": false,
+        "raw_rmse_minimum_offset_ms": 20.0,
+        "boundary_optimum": false,
+        "larger_than_clock_uncertainty": true,
+        "interpretation": "waveform offset, not isolated physical/filter latency"
+      }
+    },
+    "regime_static/own_center_of_mass/center_of_mass/yaw_rate": {
+      "published_samples": 425,
+      "matched_samples": 419,
+      "matched_fraction_of_published": 0.9858823529411764,
+      "windows": {
+        "0.08": {
+          "n": 419,
+          "bias": 0.0,
+          "rmse": 0.0,
+          "mae": 0.0,
+          "abs_p95": 0.0,
+          "abs_max": 0.0
+        },
+        "0.12": {
+          "n": 419,
+          "bias": 0.0,
+          "rmse": 0.0,
+          "mae": 0.0,
+          "abs_p95": 0.0,
+          "abs_max": 0.0
+        },
+        "0.18": {
+          "n": 419,
+          "bias": 0.0,
+          "rmse": 0.0,
+          "mae": 0.0,
+          "abs_p95": 0.0,
+          "abs_max": 0.0
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 425,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 424,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.0,
+      "reference_grid_coverage": {
+        "covered": 213,
+        "total": 213,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_straight/own_center_of_mass/center_of_mass/yaw_rate": {
+      "published_samples": 1268,
+      "matched_samples": 1262,
+      "matched_fraction_of_published": 0.9952681388012619,
+      "windows": {
+        "0.08": {
+          "n": 1262,
+          "bias": 0.000158708719523643,
+          "rmse": 0.003253444025316809,
+          "mae": 0.00026151971377537473,
+          "abs_p95": 0.0,
+          "abs_max": 0.060164141413480005
+        },
+        "0.12": {
+          "n": 1262,
+          "bias": 0.00014308096815904216,
+          "rmse": 0.0031056963625074015,
+          "mae": 0.00027739692953348036,
+          "abs_p95": 0.0,
+          "abs_max": 0.05680944055886026
+        },
+        "0.18": {
+          "n": 1262,
+          "bias": 0.00011729808697067482,
+          "rmse": 0.0029548947536959204,
+          "mae": 0.00031317514911249775,
+          "abs_p95": 0.0,
+          "abs_max": 0.050715944271913636
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 1268,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 1266,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.00015049365415102035,
+      "reference_grid_coverage": {
+        "covered": 635,
+        "total": 635,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_turn/own_center_of_mass/center_of_mass/yaw_rate": {
+      "published_samples": 605,
+      "matched_samples": 605,
+      "matched_fraction_of_published": 1.0,
+      "windows": {
+        "0.08": {
+          "n": 605,
+          "bias": -0.00038016528926100275,
+          "rmse": 0.011772647602492983,
+          "mae": 0.0025041948409547025,
+          "abs_p95": 0.002550505050487861,
+          "abs_max": 0.06255050504995585
+        },
+        "0.12": {
+          "n": 605,
+          "bias": -0.0003635001362320849,
+          "rmse": 0.011691397250082433,
+          "mae": 0.0025373139257229217,
+          "abs_p95": 0.0037331418581229682,
+          "abs_max": 0.06373314185759432
+        },
+        "0.18": {
+          "n": 605,
+          "bias": -0.0002646012100170371,
+          "rmse": 0.011598458562722418,
+          "mae": 0.0026119455176369234,
+          "abs_p95": 0.008529974669128233,
+          "abs_max": 0.06225824420623871
+        }
+      },
+      "receive_minus_source_ms": {
+        "n": 605,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "regime_support_status": "available",
+      "source_gaps_above_threshold": 0,
+      "source_period_ms": {
+        "n": 604,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      },
+      "error_slope_per_s": 0.004812690781366852,
+      "reference_grid_coverage": {
+        "covered": 303,
+        "total": 303,
+        "fraction": 1.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    },
+    "regime_s_turn/own_center_of_mass/center_of_mass/yaw_rate": {
+      "published_samples": 0,
+      "matched_samples": 0,
+      "matched_fraction_of_published": 0.0,
+      "windows": {
+        "0.08": {
+          "n": 0
+        },
+        "0.12": {
+          "n": 0
+        },
+        "0.18": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing",
+      "source_gaps_above_threshold": 0,
+      "reference_grid_coverage": {
+        "covered": 0,
+        "total": 0,
+        "fraction": 0.0
+      },
+      "waveform_offset": {
+        "identifiable": false,
+        "reason": "not_computed_for_categorical_regime_mask",
+        "interpretation": "categorical intervals can be disjoint; no lag fit across selected regimes"
+      }
+    }
+  },
+  "rejected_estimates": {},
+  "source_counts": {
+    "vicon_pose": 1201,
+    "tracking_valid": 1201
+  },
+  "reference_support": {
+    "0.08": {
+      "rear_axle": [
+        {
+          "window_samples": 9,
+          "dt_s": 0.009999999999999787,
+          "sample_span_s": 0.0799999999999983,
+          "effective_window_s": 0.08999999999999808,
+          "valid_samples": 1193,
+          "grid_samples": 1201
+        }
+      ],
+      "center_of_mass": [
+        {
+          "window_samples": 9,
+          "dt_s": 0.009999999999999787,
+          "sample_span_s": 0.0799999999999983,
+          "effective_window_s": 0.08999999999999808,
+          "valid_samples": 1193,
+          "grid_samples": 1201
+        }
+      ]
+    },
+    "0.12": {
+      "rear_axle": [
+        {
+          "window_samples": 13,
+          "dt_s": 0.009999999999999787,
+          "sample_span_s": 0.11999999999999744,
+          "effective_window_s": 0.12999999999999723,
+          "valid_samples": 1189,
+          "grid_samples": 1201
+        }
+      ],
+      "center_of_mass": [
+        {
+          "window_samples": 13,
+          "dt_s": 0.009999999999999787,
+          "sample_span_s": 0.11999999999999744,
+          "effective_window_s": 0.12999999999999723,
+          "valid_samples": 1189,
+          "grid_samples": 1201
+        }
+      ]
+    },
+    "0.18": {
+      "rear_axle": [
+        {
+          "window_samples": 19,
+          "dt_s": 0.009999999999999787,
+          "sample_span_s": 0.17999999999999616,
+          "effective_window_s": 0.18999999999999595,
+          "valid_samples": 1183,
+          "grid_samples": 1201
+        }
+      ],
+      "center_of_mass": [
+        {
+          "window_samples": 19,
+          "dt_s": 0.009999999999999787,
+          "sample_span_s": 0.17999999999999616,
+          "effective_window_s": 0.18999999999999595,
+          "valid_samples": 1183,
+          "grid_samples": 1201
+        }
+      ]
+    }
+  },
+  "vicon_receive_minus_mapped_source_ms": {
+    "n": 1201,
+    "mean": 8.0,
+    "p50": 8.0,
+    "p95": 8.0,
+    "max": 8.0,
+    "negative": 0
+  },
+  "provenance": {
+    "input_files": {
+      "gyro.csv": "b3d6328f9dec46ba748111816f0ab16a4f28f218d86816b0f560fca0ac58255f",
+      "timing.csv": "40af6905eb9dc3a97414356ea2946c8fb1aca5febe7e84227ca6af22cc874132",
+      "metadata.json": "bdc3e121d45e6f78ab7d22bafca0c331a1191ba1cdf5f4795eba026658118fc8",
+      "odometry.csv": "989fae87953ebe5d6751acf6ae5913b18341b31d929c1b06e346bda5ddb91032",
+      "estimates.csv": "6762695f60b9a2628e852bb00fc3c8757945d08b17bc36b1e32b3d485f97df4c",
+      "commands.csv": "57180356776692a76b7801d869a7e830ca8289a4b49824ff5decb885c2e6b5d3",
+      "status.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "telemetry.csv": "faaf9dc8368e7b8c97ee8cdd0cf17c274207057ac1ff2b55bbba229b7b1c1ae6",
+      "poses.csv": "dcd7d858b89bed2ca318dfbdcb7b5b0ac630711ec10064e431299e09e6faa2b6"
+    },
+    "programs": {
+      "analyze.py": "c592b887e063b2d020012fbc5ca8ad55e6ccf6a19771a1779396409f663bb260",
+      "__init__.py": "838b8fe5de5ef3280a5e62597fec214e4b8903ecbd50e00d5590943c744ffb8f",
+      "session.py": "82103b241d15d40ee6d4287439f4e383228dfcd7c8a7361409fd3ca138144005",
+      "timing.py": "52c8da1533e77b651764f72838678149802198c4e8c027f33d9b688ebae2ac29",
+      "example.py": "f2e0e5c24049ad04d572b6166b235666a386f28e1e952cd55ea74ffccd4649b3",
+      "demo.py": "dc12a1beb0bafe3ba2f69cdc1b5520ca822db8a85a22af331ce89172a5f4fc06",
+      "fastlio.py": "2b089afdc54df653d8ba8be24f280e812f31b76abb8b1dac102c245bad8ebbc8",
+      "actuator.py": "08b4ed1ac071d665d128a30eba0495b0b4e5da6105abe63ab2602a5d311d33d9",
+      "reference.py": "1910908420c8a5d0aadea3f03ceef43d010b3243a8cf27e92679ed9b844115a1",
+      "cli.py": "5a3001db4705b535b8897709d6b71cea9017dd3953dcc6403095ba8f6d38c85a",
+      "pipeline.py": "513a567f9bbcb149321ec2d450de84eddb9b4b74f20d7512f9f176f400c9bc78",
+      "capture.py": "904368bb4eb7324357b9711ff2c70ee2ae762ba3faf0f22c91d3db38eb80547a",
+      "bag.py": "fc5ca0d01e1b0a4b4fa98171f818891f221306dedfd2e45bebd8c7dc9394454c",
+      "configuration.py": "2c343e7e91df6f26495878fb3801edbb1ed7e0acad7c39f8023aea98a6090bc2"
+    },
+    "config_sha256": "725e411b467d91c27a60b451a9a2d5c559c6ba639a0ef2c07c975af0fe94be6f",
+    "extraction_metadata": {
+      "synthetic": true,
+      "source": "synthetic integrated trajectory, injected own vx bias .05m/s and20ms waveform delay; ERPM response120ms",
+      "data_sha256": {
+        "gyro.csv": "b3d6328f9dec46ba748111816f0ab16a4f28f218d86816b0f560fca0ac58255f",
+        "timing.csv": "40af6905eb9dc3a97414356ea2946c8fb1aca5febe7e84227ca6af22cc874132",
+        "odometry.csv": "989fae87953ebe5d6751acf6ae5913b18341b31d929c1b06e346bda5ddb91032",
+        "estimates.csv": "6762695f60b9a2628e852bb00fc3c8757945d08b17bc36b1e32b3d485f97df4c",
+        "commands.csv": "57180356776692a76b7801d869a7e830ca8289a4b49824ff5decb885c2e6b5d3",
+        "status.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "telemetry.csv": "faaf9dc8368e7b8c97ee8cdd0cf17c274207057ac1ff2b55bbba229b7b1c1ae6",
+        "poses.csv": "dcd7d858b89bed2ca318dfbdcb7b5b0ac630711ec10064e431299e09e6faa2b6"
+      }
+    }
+  },
+  "complete_required_outputs": true,
+  "common_grid_comparisons": {
+    "whole/rear_axle/vx": {
+      "n": 1183,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 1183,
+          "bias": 0.04949283075753678,
+          "rmse": 0.04964227770799767,
+          "mae": 0.04949283075753678,
+          "abs_p95": 0.05599999999998311,
+          "abs_max": 0.05637331418580577
+        }
+      }
+    },
+    "regime_static/rear_axle/vx": {
+      "n": 210,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 210,
+          "bias": 0.05000895770895769,
+          "rmse": 0.05000900788993117,
+          "mae": 0.05000895770895769,
+          "abs_p95": 0.05,
+          "abs_max": 0.05074662837162713
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_straight/rear_axle/vx": {
+      "n": 632,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 632,
+          "bias": 0.04964952587407808,
+          "rmse": 0.04986066994559519,
+          "mae": 0.04964952587407808,
+          "abs_p95": 0.0559999999999917,
+          "abs_max": 0.05637331418580577
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_turn/rear_axle/vx": {
+      "n": 303,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 303,
+          "bias": 0.050000068542951366,
+          "rmse": 0.05000006854411455,
+          "mae": 0.050000068542951366,
+          "abs_p95": 0.05000010330907475,
+          "abs_max": 0.05000235837826911
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_s_turn/rear_axle/vx": {
+      "n": 0,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing"
+    },
+    "whole/rear_axle/vy": {
+      "n": 1183,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 1183,
+          "bias": 8.374553333130373e-06,
+          "rmse": 0.0006199266960907101,
+          "mae": 0.0004867779224962928,
+          "abs_p95": 0.0007999463766214166,
+          "abs_max": 0.001929369229316164
+        }
+      }
+    },
+    "regime_static/rear_axle/vy": {
+      "n": 210,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 210,
+          "bias": 1.4585029754090402e-06,
+          "rmse": 1.162618101592699e-05,
+          "mae": 1.4585029754090402e-06,
+          "abs_p95": 0.0,
+          "abs_max": 0.00012169411112251889
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_straight/rear_axle/vy": {
+      "n": 632,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 632,
+          "bias": 0.00013624738454274358,
+          "rmse": 0.0006647571632821237,
+          "mae": 0.0006091073920480062,
+          "abs_p95": 0.0007998655468239547,
+          "abs_max": 0.0015843131937703682
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_turn/rear_axle/vy": {
+      "n": 303,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 303,
+          "bias": -6.285854067638673e-05,
+          "rmse": 0.00048496710770810106,
+          "mae": 0.00042960416502103047,
+          "abs_p95": 0.000737549324108333,
+          "abs_max": 0.0007927547641646219
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_s_turn/rear_axle/vy": {
+      "n": 0,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing"
+    },
+    "whole/rear_axle/ax": {
+      "n": 1183,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 1183,
+          "bias": -0.00025424321377845867,
+          "rmse": 0.030240763413938627,
+          "mae": 0.003996190423870517,
+          "abs_p95": 0.001001388804159346,
+          "abs_max": 0.46393606393569903
+        }
+      }
+    },
+    "regime_static/rear_axle/ax": {
+      "n": 210,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 210,
+          "bias": -0.0011688311688281237,
+          "rmse": 0.010863818442899503,
+          "mae": 0.0011688311688281237,
+          "abs_p95": 0.0,
+          "abs_max": 0.13606393606364034
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_straight/rear_axle/ax": {
+      "n": 632,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 632,
+          "bias": 0.0018987056575579407,
+          "rmse": 0.02951968573029011,
+          "mae": 0.004666667223906776,
+          "abs_p95": 0.0032967032822767807,
+          "abs_max": 0.3860139860114401
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_turn/rear_axle/ax": {
+      "n": 303,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 303,
+          "bias": -9.443176628497008e-07,
+          "rmse": 0.00032016061148282574,
+          "mae": 0.00018122440870976816,
+          "abs_p95": 0.0004962327319122703,
+          "abs_max": 0.0019002523994393113
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_s_turn/rear_axle/ax": {
+      "n": 0,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing"
+    },
+    "whole/rear_axle/ay": {
+      "n": 1183,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 1183,
+          "bias": -8.85909259329508e-06,
+          "rmse": 0.004772711319368667,
+          "mae": 0.001070771660540015,
+          "abs_p95": 0.0018588227481748816,
+          "abs_max": 0.07516620671853226
+        }
+      }
+    },
+    "regime_static/rear_axle/ay": {
+      "n": 210,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 210,
+          "bias": -0.00019066376322648073,
+          "rmse": 0.0017715393393220884,
+          "mae": 0.00019066376322648073,
+          "abs_p95": 0.0,
+          "abs_max": 0.022180679005655655
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_straight/rear_axle/ay": {
+      "n": 632,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 632,
+          "bias": 5.319295761082967e-05,
+          "rmse": 0.0034693335242400743,
+          "mae": 0.0007731760708244248,
+          "abs_p95": 0.0007094888289134096,
+          "abs_max": 0.05439328541535688
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_turn/rear_axle/ay": {
+      "n": 303,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 303,
+          "bias": 0.0005547585794379641,
+          "rmse": 0.0036105555841931393,
+          "mae": 0.0012828341075311776,
+          "abs_p95": 0.003510211653389065,
+          "abs_max": 0.020879738787633426
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_s_turn/rear_axle/ay": {
+      "n": 0,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing"
+    },
+    "whole/rear_axle/yaw_rate": {
+      "n": 1183,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 1183,
+          "bias": -2.356338098249233e-15,
+          "rmse": 0.00742595346849734,
+          "mae": 0.0010461727621398126,
+          "abs_p95": 1.5359935545689018e-14,
+          "abs_max": 0.06373314185759432
+        }
+      }
+    },
+    "regime_static/rear_axle/yaw_rate": {
+      "n": 210,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 210,
+          "bias": 0.0,
+          "rmse": 0.0,
+          "mae": 0.0,
+          "abs_p95": 0.0,
+          "abs_max": 0.0
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_straight/rear_axle/yaw_rate": {
+      "n": 632,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 632,
+          "bias": 0.00015219748605699223,
+          "rmse": 0.003413858377988485,
+          "mae": 0.0003145746658372492,
+          "abs_p95": 0.0,
+          "abs_max": 0.05680944055886026
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_turn/rear_axle/yaw_rate": {
+      "n": 303,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 303,
+          "bias": -0.000358910891093969,
+          "rmse": 0.011972166522608095,
+          "mae": 0.0026363405571110275,
+          "abs_p95": 0.0037331418581229904,
+          "abs_max": 0.06373314185759432
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_s_turn/rear_axle/yaw_rate": {
+      "n": 0,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_rear_axle": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing"
+    },
+    "whole/center_of_mass/vx": {
+      "n": 1183,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 1183,
+          "bias": 0.049492830852001436,
+          "rmse": 0.04964277382846419,
+          "mae": 0.049492830852001436,
+          "abs_p95": 0.05599999999998973,
+          "abs_max": 0.05637331418579511
+        }
+      }
+    },
+    "regime_static/center_of_mass/vx": {
+      "n": 210,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 210,
+          "bias": 0.05000895770895983,
+          "rmse": 0.05000900788993329,
+          "mae": 0.05000895770895983,
+          "abs_p95": 0.05000000000000211,
+          "abs_max": 0.05074662837162976
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_straight/center_of_mass/vx": {
+      "n": 632,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 632,
+          "bias": 0.04965409177161922,
+          "rmse": 0.04986535421814851,
+          "mae": 0.04965409177161922,
+          "abs_p95": 0.05599999999999569,
+          "abs_max": 0.05637331418579511
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_turn/center_of_mass/vx": {
+      "n": 303,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 303,
+          "bias": 0.04998930177155137,
+          "rmse": 0.049990574785610996,
+          "mae": 0.04998930177155137,
+          "abs_p95": 0.05000010298265008,
+          "abs_max": 0.0518706773474254
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_s_turn/center_of_mass/vx": {
+      "n": 0,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing"
+    },
+    "whole/center_of_mass/vy": {
+      "n": 1183,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 1183,
+          "bias": 8.375214565385338e-06,
+          "rmse": 0.0017715502586520644,
+          "mae": 0.0007000138159981608,
+          "abs_p95": 0.0015216789152656769,
+          "abs_max": 0.014170788591833433
+        }
+      }
+    },
+    "regime_static/center_of_mass/vy": {
+      "n": 210,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 210,
+          "bias": 1.4585029751299467e-06,
+          "rmse": 1.1626181015881551e-05,
+          "mae": 1.4585029756744847e-06,
+          "abs_p95": 2.7755575615628914e-16,
+          "abs_max": 0.00012169411112210315
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_straight/center_of_mass/vy": {
+      "n": 632,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 632,
+          "bias": 0.0001682086673085171,
+          "rmse": 0.0010223574905256594,
+          "mae": 0.000668960169349129,
+          "abs_p95": 0.0007999799357146671,
+          "abs_max": 0.012679836652221423
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_turn/center_of_mass/vy": {
+      "n": 303,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 303,
+          "bias": -0.000138225940495635,
+          "rmse": 0.0027152154603139454,
+          "mae": 0.0009709623333880768,
+          "abs_p95": 0.001504277072651987,
+          "abs_max": 0.014170788591833433
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_s_turn/center_of_mass/vy": {
+      "n": 0,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing"
+    },
+    "whole/center_of_mass/ax": {
+      "n": 1183,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 1183,
+          "bias": -0.0002632003815012362,
+          "rmse": 0.030757152235185475,
+          "mae": 0.004786431048020729,
+          "abs_p95": 0.013434991974047798,
+          "abs_max": 0.4639360639370196
+        }
+      }
+    },
+    "regime_static/center_of_mass/ax": {
+      "n": 210,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 210,
+          "bias": -0.0011688311701461831,
+          "rmse": 0.010863818443042059,
+          "mae": 0.0011688311701461831,
+          "abs_p95": 1.3180567748349858e-12,
+          "abs_max": 0.13606393606497136
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_straight/center_of_mass/ax": {
+      "n": 632,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 632,
+          "bias": 0.0014765869980361823,
+          "rmse": 0.029883640652032355,
+          "mae": 0.005201221846907354,
+          "abs_p95": 0.014835164850850891,
+          "abs_max": 0.3860139860101043
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_turn/center_of_mass/ax": {
+      "n": 303,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 303,
+          "bias": 0.0011296190321709923,
+          "rmse": 0.007779298090183444,
+          "mae": 0.0017792754085881309,
+          "abs_p95": 0.009491993907745692,
+          "abs_max": 0.06000081354132874
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_s_turn/center_of_mass/ax": {
+      "n": 0,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing"
+    },
+    "whole/center_of_mass/ay": {
+      "n": 1183,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 1183,
+          "bias": -7.5794972030201705e-06,
+          "rmse": 0.04073599651554558,
+          "mae": 0.006146937204636778,
+          "abs_p95": 0.0035672359764279396,
+          "abs_max": 0.5090661718854269
+        }
+      }
+    },
+    "regime_static/center_of_mass/ay": {
+      "n": 210,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 210,
+          "bias": -0.0001906637630368701,
+          "rmse": 0.0017715393393017717,
+          "mae": 0.00019066376340889845,
+          "abs_p95": 1.8962609260597674e-13,
+          "abs_max": 0.022180679005466164
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_straight/center_of_mass/ay": {
+      "n": 632,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 632,
+          "bias": -0.002938041447236417,
+          "rmse": 0.033159505539120886,
+          "mae": 0.004486298518899125,
+          "abs_p95": 0.0019089962096377608,
+          "abs_max": 0.4195743027536085
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_turn/center_of_mass/ay": {
+      "n": 303,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 303,
+          "bias": 0.008879812471392304,
+          "rmse": 0.05667247852361057,
+          "mae": 0.01111376571558794,
+          "abs_p95": 0.02879515154212376,
+          "abs_max": 0.5090661718854269
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_s_turn/center_of_mass/ay": {
+      "n": 0,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing"
+    },
+    "whole/center_of_mass/yaw_rate": {
+      "n": 1183,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 1183,
+          "bias": -2.356338098249233e-15,
+          "rmse": 0.00742595346849734,
+          "mae": 0.0010461727621398126,
+          "abs_p95": 1.5359935545689018e-14,
+          "abs_max": 0.06373314185759432
+        }
+      }
+    },
+    "regime_static/center_of_mass/yaw_rate": {
+      "n": 210,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 210,
+          "bias": 0.0,
+          "rmse": 0.0,
+          "mae": 0.0,
+          "abs_p95": 0.0,
+          "abs_max": 0.0
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_straight/center_of_mass/yaw_rate": {
+      "n": 632,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 632,
+          "bias": 0.00015219748605699223,
+          "rmse": 0.003413858377988485,
+          "mae": 0.0003145746658372492,
+          "abs_p95": 0.0,
+          "abs_max": 0.05680944055886026
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_turn/center_of_mass/yaw_rate": {
+      "n": 303,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 303,
+          "bias": -0.000358910891093969,
+          "rmse": 0.011972166522608095,
+          "mae": 0.0026363405571110275,
+          "abs_p95": 0.0037331418581229904,
+          "abs_max": 0.06373314185759432
+        }
+      },
+      "regime_support_status": "available"
+    },
+    "regime_s_turn/center_of_mass/yaw_rate": {
+      "n": 0,
+      "interpretation": "same reference grid/support; interpolation does not increase measurement bandwidth",
+      "streams": {
+        "own_center_of_mass": {
+          "n": 0
+        }
+      },
+      "regime_support_status": "missing"
+    }
+  },
+  "status_message_counts": {}
+}

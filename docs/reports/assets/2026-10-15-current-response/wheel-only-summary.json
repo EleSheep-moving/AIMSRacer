@@ -1,0 +1,182 @@
+{
+  "formal_attempts": 336,
+  "reconstructed_windows": 333,
+  "attempts_with_training_data": 319,
+  "training_records": 985,
+  "training_regions": {
+    "B_low": {
+      "attempted_records": 243,
+      "predicted_records": 243,
+      "trial_weight_total": 80.00000000000004,
+      "predicted_trial_weight": 80.00000000000004,
+      "weighted_coverage": 1.0,
+      "rmse_mps2": 0.3229239508280018,
+      "mae_mps2": 0.19418767075844195,
+      "bias_mps2": -0.01677476269152911,
+      "max_abs_error_mps2": 1.527547369916534
+    },
+    "B_high": {
+      "attempted_records": 105,
+      "predicted_records": 105,
+      "trial_weight_total": 105.0,
+      "predicted_trial_weight": 105.0,
+      "weighted_coverage": 1.0,
+      "rmse_mps2": 1.5291703394740885,
+      "mae_mps2": 1.0653189695863587,
+      "bias_mps2": -0.008413072405315533,
+      "max_abs_error_mps2": 7.140690256304985
+    },
+    "C": {
+      "attempted_records": 637,
+      "predicted_records": 613,
+      "trial_weight_total": 134.00000000000034,
+      "predicted_trial_weight": 128.05000000000015,
+      "weighted_coverage": 0.9555970149253719,
+      "rmse_mps2": 1.8572964261271356,
+      "mae_mps2": 1.029552624928631,
+      "bias_mps2": -0.09240589007601704,
+      "max_abs_error_mps2": 9.831242976976753
+    }
+  },
+  "verification": {
+    "independent_ols_windows": 333,
+    "max_acceleration_difference_mps2": 1.0302869668521453e-13,
+    "max_current_difference_a": 0.0,
+    "legacy_windows_matched": 333,
+    "legacy_boundary_changes": [],
+    "monotone_supported_queries": 1760,
+    "roundtrips": 1760,
+    "max_roundtrip_error_mps2": 7.105427357601002e-15,
+    "grid_attempted": 1955,
+    "grid_supported": 1760,
+    "normalized_trial_weights": 319
+  },
+  "scope": "offline mean wheel acceleration calibration, no other motion sensors, no controller changes",
+  "nominal_speed_domain_mps": [
+    1.0,
+    5.0
+  ],
+  "high_iq_domain_a": [
+    [
+      50.0,
+      98.68666666666667
+    ]
+  ],
+  "assumptions": [
+    "Low branch uses u=(Iq-Iq0(v))/(50-Iq0(v)); rows interpolate at common u.",
+    "Anchored isotonic least squares imposes current monotonicity; violations remain visible as residuals.",
+    "50 A is a candidate engineering split, not an established physical transition.",
+    "Support is interpolation within recorded local current ranges and 0.5 m/s speed bins, not an accuracy guarantee.",
+    "B >=50 A uses supported plateau-average response; other intervals use native speed-local windows.",
+    "The response horizon varies by interval; this is not a causal instantaneous plant or validated control law.",
+    "CV RMSE is conditional on supported test inputs; weighted coverage is reported alongside errors.",
+    "Frozen A speed-holding curve remains the zero-acceleration anchor; no zero-speed/reverse extrapolation."
+  ],
+  "model_fit": {
+    "method": "anchored weighted isotonic least squares with piecewise linear interpolation",
+    "speed_grid_mps": 0.5,
+    "high_current_bin_a": 5.0,
+    "low_u_bin": 0.125,
+    "boundary_anchor_method": "nonnegative pooled B current >=40 A; interpolate isotonic binned response at 50 A",
+    "within_bin_endpoint_policy": "nearest isotonic bin value to recorded extremes; no support beyond observed current range",
+    "shared_50a_acceleration_mps2": 3.740278922707266,
+    "training_records": 985,
+    "trial_weight_total": 318.99999999999744
+  },
+  "sensor_independence": {
+    "removed_motion_channels": [
+      "imu",
+      "livox_imu",
+      "lio",
+      "ekf",
+      "observer"
+    ],
+    "retained_channels": [
+      "wheel",
+      "vesc",
+      "final",
+      "request"
+    ],
+    "fitted_tables_exactly_identical": true,
+    "formal_attempts": 336,
+    "training_intervals": 985,
+    "archives_rebuilt": 6
+  },
+  "package_verification": {
+    "wheel_sha256": "36f92a207dfe0dcc0243e2068421bb1ad4c8aa340c3b950e61132cecfe7e85e2",
+    "entrypoints_verified": true,
+    "docs_packaged": true,
+    "stdlib_only_wheel_queries": [
+      {
+        "value": 9.76225788724319,
+        "valid": true,
+        "reason": "ok",
+        "segment": "high",
+        "domain": {
+          "iq_a": [
+            50.0,
+            98.68666666666667
+          ],
+          "speed_mps": [
+            1.0,
+            5.0
+          ],
+          "support_intervals": [
+            [
+              50.0,
+              98.68666666666667
+            ]
+          ]
+        },
+        "value_unit": "m/s^2"
+      },
+      {
+        "value": 60.395882007988995,
+        "valid": true,
+        "reason": "ok",
+        "segment": "high",
+        "domain": {
+          "iq_a": [
+            50.0,
+            98.68666666666667
+          ],
+          "speed_mps": [
+            1.0,
+            5.0
+          ],
+          "support_intervals": [
+            [
+              50.0,
+              98.68666666666667
+            ]
+          ]
+        },
+        "value_unit": "A"
+      }
+    ]
+  },
+  "grouped_validation_overall": {
+    "start_speed": {
+      "attempted_records": 985,
+      "predicted_records": 758,
+      "trial_weight_total": 318.99999999999665,
+      "predicted_trial_weight": 253.1194444444433,
+      "weighted_coverage": 0.7934778822709905,
+      "rmse_mps2": 1.8294881878889495,
+      "mae_mps2": 1.0164752493983504,
+      "bias_mps2": -0.2007055100254815,
+      "max_abs_error_mps2": 11.580544293334931
+    },
+    "current_level": {
+      "attempted_records": 985,
+      "predicted_records": 944,
+      "trial_weight_total": 318.9999999999981,
+      "predicted_trial_weight": 301.6833333333315,
+      "weighted_coverage": 0.945715778474399,
+      "rmse_mps2": 1.6532384057365541,
+      "mae_mps2": 0.9144041681519794,
+      "bias_mps2": -0.030976767882832313,
+      "max_abs_error_mps2": 14.52633861344294
+    }
+  }
+}

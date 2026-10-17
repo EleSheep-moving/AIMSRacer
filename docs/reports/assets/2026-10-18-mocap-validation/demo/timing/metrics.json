@@ -1,0 +1,46 @@
+{
+  "topics": {
+    "/synthetic/own": {
+      "messages": 2401,
+      "missing_source": 0,
+      "missing_dds_pub": 0,
+      "dds_to_callback_ms": {
+        "n": 2401,
+        "mean": 1.0,
+        "p50": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "negative": 0
+      },
+      "source_to_callback_ros_ms": {
+        "n": 2401,
+        "mean": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "negative": 0
+      },
+      "source_to_dds_ms": {
+        "n": 2401,
+        "mean": 2.0,
+        "p50": 2.0,
+        "p95": 2.0,
+        "max": 2.0,
+        "negative": 0
+      },
+      "callback_period_ms": {
+        "n": 2400,
+        "mean": 5.0,
+        "p50": 5.0,
+        "p95": 5.0,
+        "max": 5.0,
+        "negative": 0
+      }
+    }
+  },
+  "physical_acceptance": false,
+  "clock_domains": "DDS/system timestamps kept separate from ROS and steady clocks",
+  "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/data/timing.csv",
+  "available": true,
+  "input_sha256": "40af6905eb9dc3a97414356ea2946c8fb1aca5febe7e84227ca6af22cc874132"
+}

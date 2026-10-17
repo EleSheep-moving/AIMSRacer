@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-17",
+  "planned_test": "2026-10-19",
+  "tests": 19,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "real_ros_recording_smoke": true,
+  "real_vicon_data": false,
+  "nx_deployment": false,
+  "mpcc_changed": false,
+  "online_estimator_changed": false,
+  "tested_environment": {
+    "ros": "Humble",
+    "python": "3.10",
+    "numpy": "1.26.4",
+    "scipy": "1.15.3",
+    "matplotlib": "3.8.4"
+  },
+  "source_sha256": {
+    "docs/operations/vicon-observer-validation.zh-CN.md": "0eee4b86943c0a99e4103237f203fe3400f2c499b904fbe595509181f8af2b21",
+    "docs/operations/state-observer.zh-CN.md": "9de92e63ca638e83c6d56e39294abce2b9ef11cf755c262891ad96f3704ecf94",
+    "verification/README.zh-CN.md": "2e99392ca6688bcbe84430029e45ce692007d98adc5cd2a219b0284f06de56c9",
+    "verification/vicon_state/README.zh-CN.md": "04e4c24a1b9c72f3f3a5b2e1364c89097ce8b185a2f59ce877366167d741093d",
+    "verification/vicon_state/analyze.py": "f4a374baf78298abdf6dbb5f99b21b903d7f867b0213dc39b6fd84baf917a1d5",
+    "verification/vicon_state/bag.py": "0ced302a022415f02b8bb8f3c8c0c9666476d7bd0fb119ee676b340c8f3b50ec",
+    "verification/vicon_state/capture.py": "f4f9f921b2089b7dde9609ca10678e449c0144a83cf90201f09d203cb5c608e9",
+    "verification/vicon_state/config.template.json": "5a76ba7113123faee9fdb209b0bdc9ed1121de645ec2c9a9c663a1b0f0762ad0",
+    "verification/vicon_state/example.py": "056e0d089d1e24241684497cfb0d8fe34e60d5772d0bfd859e53fa8c71379b83",
+    "verification/vicon_state/reference.py": "1910908420c8a5d0aadea3f03ceef43d010b3243a8cf27e92679ed9b844115a1",
+    "verification/vicon_state/run.py": "1964737082a12f7557d475a7c1eba6c41352e110fa4dc832750178b2ccce755f",
+    "verification/vicon_state/test_bag.py": "b7e6216b7f6ebc312984a03e17d56fb56e27b92385f5ebe35df576ca13fff8a4",
+    "verification/vicon_state/test_capture.py": "e8623e6d7e95e10985adaf571341eca17bc8833615d838f9df2797159506cd42",
+    "verification/vicon_state/test_capture_live.py": "4a01350972e8e757969841e0be48cc7645680e702e3dec04cfad6949c2af4357",
+    "verification/vicon_state/test_cli.py": "faa990e4fdea7da9b9c18211b8d23d564272890dce95e7f71de155dbe1bb4f37",
+    "verification/vicon_state/test_pipeline.py": "fecd5e66699ace0cebce93d8fe9a04338e003e4c78c41ab817cbceba3c0ff638",
+    "verification/vicon_state/test_reference.py": "e4531d74d7dc91e620821dde1331a49dde8566f9bf6bb4baf81277327004b816",
+    "docs/plans/2026-10-17-vicon-state-comparison.md": "49fe12958701f167b98bc44f2268404230ae6a0f2360b2ce73279868cca330e9",
+    "docs/reports/2026-10-17-vicon-comparison-preparation.zh-CN.md": "ab0eca53e6d37687ff2505927821af1a7dab64a6a38ada67b8eea9c38e7abbc6"
+  },
+  "native_source_inventory_sha256": {
+    "src/aims_racer_system/src/velocity.cpp": "f7dbd2badc055dd4af5b37406a67aa52fca06705610e91996e45f6af4a130b35",
+    "src/aims_racer_system/src/velocity_node.cpp": "603bf5e2d3041e0525dc0d5ed0181cce89b0bd9f8d53fa30aceb379131308e79",
+    "src/aims_racer_system/src/body_acceleration.cpp": "3b0dd07d821d3eed5480be8639d225ced6838fb1f08390f03397ed0302413c07",
+    "src/aims_racer_system/src/body_acceleration_node.cpp": "ad15f45b08d961c730e9b2e13f3dc06d3337815c7055b6c8a5d883950fec1f1c",
+    "src/aims_racer_system/src/yaw_rate.cpp": "53bbd2c11ff233eb2a53508a33cccffbe4a8bdef113ae0dc4f947d95b4e830e1",
+    "src/aims_racer_system/src/yaw_rate_node.cpp": "8a0b6402963005f06fd25efd84e0f9a94348005801af646282a8ae5456137b82",
+    "src/aims_racer_system/src/state_observer_node.cpp": "590b961baa383d0a2fb4771158a7965698d349b9d95cf7c877778e81b266c926",
+    "src/aims_racer_system/src/gyro_bias.cpp": "3be39c7bbe81520fc4240824025a5cd4195119b62101c15a181475fa15930b1a",
+    "src/aims_racer_system/src/livox_gyro_bias.cpp": "a40223baae35d3765db5205e06c9fedb78ccdf835c028dde5b3443bc5e35ec89"
+  },
+  "synthetic_offsets_ms": {
+    "vx": 30.0,
+    "vy": 20.0,
+    "yaw_rate": 5.0
+  },
+  "real_ros_smoke_messages_per_topic": 134,
+  "artifact_sha256": {
+    "unconfigured-inspect.json": "6aa9d398ab3350af16faf7bf95396429f1a1fd7eca19fca5b2b3c9f9f326aef5",
+    "demo-metrics.json": "2fbce213bbf7ea3edfcd8d9559cea111143f74c4d227608006d2c73e52906813",
+    "demo-rear-axle.png": "3a573a20498cd8fcf55ee16268ec265e6557ce889f0fa26cd910b01c54918611",
+    "pytest.txt": "6674c0790bb190ef3583ae40b8a9c6af0eaac49c48d93571b20bd4a4583675f6"
+  },
+  "evidence": "/home/elesheep/aimsracer-data/experiments/vicon-state-preparation-20261017"
+}

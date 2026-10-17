@@ -1,0 +1,446 @@
+{
+  "date": "2026-10-15",
+  "base_commit": "098976b93ef14696aaf0bf229eaffc062b787b5c",
+  "branch": "feat/body-acceleration-observer-20261015",
+  "snapshot_note": "Base commit alone does not contain uncommitted implementation; source manifest identifies actual tested working tree. Prior unrelated edits were preserved. Documentation-only updates were synchronized after tests; compiled/runtime sources remain unchanged.",
+  "desktop": {
+    "architecture": "x86_64",
+    "ctest_entries": 22,
+    "passed": 22,
+    "xml": {
+      "files": 19,
+      "testcases": 136,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "container": "aims-body-observer-20261015",
+    "image": "aimsracer-mpcc:main-dev-20261011",
+    "wall_time_s": 47.96,
+    "runtime_elf_sha256": "531c69f7507b94747081b31fa6efcdc63e27a7c15bbaec2982522a1eb05a70fd"
+  },
+  "nx": {
+    "architecture": "aarch64",
+    "ctest_entries": 22,
+    "passed": 22,
+    "xml": {
+      "files": 19,
+      "testcases": 136,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "install_prefix": "/home/aims/aimsracer-body-observer-20261015/install",
+    "wall_time_s": 62.55,
+    "main_workspace_install_replaced": false,
+    "initial_failure": "Isolated source copy missed src/aims_mpcc_rt/launch/mpcc.launch.py used by current_launch test; fixture copied, targeted and final full suites passed.",
+    "runtime_elf_sha256": "8a12a626dce9d6fbadddcc494e71285b854885cb5f3b83ef67a49cb15f27ab53",
+    "installed_launch_smoke": {
+      "passed": true,
+      "domain": 194,
+      "localhost_only": true,
+      "hardware_started": false,
+      "log": "/home/elesheep/aimsracer-data/experiments/body-acceleration-20261015/validation/nx-launch-smoke.txt",
+      "intentional_sigint_after_s": 3
+    }
+  },
+  "new_core_testcases": 13,
+  "new_runtime_testcases": 6,
+  "offline_analysis_tests": 9,
+  "cross_architecture_native_replay": {
+    "rows": 44430,
+    "checks": {
+      "event": true,
+      "accepted": true,
+      "stamp_ns": true,
+      "valid": true,
+      "status": true,
+      "anchor_stamp_ns": true,
+      "ax": true,
+      "jerk": true,
+      "raw_ax": true,
+      "raw_ay": true,
+      "raw_az": true,
+      "variance": true,
+      "measurement_variance": true,
+      "force_x": true,
+      "force_y": true,
+      "force_z": true,
+      "gravity_x": true,
+      "gravity_y": true,
+      "gravity_z": true,
+      "omega_x": true,
+      "omega_y": true,
+      "omega_z": true,
+      "alpha_x": true,
+      "alpha_y": true,
+      "alpha_z": true,
+      "tangential_x": true,
+      "tangential_y": true,
+      "tangential_z": true,
+      "centripetal_x": true,
+      "centripetal_y": true,
+      "centripetal_z": true,
+      "replayed_imu_delta": true,
+      "alpha_window_span_s": true,
+      "alpha_sample_center_age_s": true
+    },
+    "all_fields_match": true,
+    "float_tolerance": {
+      "absolute": 1e-08,
+      "relative": 1e-10
+    },
+    "max_abs_difference": {
+      "ax": 2.220446049250313e-15,
+      "jerk": 1.4921397450962104e-13,
+      "raw_ax": 1.7763568394002505e-15,
+      "raw_ay": 4.3520742565306136e-14,
+      "raw_az": 8.881784197001252e-15,
+      "variance": 1.1102230246251565e-16,
+      "measurement_variance": 1.1102230246251565e-16,
+      "force_x": 0.0,
+      "force_y": 0.0,
+      "force_z": 0.0,
+      "gravity_x": 4.440892098500626e-16,
+      "gravity_y": 6.661338147750939e-16,
+      "gravity_z": 1.7763568394002505e-15,
+      "omega_x": 0.0,
+      "omega_y": 0.0,
+      "omega_z": 0.0,
+      "alpha_x": 4.263256414560601e-14,
+      "alpha_y": 2.930988785010413e-14,
+      "alpha_z": 1.443845043525016e-13,
+      "tangential_x": 8.881784197001252e-16,
+      "tangential_y": 4.363176486776865e-14,
+      "tangential_z": 8.881784197001252e-15,
+      "centripetal_x": 3.3306690738754696e-16,
+      "centripetal_y": 2.7755575615628914e-17,
+      "centripetal_z": 1.1102230246251565e-16,
+      "alpha_window_span_s": 0.0,
+      "alpha_sample_center_age_s": 6.938893903907228e-18
+    },
+    "processing_cost": {
+      "desktop": {
+        "IMU": {
+          "count": 42315,
+          "p50_us": 0.49,
+          "p95_us": 0.58,
+          "p99_us": 0.63,
+          "max_us": 12.77,
+          "over_5000_us": 0
+        },
+        "LIO": {
+          "count": 2115,
+          "p50_us": 3.77,
+          "p95_us": 5.622999999999999,
+          "p99_us": 7.948600000000002,
+          "max_us": 17.55,
+          "over_5000_us": 0
+        }
+      },
+      "nx": {
+        "IMU": {
+          "count": 42315,
+          "p50_us": 0.992,
+          "p95_us": 1.28,
+          "p99_us": 1.44,
+          "max_us": 17.762,
+          "over_5000_us": 0
+        },
+        "LIO": {
+          "count": 2115,
+          "p50_us": 7.841,
+          "p95_us": 11.1793,
+          "p99_us": 14.60274000000002,
+          "max_us": 43.684,
+          "over_5000_us": 0
+        }
+      }
+    },
+    "boundary": "steady clock around native add_imu/add_lio only, excludes parse/stdout/DDS, separate standalone offline processes; not hardware latency or localization joint load",
+    "source_hashes": {
+      "/home/elesheep/aimsracer-data/sessions/2026-10-15/body-acceleration-observer/quality-20261015-final-q10000-05/trace.csv": "2bd65b23479a621077b6f79cd3a5871ace878544f12868e4d2305f5cda9bb29d",
+      "/home/elesheep/aimsracer-data/experiments/body-acceleration-20261015/validation/nx-trace-final.csv": "e3d47eee993adb569f3aa56df0578233ae50bb409cea4475428ecc7b2daddd99"
+    },
+    "compile_modes": {
+      "desktop": "Standalone g++ -O2 trace",
+      "nx": "CMake Release -O3 trace",
+      "interpretation": "Same-source numerical parity and separate workload cost; not a matched compiler or architecture speed benchmark"
+    }
+  },
+  "recorded_ros_receipt_replay_1x_20s": {
+    "desktop": {
+      "checks": {
+        "enough_outputs": true,
+        "monotonic_sources": true,
+        "exact_source_subset": true,
+        "finite_ax_variance": true,
+        "independent_graph": true
+      },
+      "counts": {
+        "inputs": {
+          "corrected": 4000,
+          "lio": 199
+        },
+        "outputs": 3981,
+        "status": 212
+      },
+      "replay_status_valid_counts": {
+        "true": 199
+      },
+      "replay_status_reason_counts": {
+        "valid": 199
+      },
+      "callback_p99_ms": {
+        "callback.imu.p99_ms": {
+          "maximum": 0.03776,
+          "final": 0.02169
+        },
+        "callback.lio.p99_ms": {
+          "maximum": 0.0299,
+          "final": 0.02799
+        }
+      },
+      "callback_boundary": "max/final reported p99 over rolling <=512 callbacks; not whole-run p99 or physical delay",
+      "scheduling_ms": {
+        "p50": 0.10298399999999999,
+        "p99": 0.2560783199999972,
+        "maximum": 0.6739999999999999
+      },
+      "corrected_source_gaps": {
+        "maximum_s": 0.009189247000000001,
+        "over_deadline": 0
+      },
+      "lio_source_gaps": {
+        "maximum_s": 0.10116219500000001,
+        "over_deadline": 0
+      },
+      "subscriptions": [
+        "/livox/imu_bias_corrected",
+        "/parameter_events",
+        "/rear_axle/lio_odom"
+      ],
+      "publishers": [
+        "/parameter_events",
+        "/rosout",
+        "/state_estimation/body_acceleration",
+        "/state_estimation/body_acceleration/debug",
+        "/state_estimation/body_acceleration/status"
+      ],
+      "hashes": {
+        "/data/sessions/2026-10-15/body-acceleration-observer/source-quality-20261015-01/imu-quality-input.npz": "e214e8fd8bf8ee782e4d2c30503779dd821ffcc433a26ef9097782b806787e67",
+        "/tmp/body-install/lib/aims_racer_system/body_acceleration": "531c69f7507b94747081b31fa6efcdc63e27a7c15bbaec2982522a1eb05a70fd",
+        "/repo/verification/body_acceleration/runtime_replay.py": "990656ee8812d9ceb67b92900c68b11f35bd79306908c040505f73656ca1378e"
+      }
+    },
+    "nx": {
+      "checks": {
+        "enough_outputs": true,
+        "monotonic_sources": true,
+        "exact_source_subset": true,
+        "finite_ax_variance": true,
+        "independent_graph": true
+      },
+      "counts": {
+        "inputs": {
+          "corrected": 4000,
+          "lio": 199
+        },
+        "outputs": 3981,
+        "status": 212
+      },
+      "replay_status_valid_counts": {
+        "false": 1,
+        "true": 199
+      },
+      "replay_status_reason_counts": {
+        "no_imu": 1,
+        "valid": 199
+      },
+      "callback_p99_ms": {
+        "callback.imu.p99_ms": {
+          "maximum": 0.039524,
+          "final": 0.028995
+        },
+        "callback.lio.p99_ms": {
+          "maximum": 0.049285,
+          "final": 0.039588
+        }
+      },
+      "callback_boundary": "max/final reported p99 over rolling <=512 callbacks; not whole-run p99 or physical delay",
+      "scheduling_ms": {
+        "p50": 0.17890399999999998,
+        "p99": 0.7710179799999994,
+        "maximum": 1.629514
+      },
+      "corrected_source_gaps": {
+        "maximum_s": 0.009189247000000001,
+        "over_deadline": 0
+      },
+      "lio_source_gaps": {
+        "maximum_s": 0.10116219500000001,
+        "over_deadline": 0
+      },
+      "subscriptions": [
+        "/livox/imu_bias_corrected",
+        "/parameter_events",
+        "/rear_axle/lio_odom"
+      ],
+      "publishers": [
+        "/parameter_events",
+        "/rosout",
+        "/state_estimation/body_acceleration",
+        "/state_estimation/body_acceleration/debug",
+        "/state_estimation/body_acceleration/status"
+      ],
+      "hashes": {
+        "/home/aims/aimsracer-data/sessions/2026-10-15/body-acceleration-observer/source-quality-20261015-01/imu-quality-input.npz": "e214e8fd8bf8ee782e4d2c30503779dd821ffcc433a26ef9097782b806787e67",
+        "/home/aims/aimsracer-body-observer-20261015/install/aims_racer_system/lib/aims_racer_system/body_acceleration": "8a12a626dce9d6fbadddcc494e71285b854885cb5f3b83ef67a49cb15f27ab53",
+        "/home/aims/aimsracer-body-observer-20261015/verification/body_acceleration/runtime_replay.py": "990656ee8812d9ceb67b92900c68b11f35bd79306908c040505f73656ca1378e"
+      }
+    }
+  },
+  "source_snapshot": {
+    "files": 127,
+    "all_desktop_nx_hashes_equal": true,
+    "sha256": {
+      "src/aims_racer_system/CMakeLists.txt": "cae6b163290e2e35f6bb1623cdc31200c80db248044cafbccbe0203c2b65a911",
+      "src/aims_racer_system/README.md": "405e6e3f8541e3a343f44b4dcd86c2bd1cd05e25d18730f5f0b76d5e09f09768",
+      "src/aims_racer_system/README.zh-CN.md": "b626f5885776039880f009c927ec7e13dfe7d5138ce631b98c79036158111e20",
+      "src/aims_racer_system/aims_racer_system/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "src/aims_racer_system/aims_racer_system/gyro_bias.py": "e7cb043c38e6a89184aee83ec2bf88f7ba8e7d288777b55c14555d1964cfd6d9",
+      "src/aims_racer_system/aims_racer_system/launch_support.py": "1848b9215947b24cf85501f8c7f3c3db6a2f01861f2ff6d94d479d7202bc3be8",
+      "src/aims_racer_system/aims_racer_system/longitudinal_acceleration.py": "ed65165e086ee0290f5808972079ef08217347bc5ebe643a304ff04f37719332",
+      "src/aims_racer_system/aims_racer_system/longitudinal_observer.py": "965c724a24cb69bcbcffb226edbb36c56adb78a9c0d6c06c0874490e75474bb6",
+      "src/aims_racer_system/aims_racer_system/rear_axle_odometry.py": "dac160b30c856517cfb9969b82b206402fd836420933774010d9767c2bf47f6e",
+      "src/aims_racer_system/docs/calibration.en.md": "88674011efe1a54826a48b6753e8b9a1bd956c38eb12856daa50c3ca81863ad6",
+      "src/aims_racer_system/docs/calibration.md": "723cf35c4dfa5445e71cee0d681168a06cb54a84d5a49fb70480695d542150b9",
+      "src/aims_racer_system/docs/calibration.zh-CN.md": "a17ba7c70183ca845cc84583533169153a52c81152b05c4ac80884a124ccf610",
+      "src/aims_racer_system/include/aims_racer_system/body_acceleration.hpp": "b808cd61c2fc1a8f89b83c510fe503560e7319e5bb2dd8a3fb949e940ae54d9a",
+      "src/aims_racer_system/include/aims_racer_system/gyro_bias.hpp": "28547770e106fdc4a645bb40a8737d36028d8766bd4c506d5c9db23b1921984f",
+      "src/aims_racer_system/include/aims_racer_system/localization_alignment.hpp": "e605e6aa6266276d4c35be04acf208354909a0ffbbd22b8f7b73027d09cc2fde",
+      "src/aims_racer_system/include/aims_racer_system/localization_health.hpp": "31a14c46bb7c6dae7b4be98fdad9e9b290d5f25b4b114d4922c3318a2eb21745",
+      "src/aims_racer_system/include/aims_racer_system/localization_quality.hpp": "f2c95188399f984df41fc12c5ea35b0e3979af1f90fcbf849fc82fe39c2dce8c",
+      "src/aims_racer_system/include/aims_racer_system/longitudinal_observer.hpp": "c083abf9a51676e04ca133f46ec492665e8876b0d83b472a711c934a5dcb1284",
+      "src/aims_racer_system/include/aims_racer_system/rear_axle_imu.hpp": "10fa272146acb8318413f4df8f1e316a9f76bf386f7f4d39db157474cb94f613",
+      "src/aims_racer_system/include/aims_racer_system/rear_axle_odometry.hpp": "ea468f3439a9e5719e182ca868990f03afd216bfb7f405c9a15875964f542421",
+      "src/aims_racer_system/launch/body_acceleration.launch.py": "e8a3a2b7963bae75a30a3e4e5a3f8a875d85405a281e40abe44d572e298f4df5",
+      "src/aims_racer_system/launch/known_map_localization.launch.py": "b8f8e2643f2d8d0dd49b73a4357f2344fd40e1f22c4c92a96c4f7b4ce9f55737",
+      "src/aims_racer_system/launch/longitudinal_acceleration.launch.py": "c420f8de80fea0e1e1215c710647360137c622c90a1e55df4500a67f0fe1e0b8",
+      "src/aims_racer_system/launch/mapping.launch.py": "3083b7e893975d5543ec0840c24a66290bd234a0c0c5c328eb6bdfd4fec546be",
+      "src/aims_racer_system/launch/race.launch.py": "d21bde746b049b16218584f8123b4fa2bd80c927789a03388dce7771c237424a",
+      "src/aims_racer_system/launch/rear_axle_frames.launch.py": "b3f945753f290d2d7800b928af6f9d5ae24c7ab2cc016a6074ec86db36e559dc",
+      "src/aims_racer_system/launch/vehicle.launch.py": "4f10d1e0face2e81699352273875dd949a3c5c2a0d84d99fb15b3b9c74cd1b9c",
+      "src/aims_racer_system/package.xml": "5a1bfbef1178059ae297b6544f865dfa1b6ec2bb668d502ee83db42e7c46e3c2",
+      "src/aims_racer_system/params/MID360_config.json": "8e6fdb27391a8fcf3ad161d455b8059b6aa5f2a2bd0d8e4d5ec78c6cdab91b3a",
+      "src/aims_racer_system/params/body_acceleration.yaml": "7d10bfc8762427808fffbb432e9243f4194e4e486b40fb855430a705f71f065d",
+      "src/aims_racer_system/params/ekf_rear.yaml": "eafdface37e679b94e5e30edf8f17ead001eb2066a008839489247a3b6e821d5",
+      "src/aims_racer_system/params/fastlio_rear.yaml": "ff466ce5d81baa0eaca61b004710e8a3ada98e9a948503c36f0d25faa8634a49",
+      "src/aims_racer_system/params/gyro_bias.yaml": "dcadd62e5fe59d61731bc57be573358e9837e65c1915bc912527773a7e4b5667",
+      "src/aims_racer_system/params/localization_monitor.yaml": "7407afb4670976e1e2132a5b9de75c71e6e3749654242195f3944143464e9c6c",
+      "src/aims_racer_system/params/longitudinal_acceleration.yaml": "017bb98d7ef95b82b2b6e4141a03376056bb6b7a68807b49963fa3ee2ad7d554",
+      "src/aims_racer_system/params/longitudinal_acceleration_tuned_20261014.yaml": "5bf2f75ccbe5c4f8aa61acab3609454201ea802a0d44911cbe6ebc86f0a53b6a",
+      "src/aims_racer_system/params/ndt_fastlio.yaml": "2bef6438dda9706df40c8d18875b7eaffdb4bd7cff7f6d79a7597db77c53be40",
+      "src/aims_racer_system/params/pgo_rear.yaml": "7db4653050329e5a57cc4541d8a065cd05b22aab128b4c7b7ccfd94c1b87304b",
+      "src/aims_racer_system/params/rear_axle_geometry.yaml": "c3b51c4f3e1aa89e92d442c1d4f358b86e72f029d705cedf77122ce13cca6534",
+      "src/aims_racer_system/params/recording_qos.yaml": "64980e3b6aeedd76faf8c369e94156827fe257e6139fd1d2f61e083205af8395",
+      "src/aims_racer_system/params/replay_sensor_qos.yaml": "acc26976a5533a7a5945d149cda668535a43d6ce110f54e9b14f9da799ae2776",
+      "src/aims_racer_system/params/vesc.yaml": "bfb6cb8ec1884666aa8161af2daf201b1f6c87381f29c2330586dafa3059f2a6",
+      "src/aims_racer_system/resource/aims_racer_system": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "src/aims_racer_system/rviz/mpcc_lio.rviz": "01d0f2aaa0a2b2dcb704cead4d4a0305217b43bccddf3bbd12cd01faa3d8784b",
+      "src/aims_racer_system/rviz/nav.rviz": "b64da6e439c78758b70bba8b2679774dab029c5778f6de84c9ecfba8594ab7ed",
+      "src/aims_racer_system/rviz/odom.rviz": "f6426c7d1c0d36f67fb8202db613beb32cae89d32f5ffb4a670ffb0f99f4d1f9",
+      "src/aims_racer_system/rviz/pp.rviz": "69eba016a88630e62b4cf3af903ed4eab9c9631615813d8c4a0c4bb43c751af1",
+      "src/aims_racer_system/rviz/slam.rviz": "48259c44639cb66f3969334e0b2d33d289ad4684782999260dce174870fdc8dc",
+      "src/aims_racer_system/rviz/slam_toolbox_default.rviz": "97065b7fc25f5d02c1d0479305fab4da725f5aadf9d24d0d3305e8769f5c9eb2",
+      "src/aims_racer_system/rviz/tf_check.rviz": "d18d9f04c0fc9ed384e60ff7424f0d47bfb69f679ade91f3cbed0bf6acc13071",
+      "src/aims_racer_system/scripts/README.md": "1fe4cf57148ad5f28b579fbcb7218656ac11f56fc3b729749800f1910492cd66",
+      "src/aims_racer_system/scripts/README.zh-CN.md": "122d03babc3074ebac3d0dd1d16c17e3e1c32531d4242e804a6a1d2d070bba78",
+      "src/aims_racer_system/scripts/README_EN.md": "1cdcaae1b4081ae5d4ce5e8d1b6d683ab0b84642001c82649420ca189e6150e8",
+      "src/aims_racer_system/scripts/__init__.py": "d4729ac998b91c9e1384a07463fbfc06ebae2af5d524c529c5880b50c478f939",
+      "src/aims_racer_system/scripts/activate_ndt.py": "1c5b3f059f97c4a8f4c775f156496c66d4d4c83139713cf1d33a9a60ce25cff9",
+      "src/aims_racer_system/scripts/lio_to_rear_axle.py": "abe1bdde8c16fdc36d99b118124b84b184f37c66bfe2f27cf2c65e4882033d80",
+      "src/aims_racer_system/scripts/livox_gyro_bias.py": "cb68b4918996e967277108c8ce91fb0a25d759164eb554c804bd3366e259a3af",
+      "src/aims_racer_system/scripts/localization_policy.py": "a1d7bb36986371e355878eb0b4095747eab6eb51c1eed0afcf7467ab8ffa7e25",
+      "src/aims_racer_system/scripts/longitudinal_acceleration.py": "d16e34602e55f84cf15341f856558f34d5b228d0dea5cd4124ee961c44127815",
+      "src/aims_racer_system/scripts/relocalize_known_map.py": "42b25b441f5892bff1ecfe7db947b797fb43a29ff2bad58c34b86c9835cdc0b6",
+      "src/aims_racer_system/src/body_acceleration.cpp": "d32d03b53baf2f2d628f994b0ede12cf2c16d120b907be2a2bd6d5a3efd725d8",
+      "src/aims_racer_system/src/body_acceleration_node.cpp": "1e7fa4a875a155e98d96b6d4fcff7b1e938025f9e753b013a8ca268abdb7d410",
+      "src/aims_racer_system/src/gyro_bias.cpp": "3be39c7bbe81520fc4240824025a5cd4195119b62101c15a181475fa15930b1a",
+      "src/aims_racer_system/src/imu_to_rear_axle.cpp": "2a0839800b2e8bdf70b88a291306767c439083767a0219ac8f1eb0d31d7ba319",
+      "src/aims_racer_system/src/lio_to_rear_axle.cpp": "a703e987894b9f48e18a0ad99262b2db50a53b86744aefd99659d002f91b06cb",
+      "src/aims_racer_system/src/livox_gyro_bias.cpp": "a40223baae35d3765db5205e06c9fedb78ccdf835c028dde5b3443bc5e35ec89",
+      "src/aims_racer_system/src/localization_health.cpp": "e35111bf97a374a904ef6a182dca8924f5d681d287d975847cf2cf966f92fc32",
+      "src/aims_racer_system/src/localization_monitor.cpp": "b42c3900f4661b72824fe0abadd10345c985969a02ca48a1ed5ab7c47734b2c4",
+      "src/aims_racer_system/src/localization_quality.cpp": "4465bb9e368af13dc1896829ffb41274de8e4f8dfc178628c1e8fba4b075405f",
+      "src/aims_racer_system/src/longitudinal_acceleration.cpp": "43ce2631127d7b5f221f3ed12c4e5b852b98e25d0b1fb5d61a2d8fe468c9f3a9",
+      "src/aims_racer_system/src/longitudinal_observer.cpp": "6f4f09176f4f6c570dc31fd057e007d3e7c5d401365daf57ff7df0e19b2b2cf2",
+      "src/aims_racer_system/src/rear_axle_imu.cpp": "2ebc1e557b1d46a602582ea66d2c4a81fece5ebfc843ab4e5d4f270c0d002a91",
+      "src/aims_racer_system/src/rear_axle_odometry.cpp": "9a7df8c2d923483cc83008e7014e6e6c254f1049c44f555becc29e4edb0bba1d",
+      "src/aims_racer_system/tests/benchmark_rear_axle_imu.cpp": "42551e68b3808110b61dd3c87a50143bebce48604224aa1256e11b6dfd02ce23",
+      "src/aims_racer_system/tests/body_acceleration_trace.cpp": "9580e412a0885c26b7c139f0a2ace2d9cc2d22d54b93a7fd603c5fe3f317f629",
+      "src/aims_racer_system/tests/data/imu_python_reference.csv": "975e3fd483996d974a371d82ca4c51460ef6f12f83734dba700568df7f330af8",
+      "src/aims_racer_system/tests/longitudinal_observer_trace.cpp": "4c04cacfbbc2115d4cf0997196443b78fef0c25ac37a4b159aba55ca1ad88124",
+      "src/aims_racer_system/tests/test_body_acceleration.cpp": "04273c3c6b3e1f6455e17b1e12c4fa896d8c36b06bc5b46dd07ca20e1c35158a",
+      "src/aims_racer_system/tests/test_body_acceleration_runtime.py": "5bf3516b26948143db4baa4c3269ec102536ce064d7e0a3bf1db88f6f7c4ca99",
+      "src/aims_racer_system/tests/test_current_launch.py": "09691e3055c7e24f1a804f2345b5f0a7af0ef3f13f65d50ad3167e0b5d8cb6e8",
+      "src/aims_racer_system/tests/test_gyro_bias.cpp": "4037bf4f8f358d7990e1d685b2826369103c9900da4267908476c9374e7b7d93",
+      "src/aims_racer_system/tests/test_gyro_bias.py": "2b358150c9af369ef4354694a930d8d406403e1b46eef8bb64aa74ab0bc3c3fb",
+      "src/aims_racer_system/tests/test_initializer_lifecycle.py": "e032da93e87a13bef99dd447bd07c9d274bc515e9b6e1197ccdc750ac9cda699",
+      "src/aims_racer_system/tests/test_localization_alignment.cpp": "af2a0fa5db93bf23f9b5a9d332fa7cf867ca3725ff00e17d78a35740c04e2cb8",
+      "src/aims_racer_system/tests/test_localization_policy.py": "ed404532b8b01003164430697ba2860ae67b0955415ee3dd02378e2ca98831ce",
+      "src/aims_racer_system/tests/test_longitudinal_acceleration.py": "6b669820a82b47b162a76a81e212dea4f9a4181a101a07c396342b3b11c6fcf9",
+      "src/aims_racer_system/tests/test_longitudinal_observer.cpp": "6e19dfb66cce256acf6a4664d8d273e8a5d8c9de33c0d77a9613864eb7cba6a7",
+      "src/aims_racer_system/tests/test_monitor_alignment_delivery.py": "dac322d5be8d3258aae2c7c40a8353009b2e98549ea1186e5423479a502c5eaa",
+      "src/aims_racer_system/tests/test_native_acceleration_runtime.py": "a136ce5c370217eed19c5801c90c9dfd1323e37e67c37f025d9e9b6476309efd",
+      "src/aims_racer_system/tests/test_native_gyro_runtime.py": "79b1857ecc225e6f680e73dab949003c24bcf97257e88bd6471d4f0714c3ec33",
+      "src/aims_racer_system/tests/test_native_observer_parity.py": "ec1450e6593d7e07565cb01e6cbaa0edc2f3a1b67e9dddbbcb4567c92ba6a053",
+      "src/aims_racer_system/tests/test_rear_axle_contract.py": "09b2bd34681dca22d76c96f4acd6db37ed4322a9ee5a8da2c8c0b5e524b2427b",
+      "src/aims_racer_system/tests/test_rear_axle_force.cpp": "1834d70d6c7a85d14f73d28a18fdd219325218e020fd39ea744db628e9496cf8",
+      "src/aims_racer_system/tests/test_rear_axle_imu.cpp": "6a18ac930c00564e85839460585837802d8217fa4ecdc517e1ee95d2dcffa155",
+      "src/aims_racer_system/tests/test_rear_axle_odometry.cpp": "19149eaeec07d48ced9ce3bd52467d472c8146734b3b471b56ecb9bde26731c8",
+      "src/aims_racer_system/tests/test_rear_axle_pipeline.py": "7cf3b62c523d3fb723f940b8da8c47d8c898ec89cd80b8a261b1fa470d175a91",
+      "src/aims_racer_system/tests/test_rear_axle_timestamps.py": "6dd56c7bb4d001045d573875997d6e7eb580521370094a8452fa669ec50402b8",
+      "src/aims_racer_system/tests/test_replay_acceptance.py": "6d70e6ea250459a5f58385c0bb443e4602d0734f052899a4177024cd8705a8ad",
+      "src/aims_racer_system/tests/test_replay_sensor_qos.py": "b76eae3fea3aad5ebf875dfe858894e84db79b96c5387a4e0fcb169f596f8c8b",
+      "verification/README.md": "4f34eda40a76c1de9e6fa2c7d2a367f902b1db3754b34f4adebbded3dcd14afd",
+      "verification/README.zh-CN.md": "50296238095a4578a5eb48c2b2b24844611037932e742f249b8691fe1d0fad3d",
+      "verification/acceleration/README.md": "4a16dfd296369ee1c3dcecbc08df72d8b8274807d5e0e90921b5c35f5fca4e44",
+      "verification/acceleration/README.zh-CN.md": "6bc82948ed55a484c7f757e5cb232b12aabc05cb76b9301aa18fd8a101f6b0e6",
+      "verification/acceleration/evaluate.py": "d68ccd89513d929c8d924d12447699f802d3cfad53b381090b6ef86e6f65c965",
+      "verification/acceleration/observer.py": "4d304d2085171b087cea57dca4a57105b105d2db7cfa41d944a07120d45e8805",
+      "verification/acceleration/replay.py": "a56a51a3662bd88087faf410354cf5c486c2e94568b73097647cb37fef574257",
+      "verification/acceleration/runtime_replay.py": "c307e1b7aa260ee1dccb29219dc1a29764d8d1aeb703b93837f4d30702babb9d",
+      "verification/acceleration/test_observer.py": "df4c88da3609833ea8e627962b53f83bec2e720265136738cd736b680f0d1b76",
+      "verification/acceleration/test_pipeline.py": "60613becbfc48e091890db3035076e77d4c22d694ebce8d8ea43dbf54e41b164",
+      "verification/body_acceleration/README.md": "98c8bb84d139f411e21336cdd526ac8515405cbc9f287c95da5c9a1f275fb0c6",
+      "verification/body_acceleration/README.zh-CN.md": "4879cd31ad53b59981e19c785e580ef6ed5e047a16a4a7e07d3f02875799658e",
+      "verification/body_acceleration/extract.py": "de865f6404e72f95950ac92af86b36da6304462cc2b52060e7af4a05fbeede42",
+      "verification/body_acceleration/quality.py": "615b1d1c854e2898a15a8f4465118b4b60b1d1111a9df1e06fba049e1becbddd",
+      "verification/body_acceleration/runtime_replay.py": "990656ee8812d9ceb67b92900c68b11f35bd79306908c040505f73656ca1378e",
+      "verification/body_acceleration/test_quality.py": "8a5232c49fd1da982e7299a06df32af0c4edb5d79e192e24c2b4268a150bbbb1",
+      "verification/config/experimental_envelope_recovery_jerk.yaml": "6e471f9ed313cd5b635e048f577647d1c685e545f734f5861d960b54cf119bee",
+      "verification/config/experimental_envelope_strict.yaml": "50721df6d5ccabf3b44b808decd9d24d0fee21ba8325c7f42ffac0453f2fd91e",
+      "verification/config/experimental_native_rti2.yaml": "ee877b9836abe7f5725d9f68beebb65d310aaacede82df884913eb694319d064",
+      "verification/config/native_rate_bounded.yaml": "03cd6380bd1d106cbe84e0d92568d4b3f126c1143d8d84422681228bfb0841c0",
+      "verification/config/vehicle_field_20261010_v35.yaml": "667b61ec68a2c2e1d444308ded353a1e9df298e91eb6e3e5de527c8b955cd870",
+      "verification/localization/evaluate_replay.py": "2693aca866cb5ef355b27d1de70849fff8abc64963330af427236062ab08a680",
+      "verification/localization/fastlio_ndt_replay.py": "4ea222df324560949cf67cbe08ae00dbe53c683023e5c7d1244c1ae55a130a0e",
+      "verification/localization/launch/fastlio_ndt_replay.launch.py": "2768c5c3b53de8807fa467741adc4953356708744d3603cc029c92a9c355cf08",
+      "verification/localization/tf_authority_audit.cpp": "827eb1ab9a19489e75aa032fcd000043e7e8f881d44e34ea3cec29eca4d2770a",
+      "verification/mpcc/replay_requests.cpp": "7e81535ddf5253d05067905a415255b9e650dad09160a8bd0b1f03f742f741d9",
+      "verification/mpcc/replay_runtime.cpp": "8a796c5969aa2623b61e6a3829c114b3706387aa64d80bd80e9b18fca9f8f732",
+      "src/aims_mpcc_rt/launch/mpcc.launch.py": "18f0751900f37354d0b501e89907073e15ab2c6c4f054a558eccc269e5a759b2"
+    }
+  },
+  "input_quality_evidence": "/home/elesheep/aimsracer-data/sessions/2026-10-15/body-acceleration-observer/quality-20261015-final-q10000-05",
+  "full_validation_evidence": "/home/elesheep/aimsracer-data/experiments/body-acceleration-20261015/validation",
+  "limits": [
+    "No independent dynamic acceleration truth or mocap collected.",
+    "No new multi-pose, long stationary or temperature calibration collected.",
+    "Timing is standalone software boundary with recorded LIO, not simultaneous FAST-LIO/EKF/NDT/MPCC workload or sensor latency.",
+    "Default force/gyro/tilt uncertainty is model-based and uncalibrated.",
+    "Only inertial longitudinal acceleration is valid; yaw-rate/lateral supervision follow later."
+  ],
+  "compiled_runtime_binaries_match_measurement": true
+}

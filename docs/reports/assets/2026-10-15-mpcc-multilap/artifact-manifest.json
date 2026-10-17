@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "session": "022604_194643_race",
+  "source_review_directory": "022604-mpcc-review",
+  "source_files": [
+    {
+      "name": "REVIEW.md",
+      "basename": "REVIEW.md",
+      "bytes": 7893,
+      "sha256": "3dd6c0c4f6b1b244f83c70e174149f5f82bf53296a4f8ff70deca3fcb7021a2e"
+    },
+    {
+      "name": "metrics.json",
+      "basename": "metrics.json",
+      "bytes": 26852,
+      "sha256": "ae7d8b440debbef0c90c088af4e4d0683501237f22f1a2c71b2ce38395b4f5d3"
+    },
+    {
+      "name": "laps.csv",
+      "basename": "laps.csv",
+      "bytes": 1861,
+      "sha256": "297e57c067bf5658ba1d350cbbf93811cee860d42f91baf3d88072d95451f2f5"
+    },
+    {
+      "name": "validation.json",
+      "basename": "validation.json",
+      "bytes": 622,
+      "sha256": "29bb9816096ff5c0369ec1e7015d9f3ecd62474fcb4f5064c9ad6c92326407d9"
+    },
+    {
+      "name": "config.json",
+      "basename": "config.json",
+      "bytes": 1455,
+      "sha256": "3744a760fb1ea80086c739e9b7f875211af66ef3a48e4980a2b9d754632fc837"
+    },
+    {
+      "name": "manifest.json",
+      "basename": "manifest.json",
+      "bytes": 11194,
+      "sha256": "8e06f03ed4948fd27421f7bafee6c0cdfca2ebd3d758a11fbaa6ecb0a3e66ffa"
+    },
+    {
+      "name": "critical-review/raw-meta.json",
+      "basename": "raw-meta.json",
+      "bytes": 2117,
+      "sha256": "1d96bc45e91d1f76948b0bb6381d5a2c41688a4badbc0986165b24a6ee1404f9"
+    },
+    {
+      "name": "frame-review/audit.json",
+      "basename": "audit.json",
+      "bytes": 4279,
+      "sha256": "587774f634c8574e26853572f8a388c6667eae680f7486f9d1eb9a3aec0d4eb7"
+    },
+    {
+      "name": "analyze.py",
+      "basename": "analyze.py",
+      "bytes": 13847,
+      "sha256": "2ad1af986abe288b318a2a1e9220052ad77f5a11d6d463ead45cb72661d43f52"
+    },
+    {
+      "name": "runtime.csv",
+      "basename": "runtime.csv",
+      "bytes": 4837073,
+      "sha256": "80f9bcbb7a0fd0caa8ad5651316524826e33c95eda4097d7feb9937c8bac4985"
+    },
+    {
+      "name": "critical-review/status.json",
+      "basename": "status.json",
+      "bytes": 17055718,
+      "sha256": "37fbe8a0b3848c32d0448c9d66b3dd6580d7126c3f04efde730d85fc401966b0"
+    },
+    {
+      "name": "critical-review/raw.npz",
+      "basename": "raw.npz",
+      "bytes": 5976424,
+      "sha256": "86d66fd62c685ddbd677f2a50babf7316bd8504b585300fe6fe6dd25e212e7d0"
+    },
+    {
+      "name": "analysis-arrays.npz",
+      "basename": "analysis-arrays.npz",
+      "bytes": 1450676,
+      "sha256": "9364b880b60d05dc38e8cf493b8b0cda86a2a467feab4a73d44c80881f5a48b2"
+    },
+    {
+      "name": "laps-and-path.png",
+      "basename": "laps-and-path.png",
+      "bytes": 260511,
+      "sha256": "afc7f1587bf9cee304f973363958c76edff232706c4f0a5ab5d7f10376454c88"
+    }
+  ],
+  "bag_identity": {
+    "basename": "bag_0.db3",
+    "bytes": 1361657856,
+    "selected_cdr_sha256": "f487f1a562121a3600514ed8cb4ad46cec4f030453808b5b7b19e4cce03ec41f",
+    "hash_scope": "selected extracted serialized messages, not the whole SQLite bag"
+  },
+  "curation": "summary.json selects documented metrics and adds independently recomputed counts/timing boundaries; laps.csv and PNG are byte-for-byte copies; raw source files stay external",
+  "exported_files": [
+    {
+      "name": "laps-and-path.png",
+      "bytes": 260511,
+      "sha256": "afc7f1587bf9cee304f973363958c76edff232706c4f0a5ab5d7f10376454c88"
+    },
+    {
+      "name": "laps.csv",
+      "bytes": 1861,
+      "sha256": "297e57c067bf5658ba1d350cbbf93811cee860d42f91baf3d88072d95451f2f5"
+    },
+    {
+      "name": "summary.json",
+      "bytes": 15689,
+      "sha256": "670e54258ca03e29c204671e664223e7621de8c845f90bd2dcdd955a4256d6bf"
+    }
+  ]
+}

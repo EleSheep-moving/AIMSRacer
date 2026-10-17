@@ -1,0 +1,414 @@
+{
+  "runs": [
+    {
+      "name": "mpcc",
+      "original_bag": "/home/aims/aimsracer-data/sessions/2026-10-15/022604_194643_race/bag/bag_0.db3",
+      "input_sha256": "e214e8fd8bf8ee782e4d2c30503779dd821ffcc433a26ef9097782b806787e67",
+      "events": 44430,
+      "ax_identical_to_lateral_disabled": {
+        "event": true,
+        "accepted": true,
+        "stamp_ns": true,
+        "valid": true,
+        "status": true,
+        "ax": true,
+        "jerk": true,
+        "variance": true
+      },
+      "trace_sha256": "4492a29b4b57c83fcdb0ebcb0bdc2e2995569759ac0a8f82b7914af86ffe79c9",
+      "new_binary_sha256": "8e4c82485d5454decae33f915c21d7515be6c7da10dfaade0ae702319254c55d",
+      "old_accepted_binary_sha256": "d40d6f4c90d49761594b96ba5dc92263d4173cb3343c36d16c29e06ffaf8d772",
+      "max_ax_difference_from_accepted_binary": 0.0,
+      "valid_imu_n": 42293,
+      "origin_ns": 1792002365474876930,
+      "windows": {
+        "static": {
+          "window_s": [
+            13.065745826,
+            41.425777542
+          ],
+          "n": 5672,
+          "force_y": {
+            "n": 5672,
+            "mean": 0.04328800270172126,
+            "std_ddof0": 0.013195530890264772,
+            "abs_p95": 0.06533306192304007,
+            "abs_max": 0.09885188516522757
+          },
+          "gravity_y": {
+            "n": 5672,
+            "mean": -0.010267271320154514,
+            "std_ddof0": 0.0023904323420445473,
+            "abs_p95": 0.014219397782661207,
+            "abs_max": 0.016999581781708968
+          },
+          "tangential_y": {
+            "n": 5672,
+            "mean": 7.096938833046923e-05,
+            "std_ddof0": 0.04504041253521586,
+            "abs_p95": 0.08863221639774144,
+            "abs_max": 0.16346744031010738
+          },
+          "centripetal_y": {
+            "n": 5672,
+            "mean": -9.909368005465127e-08,
+            "std_ddof0": 9.704549084720192e-07,
+            "abs_p95": 2.1196017891822138e-06,
+            "abs_max": 6.529920824911456e-06
+          },
+          "raw_ay": {
+            "n": 5672,
+            "mean": 0.03294986108691633,
+            "std_ddof0": 0.04598931837754521,
+            "abs_p95": 0.1069861554103709,
+            "abs_max": 0.2220581453149415
+          },
+          "ay": {
+            "n": 5672,
+            "mean": 0.0329566510592326,
+            "std_ddof0": 0.027596208861837803,
+            "abs_p95": 0.07779071708500335,
+            "abs_max": 0.1289321317636889
+          },
+          "lateral_g": {
+            "n": 5672,
+            "mean": 0.003360643141055569,
+            "std_ddof0": 0.002814030159314119,
+            "abs_p95": 0.007932445543075704,
+            "abs_max": 0.01314741851332401
+          },
+          "longitudinal_g": {
+            "n": 5672,
+            "mean": -0.0015963810629388859,
+            "std_ddof0": 0.0026276058856275473,
+            "abs_p95": 0.005919649206845636,
+            "abs_max": 0.007990133573732454
+          }
+        },
+        "running": {
+          "window_s": [
+            41.926416916,
+            220.431558514
+          ],
+          "n": 35699,
+          "force_y": {
+            "n": 35699,
+            "mean": 1.6437109642330248,
+            "std_ddof0": 2.528748330442148,
+            "abs_p95": 5.885637416493893,
+            "abs_max": 12.299703664052485
+          },
+          "gravity_y": {
+            "n": 35699,
+            "mean": -0.16438577102209034,
+            "std_ddof0": 0.11688504873778559,
+            "abs_p95": 0.34816089130680394,
+            "abs_max": 0.47977786893006164
+          },
+          "tangential_y": {
+            "n": 35699,
+            "mean": 0.00034291471820559145,
+            "std_ddof0": 1.2703766371533565,
+            "abs_p95": 2.5346869596726362,
+            "abs_max": 10.518938698456324
+          },
+          "centripetal_y": {
+            "n": 35699,
+            "mean": -0.0009431004276639423,
+            "std_ddof0": 0.01593074275230749,
+            "abs_p95": 0.03426849016291873,
+            "abs_max": 0.17141227703649178
+          },
+          "raw_ay": {
+            "n": 35699,
+            "mean": 1.479925378920393,
+            "std_ddof0": 2.4435909348663576,
+            "abs_p95": 5.677026257508328,
+            "abs_max": 15.17167682892847
+          },
+          "ay": {
+            "n": 35699,
+            "mean": 1.4793587241066837,
+            "std_ddof0": 2.168195174799229,
+            "abs_p95": 5.256969911165994,
+            "abs_max": 12.038350652982738
+          },
+          "lateral_g": {
+            "n": 35699,
+            "mean": 0.15085260757819272,
+            "std_ddof0": 0.22109437726432868,
+            "abs_p95": 0.5360617449553103,
+            "abs_max": 1.2275701338359928
+          },
+          "longitudinal_g": {
+            "n": 35699,
+            "mean": 0.008923818505459716,
+            "std_ddof0": 0.2583767466070697,
+            "abs_p95": 0.46886793367249796,
+            "abs_max": 0.7116192898680751
+          }
+        }
+      },
+      "interpretation": "native source-time valid outputs only; no independent truth; isotropic effective covariance; XY correlation unidentified"
+    },
+    {
+      "name": "233659-B-full",
+      "original_bag": "/home/aims/aimsracer-data/sessions/2026-10-14/233659-B-full/bag/bag_0.db3",
+      "input_sha256": "a93a7949807731505c5a9f4b37039ef1890f79e0f7309bbd9418cccd4780e5c4",
+      "events": 129880,
+      "ax_identical_to_lateral_disabled": {
+        "event": true,
+        "accepted": true,
+        "stamp_ns": true,
+        "valid": true,
+        "status": true,
+        "ax": true,
+        "jerk": true,
+        "variance": true
+      },
+      "trace_sha256": "d49389b3c8b5740d8eaac0d2af179a00efe6347ef03c681134f51500d3649ccc",
+      "new_binary_sha256": "8e4c82485d5454decae33f915c21d7515be6c7da10dfaade0ae702319254c55d",
+      "valid_imu_n": 121664,
+      "origin_ns": 1791992269399867434,
+      "windows": {
+        "all_valid": {
+          "window_s": [
+            16.330121154,
+            655.568421356
+          ],
+          "n": 121664,
+          "force_y": {
+            "n": 121664,
+            "mean": 0.07781388872662856,
+            "std_ddof0": 0.3495768898894349,
+            "abs_p95": 0.7309210960470139,
+            "abs_max": 9.2624764873147
+          },
+          "gravity_y": {
+            "n": 121664,
+            "mean": -0.05121761650856228,
+            "std_ddof0": 0.06096676551240582,
+            "abs_p95": 0.1539109061842432,
+            "abs_max": 0.4050689475849796
+          },
+          "tangential_y": {
+            "n": 121664,
+            "mean": -0.002749491962979344,
+            "std_ddof0": 0.5220233190755421,
+            "abs_p95": 0.3738038290232128,
+            "abs_max": 106.2983160849985
+          },
+          "centripetal_y": {
+            "n": 121664,
+            "mean": -0.00011774918169424851,
+            "std_ddof0": 0.002168449690941112,
+            "abs_p95": 0.0018602208711648658,
+            "abs_max": 0.13709053117450812
+          },
+          "raw_ay": {
+            "n": 121664,
+            "mean": 0.029463513362739863,
+            "std_ddof0": 0.5818692032039325,
+            "abs_p95": 0.7374020158739901,
+            "abs_max": 106.79519826504055
+          },
+          "ay": {
+            "n": 121664,
+            "mean": 0.02958491189121942,
+            "std_ddof0": 0.5288148515120984,
+            "abs_p95": 0.7016237361583467,
+            "abs_max": 92.6568167937945
+          },
+          "lateral_g": {
+            "n": 121664,
+            "mean": 0.0030168214314999944,
+            "std_ddof0": 0.05392410777504025,
+            "abs_p95": 0.07154570991708144,
+            "abs_max": 9.448365832755783
+          },
+          "longitudinal_g": {
+            "n": 121664,
+            "mean": 0.0010357545207499892,
+            "std_ddof0": 0.126007541528262,
+            "abs_p95": 0.10278362216627346,
+            "abs_max": 16.208235622542258
+          }
+        }
+      },
+      "interpretation": "native source-time valid outputs only; no independent truth; isotropic effective covariance; XY correlation unidentified"
+    },
+    {
+      "name": "015017-C-resume-minus60A-odom30cm",
+      "original_bag": "/home/aims/aimsracer-data/sessions/2026-10-15/015017-C-resume-minus60A-odom30cm/bag/bag_0.db3",
+      "input_sha256": "8d4f271ae0fee42d75d42d6680136159d70090a9e58fc52c8131d867a1685ec1",
+      "events": 225598,
+      "ax_identical_to_lateral_disabled": {
+        "event": true,
+        "accepted": true,
+        "stamp_ns": true,
+        "valid": true,
+        "status": true,
+        "ax": true,
+        "jerk": true,
+        "variance": true
+      },
+      "trace_sha256": "032885ac4ea22716fec0fd19a49d0aa655a57617f2a04d63701f72c9b677f708",
+      "new_binary_sha256": "8e4c82485d5454decae33f915c21d7515be6c7da10dfaade0ae702319254c55d",
+      "valid_imu_n": 214838,
+      "origin_ns": 1792000252694373093,
+      "windows": {
+        "all_valid": {
+          "window_s": [
+            0.12589518900000002,
+            1074.3265486
+          ],
+          "n": 214838,
+          "force_y": {
+            "n": 214838,
+            "mean": 0.1577764287328372,
+            "std_ddof0": 0.9627257273324797,
+            "abs_p95": 2.0884334373556075,
+            "abs_max": 9.997496396982669
+          },
+          "gravity_y": {
+            "n": 214838,
+            "mean": -0.08829834014077474,
+            "std_ddof0": 0.07342642760527844,
+            "abs_p95": 0.2190588339275614,
+            "abs_max": 0.3650812656171054
+          },
+          "tangential_y": {
+            "n": 214838,
+            "mean": -0.00010816363646434594,
+            "std_ddof0": 0.480294975633807,
+            "abs_p95": 0.9625514745662271,
+            "abs_max": 12.76908991757976
+          },
+          "centripetal_y": {
+            "n": 214838,
+            "mean": -0.0003253839497850597,
+            "std_ddof0": 0.008058281574456788,
+            "abs_p95": 0.015011490503570075,
+            "abs_max": 0.26216656920194703
+          },
+          "raw_ay": {
+            "n": 214838,
+            "mean": 0.06991163617831189,
+            "std_ddof0": 0.9940312702401126,
+            "abs_p95": 2.1638733749358203,
+            "abs_max": 13.424353562142182
+          },
+          "ay": {
+            "n": 214838,
+            "mean": 0.06989440774927927,
+            "std_ddof0": 0.7876685911871534,
+            "abs_p95": 1.603740914337779,
+            "abs_max": 11.896280514016185
+          },
+          "lateral_g": {
+            "n": 214838,
+            "mean": 0.007127246077843023,
+            "std_ddof0": 0.08031984328870241,
+            "abs_p95": 0.163536061176628,
+            "abs_max": 1.2130830114275706
+          },
+          "longitudinal_g": {
+            "n": 214838,
+            "mean": -0.0010320639159888047,
+            "std_ddof0": 0.18623607342533108,
+            "abs_p95": 0.5208887779101236,
+            "abs_max": 1.4263530006426586
+          }
+        }
+      },
+      "interpretation": "native source-time valid outputs only; no independent truth; isotropic effective covariance; XY correlation unidentified"
+    }
+  ],
+  "synthetic": [
+    {
+      "kind": "lateral_translation",
+      "frequency_hz": 0.5,
+      "n": 1600,
+      "true_rear_ay_amplitude": 1.0,
+      "raw_reconstruction_error_rms": 3.685052464654048e-17,
+      "filtered_error_rms": 0.0009141659303520452,
+      "filtered_error_abs_p95_g": 0.0001313879109758368,
+      "gain": 1.0012905839717672,
+      "equivalent_filter_lag_ms": 0.02420880764888145
+    },
+    {
+      "kind": "yaw_pivot_about_rear",
+      "frequency_hz": 0.5,
+      "n": 1600,
+      "true_rear_ay_amplitude": 0.0,
+      "raw_reconstruction_error_rms": 0.026166707884484712,
+      "filtered_error_rms": 0.026200495918279002,
+      "filtered_error_abs_p95_g": 0.0037649280934019627
+    },
+    {
+      "kind": "lateral_translation",
+      "frequency_hz": 1,
+      "n": 1600,
+      "true_rear_ay_amplitude": 1.0,
+      "raw_reconstruction_error_rms": 3.748769139724479e-17,
+      "filtered_error_rms": 0.00365658507715942,
+      "filtered_error_abs_p95_g": 0.0005253697962006324,
+      "gain": 1.0051353728853734,
+      "equivalent_filter_lag_ms": 0.09645472783608916
+    },
+    {
+      "kind": "yaw_pivot_about_rear",
+      "frequency_hz": 1,
+      "n": 1600,
+      "true_rear_ay_amplitude": 0.0,
+      "raw_reconstruction_error_rms": 0.10461844996130475,
+      "filtered_error_rms": 0.10515598400028843,
+      "filtered_error_abs_p95_g": 0.015114130014936153
+    },
+    {
+      "kind": "lateral_translation",
+      "frequency_hz": 2,
+      "n": 1600,
+      "true_rear_ay_amplitude": 1.0,
+      "raw_reconstruction_error_rms": 3.7758040750714955e-17,
+      "filtered_error_rms": 0.014621309835386759,
+      "filtered_error_abs_p95_g": 0.0021023718121192685,
+      "gain": 1.0201079186957223,
+      "equivalent_filter_lag_ms": 0.3798023045519054
+    },
+    {
+      "kind": "yaw_pivot_about_rear",
+      "frequency_hz": 2,
+      "n": 1600,
+      "true_rear_ay_amplitude": 0.0,
+      "raw_reconstruction_error_rms": 0.41770046187382875,
+      "filtered_error_rms": 0.42610376421854373,
+      "filtered_error_abs_p95_g": 0.061231488711608134
+    },
+    {
+      "kind": "lateral_translation",
+      "frequency_hz": 3,
+      "n": 1600,
+      "true_rear_ay_amplitude": 1.0,
+      "raw_reconstruction_error_rms": 3.6699140102110006e-17,
+      "filtered_error_rms": 0.03284903461481441,
+      "filtered_error_abs_p95_g": 0.0047221989050422256,
+      "gain": 1.0436018953251667,
+      "equivalent_filter_lag_ms": 0.8325233908791004
+    },
+    {
+      "kind": "yaw_pivot_about_rear",
+      "frequency_hz": 3,
+      "n": 1600,
+      "true_rear_ay_amplitude": 0.0,
+      "raw_reconstruction_error_rms": 0.9369321539373947,
+      "filtered_error_rms": 0.9778033367294955,
+      "filtered_error_abs_p95_g": 0.14049444361000687
+    }
+  ],
+  "renderer_sha256": "37436ba5b3b07cdab193de7c2fc5206ad2a7a293e021867915cb2df658a61e60",
+  "g0": 9.80665,
+  "independent_truth": false,
+  "reference_point": "rear axle base_link",
+  "covariance_xy_correlation": "unidentified; diagonal effective model only"
+}

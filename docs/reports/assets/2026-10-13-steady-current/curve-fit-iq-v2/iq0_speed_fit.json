@@ -1,0 +1,137 @@
+{
+  "signal": "avg_iq",
+  "source": "../accepted_trials.csv",
+  "source_sha256": "e75d23def17e004d22a8922a60e529e1557b9dc64385a9b45fbb5a013cb2fb46",
+  "trial_count": 27,
+  "complete_sweeps": 3,
+  "method": "Equal-weight trial means; measured wheel velocity; leave one complete sweep out, three folds.",
+  "selected_degree": 3,
+  "selected_by": "Smallest complete-sweep held-out RMSE among degrees 1, 2, 3.",
+  "nominal_valid_range_mps": [
+    1,
+    5
+  ],
+  "minimum_slope_a_per_mps": 0.9095898490004002,
+  "models": {
+    "1": {
+      "coefficients_ascending": [
+        7.977405958348861,
+        1.2992551453476395
+      ],
+      "training_rmse_a": 0.30568682131660624,
+      "grouped_rmse_a": 0.3229045006138339,
+      "grouped_mae_a": 0.2609046620129049,
+      "grouped_max_abs_error_a": 0.8769024938737058,
+      "folds": [
+        {
+          "group": "heavy_fresh",
+          "rmse_a": 0.3039090906766132
+        },
+        {
+          "group": "heavy_repeat",
+          "rmse_a": 0.32906712329714866
+        },
+        {
+          "group": "light_split",
+          "rmse_a": 0.3348970625715634
+        }
+      ]
+    },
+    "2": {
+      "coefficients_ascending": [
+        6.604643667760051,
+        2.418697242524671,
+        -0.18585431900516713
+      ],
+      "training_rmse_a": 0.13482636984825275,
+      "grouped_rmse_a": 0.1719918386386413,
+      "grouped_mae_a": 0.13507165600862236,
+      "grouped_max_abs_error_a": 0.41582579753241866,
+      "folds": [
+        {
+          "group": "heavy_fresh",
+          "rmse_a": 0.1275185894885759
+        },
+        {
+          "group": "heavy_repeat",
+          "rmse_a": 0.13977779936283938
+        },
+        {
+          "group": "light_split",
+          "rmse_a": 0.23009727033371596
+        }
+      ]
+    },
+    "3": {
+      "coefficients_ascending": [
+        5.775448332191859,
+        3.5136698533396333,
+        -0.5940088414644229,
+        0.045165855502896424
+      ],
+      "training_rmse_a": 0.11386523233497975,
+      "grouped_rmse_a": 0.15612218045209578,
+      "grouped_mae_a": 0.13394360126542543,
+      "grouped_max_abs_error_a": 0.347556701760352,
+      "folds": [
+        {
+          "group": "heavy_fresh",
+          "rmse_a": 0.10562818380033569
+        },
+        {
+          "group": "heavy_repeat",
+          "rmse_a": 0.12234906252985431
+        },
+        {
+          "group": "light_split",
+          "rmse_a": 0.21678514564531068
+        }
+      ]
+    }
+  },
+  "predictions": [
+    {
+      "speed_mps": 1.0,
+      "iq0_a": 8.740275199569965
+    },
+    {
+      "speed_mps": 1.5,
+      "iq0_a": 9.861867981228633
+    },
+    {
+      "speed_mps": 2.0,
+      "iq0_a": 10.788079517036605
+    },
+    {
+      "speed_mps": 2.5,
+      "iq0_a": 11.552784198621055
+    },
+    {
+      "speed_mps": 3.0,
+      "iq0_a": 12.189856417609157
+    },
+    {
+      "speed_mps": 3.5,
+      "iq0_a": 12.733170565628079
+    },
+    {
+      "speed_mps": 4.0,
+      "iq0_a": 13.216601034304997
+    },
+    {
+      "speed_mps": 4.5,
+      "iq0_a": 13.674022215267081
+    },
+    {
+      "speed_mps": 5.0,
+      "iq0_a": 14.139308500141507
+    }
+  ],
+  "limits": [
+    "Three sweeps used for model selection, not an independent final test.",
+    "Trial means describe observed straight steady driving; within-trial spread is not fit uncertainty.",
+    "Mass, temperature, region and battery/time effects are not independently identified.",
+    "No extrapolation to standstill, launch, braking, or speeds above 5 m/s.",
+    "No ROS output, controller parameter or acquisition-policy modification."
+  ]
+}

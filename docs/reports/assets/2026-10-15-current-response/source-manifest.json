@@ -1,0 +1,135 @@
+{
+  "evidence_date": "2026-10-15",
+  "scope": "Small report extracts from existing offline analyses; no raw bag rerun or new vehicle test. Source names are relative to the external stage-bc-review root, absent from a fresh clone.",
+  "transformations": {
+    "collection-coverage.csv": "Selected counters from summary.json and measured-current-windows/summary.json. Cross-checked against plan-coverage.csv and wheel-only-model-v1/audit.csv.",
+    "measured-window-summary.json": "Selected summary fields and example rows; omitted IMU/EKF fields from examples.",
+    "grouped-validation.csv": "Region rows from wheel-only-model-v1/summary.json grouped_validation. RMSE and weighted coverage independently recomputed from heldout-predictions.csv.",
+    "high-current-comparison.csv": "Selected rows/columns from measured-current-windows/high-current-pooling/summary.json.",
+    "wheel-only-summary.json": "Summary excluding long per-fold arrays, with fit, sensor-independence and package verification objects.",
+    "coverage.png": "Byte-identical copy of wheel-only-model-v1/coverage.png.",
+    "response-curves.png": "Byte-identical copy of wheel-only-model-v1/response-curves.png."
+  },
+  "external_sources": [
+    {
+      "name": "summary.json",
+      "sha256": "32bdc754bead1ebf9eadcdc174e78e674e71c89f3d1d2585c391df9f078477bc"
+    },
+    {
+      "name": "plan-coverage.csv",
+      "sha256": "745065e1fe567e0502824299ee031904931b089c2d63c38de2a499f426120f13"
+    },
+    {
+      "name": "session-inventory.csv",
+      "sha256": "525be9d23f89eec5803ba6ee2c94da76a143259391ea852aaa2f9c4bed06021a"
+    },
+    {
+      "name": "full-range-summary.json",
+      "sha256": "34463d073302c4be4e4caf5d37cefdec27d20d9ce546b0fafc413f2ccac171ce"
+    },
+    {
+      "name": "constant-current-acquisition-handoff.zh-CN.md",
+      "sha256": "96851d9eb31bd7c6afdc0f0854d571e2d071b96bb454d24b934afe1382c3137d"
+    },
+    {
+      "name": "measured-current-windows/README.md",
+      "sha256": "cd701db0f807d2427a0fd5df7bf76925d79d8f1f0c45f89bf5080c1c56a66cc4"
+    },
+    {
+      "name": "measured-current-windows/summary.json",
+      "sha256": "ed308178cc8b15a5a07322e65742a8afa79ecd6fea60b0e3ddfe0ec4ddc7d9c1"
+    },
+    {
+      "name": "measured-current-windows/high-current-pooling/README.md",
+      "sha256": "f4bd08abc4cdc4c290eea6ef302fd74442657a542d86ccae07d62da0582fda44"
+    },
+    {
+      "name": "measured-current-windows/high-current-pooling/summary.json",
+      "sha256": "66b291bc367173b55ab81dfce5bdd78958fa38a7fa851ff9afbd99cf409e0df2"
+    },
+    {
+      "name": "wheel-only-model-v1/README.md",
+      "sha256": "e6209678ad4d472a3350a5c49e6307feaba75c008ffc0e280dd046fb63a7d45f"
+    },
+    {
+      "name": "wheel-only-model-v1/summary.json",
+      "sha256": "a2e4523a85c22713223816def5eeee1eca5288882bac3d2a027b9ad6557a89a4"
+    },
+    {
+      "name": "wheel-only-model-v1/model.json",
+      "sha256": "2f30f7855d0f944c97f015ccaaa5c098b15e518cf8498352c36275d9eb5c536f"
+    },
+    {
+      "name": "wheel-only-model-v1/verification.json",
+      "sha256": "67eb0f2c029094f88f71dd9ef1f02e35885871e870cab260efbc376e3afb1988"
+    },
+    {
+      "name": "wheel-only-model-v1/audit.csv",
+      "sha256": "8ae6f7b143fc5e562b90bebce22a01413229062a5a9b1247073144ca8a62d1ea"
+    },
+    {
+      "name": "wheel-only-model-v1/training-intervals.csv",
+      "sha256": "ff18659165d5d880e8a8e0315540d4b4ef45a32870568aa8962ccd9361d347f9"
+    },
+    {
+      "name": "wheel-only-model-v1/heldout-predictions.csv",
+      "sha256": "4162a4c8cd3380297e0c990e4d56e5276e2fe0d8bcc7225bbad846825135fcc0"
+    },
+    {
+      "name": "wheel-only-model-v1/sensor-independence.json",
+      "sha256": "60de0f8414ed28e2135f7f7d5ddc228b6362a8fbfe83272217301c3090453fd8"
+    },
+    {
+      "name": "wheel-only-model-v1/package-verification.json",
+      "sha256": "70918f7fc0b512327a378ddf3f2bf7fd5a0b0388464012d715f9a2b5b7834580"
+    },
+    {
+      "name": "wheel-only-model-v1/coverage.png",
+      "sha256": "37356a8c8e1b332f62862472db028501e5d0b6024470ab42d30bcce3d7b8a968"
+    },
+    {
+      "name": "wheel-only-model-v1/response-curves.png",
+      "sha256": "0b46e9d4461129e0dac3aa9c92baf4c990a99b7539d25b42f763d86323bb2788"
+    }
+  ],
+  "nx_completion_documents_retrieved_this_review": [
+    {
+      "basename": "stage-B-summary-20261015.zh-CN.md",
+      "sha256": "ad0c7a89685ef5d58ad9fb0eaca20ba4e9587168e9a0d1501237f73939ca7b0f"
+    },
+    {
+      "basename": "stage-C-summary-20261015.zh-CN.md",
+      "sha256": "057b1c117fc37c1d7129a194b0355bb0dd9c4bfa84a357329ce46b4fc620b51e"
+    }
+  ],
+  "portable_artifacts": [
+    {
+      "name": "collection-coverage.csv",
+      "sha256": "d3efbe1a41092fd119b3d72d94ed7829fdee9f6e2698bbe3ddf4243f9bc634c5"
+    },
+    {
+      "name": "coverage.png",
+      "sha256": "37356a8c8e1b332f62862472db028501e5d0b6024470ab42d30bcce3d7b8a968"
+    },
+    {
+      "name": "grouped-validation.csv",
+      "sha256": "1688a39308065a18ba617c53867b7210a0c97a2fe7346ebb4bc3b361e9bc6f7e"
+    },
+    {
+      "name": "high-current-comparison.csv",
+      "sha256": "d92d9c2dc66c313ab8522347bf5ca69aebbdf0c778d79ae31254506b8fcf4c56"
+    },
+    {
+      "name": "measured-window-summary.json",
+      "sha256": "c58a6377f3bc40a84eacadff5a89e8b8dc4d18a65cce97e5854ad2ff7efd634d"
+    },
+    {
+      "name": "response-curves.png",
+      "sha256": "0b46e9d4461129e0dac3aa9c92baf4c990a99b7539d25b42f763d86323bb2788"
+    },
+    {
+      "name": "wheel-only-summary.json",
+      "sha256": "645aaadb04d0464cdc8e83653300661f0820e8827036efeb6a735378536f4672"
+    }
+  ]
+}

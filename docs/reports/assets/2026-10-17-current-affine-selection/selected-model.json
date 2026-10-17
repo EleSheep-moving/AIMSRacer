@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-17",
+  "status": "user_selected_interval_description_only",
+  "model": "raw_affine",
+  "formula": "a_bar = b + k * time_mean(measured_avg_iq)",
+  "current_unit": "A",
+  "acceleration_unit": "m/s^2",
+  "explicit_basic_subtraction": false,
+  "branches": {
+    "B": {
+      "cohort": "B_limit",
+      "n": 10,
+      "slope": 0.10514677523013137,
+      "intercept": -1.3706685248564916,
+      "leave_current_out_rmse_mps2": 0.04185915599144176,
+      "heldout_max_abs_mps2": 0.0980428795217767,
+      "requested_currents": [
+        23.740276899999998,
+        28.740276899999998,
+        33.7402769,
+        38.7402769,
+        43.7402769,
+        48.7402769,
+        53.7402769,
+        58.7402769,
+        63.7402769,
+        68.7402769
+      ],
+      "actual_mean_iq_range_A": [
+        23.65981064880477,
+        68.16938860367618
+      ],
+      "basic_range_A": [
+        11.976957241850618,
+        12.190499526473216
+      ],
+      "retained_fraction_range": [
+        0.9700621101286826,
+        0.9942295732511434
+      ]
+    },
+    "C": {
+      "cohort": "C_screened",
+      "n": 9,
+      "slope": 0.12936510607178806,
+      "intercept": -1.2503214337957151,
+      "leave_current_out_rmse_mps2": 0.04958824492956368,
+      "heldout_max_abs_mps2": 0.11191206388884112,
+      "requested_currents": [
+        -35.0,
+        -30.0,
+        -25.0,
+        -20.0,
+        -15.0,
+        -10.0,
+        -5.0,
+        0.0,
+        4.139312499999999
+      ],
+      "actual_mean_iq_range_A": [
+        -34.71211919109349,
+        4.172564724469092
+      ],
+      "basic_range_A": [
+        11.464448228832149,
+        11.888510797382123
+      ],
+      "retained_fraction_range": [
+        0.8895569958488342,
+        0.9679456209229707
+      ]
+    }
+  },
+  "branch_identity": "B/C acquisition stage; not selected solely by current sign",
+  "speed_support_mps": [
+    1,
+    5
+  ],
+  "runtime_deployed_by_this_documentation_change": false,
+  "source_metrics_sha256": "cedefcf73814a2116813f059ba959eafac02988d3dc7364fe2bf57cb8b7fcea9"
+}

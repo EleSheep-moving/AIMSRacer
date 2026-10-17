@@ -1,0 +1,216 @@
+{
+  "original_bag": "/home/aims/aimsracer-data/sessions/2026-10-15/022604_194643_race/bag/bag_0.db3",
+  "origin_ns": 1792002365474876930,
+  "hashes": {
+    "/home/elesheep/aimsracer-data/experiments/planar-acceleration-20261015/quality-02/mpcc-trace.csv": "4492a29b4b57c83fcdb0ebcb0bdc2e2995569759ac0a8f82b7914af86ffe79c9",
+    "/home/elesheep/aimsracer-data/experiments/yaw-rate-20261015/quality-02/mpcc-trace.csv": "5ac9cfa6778963399651f23715d5fc9aa14a0d8c577e37feccb0d9de30e723c6",
+    "/home/elesheep/aimsracer-data/sessions/2026-10-15/022604-mpcc-review/yaw-rate-quality/input/yaw-input.npz": "e5d5321c2b9d61edd850146a237586e732d31fe0d94252c6c5cfc8a11af2cc14",
+    "/home/elesheep/AIMSRacer/verification/planar_acceleration/kinematic_comparison.py": "6c7b80e4f95a071e7cbc5e46392228bce37ea46f525e8da90813a3d3fd0673de"
+  },
+  "initial_condition": {
+    "source_time_s": 41.420061448000006,
+    "vx_mps": 0.0,
+    "basis": "last valid sample within recorded pre-motion stationary window"
+  },
+  "stationary_ax_mean_si": -0.015655150350869628,
+  "running_window_s": [
+    41.926416916,
+    220.431558514
+  ],
+  "running_valid_n": 35699,
+  "common_n": 35694,
+  "excluded_wheel_gap_n": 5,
+  "integration_max_valid_source_interval_ms": 20.730813000000126,
+  "wheel_source_max_interval_ms": 34.72819199998867,
+  "final_common_sample": {
+    "source_time_s": 220.42987770000002,
+    "integrated_vx_mps": 15.619216732354236,
+    "static_corrected_integrated_vx_mps": 18.421642320060936,
+    "wheel_vx_mps": 2.15352490843966
+  },
+  "speed_common": {
+    "ax_integral": {
+      "n": 35694,
+      "mean": 9.805856591076507,
+      "rms": 10.600789397975666,
+      "abs_p95": 16.100182687645933,
+      "abs_max": 18.161017279011727
+    },
+    "static_corrected_ax_integral": {
+      "n": 35694,
+      "mean": 11.211257646919687,
+      "rms": 12.203169799599692,
+      "abs_p95": 18.73732301776917,
+      "abs_max": 20.94632293301973
+    },
+    "wheel": {
+      "n": 35694,
+      "mean": 3.0574510035570426,
+      "rms": 3.1668012417083844,
+      "abs_p95": 4.4896712166724395,
+      "abs_max": 4.6656311743783485
+    }
+  },
+  "comparison": {
+    "imu_ay": {
+      "si": {
+        "n": 35694,
+        "mean": 1.4795699338908315,
+        "rms": 2.624979247132987,
+        "abs_p95": 5.256976401033585,
+        "abs_max": 12.038350652982738
+      },
+      "g": {
+        "n": 35694,
+        "mean": 0.15087414498231624,
+        "rms": 0.2676733897032103,
+        "abs_p95": 0.5360624067376306,
+        "abs_max": 1.2275701338359928
+      },
+      "difference_from_imu_rmse_si": 0.0,
+      "correlation_with_imu": 1.0,
+      "fraction_abs_above_imu": 0.0
+    },
+    "ax_integral_times_rate": {
+      "si": {
+        "n": 35694,
+        "mean": 5.365894284319371,
+        "rms": 8.654275909383687,
+        "abs_p95": 18.069054320665114,
+        "abs_max": 31.943255796757807
+      },
+      "g": {
+        "n": 35694,
+        "mean": 0.5471689398846059,
+        "rms": 0.8824905456382849,
+        "abs_p95": 1.8425307643961102,
+        "abs_max": 3.257305583125513
+      },
+      "difference_from_imu_rmse_si": 6.851322013867647,
+      "correlation_with_imu": 0.6441838773903938,
+      "fraction_abs_above_imu": 0.8373676248108926
+    },
+    "static_corrected_integral_times_rate": {
+      "si": {
+        "n": 35694,
+        "mean": 6.165605861689911,
+        "rms": 10.019200434659595,
+        "abs_p95": 21.047437750220652,
+        "abs_max": 37.391609381791234
+      },
+      "g": {
+        "n": 35694,
+        "mean": 0.6287168259996951,
+        "rms": 1.0216741124297894,
+        "abs_p95": 2.146241351554369,
+        "abs_max": 3.812883031595013
+      },
+      "difference_from_imu_rmse_si": 8.200728950882725,
+      "correlation_with_imu": 0.6359004076837431,
+      "fraction_abs_above_imu": 0.8539530453297473
+    },
+    "wheel_times_rate": {
+      "si": {
+        "n": 35694,
+        "mean": 1.5318591730891788,
+        "rms": 2.3219158843538237,
+        "abs_p95": 4.338958831948457,
+        "abs_max": 6.15920684783226
+      },
+      "g": {
+        "n": 35694,
+        "mean": 0.15620616347979982,
+        "rms": 0.23676952724465783,
+        "abs_p95": 0.44245066683816153,
+        "abs_max": 0.6280643081819235
+      },
+      "difference_from_imu_rmse_si": 1.485922260099475,
+      "correlation_with_imu": 0.7322539023446177,
+      "fraction_abs_above_imu": 0.44917913374796886
+    }
+  },
+  "time_windows_g": {
+    "first_10s": {
+      "window_s": [
+        41.926416916,
+        51.926416916
+      ],
+      "signals": {
+        "imu_ay": {
+          "n": 2000,
+          "mean": 0.16971769603723863,
+          "rms": 0.26814526970922453,
+          "abs_p95": 0.5745848049452623,
+          "abs_max": 0.9023425842419484
+        },
+        "ax_integral_times_rate": {
+          "n": 2000,
+          "mean": 0.20022637507711688,
+          "rms": 0.2743109101746402,
+          "abs_p95": 0.5021160196233132,
+          "abs_max": 0.7601561336084067
+        },
+        "static_corrected_integral_times_rate": {
+          "n": 2000,
+          "mean": 0.20634657521564126,
+          "rms": 0.2827567121398842,
+          "abs_p95": 0.5207465604094585,
+          "abs_max": 0.7885481600930531
+        },
+        "wheel_times_rate": {
+          "n": 2000,
+          "mean": 0.17486099389288157,
+          "rms": 0.2394716108652289,
+          "abs_p95": 0.452237207888416,
+          "abs_max": 0.6132349485393395
+        }
+      }
+    },
+    "last_10s": {
+      "window_s": [
+        210.431558514,
+        220.431558514
+      ],
+      "signals": {
+        "imu_ay": {
+          "n": 2000,
+          "mean": 0.15997006040640405,
+          "rms": 0.2779412388504718,
+          "abs_p95": 0.5367841151573799,
+          "abs_max": 1.0062345502282763
+        },
+        "ax_integral_times_rate": {
+          "n": 2000,
+          "mean": 0.9626769170484043,
+          "rms": 1.4141937755190008,
+          "abs_p95": 2.5416537337111667,
+          "abs_max": 3.257305583125513
+        },
+        "static_corrected_integral_times_rate": {
+          "n": 2000,
+          "mean": 1.1278073609008266,
+          "rms": 1.657089543891238,
+          "abs_p95": 2.985473925888395,
+          "abs_max": 3.812883031595013
+        },
+        "wheel_times_rate": {
+          "n": 2000,
+          "mean": 0.16533171689144832,
+          "rms": 0.2471188859485663,
+          "abs_p95": 0.47316947226904355,
+          "abs_max": 0.5966748103915139
+        }
+      }
+    }
+  },
+  "assumptions": [
+    "planar a_x = dot(v_x) - r*v_y; integral neglects r*v_y",
+    "initial vx=0 at rest; no later reset or wheel correction",
+    "valid source gaps <=30ms integrated by endpoint trapezoids, including one omitted warmup sample",
+    "source stamp matching for new yaw observer; wheel interpolation <=30ms only, no phase fit",
+    "static-mean correction is a sensitivity case, not a changed estimator",
+    "same IMU drives ax, ay and yaw; their errors are correlated",
+    "wheel speed is not independent ground truth; wheel product is not ay truth"
+  ],
+  "independent_truth": false
+}

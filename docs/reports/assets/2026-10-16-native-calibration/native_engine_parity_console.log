@@ -1,0 +1,8 @@
+........................................................................ [ 40%]
+........................................................................ [ 81%]
+................................                                         [100%]
+176 passed in 5.83s
+Native/Python parity PASS: 113 traces, 6382 public API events; 32 internal-mutation or empty cases excluded
+Native bounded status benchmark: {"large_enabled": true, "large_samples": 19996, "large_status_us": 26.313758, "small_samples": 96, "small_status_us": 26.850717}
+.                                                                        [100%]
+1 passed in 0.02s

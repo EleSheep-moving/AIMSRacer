@@ -1,0 +1,110 @@
+{
+  "source_files": {
+    "src/aims_racer_system/CMakeLists.txt": "c46a88795d827834f4612fd5f31826e21fca719c161510ac4653259a86695f95",
+    "src/aims_racer_system/include/aims_racer_system/yaw_rate.hpp": "16f96fd2ffdbe3251a2931c0e955fe6377f12ea4deed06322ca4bb6f85f9b17f",
+    "src/aims_racer_system/src/yaw_rate.cpp": "53bbd2c11ff233eb2a53508a33cccffbe4a8bdef113ae0dc4f947d95b4e830e1",
+    "src/aims_racer_system/src/yaw_rate_node.cpp": "8a0b6402963005f06fd25efd84e0f9a94348005801af646282a8ae5456137b82",
+    "src/aims_racer_system/tests/test_yaw_rate.cpp": "69a84edcd935121623e069b9e46b640ee38649a3fc819faf18864fb5526ab40f",
+    "src/aims_racer_system/tests/test_yaw_rate_runtime.py": "c13791d0adf44d4fc9e8c11a22c062489f13d0c85cd098f3dd9020fdf1bb1707",
+    "src/aims_racer_system/tests/yaw_rate_trace.cpp": "d0e14f569b0aa37f9de805e10cf1726b9b2776b6fc62c3704a43e0046ec4a0ee",
+    "src/aims_racer_system/params/yaw_rate.yaml": "2cee18594401791566ed3265913ab40ab0edd751cbea161251776776360ca20b",
+    "src/aims_racer_system/launch/yaw_rate.launch.py": "f92fc900607b33d83a2d07241360bf17ce155175cb33b103274fb3fcfa5b2795",
+    "src/aims_racer_system/launch/vehicle.launch.py": "3c4cc111e2a10e19d165b842960fb54ad60fa60605f286847a265e505374a0b7",
+    "src/aims_racer_system/launch/race.launch.py": "f9b7d8c28abe1e49c9d6a786ccf3e5c12c0e42756825942e406f7136244ad38b",
+    "src/aims_racer_system/aims_racer_system/launch_support.py": "1a027e964bbcccc59a6e205ce7602f1b4b588a11dc0e3db7d633bb28c0df509d",
+    "verification/yaw_rate/evaluate.py": "7f953b146a4b6e1836fc4ada13a76fabe9285ecf03625dcf1865de6a01468169",
+    "verification/yaw_rate/test_evaluate.py": "c76e4bdbda62d437c15f665875355094af17d63b0359de41d11e6a1b53737286",
+    "verification/yaw_rate/runtime_replay.py": "86512b9a5377ed81ba99a934e4d25831c3952d42a5ff740e115a5bdd6a8a9dfd"
+  },
+  "source_files_x86_nx_identical": true,
+  "file_count": 15,
+  "accepted_acceleration_files_unchanged": {
+    "src/aims_racer_system/src/body_acceleration.cpp": true,
+    "src/aims_racer_system/src/body_acceleration_node.cpp": true,
+    "src/aims_racer_system/include/aims_racer_system/body_acceleration.hpp": true,
+    "src/aims_racer_system/params/body_acceleration.yaml": true,
+    "src/aims_racer_system/launch/body_acceleration.launch.py": true
+  },
+  "ctest_groups_each_arch": {
+    "passed": 24,
+    "total": 24
+  },
+  "desktop_xml": {
+    "files": 20,
+    "testcases": 139,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "new_core_assertion_scenarios": 6,
+  "new_ros_pytest_cases": 3,
+  "offline_python_tests": 3,
+  "runtime": {
+    "desktop-runtime-1x-20s-final02": {
+      "checks": {
+        "complete_expected_source_sequence": true,
+        "monotonic_source": true,
+        "exact_source_subset": true,
+        "alpha_same_sources": true,
+        "finite_rate_alpha_covariance": true,
+        "independent_graph": true
+      },
+      "sent": 4000,
+      "expected_outputs": 3998,
+      "rate_outputs": 3998,
+      "alpha_outputs": 3998,
+      "max_reported_callback_window_p99_ms": 0.061719,
+      "scheduling_p99_ms": 0.1844724899999993,
+      "executable_sha256": "3232e3f061b3e0e6d303f04e52dcb78c56cefaea46160ea04e298de9d70d9d62",
+      "script_sha256": "86512b9a5377ed81ba99a934e4d25831c3952d42a5ff740e115a5bdd6a8a9dfd"
+    },
+    "nx-runtime-1x-20s-final02": {
+      "checks": {
+        "complete_expected_source_sequence": true,
+        "monotonic_source": true,
+        "exact_source_subset": true,
+        "alpha_same_sources": true,
+        "finite_rate_alpha_covariance": true,
+        "independent_graph": true
+      },
+      "sent": 4000,
+      "expected_outputs": 3998,
+      "rate_outputs": 3998,
+      "alpha_outputs": 3998,
+      "max_reported_callback_window_p99_ms": 0.096901,
+      "scheduling_p99_ms": 0.5099686299999993,
+      "executable_sha256": "093b26c135fc8edf187083357262dc4ee38757742074673a5703f4a298f295b2",
+      "script_sha256": "86512b9a5377ed81ba99a934e4d25831c3952d42a5ff740e115a5bdd6a8a9dfd"
+    }
+  },
+  "native_parity": {
+    "events": 42315,
+    "discrete_equal": {
+      "stamp_ns": true,
+      "accepted": true,
+      "valid": true
+    },
+    "max_abs_differences": {
+      "measured_rate": 0.0,
+      "rate": 4.440892098500626e-16,
+      "alpha": 2.042810365310288e-14,
+      "rate_variance": 4.0657581468206416e-20,
+      "alpha_variance": 1.687538997430238e-14,
+      "cross_covariance": 1.0408340855860843e-17
+    },
+    "boundary": "native standalone source-stamped core; excludes DDS and clocks; not independent sensor accuracy"
+  },
+  "git_base_commit": "098976b93ef14696aaf0bf229eaffc062b787b5c",
+  "uncommitted_source": true,
+  "nx_install": "/home/aims/aimsracer-yaw-observer-20261015/install",
+  "main_nx_install_replaced": false,
+  "acceptance": "software tests and independent-node replay only; no sensor dynamic truth, joint vehicle load or control acceptance",
+  "review": "read-only independent code review; no substantive findings; per-clock-epoch monotonicity clarified; runtime expected sequence checks strengthened",
+  "nx_xml": {
+    "files": 20,
+    "testcases": 139,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

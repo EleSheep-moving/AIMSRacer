@@ -1,0 +1,39 @@
+{
+  "verified_on": "2026-10-17",
+  "search": "citation-assistant Semantic Scholar (429), then Crossref metadata; primary-source full text checked",
+  "sources": [
+    {
+      "id": "R1",
+      "type": "official_technical_documentation",
+      "title": "PMSM Torque Estimator",
+      "author": "MathWorks",
+      "url": "https://www.mathworks.com/help/mcb/ref/pmsmtorqueestimator.html",
+      "location": "Equations, first torque equation",
+      "equation": "Te = (3/2) p {psi_m Iq + (Ld-Lq) Id Iq}",
+      "supports": "Conditional torque/current approximation; no evidence of this car coefficient or prediction accuracy"
+    },
+    {
+      "id": "R2",
+      "type": "journal_article_author_manuscript",
+      "authors": [
+        "Alexander Liniger",
+        "Alexander Domahidi",
+        "Manfred Morari"
+      ],
+      "title": "Optimization-based autonomous racing of 1:43 scale RC cars",
+      "journal": "Optimal Control Applications and Methods",
+      "year": 2015,
+      "volume": 36,
+      "issue": 5,
+      "pages": "628-647",
+      "doi": "10.1002/oca.2123",
+      "publisher_url": "https://doi.org/10.1002/oca.2123",
+      "full_text_url": "https://arxiv.org/pdf/1711.07300#page=5",
+      "location": "PDF page 5 (zero-based page index 4), Section II-A, Eq. (2c) and immediately following paragraph",
+      "equation": "Fr,x = (Cm1 - Cm2 vx) d - Cr - Cd vx^2",
+      "input_semantics": "PWM duty cycle d, not measured Iq",
+      "supports": "Drive-minus-resistance model structure; not this car coefficients or superiority of affine fits",
+      "publication_dates": "Online first 2014; journal issue 2015; author manuscript uploaded 2017"
+    }
+  ]
+}

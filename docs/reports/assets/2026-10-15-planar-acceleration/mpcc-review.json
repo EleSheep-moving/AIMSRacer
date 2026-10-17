@@ -1,0 +1,119 @@
+{
+  "original_bag": "/home/aims/aimsracer-data/sessions/2026-10-15/022604_194643_race/bag/bag_0.db3",
+  "trace_sha256": "4492a29b4b57c83fcdb0ebcb0bdc2e2995569759ac0a8f82b7914af86ffe79c9",
+  "input_sha256": "e214e8fd8bf8ee782e4d2c30503779dd821ffcc433a26ef9097782b806787e67",
+  "script_sha256": "8d3601a77ae4d62bdd9b39330b0021f6712fb81debc60608be9911e8bea5ad53",
+  "origin_ns": 1792002365474876930,
+  "running_window_s": [
+    41.926416916,
+    220.431558514
+  ],
+  "accepted_imu_n": 35700,
+  "valid_imu_n": 35699,
+  "invalid_status_counts": {
+    "gyro_warmup": 1
+  },
+  "source_intervals": {
+    "min_ms": 0.005824,
+    "max_ms": 20.706684000000003,
+    "below_1ms": 29,
+    "above_30ms": 0
+  },
+  "group_rules": {
+    "near_straight": "|r| < 0.15 rad/s and |alpha_z| < 2 rad/s^2",
+    "steady_turn": "|r| >= 0.5 rad/s and |alpha_z| < 2 rad/s^2",
+    "rapid_yaw_change": "|alpha_z| >= 8 rad/s^2",
+    "other": "complement; groups partition valid samples, not sustained events"
+  },
+  "groups": {
+    "near_straight": {
+      "n": 2131,
+      "ay_abs_p95_g": 0.2055894364576472,
+      "ay_abs_max_g": 0.4019565375690284,
+      "tangent_abs_p95_si": 0.8905748444992616,
+      "alpha_support_min_ms": 10.142105
+    },
+    "steady_turn": {
+      "n": 5850,
+      "ay_abs_p95_g": 0.5536491447086028,
+      "ay_abs_max_g": 1.1360987160054985,
+      "tangent_abs_p95_si": 1.1373033240476431,
+      "alpha_support_min_ms": 13.582323
+    },
+    "rapid_yaw_change": {
+      "n": 4558,
+      "ay_abs_p95_g": 0.6513176562662634,
+      "ay_abs_max_g": 1.2170468615121182,
+      "tangent_abs_p95_si": 3.5840515058754603,
+      "alpha_support_min_ms": 5.6504270000000005
+    },
+    "other": {
+      "n": 23160,
+      "ay_abs_p95_g": 0.5055212903416741,
+      "ay_abs_max_g": 1.2275701338359928,
+      "tangent_abs_p95_si": 2.016165939079856,
+      "alpha_support_min_ms": 13.558839
+    }
+  },
+  "all_valid": {
+    "n": 35699,
+    "ay_abs_p95_g": 0.5360617449553103,
+    "ay_abs_max_g": 1.2275701338359928,
+    "tangent_abs_p95_si": 2.5346869596726362,
+    "alpha_support_min_ms": 5.6504270000000005
+  },
+  "selected_windows": {
+    "strong_yaw_change": {
+      "source_time_s": 131.05617902100002,
+      "window_s": [
+        130.55617902100002,
+        131.55617902100002
+      ],
+      "sample": {
+        "stamp_ns": 1792002496531055951,
+        "ay": 3.7235632905144738,
+        "raw_ay": 6.52450146073302,
+        "force_y": 1.0110426902852951,
+        "gravity_y": -0.04567078185226853,
+        "tangential_y": -5.572651309610658,
+        "centripetal_y": 0.013521757310665067,
+        "omega_z": 0.01211378822376678,
+        "alpha_x": -48.93002566655373,
+        "alpha_z": -23.468506932024233,
+        "alpha_window_span_s": 0.020364432000000002
+      },
+      "n": 200,
+      "ay_abs_p95_g": 0.55572208473707,
+      "ay_abs_max_g": 0.6737632230682182,
+      "tangent_abs_p95_si": 3.589957427849339,
+      "alpha_support_min_ms": 17.520258000000002
+    },
+    "peak_ay": {
+      "source_time_s": 150.515826518,
+      "window_s": [
+        150.015826518,
+        151.015826518
+      ],
+      "sample": {
+        "stamp_ns": 1792002515990703448,
+        "ay": 12.038350652982738,
+        "raw_ay": 9.24293602389372,
+        "force_y": 9.974933852040767,
+        "gravity_y": -0.40867099262436035,
+        "tangential_y": 0.31432533175618094,
+        "centripetal_y": 0.009001503766505832,
+        "omega_z": 1.8752614344125027,
+        "alpha_x": -57.98413382928874,
+        "alpha_z": -4.750662277074937,
+        "alpha_window_span_s": 0.020027526
+      },
+      "n": 200,
+      "ay_abs_p95_g": 0.8417999788534608,
+      "ay_abs_max_g": 1.2275701338359928,
+      "tangent_abs_p95_si": 3.168195714947742,
+      "alpha_support_min_ms": 18.91172
+    }
+  },
+  "scope": "MPCC primary; B/C auxiliary only; group labels from existing gyro/alpha are heuristic, not truth",
+  "independent_truth": false
+}

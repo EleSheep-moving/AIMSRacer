@@ -1,0 +1,10 @@
+{
+  "checked_candidates": 40,
+  "frozen_kf_selection_verified": true,
+  "all_forecast_counts_and_rmse_verified": true,
+  "common_cohorts_verified": true,
+  "receipt_time_availability_verified": true,
+  "inputs_unchanged": true,
+  "pulse_search_boundary_optima": 0,
+  "limitations": "Numerical and offline proxy evidence; no ROS runtime, NX deployment, independent acceleration truth or closed-loop validation."
+}

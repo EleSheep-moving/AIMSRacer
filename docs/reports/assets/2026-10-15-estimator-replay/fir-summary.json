@@ -1,0 +1,321 @@
+{
+  "selection": {
+    "training_run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+    "upstream": {
+      "repo": "https://github.com/TUMFTM/3DVehicleDynamicsStateEstimation",
+      "commit": "14ba6285d1cb8d0cd847a69af4e1981015d48b8e",
+      "files": {
+        "config.yml": {
+          "path": "config/state_estimation_cpp_3d_ekf_config.yml",
+          "sha256": "d6b8e4e6088ed4661c8ede5e107b42455465c34269902b76d95ec727320c70db"
+        },
+        "fir_impl.hpp": {
+          "path": "lib_cpp/base/classical_filter/include/classical_filter/fir_impl.hpp",
+          "sha256": "1d2b31f187df28f35de27291cf48703894b57f64d03aa098a468a97b6dd687e4"
+        }
+      },
+      "coefficients": [
+        0.07722183762197628,
+        0.24522338986219644,
+        0.34256086202951863,
+        0.24522338986219644,
+        0.07722183762197628
+      ]
+    },
+    "kernel_sha256": "965c724a24cb69bcbcffb226edbb36c56adb78a9c0d6c06c0874490e75474bb6",
+    "fir_sha256": "d593daf10adce59f5eb222224b853383d64600c9ec65f5772d21ba9a578bdde8",
+    "reference_config": {
+      "use_imu": true,
+      "use_gravity": false,
+      "jerk_psd": 30,
+      "disturbance_psd": 0.01,
+      "speed_variance": 0.0025,
+      "force_variance": 16,
+      "gravity_variance": 0.0225,
+      "history_seconds": 2.0,
+      "max_history_measurements": 4096
+    },
+    "selected_key": "tuned_fir_r16",
+    "selected_config": {
+      "use_imu": true,
+      "use_gravity": false,
+      "jerk_psd": 30,
+      "disturbance_psd": 0.01,
+      "speed_variance": 0.0025,
+      "force_variance": 16.0,
+      "gravity_variance": 0.0225,
+      "history_seconds": 2.0,
+      "max_history_measurements": 4096
+    },
+    "passes_training_noise_bounds": true,
+    "selected_training_metrics": {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "variant": "tuned_fir_r16",
+      "force_variance": 16.0,
+      "moving_100ms_n": 15012,
+      "moving_100ms_rmse": 0.0649630443753765,
+      "high_100ms_n": 4338,
+      "high_100ms_rmse": 0.07640513268585208,
+      "moving_200ms_n": 14475,
+      "moving_200ms_rmse": 0.15275570498997462,
+      "high_200ms_n": 4202,
+      "high_200ms_rmse": 0.17302226513617652,
+      "ref_wheel_0.21s_high_rmse": 0.5309593254178961,
+      "ref_lio_0.51s_high_rmse": 0.4031446465190938,
+      "steady_all_sigma": 0.12160101319702377,
+      "steady_high_sigma": 0.13928385059723702,
+      "steady_max_abs_mean": 0.07709387459687946,
+      "score": 0.03247324912066142,
+      "acceleration_waveform_lag_ms": 50.0,
+      "braking_waveform_lag_ms": 50.0,
+      "passes_training_noise_bounds": true
+    },
+    "diagnostic_key": "tuned_fir_r8",
+    "diagnostic_config": {
+      "use_imu": true,
+      "use_gravity": false,
+      "jerk_psd": 30,
+      "disturbance_psd": 0.01,
+      "speed_variance": 0.0025,
+      "force_variance": 8.0,
+      "gravity_variance": 0.0225,
+      "history_seconds": 2.0,
+      "max_history_measurements": 4096
+    },
+    "diagnostic_training_metrics": {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "variant": "tuned_fir_r8",
+      "force_variance": 8.0,
+      "moving_100ms_n": 15012,
+      "moving_100ms_rmse": 0.06447935963025363,
+      "high_100ms_n": 4338,
+      "high_100ms_rmse": 0.07634341699059016,
+      "moving_200ms_n": 14475,
+      "moving_200ms_rmse": 0.15023762640344435,
+      "high_200ms_n": 4202,
+      "high_200ms_rmse": 0.17092334788866956,
+      "ref_wheel_0.21s_high_rmse": 0.5533550604892388,
+      "ref_lio_0.51s_high_rmse": 0.3793360123182869,
+      "steady_all_sigma": 0.17438999446819245,
+      "steady_high_sigma": 0.19514218803909197,
+      "steady_max_abs_mean": 0.10657903030183391,
+      "score": 0.03172138493820517,
+      "acceleration_waveform_lag_ms": 50.0,
+      "braking_waveform_lag_ms": 60.0,
+      "passes_training_noise_bounds": false
+    },
+    "rule": "Minimum prior 100/200 ms wheel-speed prediction score within prior steady noise/bias bounds; only IMU R changed. No delay gate or validation-based retuning."
+  },
+  "inputs": [
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "filter_counters": {
+        "received": 83483,
+        "invalid": 2,
+        "warmup": 4,
+        "gap_resets": 0,
+        "nonmonotonic": 0,
+        "output": 83477
+      },
+      "nominal_filter_group_delay_ms": 10,
+      "source_effective_lookback_ms_p50_p95": [
+        9.973968929928688,
+        10.598866435273486
+      ],
+      "high_hold_input_raw_std": 1.1766786308285844,
+      "high_hold_input_filtered_std": 0.7260263481257415,
+      "input_npz_sha256": "8662f47e26f20358e22048274e6b3cc44670dffdf2fd1f70cc5b67b21f534b55"
+    },
+    {
+      "run": "134131-mpcc-baseline-lat1p0",
+      "filter_counters": {
+        "received": 72835,
+        "invalid": 2,
+        "warmup": 4,
+        "gap_resets": 0,
+        "nonmonotonic": 0,
+        "output": 72829
+      },
+      "nominal_filter_group_delay_ms": 10,
+      "source_effective_lookback_ms_p50_p95": [
+        10.001818778700285,
+        10.59307284039878
+      ],
+      "high_hold_input_raw_std": null,
+      "high_hold_input_filtered_std": null,
+      "input_npz_sha256": "7ad72abb09101cca79706af6cb3a7fb2574771e94b6bd862adf458b215d751bb"
+    },
+    {
+      "run": "135222-mpcc-lat1p5",
+      "filter_counters": {
+        "received": 14934,
+        "invalid": 3,
+        "warmup": 8,
+        "gap_resets": 0,
+        "nonmonotonic": 0,
+        "output": 14923
+      },
+      "nominal_filter_group_delay_ms": 10,
+      "source_effective_lookback_ms_p50_p95": [
+        10.021414625849124,
+        10.589626717479256
+      ],
+      "high_hold_input_raw_std": null,
+      "high_hold_input_filtered_std": null,
+      "input_npz_sha256": "d158b352882534e3f97c32bdf70038273261d2a363158ac0f972359b4443261f"
+    },
+    {
+      "run": "135509-mpcc-lat2p0",
+      "filter_counters": {
+        "received": 12110,
+        "invalid": 2,
+        "warmup": 4,
+        "gap_resets": 0,
+        "nonmonotonic": 0,
+        "output": 12104
+      },
+      "nominal_filter_group_delay_ms": 10,
+      "source_effective_lookback_ms_p50_p95": [
+        9.993640691335072,
+        10.662057244020115
+      ],
+      "high_hold_input_raw_std": null,
+      "high_hold_input_filtered_std": null,
+      "input_npz_sha256": "b56263a0035888a7c5fd3515ce00a0d87f22f206afc2f2db20244751c8f6cf98"
+    },
+    {
+      "run": "135727-mpcc-lat2p5",
+      "filter_counters": {
+        "received": 74495,
+        "invalid": 4,
+        "warmup": 12,
+        "gap_resets": 0,
+        "nonmonotonic": 0,
+        "output": 74479
+      },
+      "nominal_filter_group_delay_ms": 10,
+      "source_effective_lookback_ms_p50_p95": [
+        10.022390420680031,
+        10.503821189963762
+      ],
+      "high_hold_input_raw_std": null,
+      "high_hold_input_filtered_std": null,
+      "input_npz_sha256": "e25b8d4f8b8c1e20fde8e17afc1522545c91a8232687a1248c321b7f3a7b3515"
+    },
+    {
+      "run": "141211-mpcc-lat3p0",
+      "filter_counters": {
+        "received": 49081,
+        "invalid": 2,
+        "warmup": 4,
+        "gap_resets": 0,
+        "nonmonotonic": 0,
+        "output": 49075
+      },
+      "nominal_filter_group_delay_ms": 10,
+      "source_effective_lookback_ms_p50_p95": [
+        9.989256694080057,
+        10.58624963524584
+      ],
+      "high_hold_input_raw_std": null,
+      "high_hold_input_filtered_std": null,
+      "input_npz_sha256": "fd57b23efc6f238ce17e62205b4c74a33350863d05465bf21f7d5587ae3b4d61"
+    },
+    {
+      "run": "142308-mpcc-lat3p0-acc1p5-brake1p5",
+      "filter_counters": {
+        "received": 24909,
+        "invalid": 2,
+        "warmup": 4,
+        "gap_resets": 0,
+        "nonmonotonic": 0,
+        "output": 24903
+      },
+      "nominal_filter_group_delay_ms": 10,
+      "source_effective_lookback_ms_p50_p95": [
+        10.026087378079485,
+        10.635350962034313
+      ],
+      "high_hold_input_raw_std": null,
+      "high_hold_input_filtered_std": null,
+      "input_npz_sha256": "8ff4d7e490aaeed524494eede1a6f7aed0a1227aee0b5d7e49bd330d7daa75ee"
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "filter_counters": {
+        "received": 66375,
+        "invalid": 3,
+        "warmup": 8,
+        "gap_resets": 0,
+        "nonmonotonic": 0,
+        "output": 66364
+      },
+      "nominal_filter_group_delay_ms": 10,
+      "source_effective_lookback_ms_p50_p95": [
+        9.979265045780942,
+        10.68224964052296
+      ],
+      "high_hold_input_raw_std": 1.2870693131435096,
+      "high_hold_input_filtered_std": 0.7928511435744845,
+      "input_npz_sha256": "cb9c9b52559aebebb5e450243100dbfe7d68d27dd1f9c0ac459dd05f6abe13dc"
+    }
+  ],
+  "real_time_deployment": false,
+  "common_prediction_sample_counts": true,
+  "limitations": [
+    "No independent acceleration truth; wheel-derived references share input with estimator.",
+    "FIR adds nominal 10 ms group delay; source stamp is retained and no output curve is artificially shifted.",
+    "Effective IMU variance is tuned, not a calibrated physical noise variance; FIR induces temporal correlation.",
+    "Warmup/gap adaptation suppresses incomplete windows; this differs from TUM zero-filled startup.",
+    "The prior tuned reference was selected in a preceding study; this study selects only FIR IMU R on 21:53."
+  ],
+  "verification": {
+    "accepted_filter_variant": "tuned_fir_r16",
+    "input_core_hashes_verified": true,
+    "common_prediction_sample_counts": true,
+    "all_filtered_replays_without_numerical_failure_or_too_old": true,
+    "independent_fir_checks": {
+      "independent_convolution": true,
+      "constant_gain": true,
+      "nominal_delay_s": 0.01,
+      "invalid_gap_and_nonmonotonic": true,
+      "coefficients": [
+        0.07722183762197628,
+        0.24522338986219644,
+        0.34256086202951863,
+        0.24522338986219644,
+        0.07722183762197628
+      ],
+      "dc_gain": 0.9874513169978641
+    },
+    "counts": 43
+  },
+  "nx_sync": {
+    "files": 97,
+    "verified_hashes": 96,
+    "bytes": 51479826,
+    "seconds": 4.55,
+    "sha256_check_exit": 0
+  },
+  "captured_upstream_source": {
+    "repo": "https://github.com/TUMFTM/3DVehicleDynamicsStateEstimation",
+    "commit": "14ba6285d1cb8d0cd847a69af4e1981015d48b8e",
+    "files": {
+      "config.yml": {
+        "path": "config/state_estimation_cpp_3d_ekf_config.yml",
+        "sha256": "d6b8e4e6088ed4661c8ede5e107b42455465c34269902b76d95ec727320c70db"
+      },
+      "fir_impl.hpp": {
+        "path": "lib_cpp/base/classical_filter/include/classical_filter/fir_impl.hpp",
+        "sha256": "1d2b31f187df28f35de27291cf48703894b57f64d03aa098a468a97b6dd687e4"
+      }
+    },
+    "coefficients": [
+      0.07722183762197628,
+      0.24522338986219644,
+      0.34256086202951863,
+      0.24522338986219644,
+      0.07722183762197628
+    ]
+  }
+}

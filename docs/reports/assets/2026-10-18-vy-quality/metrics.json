@@ -1,0 +1,114 @@
+{
+  "source": "/home/aims/aimsracer-data/sessions/2026-10-15/022604_194643_race/bag/bag_0.db3",
+  "independent_truth": false,
+  "units": "m/s",
+  "source_origin_ns": 1792002365474876930,
+  "static_window_s": [
+    13.065745826,
+    41.425777542
+  ],
+  "running_window_s": [
+    41.926416916,
+    220.431558514
+  ],
+  "detail_window_s": [
+    100,
+    106
+  ],
+  "no_additional_smoothing": true,
+  "no_time_shift": true,
+  "statistics": {
+    "rear_axle": {
+      "static": {
+        "n": 5672,
+        "mean": 0.0006495518369932207,
+        "std": 0.0024903648672538847,
+        "abs_p95": 0.003361659179618413,
+        "abs_max": 0.015188926544561467
+      },
+      "running": {
+        "n": 35700,
+        "mean": -0.14725873414109053,
+        "std": 0.11717029548362684,
+        "abs_p95": 0.387028403408032,
+        "abs_max": 0.5752730674713394
+      }
+    },
+    "center_of_mass": {
+      "static": {
+        "n": 5672,
+        "mean": 0.0006717124599382513,
+        "std": 0.002391633405644593,
+        "abs_p95": 0.002985640287078796,
+        "abs_max": 0.01415353349947951
+      },
+      "running": {
+        "n": 35700,
+        "mean": -0.027301525889297077,
+        "std": 0.09620123667927274,
+        "abs_p95": 0.18032951159211782,
+        "abs_max": 0.24916590652214496
+      }
+    },
+    "lio": {
+      "static": {
+        "n": 283,
+        "mean": 0.0004837124248086604,
+        "std": 0.002067797680427406,
+        "abs_p95": 0.0040379230486400795,
+        "abs_max": 0.005125171310098829
+      },
+      "running": {
+        "n": 1785,
+        "mean": -0.1495647349328948,
+        "std": 0.1010690873522344,
+        "abs_p95": 0.3574876475537864,
+        "abs_max": 0.5375785948222811
+      }
+    },
+    "ekf": {
+      "static": {
+        "n": 5657,
+        "mean": 0.00042972454021484506,
+        "std": 0.0012178234377219692,
+        "abs_p95": 0.0023334970540636953,
+        "abs_max": 0.0040402343357644
+      },
+      "running": {
+        "n": 35526,
+        "mean": -0.14973567967258697,
+        "std": 0.06781656554461729,
+        "abs_p95": 0.28954857855551663,
+        "abs_max": 0.40256505601874815
+      }
+    }
+  },
+  "actual_executable_sha256": "9d1aa3b796b385bcc3d7a5a45558eef1dea8612dd642cfb5ccf0ffd5fea86c1c",
+  "provenance": {
+    "/out/warning-policy/raw.npz": "86d66fd62c685ddbd677f2a50babf7316bd8504b585300fe6fe6dd25e212e7d0",
+    "/out/warning-policy/raw-meta.json": "1d96bc45e91d1f76948b0bb6381d5a2c41688a4badbc0986165b24a6ee1404f9",
+    "/out/warning-policy/replay-full/outputs.csv": "ee975a84cb6388c859bd2779c114260bfacc4862791ce3548894baad99a18d0d",
+    "/out/warning-policy/replay-full/summary.json": "c72fcf80d91725f1ea80cadd09b24a4726040b89840bd35c09ca5bf50c725b1f",
+    "/work/verification/dual_reference/plot_vy.py": "227c56344e7fce9e842aa7c00702c424ffcb377d8ccfbc7864b81992f82908d7",
+    "/work/verification/dual_reference/compare_reference.py": "12d211a850259b1f6bf34eb6fdaa9447063bd2c3eed15763d010f0617f354dcf"
+  },
+  "rear_lio_waveform_comparison": {
+    "rear_axle": {
+      "n": 35000,
+      "zero_shift_rmse": 0.0700128088510216,
+      "best_lag_ms": 25.0,
+      "best_rmse": 0.06839026368147488
+    },
+    "ekf": {
+      "n": 35000,
+      "zero_shift_rmse": 0.09929993150735664,
+      "best_lag_ms": 265.0,
+      "best_rmse": 0.04677156649397349
+    }
+  },
+  "artifact_sha256": {
+    "vy-alignment.png": "ca53959ca277d54d91f9092e75a0210233243a904d1e640584b68def1d8ebdc2",
+    "vy-comparison.png": "97444999360365d4ed72d979a4d462d315abdc9d233cab9088cfb037a76f9960",
+    "vy-comparison.svg": "a3d6b0521f673b48759914e88da29f9b1026a9a884df214568c2faaec96052ad"
+  }
+}

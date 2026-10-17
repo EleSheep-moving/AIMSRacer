@@ -1,0 +1,29 @@
+{
+  "source": "User confirmed evening session-to-battery assignment in this conversation",
+  "conditions": "Same surface and vehicle; approximately 100 g battery mass difference reported by user, not weighed in this analysis",
+  "groups": {
+    "light_split": {
+      "battery": "light",
+      "sessions": [
+        "204223_803655655-pp-speed-hold-1to5",
+        "211917_973666-pp-speed-hold-4to5",
+        "213927_671246-pp-speed-hold-5"
+      ],
+      "approx_extra_battery_mass_g": 0
+    },
+    "heavy_fresh": {
+      "battery": "heavy",
+      "sessions": [
+        "215303_268004918-pp-speed-hold-1to5-new-battery"
+      ],
+      "approx_extra_battery_mass_g": 100
+    },
+    "heavy_repeat": {
+      "battery": "same_heavy_as_previous",
+      "sessions": [
+        "222944_118387098-pp-speed-hold-1to5-repeat-battery"
+      ],
+      "approx_extra_battery_mass_g": 100
+    }
+  }
+}

@@ -1,0 +1,709 @@
+{
+  "evidence_file_hashes_checked": 168,
+  "raw_archive_hashes_checked": 5,
+  "accepted_trials": 27,
+  "unsuccessful_trials": 1,
+  "total_admitted_samples": 6749,
+  "accepted_samples": 6733,
+  "accepted_segments": 57,
+  "accepted_duration_s": 135.25760221481323,
+  "accepted_fault_samples": 0,
+  "primary_current_signal": "avg_iq",
+  "original_motor_log_reconciliation_error_a": 0.0,
+  "checks": [
+    {
+      "run": "204223_803655655-pp-speed-hold-1to5",
+      "trial_id": 1,
+      "target_speed": 1.0,
+      "expected_samples": 250,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 250,
+      "all_checks_passed": true
+    },
+    {
+      "run": "204223_803655655-pp-speed-hold-1to5",
+      "trial_id": 2,
+      "target_speed": 1.5,
+      "expected_samples": 250,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 250,
+      "all_checks_passed": true
+    },
+    {
+      "run": "204223_803655655-pp-speed-hold-1to5",
+      "trial_id": 3,
+      "target_speed": 2.0,
+      "expected_samples": 247,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 247,
+      "all_checks_passed": true
+    },
+    {
+      "run": "204223_803655655-pp-speed-hold-1to5",
+      "trial_id": 4,
+      "target_speed": 2.5,
+      "expected_samples": 245,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 245,
+      "all_checks_passed": true
+    },
+    {
+      "run": "204223_803655655-pp-speed-hold-1to5",
+      "trial_id": 5,
+      "target_speed": 3.0,
+      "expected_samples": 246,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 246,
+      "all_checks_passed": true
+    },
+    {
+      "run": "204223_803655655-pp-speed-hold-1to5",
+      "trial_id": 6,
+      "target_speed": 3.5,
+      "expected_samples": 248,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 248,
+      "all_checks_passed": true
+    },
+    {
+      "run": "204223_803655655-pp-speed-hold-1to5",
+      "trial_id": 7,
+      "target_speed": 4.0,
+      "expected_samples": 16,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 16,
+      "all_checks_passed": true
+    },
+    {
+      "run": "211917_973666-pp-speed-hold-4to5",
+      "trial_id": 1,
+      "target_speed": 4.0,
+      "expected_samples": 245,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 245,
+      "all_checks_passed": true
+    },
+    {
+      "run": "211917_973666-pp-speed-hold-4to5",
+      "trial_id": 2,
+      "target_speed": 4.5,
+      "expected_samples": 248,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 248,
+      "all_checks_passed": true
+    },
+    {
+      "run": "213927_671246-pp-speed-hold-5",
+      "trial_id": 1,
+      "target_speed": 5.0,
+      "expected_samples": 251,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 3,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 4,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 251,
+      "all_checks_passed": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "trial_id": 1,
+      "target_speed": 1.0,
+      "expected_samples": 248,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 248,
+      "all_checks_passed": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "trial_id": 2,
+      "target_speed": 1.5,
+      "expected_samples": 251,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 251,
+      "all_checks_passed": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "trial_id": 3,
+      "target_speed": 2.0,
+      "expected_samples": 250,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 250,
+      "all_checks_passed": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "trial_id": 4,
+      "target_speed": 2.5,
+      "expected_samples": 250,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 250,
+      "all_checks_passed": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "trial_id": 5,
+      "target_speed": 3.0,
+      "expected_samples": 250,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 250,
+      "all_checks_passed": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "trial_id": 6,
+      "target_speed": 3.5,
+      "expected_samples": 250,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 250,
+      "all_checks_passed": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "trial_id": 7,
+      "target_speed": 4.0,
+      "expected_samples": 251,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 3,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 251,
+      "all_checks_passed": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "trial_id": 8,
+      "target_speed": 4.5,
+      "expected_samples": 253,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 3,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 253,
+      "all_checks_passed": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "trial_id": 9,
+      "target_speed": 5.0,
+      "expected_samples": 252,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 3,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 4,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 252,
+      "all_checks_passed": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "trial_id": 1,
+      "target_speed": 1.0,
+      "expected_samples": 251,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 251,
+      "all_checks_passed": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "trial_id": 2,
+      "target_speed": 1.5,
+      "expected_samples": 248,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 248,
+      "all_checks_passed": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "trial_id": 3,
+      "target_speed": 2.0,
+      "expected_samples": 249,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 249,
+      "all_checks_passed": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "trial_id": 4,
+      "target_speed": 2.5,
+      "expected_samples": 251,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 251,
+      "all_checks_passed": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "trial_id": 5,
+      "target_speed": 3.0,
+      "expected_samples": 249,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 249,
+      "all_checks_passed": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "trial_id": 6,
+      "target_speed": 3.5,
+      "expected_samples": 248,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 248,
+      "all_checks_passed": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "trial_id": 7,
+      "target_speed": 4.0,
+      "expected_samples": 248,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 248,
+      "all_checks_passed": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "trial_id": 8,
+      "target_speed": 4.5,
+      "expected_samples": 251,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 3,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 251,
+      "all_checks_passed": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "trial_id": 9,
+      "target_speed": 5.0,
+      "expected_samples": 253,
+      "segment_checks": [
+        {
+          "segment_id": 1,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 2,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 3,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        },
+        {
+          "segment_id": 4,
+          "samples_match": true,
+          "mean_match": true,
+          "std_match": true,
+          "max_header_match_error_us": 0.2384185791015625
+        }
+      ],
+      "reconstructed_samples": 253,
+      "all_checks_passed": true
+    }
+  ],
+  "methodological_limits": [
+    "Velocity is wheel odometry, not independent ground truth.",
+    "Intervals are admitted straight segments; gaps and turns are excluded.",
+    "27 points are three physical speed sweeps, not thousands of independent trials.",
+    "Light battery and heavy battery differ in mass; voltage and ascending-speed/time order are confounded.",
+    "Recorded percentiles describe sample spread, not confidence intervals.",
+    "No voltage compensation controller or vehicle parameters are changed."
+  ]
+}

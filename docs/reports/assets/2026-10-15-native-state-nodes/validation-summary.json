@@ -1,0 +1,59 @@
+{
+  "scope": [
+    "lio_to_rear_axle",
+    "longitudinal_acceleration",
+    "livox_gyro_bias"
+  ],
+  "source_sha256": {
+    "src/aims_racer_system/include/aims_racer_system/rear_axle_odometry.hpp": "ea468f3439a9e5719e182ca868990f03afd216bfb7f405c9a15875964f542421",
+    "src/aims_racer_system/src/rear_axle_odometry.cpp": "9a7df8c2d923483cc83008e7014e6e6c254f1049c44f555becc29e4edb0bba1d",
+    "src/aims_racer_system/tests/test_rear_axle_odometry.cpp": "19149eaeec07d48ced9ce3bd52467d472c8146734b3b471b56ecb9bde26731c8",
+    "src/aims_racer_system/include/aims_racer_system/longitudinal_observer.hpp": "c083abf9a51676e04ca133f46ec492665e8876b0d83b472a711c934a5dcb1284",
+    "src/aims_racer_system/src/longitudinal_observer.cpp": "6f4f09176f4f6c570dc31fd057e007d3e7c5d401365daf57ff7df0e19b2b2cf2",
+    "src/aims_racer_system/tests/test_longitudinal_observer.cpp": "6e19dfb66cce256acf6a4664d8d273e8a5d8c9de33c0d77a9613864eb7cba6a7",
+    "src/aims_racer_system/include/aims_racer_system/gyro_bias.hpp": "28547770e106fdc4a645bb40a8737d36028d8766bd4c506d5c9db23b1921984f",
+    "src/aims_racer_system/src/gyro_bias.cpp": "3be39c7bbe81520fc4240824025a5cd4195119b62101c15a181475fa15930b1a",
+    "src/aims_racer_system/tests/test_gyro_bias.cpp": "4037bf4f8f358d7990e1d685b2826369103c9900da4267908476c9374e7b7d93",
+    "src/aims_racer_system/src/lio_to_rear_axle.cpp": "a703e987894b9f48e18a0ad99262b2db50a53b86744aefd99659d002f91b06cb",
+    "src/aims_racer_system/src/longitudinal_acceleration.cpp": "43ce2631127d7b5f221f3ed12c4e5b852b98e25d0b1fb5d61a2d8fe468c9f3a9",
+    "src/aims_racer_system/src/livox_gyro_bias.cpp": "a40223baae35d3765db5205e06c9fedb78ccdf835c028dde5b3443bc5e35ec89",
+    "src/aims_racer_system/tests/longitudinal_observer_trace.cpp": "4c04cacfbbc2115d4cf0997196443b78fef0c25ac37a4b159aba55ca1ad88124",
+    "src/aims_racer_system/tests/test_native_acceleration_runtime.py": "a136ce5c370217eed19c5801c90c9dfd1323e37e67c37f025d9e9b6476309efd",
+    "src/aims_racer_system/tests/test_native_gyro_runtime.py": "79b1857ecc225e6f680e73dab949003c24bcf97257e88bd6471d4f0714c3ec33",
+    "src/aims_racer_system/tests/test_native_observer_parity.py": "ec1450e6593d7e07565cb01e6cbaa0edc2f3a1b67e9dddbbcb4567c92ba6a053",
+    "src/aims_racer_system/CMakeLists.txt": "2a7e0dc0e5ef9d50af6ab5d96875004849f1152dcf137637ef0786489aca27c8",
+    "src/aims_racer_system/package.xml": "5a1bfbef1178059ae297b6544f865dfa1b6ec2bb668d502ee83db42e7c46e3c2",
+    "src/aims_racer_system/launch/rear_axle_frames.launch.py": "b3f945753f290d2d7800b928af6f9d5ae24c7ab2cc016a6074ec86db36e559dc",
+    "src/aims_racer_system/launch/longitudinal_acceleration.launch.py": "c420f8de80fea0e1e1215c710647360137c622c90a1e55df4500a67f0fe1e0b8"
+  },
+  "source_nx_match": true,
+  "desktop_ctest_suites": {
+    "passed": 20,
+    "failed": 0
+  },
+  "nx_ctest_suites": {
+    "passed": 20,
+    "failed": 0
+  },
+  "nx_colcon_summary": {
+    "tests": 119,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "as_of": "2026-10-15",
+  "base_commit": "098976b93ef14696aaf0bf229eaffc062b787b5c",
+  "source_state": "working tree with migration changes; source_sha256 identifies tested files",
+  "desktop": {
+    "architecture": "x86_64",
+    "runtime": "ROS 2 Humble Docker",
+    "image": "aimsracer-mpcc:main-dev-20261011"
+  },
+  "nx": {
+    "architecture": "aarch64",
+    "runtime": "ROS 2 Humble",
+    "deployment": "main workspace build and install"
+  },
+  "acceptance": "software numerical and synthetic DDS/process contracts; no post-migration field-driving run",
+  "benchmark": "no matched runtime-performance benchmark was performed"
+}

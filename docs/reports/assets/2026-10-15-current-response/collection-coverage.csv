@@ -1,0 +1,3 @@
+stage,formal_attempts,original_successful_attempts,planned_items,successful_unique_plan_items,invalid_plan_items,skipped_plan_items,reconstructed_windows,originally_unsuccessful_reconstructed,zero_duration_reconstructed
+B,186,174,146,146,0,0,185,11,0
+C,150,122,183,122,17,44,148,26,9

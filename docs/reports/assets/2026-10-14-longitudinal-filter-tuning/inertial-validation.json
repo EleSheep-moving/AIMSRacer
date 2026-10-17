@@ -1,0 +1,15 @@
+{
+  "stationary_offset_recovery": {
+    "acceleration": 1.189769784915029e-07,
+    "velocity": 6.92853600798704e-09,
+    "effective_offset": 1.6999998810230217
+  },
+  "step_after_100ms_mps2": 2.835046811660943,
+  "wheel_before_imu_startup_oracle": true,
+  "independent_receipt_prefix_oracle": {
+    "snapshots": 6,
+    "max_absolute_error": 1.3877787807814457e-17,
+    "late_observations": true,
+    "prediction_does_not_mutate_history": true
+  }
+}

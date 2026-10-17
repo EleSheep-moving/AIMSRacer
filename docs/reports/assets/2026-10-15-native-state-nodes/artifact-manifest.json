@@ -1,0 +1,14 @@
+{
+  "files": {
+    "desktop-ctest.txt": "69209147a3ec4d06ff23b2b6dff4fc27d5832d53f2a986a6a4c04e481a5e11f7",
+    "nx-ctest.txt": "105312338a562b2eb5592252d3a69f32d0e23531fb0a7aead1f7675f14ddcb35",
+    "validation-summary.json": "da463f5234ca41fbc8775e8caa578379793d43c733d251c998ec2c58703b2717"
+  },
+  "source": "native-state-port-20261015 validation archive",
+  "original_log_sha256": {
+    "desktop-ctest.log": "8e442e6860c17f31521e92eaee3506a36c937b91ea754885faff39bfab3ed9ac",
+    "tests-deploy.log": "81ad789c05eceedec32d104589c3a06318f532948b910121a4b9d8b61cf26e5a",
+    "build-deploy.log": "fe6804befaf448640f0ee47dd6fdf59756af8e25b2157ce872ad8a7f47a9a4c9"
+  },
+  "transform": "CTest log workspace paths normalized; validation summary retains exact source hashes; no credential or host-address fields copied"
+}

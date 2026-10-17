@@ -1,0 +1,29 @@
+{
+  "generated_utc": "2026-10-15T10:36:38.109749+00:00",
+  "files_sha256": {
+    "docs/plans/2026-10-15-body-acceleration.md": "fd297ef7b364a97a8bbe425b2a127feed6c3f6ba34c839bb29f0d597031885e4",
+    "docs/operations/body-acceleration.md": "7c07fa02d114aa293969f5241df3808110d4738c5f45de891d1d7742a7f40e4a",
+    "docs/operations/body-acceleration.zh-CN.md": "5ac1c238e3a0f93025580fbd27a6fbd2b8f3923a08655401bcdf6ef3282b7183",
+    "docs/reports/2026-10-15-body-acceleration-quality.md": "340d54d369370a7f65a527648bbadcb0cf5c1ef65239ec33cdb5e5a7737075db",
+    "docs/reports/2026-10-15-body-acceleration-quality.zh-CN.md": "14bbf60063f7d82f1ba49ec70a79692305b11ed51f4a0f4263f9df6970560f66",
+    "verification/body_acceleration/README.md": "98c8bb84d139f411e21336cdd526ac8515405cbc9f287c95da5c9a1f275fb0c6",
+    "verification/body_acceleration/README.zh-CN.md": "4879cd31ad53b59981e19c785e580ef6ed5e047a16a4a7e07d3f02875799658e",
+    "docs/reports/assets/2026-10-15-body-acceleration/causal-native-stages.png": "594e90f0711a949eae7391bb459d8d2c7e0302d8d3f9e44096f0a1aa60df592f",
+    "docs/reports/assets/2026-10-15-body-acceleration/desktop-ctest.txt": "53f6c9a03c8470ebf0c077a5d9a883ce14325a7a0e3fa0793f4899a8993b4543",
+    "docs/reports/assets/2026-10-15-body-acceleration/lever-decomposition.png": "e0c692b6dea68e6c97814708a2bac9f56bdbe462debc1c754d8d3d6765e7498c",
+    "docs/reports/assets/2026-10-15-body-acceleration/nx-ctest.txt": "17cb94534b961244ef265e9e59bcb7e0d2f972f3627542d26ae42c892ff060d7",
+    "docs/reports/assets/2026-10-15-body-acceleration/quality-summary.json": "930f12cce2327a13aa3c57528d3d4d4e8707292ca146dafe5b87c4d82478a1ea",
+    "docs/reports/assets/2026-10-15-body-acceleration/running-psd.png": "cc68f529fb0aba59c2ec95d655982e225ae2e1cac6e9507db09d1a31bf7e26f2",
+    "docs/reports/assets/2026-10-15-body-acceleration/short-static-allan.png": "a38e66a11f9d851d20131263e8b53996cc89eaf1ef2fbc0efc71b992d5eefdc8",
+    "docs/reports/assets/2026-10-15-body-acceleration/static-six-axis.png": "7c3c70d4c121b150b16028575ad6867cc87a9818c73f0a5589c83937d42e72ee",
+    "docs/reports/assets/2026-10-15-body-acceleration/validation-summary.json": "41470e5549de228f27c8938cb24176c0aa8b566e446be50e823c7924b87f2f8e"
+  },
+  "external_full_evidence": "/home/elesheep/aimsracer-data/experiments/body-acceleration-20261015/validation",
+  "source_snapshot_sha256_file": "validation-summary.json",
+  "local_docs_links_checked": 7,
+  "source_snapshot_files_equal": 127,
+  "notes": [
+    "Raw bags and traces remain external; repository artifacts contain no ELF or raw sensor arrays.",
+    "Full CTest logs and JSON retain exact workload and boundary definitions."
+  ]
+}

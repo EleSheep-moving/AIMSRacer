@@ -1,0 +1,21 @@
+{
+  "host_new": {
+    "passed": 51,
+    "xml_sha256": "89d34f5ba541e2f11c760118fdf8bdb394e5170d8e9288c535f0d6f2d5db7807"
+  },
+  "host_legacy": {
+    "passed": 19,
+    "xml_sha256": "3d5d10ff647e82eedb81d13cee52b242752c98deb7caae02c50829bfce81c7b8"
+  },
+  "nx_new": {
+    "passed": 51,
+    "xml_sha256": "3e0ac5eeaea72db8f253e0e05d8a2e2e18ae2c8e91ade64b0f399b2f6876d8c9"
+  },
+  "nx_legacy": {
+    "passed": 19,
+    "xml_sha256": "7d8564f599689bb5181efdc711598170a31753c9374670a1958e0cf6d33120fe"
+  },
+  "source_files_identical": 1333,
+  "protected_production_files_unchanged": 620,
+  "synthetic_all_three_reports_computed": true
+}

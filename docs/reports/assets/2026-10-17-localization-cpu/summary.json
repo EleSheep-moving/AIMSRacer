@@ -1,0 +1,95 @@
+{
+  "source_bag": "/home/aims/aimsracer-data/sessions/2026-10-15/022604_194643_race/bag/bag_0.db3",
+  "window_bag_s": [
+    60,
+    80
+  ],
+  "replay_rate": 1.0,
+  "input_clouds": 200,
+  "steady_cpu_measurement_excludes_first_seconds": 3.0,
+  "results": [
+    {
+      "label": "default",
+      "cpu_percent_one_core": 65.3807856991962,
+      "alignment_ms": {
+        "n": 168,
+        "mean": 30.7436656384241,
+        "p50": 26.653289794921875,
+        "p95": 61.192989349365234,
+        "maximum": 83.58478546142578
+      },
+      "processing_ms": {
+        "n": 168,
+        "mean": 37.12001980357142,
+        "p50": 33.264972,
+        "p95": 67.387064,
+        "maximum": 89.737158
+      },
+      "committed_samples": 168
+    },
+    {
+      "label": "passive",
+      "cpu_percent_one_core": 65.90657274189171,
+      "alignment_ms": {
+        "n": 168,
+        "mean": 31.327534289587113,
+        "p50": 27.52065658569336,
+        "p95": 62.78204917907715,
+        "maximum": 105.1182746887207
+      },
+      "processing_ms": {
+        "n": 168,
+        "mean": 37.67220701190477,
+        "p50": 33.725709,
+        "p95": 68.635452,
+        "maximum": 111.600447
+      },
+      "committed_samples": 168
+    },
+    {
+      "label": "one-thread",
+      "cpu_percent_one_core": 58.080118130852874,
+      "alignment_ms": {
+        "n": 169,
+        "mean": 43.65828897826065,
+        "p50": 36.84186935424805,
+        "p95": 83.6484432220459,
+        "maximum": 126.23119354248047
+      },
+      "processing_ms": {
+        "n": 169,
+        "mean": 49.933780852070996,
+        "p50": 43.492221,
+        "p95": 89.590874,
+        "maximum": 132.681402
+      },
+      "committed_samples": 169
+    }
+  ],
+  "paired_output_comparison": {
+    "default": {
+      "committed_source_stamps": 198,
+      "common_committed_stamps": 198,
+      "maximum_translation_difference_m": 0.0,
+      "maximum_rotation_difference_deg": 0.0
+    },
+    "passive": {
+      "committed_source_stamps": 198,
+      "common_committed_stamps": 198,
+      "maximum_translation_difference_m": 0.0,
+      "maximum_rotation_difference_deg": 0.0
+    },
+    "one-thread": {
+      "committed_source_stamps": 198,
+      "common_committed_stamps": 198,
+      "maximum_translation_difference_m": 0.0,
+      "maximum_rotation_difference_deg": 0.0
+    }
+  },
+  "limits": [
+    "Isolated NDT replay, not the joint vehicle workload",
+    "Short same-input comparison, no confidence interval",
+    "CPU 100 percent equals one logical core",
+    "Production parameters and installed binaries unchanged"
+  ]
+}

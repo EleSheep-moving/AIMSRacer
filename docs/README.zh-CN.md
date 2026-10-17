@@ -4,6 +4,10 @@
 
 当前 **FAST-LIO2 + 后轴 EKF + NDT + 原生 MPCC** 栈的资料导航。本索引列出的当前指南均提供完整英文与简体中文版，默认英文，每页有语言切换。历史实验报告和已退役设计资料保留原语言。
 
+## 近期实验与现场校对
+
+[实验精选与当前结论](reports/latest-results.zh-CN.md)按五量估计器、动捕校对、B/C 电流模型、MPCC／定位分组。包含关键图表与小型证据；发布范围仅文档，NX 部署快照与 main 源码范围分别注明。
+
 ## 推荐阅读顺序
 
 1. **新机部署：** [系统依赖](deployment/README.zh-CN.md) → [目标平台](deployment/orin.zh-CN.md) → [车辆启动](operations/bringup.zh-CN.md)。

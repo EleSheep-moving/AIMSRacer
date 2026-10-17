@@ -1,0 +1,17 @@
+{
+  "events": 42315,
+  "discrete_equal": {
+    "stamp_ns": true,
+    "accepted": true,
+    "valid": true
+  },
+  "max_abs_differences": {
+    "measured_rate": 0.0,
+    "rate": 4.440892098500626e-16,
+    "alpha": 2.042810365310288e-14,
+    "rate_variance": 4.0657581468206416e-20,
+    "alpha_variance": 1.687538997430238e-14,
+    "cross_covariance": 1.0408340855860843e-17
+  },
+  "boundary": "native standalone source-stamped core; excludes DDS and clocks; not independent sensor accuracy"
+}

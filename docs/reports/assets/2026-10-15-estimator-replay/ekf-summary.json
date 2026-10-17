@@ -1,0 +1,201 @@
+{
+  "events": 38,
+  "production_parameters_changed": false,
+  "fit_definition": "Source-time 5 ms grid, shifts -250..250 ms in 5 ms steps, least-squares gain and bias; positive shift means EKF trails wheel speed. No shifts applied to drawn curves.",
+  "limitations": [
+    "Wheel is a fused input, not independent truth.",
+    "LIO is approximately 10 Hz; its connecting lines do not provide higher-rate observations.",
+    "Late-window replays start cold with at least 15 s warmup; baseline reproduction is reported.",
+    "Replay clock, input bridge and capture timing may differ from original recording; these are covariance sensitivity results, not hardware delay measurements."
+  ],
+  "provenance": [
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "raw_extract_sha256": "8662f47e26f20358e22048274e6b3cc44670dffdf2fd1f70cc5b67b21f534b55",
+      "replay_output_sha256": "c1dd885c83b172343c35f5594d9c3296973996b877e3e54023d272777d93a503",
+      "baseline_reproduction": {
+        "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+        "variant": "r004",
+        "common_n": 38447,
+        "wheel_difference_rmse": 0.04698045748143664,
+        "recorded_difference_rmse": 0.004382413555836404,
+        "recorded_difference_abs_p95": 0.003295181177479365,
+        "lag_ms": 30.0,
+        "n": 38448,
+        "gain": 1.0040790536681108,
+        "bias": -0.007477342175684171,
+        "fit_rmse": 0.008600789684443751,
+        "search_boundary": false
+      },
+      "input_coverage": {
+        "wheel": {
+          "expected": 20999,
+          "captured": 20841,
+          "fraction": 0.9924758321824849
+        },
+        "lio": {
+          "expected": 2100,
+          "captured": 2086,
+          "fraction": 0.9933333333333333
+        },
+        "imu": {
+          "expected": 41994,
+          "captured": 41668,
+          "fraction": 0.992236986236129
+        }
+      },
+      "events": 19,
+      "frames": {
+        "wheel": [
+          "odom",
+          "base_link"
+        ],
+        "recorded": [
+          "odom",
+          "base_link"
+        ],
+        "lio": [
+          "odom",
+          "base_link"
+        ],
+        "r004": [
+          "odom",
+          "base_link"
+        ],
+        "r002": [
+          "odom",
+          "base_link"
+        ],
+        "r001": [
+          "odom",
+          "base_link"
+        ]
+      }
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "raw_extract_sha256": "cb9c9b52559aebebb5e450243100dbfe7d68d27dd1f9c0ac459dd05f6abe13dc",
+      "replay_output_sha256": "02d89a47884f98d66a5e0e3696a80f058a7c52ebe455e925b0e8fba9cb4f7108",
+      "baseline_reproduction": {
+        "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+        "variant": "r004",
+        "common_n": 38607,
+        "wheel_difference_rmse": 0.04649936940740845,
+        "recorded_difference_rmse": 0.00484417189163277,
+        "recorded_difference_abs_p95": 0.003698830769568673,
+        "lag_ms": 30.0,
+        "n": 38608,
+        "gain": 1.004118698085137,
+        "bias": -0.007494641281572295,
+        "fit_rmse": 0.00781878307142677,
+        "search_boundary": false
+      },
+      "input_coverage": {
+        "wheel": {
+          "expected": 21096,
+          "captured": 21075,
+          "fraction": 0.999004550625711
+        },
+        "lio": {
+          "expected": 2110,
+          "captured": 2110,
+          "fraction": 1.0
+        },
+        "imu": {
+          "expected": 42194,
+          "captured": 42134,
+          "fraction": 0.9985779968715931
+        }
+      },
+      "events": 19,
+      "frames": {
+        "wheel": [
+          "odom",
+          "base_link"
+        ],
+        "recorded": [
+          "odom",
+          "base_link"
+        ],
+        "lio": [
+          "odom",
+          "base_link"
+        ],
+        "r004": [
+          "odom",
+          "base_link"
+        ],
+        "r002": [
+          "odom",
+          "base_link"
+        ],
+        "r001": [
+          "odom",
+          "base_link"
+        ]
+      }
+    }
+  ],
+  "candidate_deltas": [
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "variant": "r002",
+      "n": 38956,
+      "baseline_difference_rmse": 0.000609389834894719,
+      "baseline_difference_abs_p95": 0.000765272039578796,
+      "baseline_difference_abs_max": 0.0578316814959412
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "variant": "r001",
+      "n": 38955,
+      "baseline_difference_rmse": 0.0012072475427970168,
+      "baseline_difference_abs_p95": 0.001766310814489945,
+      "baseline_difference_abs_max": 0.07374876886330828
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "variant": "r002",
+      "n": 39157,
+      "baseline_difference_rmse": 0.0007077202122321167,
+      "baseline_difference_abs_p95": 0.000762043669776879,
+      "baseline_difference_abs_max": 0.05672717619986245
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "variant": "r001",
+      "n": 39156,
+      "baseline_difference_rmse": 0.001125440204283976,
+      "baseline_difference_abs_p95": 0.0017596350633775903,
+      "baseline_difference_abs_max": 0.07170877145536769
+    }
+  ],
+  "verification": {
+    "real_ekf_runs": 2,
+    "variants_per_run": 3,
+    "events": 38,
+    "figures": 10,
+    "production_defaults_unchanged": true,
+    "source_bags_size_mtime_unchanged": true,
+    "variant_lio_fanout_counts_equal": true,
+    "input_covariance_psd_verified": true,
+    "drawn_curves_not_time_shifted": true,
+    "all_output_finite": true,
+    "baseline_reproduction_rmse": [
+      0.004382413555836404,
+      0.00484417189163277
+    ],
+    "config_sha256": "eafdface37e679b94e5e30edf8f17ead001eb2066a008839489247a3b6e821d5",
+    "trial_ekf_processes": []
+  },
+  "nx_sync": {
+    "uploaded_root_files": 22,
+    "verified_hashes": 39,
+    "sha256_check_exit": 0
+  },
+  "event_counts": {
+    "unique_events": 38,
+    "acceleration": 18,
+    "braking": 20
+  }
+}

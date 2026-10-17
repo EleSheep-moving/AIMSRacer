@@ -1,0 +1,141 @@
+{
+  "baseline": "causal10",
+  "comparison": "held source-time map-to-odom corrections applied to identical odom positions, excluding first5s and last0.5s",
+  "results": {
+    "causal10": {
+      "ndt_cpu_percent": 71.06812589814045,
+      "monitor_cpu_percent": 7.898421749494973,
+      "commits_total": 598,
+      "processing_ms": {
+        "n": 568,
+        "mean": 39.73559301584505,
+        "p50": 33.876612,
+        "p95": 73.596103,
+        "maximum": 106.87720900000001
+      },
+      "first_ready_seconds": 0.3004812049912289,
+      "health_ready_message_fraction": 1.0,
+      "health_ready_time_fraction": 1.0,
+      "health_reasons": {
+        "committed": 1136
+      },
+      "anchor_age_s": {
+        "n": 1136,
+        "mean": 0.1448513985704223,
+        "p50": 0.123205198,
+        "p95": 0.223157315,
+        "maximum": 0.322867544
+      },
+      "position_difference_cm": {
+        "n": 2725,
+        "mean": 0.0,
+        "rms": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "position_3d_difference_cm": {
+        "n": 2725,
+        "mean": 0.0,
+        "rms": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "lateral_difference_cm": {
+        "n": 2725,
+        "mean": 0.0,
+        "rms": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "vehicle_heading_difference_deg": {
+        "n": 2725,
+        "mean": 0.0,
+        "rms": 0.0,
+        "p95": 0.0,
+        "maximum": 0.0
+      },
+      "independent_quality_rmse_cm": {
+        "n": 120,
+        "mean": 4.643535534080246,
+        "rms": 4.891011166505165,
+        "p95": 8.057410960756137,
+        "maximum": 10.32179584574187
+      },
+      "independent_quality_inlier_fraction": {
+        "n": 120,
+        "mean": 0.9872009634411979,
+        "rms": 0.9873149268603229,
+        "p95": 0.9971216671875088,
+        "maximum": 1.0
+      }
+    },
+    "native5": {
+      "ndt_cpu_percent": 44.69058455651425,
+      "monitor_cpu_percent": 7.3865813936824685,
+      "commits_total": 298,
+      "processing_ms": {
+        "n": 284,
+        "mean": 46.32469589788734,
+        "p50": 44.103112,
+        "p95": 83.358671,
+        "maximum": 113.601632
+      },
+      "first_ready_seconds": 0.5753490789938951,
+      "health_ready_message_fraction": 1.0,
+      "health_ready_time_fraction": 1.0,
+      "health_reasons": {
+        "committed": 852
+      },
+      "anchor_age_s": {
+        "n": 852,
+        "mean": 0.1984888304495308,
+        "p50": 0.146741116,
+        "p95": 0.34397362,
+        "maximum": 0.443989076
+      },
+      "position_difference_cm": {
+        "n": 2725,
+        "mean": 0.7269939248235218,
+        "rms": 1.067102941862646,
+        "p95": 2.2764412606536286,
+        "maximum": 4.922274304943124
+      },
+      "position_3d_difference_cm": {
+        "n": 2725,
+        "mean": 0.8460845804922772,
+        "rms": 1.2055798777065447,
+        "p95": 2.50590612426626,
+        "maximum": 6.044589898025878
+      },
+      "lateral_difference_cm": {
+        "n": 2725,
+        "mean": 0.3852752031935737,
+        "rms": 0.6151137792579476,
+        "p95": 1.316034671844607,
+        "maximum": 3.271801373103367
+      },
+      "vehicle_heading_difference_deg": {
+        "n": 2725,
+        "mean": 0.19124079882756115,
+        "rms": 0.3342246370897021,
+        "p95": 0.7334751414424783,
+        "maximum": 1.9814403778978062
+      },
+      "independent_quality_rmse_cm": {
+        "n": 120,
+        "mean": 5.284923330017369,
+        "rms": 5.578475445986349,
+        "p95": 8.985238847611264,
+        "maximum": 10.845726489911161
+      },
+      "independent_quality_inlier_fraction": {
+        "n": 120,
+        "mean": 0.9824923457334944,
+        "rms": 0.9827237214506728,
+        "p95": 0.9971756382272371,
+        "maximum": 0.9992872416250891
+      }
+    }
+  },
+  "scope": "Relative difference from 10Hz; not absolute error or real-car closed-loop result. Shared fixed recorded odometry isolates registration frequency only."
+}

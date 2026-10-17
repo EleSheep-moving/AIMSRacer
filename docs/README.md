@@ -4,6 +4,10 @@
 
 Guides for the current **FAST-LIO2 + rear-axle EKF + NDT + native MPCC** stack. Current guides listed here have full English and Simplified Chinese versions, with English as the default and a language switch on each page. Historical reports and retired design notes retain their original language.
 
+## Recent experiments and field validation
+
+[Selected recent results](reports/latest-results.md) groups state estimation, motion capture, current calibration, and MPCC/localization evidence. Figures and small receipts are included. This publication updates documentation only; dated NX deployment snapshots are distinguished from the source available on main.
+
 ## Suggested reading order
 
 1. **New deployment:** [system dependencies](deployment/README.md) → [target platform](deployment/orin.md) → [vehicle launch](operations/bringup.md).

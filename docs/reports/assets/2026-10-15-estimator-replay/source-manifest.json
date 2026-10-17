@@ -1,0 +1,65 @@
+{
+  "description": "Captured local source locators and SHA256 for this summary export; raw sources are not shipped. Paths are relative to aimsracer-data, not links inside this repository.",
+  "sources": [
+    {
+      "session_relative_path": "sessions/2026-10-15/calibration-ekf-lio-vx-comparison/README.zh-CN.md",
+      "sha256": "78b65305474faba405e0aafc87313e582587b4871b8e010a90572d076c6ffb87"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-15/calibration-ekf-lio-vx-comparison/results.json",
+      "sha256": "13f4a741c4d55287d0f4a14fbc99d24e9173fc536f24af8e8310b14a73bc69b9"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-15/calibration-ekf-lio-vx-comparison/candidate_deltas.json",
+      "sha256": "a9adab6af87ed1e5e66b6521015a55bc5aa63cf5c6c886243570773a2c465199"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-15/calibration-ekf-lio-vx-comparison/run_metrics.csv",
+      "sha256": "0ed0c7f01a799a84e424fc00fb3b82d559a93cac73a4165f2f808098a52798af"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-15/calibration-ekf-lio-vx-comparison/event_metrics.csv",
+      "sha256": "f89308bd95d8e7423b8cd96c8694cc351bcede379a7e9ae7e2aa8ce74a7f66b3"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-15/calibration-ekf-lio-vx-comparison/verification.json",
+      "sha256": "e64980e9fa7b17ce63bc4124e24a279d8d0ca77c1934e673de51054f0e72be2e"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-15/calibration-ekf-lio-vx-comparison/nx_sync.json",
+      "sha256": "23b69c5c3b241783b1ac72e0623d2e8fbcc560c83ad069de0feb4f4d14e629c2"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-14/calibration-acceleration-peaks/tum-fir-trial/README.zh-CN.md",
+      "sha256": "804410007cf4c25f5b044c0fc7986139116956cbb3985dfec1cd83f56c8e354d"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-14/calibration-acceleration-peaks/tum-fir-trial/results.json",
+      "sha256": "58e9c835b5321f413352b389b0131bf033e946a440e948b29eae95e1ecef31bd"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-14/calibration-acceleration-peaks/tum-fir-trial/selection.json",
+      "sha256": "759bd715f6950dbaf84196fa72cae2098bb06159ebfc0a3022334b0d1ea8c9db"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-14/calibration-acceleration-peaks/tum-fir-trial/cross_run_metrics.csv",
+      "sha256": "44c4ba9f7ebf6e4341d08c2123e7503bfb109a27e108a35cb854fcefef682db7"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-14/calibration-acceleration-peaks/tum-fir-trial/turning_checks.csv",
+      "sha256": "6b9ba12bd2355d463ea55f147ecf827b93f56c72538ebe8412a4b2cfa22d24c6"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-14/calibration-acceleration-peaks/tum-fir-trial/verification.json",
+      "sha256": "a9807672408d64d8e3f8503472171cd0e4b85e35c8a98247edd7154e105a746b"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-14/calibration-acceleration-peaks/tum-fir-trial/nx_sync.json",
+      "sha256": "dd6fc49b7161c2fc9bdb75ab3b0f60596536049d08e40dfe081b6154c85ffedf"
+    },
+    {
+      "session_relative_path": "sessions/2026-10-14/calibration-acceleration-peaks/tum-fir-trial/upstream/source.json",
+      "sha256": "fe69853d0fdb832efe81f7aab388f96c76c7c5c4eddefea908f464d7deaea4ad"
+    }
+  ]
+}

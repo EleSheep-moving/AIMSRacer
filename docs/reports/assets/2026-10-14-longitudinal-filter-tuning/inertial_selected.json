@@ -1,0 +1,47 @@
+{
+  "training": "215303_268004918-pp-speed-hold-1to5-new-battery",
+  "fixed": {
+    "tau_s": 0.04,
+    "wheel_hz": 20,
+    "speed_variance": 0.01,
+    "bias_psd": 0.1,
+    "acceleration_psd": 0.08,
+    "history_ns": 2000000000,
+    "max_history": 4096
+  },
+  "selected": {
+    "tau_s": 0.04,
+    "wheel_hz": 100,
+    "speed_variance": 0.0025,
+    "bias_psd": 0.01,
+    "acceleration_psd": 0.32,
+    "history_ns": 2000000000,
+    "max_history": 4096
+  },
+  "any_candidate_passed_noise_guard": false,
+  "selected_metrics": {
+    "tau_s": 0.04,
+    "wheel_hz": 100,
+    "speed_variance": 0.0025,
+    "bias_psd": 0.01,
+    "acceleration_psd": 0.32,
+    "history_ns": 2000000000,
+    "max_history": 4096,
+    "moving_100ms_n": 15012,
+    "moving_100ms_rmse": 0.0700199569136366,
+    "high_100ms_n": 4338,
+    "high_100ms_rmse": 0.08408955476150799,
+    "moving_200ms_n": 14475,
+    "moving_200ms_rmse": 0.1558112844199905,
+    "high_200ms_n": 4202,
+    "high_200ms_rmse": 0.17980053043084615,
+    "ref_wheel_0.21s_high_rmse": 0.6862018707579896,
+    "ref_lio_0.51s_high_rmse": 0.41067349915153223,
+    "steady_all_sigma": 0.23286638644590282,
+    "steady_high_sigma": 0.2547265716975507,
+    "steady_max_abs_mean": 0.12198589502158856,
+    "score": 0.03537374676789906,
+    "delayed": 21282,
+    "passes_training_noise_guard": false
+  }
+}

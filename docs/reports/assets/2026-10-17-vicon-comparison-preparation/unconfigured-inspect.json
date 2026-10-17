@@ -1,0 +1,28 @@
+{
+  "capture_configuration_errors": [
+    "configure Vicon topic and supported pose message_type, or supply external Vicon CSV"
+  ],
+  "analysis_configuration_errors": [
+    "clock mapping needs explicit source/ROS anchors, scale and uncertainty",
+    "body orientation needs explicit finite values",
+    "rear_axle origin needs explicit finite values",
+    "center_of_mass origin needs explicit finite values"
+  ],
+  "missing_topics": [],
+  "type_mismatches": {},
+  "graph": {
+    "/parameter_events": [
+      "rcl_interfaces/msg/ParameterEvent"
+    ],
+    "/rosout": [
+      "rcl_interfaces/msg/Log"
+    ]
+  },
+  "note": "missing publishers may start later; capture can wait, mismatched existing types require correction",
+  "nodes": [
+    "/vicon_state_inspect"
+  ],
+  "samples": {},
+  "sample_duration_s": 0.2,
+  "sample_note": "Vicon source clock may differ; no age/latency inferred until clock mapping is known"
+}

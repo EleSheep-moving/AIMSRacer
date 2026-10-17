@@ -1,0 +1,103 @@
+{
+  "attempts": 336,
+  "statuses": {
+    "reconstructed": 333,
+    "no_sustained_plateau": 3
+  },
+  "stages": {
+    "B": {
+      "attempts": 186,
+      "fitted": 185,
+      "originally_unsuccessful_reconstructed": 11,
+      "zero_duration_reconstructed": 0,
+      "median_duration_s": 0.15977931022644043,
+      "median_r2": 0.994036795244781,
+      "median_boundary_sensitivity_span": 0.14819362118914636,
+      "r2_at_least_099": 120,
+      "both_halves_at_least_3_samples": 184,
+      "half_slopes_within_20pct_of_full_slope": 88,
+      "literal_peak_under_3_wheel_samples": 14,
+      "dynamic_baseline_full_window_available": 156,
+      "dynamic_baseline_matched_subwindow_available": 185
+    },
+    "C": {
+      "attempts": 150,
+      "fitted": 148,
+      "originally_unsuccessful_reconstructed": 26,
+      "zero_duration_reconstructed": 9,
+      "median_duration_s": 0.425026535987854,
+      "median_r2": 0.9896415995403021,
+      "median_boundary_sensitivity_span": 0.09770961579507553,
+      "r2_at_least_099": 72,
+      "both_halves_at_least_3_samples": 138,
+      "half_slopes_within_20pct_of_full_slope": 64,
+      "literal_peak_under_3_wheel_samples": 11,
+      "dynamic_baseline_full_window_available": 21,
+      "dynamic_baseline_matched_subwindow_available": 134
+    }
+  },
+  "actual_speed_segments": 1054,
+  "actual_speed_segments_are_overlapping_and_not_independent": true,
+  "method": "source-time native wheel OLS, measured current plateau; 2-of-3 sustained edge; no current/duration exclusion",
+  "edge_tolerance": "max(1 A, 3 * 1.4826 * plateau MAD, 0.10 * measured step amplitude)",
+  "caveats": [
+    "Search near final command exit prevents noise ending a valid pulse early; it can miss earlier sustained IQ sag.",
+    "Plateau onset is current establishment, not guaranteed mechanical steady acceleration.",
+    "2-of-3 edge detection has offline lookahead; feedback timestamps and avg_iq averaging do not establish MCU response delay.",
+    "Wheel slope is the selected outcome, not independent body acceleration; overshoot changes sampled speed range.",
+    "Current tolerances and descriptive regressions are analysis choices, not validated control acceptance rules."
+  ],
+  "examples": [
+    {
+      "run": "233659-B-full",
+      "trial_id": 19,
+      "current": 98.7402769,
+      "iq_mean": 97.33687499999999,
+      "wheel_n": 16,
+      "wheel_duration_s": 0.15043282508850098,
+      "wheel_v_start": 1.0632034632034633,
+      "wheel_v_end": 3.978066378066378,
+      "wheel_a": 19.974401641888967,
+      "wheel_r2": 0.9957952673321758,
+      "wheel_first_half_a": 17.819615731139137,
+      "wheel_second_half_a": 19.860207589760183,
+      "one_sample_boundary_a_min": 19.458636542405422,
+      "one_sample_boundary_a_max": 20.39665519997937,
+      "reason": "completed"
+    },
+    {
+      "run": "015017-C-resume-minus60A-odom30cm",
+      "trial_id": 80,
+      "current": -80.0,
+      "iq_mean": -76.67625,
+      "wheel_n": 8,
+      "wheel_duration_s": 0.07008719444274902,
+      "wheel_v_start": 2.8190476190476192,
+      "wheel_v_end": -0.09754689754689755,
+      "wheel_a": -48.27124672196801,
+      "wheel_r2": 0.9495463521704136,
+      "wheel_first_half_a": -23.613286563680393,
+      "wheel_second_half_a": -44.779608688013774,
+      "one_sample_boundary_a_min": -52.65602292059279,
+      "one_sample_boundary_a_max": -44.36655590451304,
+      "reason": "reverse_motion"
+    },
+    {
+      "run": "015017-C-resume-minus60A-odom30cm",
+      "trial_id": 114,
+      "current": -65.0,
+      "iq_mean": -60.834999999999994,
+      "wheel_n": 4,
+      "wheel_duration_s": 0.02967095375061035,
+      "wheel_v_start": 1.8080808080808082,
+      "wheel_v_end": 0.5238095238095238,
+      "wheel_a": -38.720802713334805,
+      "wheel_r2": 0.81740118671345,
+      "wheel_first_half_a": null,
+      "wheel_second_half_a": null,
+      "one_sample_boundary_a_min": -45.41623065100234,
+      "one_sample_boundary_a_max": -18.56041384499679,
+      "reason": "interval_without_positive_duration"
+    }
+  ]
+}

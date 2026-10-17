@@ -1,0 +1,106 @@
+{
+  "x86": {
+    "platform": "Linux-6.17.0-35-generic-x86_64-with-glibc2.35",
+    "hashes": {
+      "/data/sessions/2026-10-15/body-acceleration-observer/source-quality-20261015-01/imu-quality-input.npz": "e214e8fd8bf8ee782e4d2c30503779dd821ffcc433a26ef9097782b806787e67",
+      "/tmp/planar-install/lib/aims_racer_system/body_acceleration": "1f78201cf79a2cef40e509cda9ece51a575f22d3ce60f9dbec77e41b8d55eced",
+      "/tmp/yaw-build/body_acceleration_trace": "8e4c82485d5454decae33f915c21d7515be6c7da10dfaade0ae702319254c55d",
+      "/repo/verification/planar_acceleration/runtime_replay.py": "a253c79224bc83ab5f13fa332f3ef73992ee1fd536529ceb9b10415788260e34"
+    },
+    "checks": {
+      "complete_native_expected_sequence": true,
+      "monotonic_sources": true,
+      "exact_source_subset": true,
+      "finite_xy_variance": true,
+      "same_g_sources": true,
+      "g_unit_conversion": true,
+      "independent_graph": true
+    },
+    "counts": {
+      "inputs": {
+        "corrected": 4000,
+        "lio": 199
+      },
+      "native_expected": 3981,
+      "outputs": 3981,
+      "g_outputs": 3981,
+      "status": 212
+    },
+    "callback_p99_ms": {
+      "callback.imu.p99_ms": {
+        "maximum": 0.035061,
+        "final": 0.032071
+      },
+      "callback.lio.p99_ms": {
+        "maximum": 0.030671,
+        "final": 0.025801
+      }
+    },
+    "corrected_source_gaps": {
+      "maximum_s": 0.009189247000000001,
+      "over_deadline": 0
+    },
+    "lio_source_gaps": {
+      "maximum_s": 0.10116219500000001,
+      "over_deadline": 0
+    },
+    "xml_totals": {
+      "tests": 145,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "nx": {
+    "platform": "Linux-5.15.199-tegra-aarch64-with-glibc2.35",
+    "hashes": {
+      "/home/aims/aimsracer-data/sessions/2026-10-15/body-acceleration-observer/source-quality-20261015-01/imu-quality-input.npz": "e214e8fd8bf8ee782e4d2c30503779dd821ffcc433a26ef9097782b806787e67",
+      "/home/aims/aimsracer-planar-observer-20261015/install/lib/aims_racer_system/body_acceleration": "73d174a93fda70ba5157f1461c799e7124cde8a6b06c07ff5f41400aa5c5acfe",
+      "/home/aims/aimsracer-planar-observer-20261015/build/body_acceleration_trace": "c0da0feedefc8e4192463e833e67767e15e507f81adf543b83daf36cc13abdfc",
+      "/home/aims/aimsracer-planar-observer-20261015/verification/planar_acceleration/runtime_replay.py": "a253c79224bc83ab5f13fa332f3ef73992ee1fd536529ceb9b10415788260e34"
+    },
+    "checks": {
+      "complete_native_expected_sequence": true,
+      "monotonic_sources": true,
+      "exact_source_subset": true,
+      "finite_xy_variance": true,
+      "same_g_sources": true,
+      "g_unit_conversion": true,
+      "independent_graph": true
+    },
+    "counts": {
+      "inputs": {
+        "corrected": 4000,
+        "lio": 199
+      },
+      "native_expected": 3981,
+      "outputs": 3981,
+      "g_outputs": 3981,
+      "status": 212
+    },
+    "callback_p99_ms": {
+      "callback.imu.p99_ms": {
+        "maximum": 0.080647,
+        "final": 0.056645
+      },
+      "callback.lio.p99_ms": {
+        "maximum": 0.058373,
+        "final": 0.058373
+      }
+    },
+    "corrected_source_gaps": {
+      "maximum_s": 0.009189247000000001,
+      "over_deadline": 0
+    },
+    "lio_source_gaps": {
+      "maximum_s": 0.10116219500000001,
+      "over_deadline": 0
+    },
+    "xml_totals": {
+      "tests": 145,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  }
+}

@@ -1,0 +1,69 @@
+Test project /home/aims/aimsracer-data/code/state-observer-20261018/build/aims_racer_system
+      Start  1: yaw_rate_core
+ 1/30 Test  #1: yaw_rate_core ....................   Passed    0.00 sec
+      Start  2: velocity_core_test
+ 2/30 Test  #2: velocity_core_test ...............   Passed    0.12 sec
+      Start  3: rear_axle_imu_test
+ 3/30 Test  #3: rear_axle_imu_test ...............   Passed    0.12 sec
+      Start  4: rear_axle_odometry_test
+ 4/30 Test  #4: rear_axle_odometry_test ..........   Passed    0.11 sec
+      Start  5: longitudinal_observer_test
+ 5/30 Test  #5: longitudinal_observer_test .......   Passed    0.15 sec
+      Start  6: native_gyro_bias
+ 6/30 Test  #6: native_gyro_bias .................   Passed    0.01 sec
+      Start  7: rear_axle_force
+ 7/30 Test  #7: rear_axle_force ..................   Passed    0.00 sec
+      Start  8: localization_alignment
+ 8/30 Test  #8: localization_alignment ...........   Passed    0.00 sec
+      Start  9: body_acceleration_core_test
+ 9/30 Test  #9: body_acceleration_core_test ......   Passed    0.15 sec
+      Start 10: state_observer_runtime
+10/30 Test #10: state_observer_runtime ...........   Passed   37.85 sec
+      Start 11: velocity_runtime
+11/30 Test #11: velocity_runtime .................   Passed   13.97 sec
+      Start 12: planar_acceleration_runtime
+12/30 Test #12: planar_acceleration_runtime ......   Passed    4.77 sec
+      Start 13: yaw_rate_runtime
+13/30 Test #13: yaw_rate_runtime .................   Passed    6.99 sec
+      Start 14: rear_axle_contract
+14/30 Test #14: rear_axle_contract ...............   Passed    1.23 sec
+      Start 15: rear_axle_timestamps
+15/30 Test #15: rear_axle_timestamps .............   Passed    3.83 sec
+      Start 16: gyro_bias
+16/30 Test #16: gyro_bias ........................   Passed    2.70 sec
+      Start 17: current_launch
+17/30 Test #17: current_launch ...................   Passed    1.00 sec
+      Start 18: controller_calibration_launch
+18/30 Test #18: controller_calibration_launch ....   Passed    1.10 sec
+      Start 19: full_step_launch
+19/30 Test #19: full_step_launch .................   Passed    0.93 sec
+      Start 20: longitudinal_observer
+20/30 Test #20: longitudinal_observer ............   Passed    3.26 sec
+      Start 21: longitudinal_acceleration
+21/30 Test #21: longitudinal_acceleration ........   Passed    4.30 sec
+      Start 22: native_acceleration_runtime
+22/30 Test #22: native_acceleration_runtime ......   Passed    4.87 sec
+      Start 23: body_acceleration_runtime
+23/30 Test #23: body_acceleration_runtime ........   Passed   29.18 sec
+      Start 24: native_gyro_runtime
+24/30 Test #24: native_gyro_runtime ..............   Passed    3.47 sec
+      Start 25: native_observer_parity
+25/30 Test #25: native_observer_parity ...........   Passed    1.79 sec
+      Start 26: localization_policy
+26/30 Test #26: localization_policy ..............   Passed    0.97 sec
+      Start 27: initializer_lifecycle
+27/30 Test #27: initializer_lifecycle ............   Passed    1.35 sec
+      Start 28: replay_sensor_qos
+28/30 Test #28: replay_sensor_qos ................   Passed    1.13 sec
+      Start 29: replay_acceptance
+29/30 Test #29: replay_acceptance ................   Passed    0.84 sec
+      Start 30: monitor_alignment_delivery
+30/30 Test #30: monitor_alignment_delivery .......   Passed    2.51 sec
+
+100% tests passed out of 30
+
+Label Time Summary:
+gtest     =   0.66 sec*proc (5 tests)
+pytest    = 128.01 sec*proc (21 tests)
+
+Total Test time (real) = 128.71 sec

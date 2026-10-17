@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "planned_test_date": "2026-10-19",
+  "vicon": {
+    "topic": null,
+    "message_type": null,
+    "position_unit": "m",
+    "tracking_semantics": null,
+    "camera_rate_hz": null,
+    "bridge_timestamp_semantics": null,
+    "prediction_or_retiming_enabled": null
+  },
+  "clock": {
+    "source_anchor_ns": null,
+    "ros_anchor_ns": null,
+    "scale": 1.0,
+    "uncertainty_ns": null,
+    "verified": false
+  },
+  "body_orientation_in_marker_xyzw": null,
+  "body_orientation_measured": false,
+  "references": {
+    "rear_axle": {
+      "origin_in_marker_m": null,
+      "measured": false,
+      "frame_id": "base_link"
+    },
+    "center_of_mass": {
+      "origin_in_marker_m": null,
+      "measured": false,
+      "frame_id": "center_of_mass"
+    }
+  },
+  "differentiation": {
+    "windows_s": [
+      0.08,
+      0.12,
+      0.18
+    ],
+    "primary_window_s": 0.12,
+    "polyorder": 3,
+    "max_gap_s": 0.04,
+    "max_rotation_span_rad": 2.8
+  },
+  "comparison": {
+    "estimate_max_gap_s": 0.04,
+    "lag_limit_s": 0.5,
+    "lag_step_s": 0.005,
+    "min_dynamic_std": {
+      "vx": 0.05,
+      "vy": 0.03,
+      "ax": 0.2,
+      "ay": 0.2,
+      "yaw_rate": 0.05
+    }
+  },
+  "evaluation_windows": [],
+  "extra_topics": [],
+  "streams": [
+    {
+      "name": "own_rear_velocity",
+      "topic": "/state_estimation/rear_axle/velocity",
+      "kind": "velocity",
+      "reference": "rear_axle"
+    },
+    {
+      "name": "own_rear_acceleration",
+      "topic": "/state_estimation/rear_axle/acceleration",
+      "kind": "acceleration",
+      "reference": "rear_axle"
+    },
+    {
+      "name": "own_rear_yaw",
+      "topic": "/state_estimation/rear_axle/yaw_rate",
+      "kind": "yaw_rate",
+      "reference": "rear_axle"
+    },
+    {
+      "name": "own_rear_status",
+      "topic": "/state_estimation/rear_axle/status",
+      "kind": "status",
+      "reference": "rear_axle"
+    },
+    {
+      "name": "own_cg_velocity",
+      "topic": "/state_estimation/center_of_mass/velocity",
+      "kind": "velocity",
+      "reference": "center_of_mass"
+    },
+    {
+      "name": "own_cg_acceleration",
+      "topic": "/state_estimation/center_of_mass/acceleration",
+      "kind": "acceleration",
+      "reference": "center_of_mass"
+    },
+    {
+      "name": "own_cg_yaw",
+      "topic": "/state_estimation/center_of_mass/yaw_rate",
+      "kind": "yaw_rate",
+      "reference": "center_of_mass"
+    },
+    {
+      "name": "own_cg_status",
+      "topic": "/state_estimation/center_of_mass/status",
+      "kind": "status",
+      "reference": "center_of_mass"
+    },
+    {
+      "name": "robot_localization",
+      "topic": "/odometry/filtered",
+      "kind": "odometry",
+      "reference": "rear_axle"
+    },
+    {
+      "name": "lio",
+      "topic": "/rear_axle/lio_odom",
+      "kind": "odometry",
+      "reference": "rear_axle",
+      "max_gap_s": 0.25
+    },
+    {
+      "name": "wheel",
+      "topic": "/rear_axle/wheel_odom",
+      "kind": "odometry",
+      "reference": "rear_axle"
+    },
+    {
+      "name": "corrected_gyro",
+      "topic": "/rear_axle/imu",
+      "kind": "yaw_rate",
+      "reference": "rear_axle"
+    }
+  ],
+  "vrpn": {
+    "server": null,
+    "port": 3883,
+    "tracker": null,
+    "update_freq": 200.0,
+    "start_bridge": true,
+    "use_vrpn_timestamps": true
+  },
+  "capture": {
+    "queue_capacity": 4096
+  },
+  "fastlio": {
+    "streams": [
+      {
+        "name": "raw_fastlio",
+        "topic": "/fastlio2/lio_odom",
+        "pose_reference": "imu",
+        "velocity_frame": "world",
+        "angular_velocity_valid": false
+      },
+      {
+        "name": "rear_fastlio",
+        "topic": "/rear_axle/lio_odom",
+        "pose_reference": "rear_axle",
+        "velocity_frame": "body",
+        "angular_velocity_valid": true
+      }
+    ],
+    "world_alignment": {
+      "rotation_xyzw": null,
+      "translation_m": null,
+      "static_window_s": null
+    },
+    "rear_to_imu_body_m": [
+      0.3,
+      0.0,
+      0.03
+    ],
+    "imu_mount_body_xyzw": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "max_gap_s": 0.25,
+    "geometry_measured": false
+  },
+  "actuator": {
+    "baseline_s": 0.4,
+    "response_s": 1.0,
+    "min_hold_s": 0.1,
+    "confirmation_s": 0.02,
+    "min_confirm_samples": 3,
+    "noise_multiplier": 4.0,
+    "step_thresholds": {
+      "speed": 0.1,
+      "current": 5.0,
+      "brake": 5.0,
+      "duty": 0.02,
+      "steering": 0.03
+    },
+    "response_floors": {
+      "erpm": 100.0,
+      "vx": 0.05,
+      "ax": 0.3,
+      "yaw_rate": 0.05,
+      "ay": 0.3
+    },
+    "max_gap_s": 0.04,
+    "event_windows": []
+  }
+}

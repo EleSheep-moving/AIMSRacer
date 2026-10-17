@@ -1,0 +1,81 @@
+{
+  "method": "estimate(t) versus reference(t-lag); positive lag = estimate trails reference",
+  "source_window_s": [
+    44.0,
+    219.0
+  ],
+  "step_s": 0.005,
+  "lag_search_ms": [
+    -800,
+    800
+  ],
+  "independent_truth": false,
+  "fitted_gain_or_bias": false,
+  "interpretation": "waveform alignment and disagreement only; not physical delay or accuracy",
+  "same_mask_for_estimators_and_all_candidate_lags": true,
+  "provenance": {
+    "raw_sha256": "86d66fd62c685ddbd677f2a50babf7316bd8504b585300fe6fe6dd25e212e7d0",
+    "replay_csv_sha256": "ee975a84cb6388c859bd2779c114260bfacc4862791ce3548894baad99a18d0d",
+    "actual_executable_sha256": "9d1aa3b796b385bcc3d7a5a45558eef1dea8612dd642cfb5ccf0ffd5fea86c1c",
+    "script_sha256": "12d211a850259b1f6bf34eb6fdaa9447063bd2c3eed15763d010f0617f354dcf"
+  },
+  "comparisons": {
+    "vx": {
+      "reference_topic": "/rear_axle/wheel_odom",
+      "unit": "m/s",
+      "n": 35000,
+      "estimators": {
+        "robot_localization": {
+          "zero_shift_rmse": 0.07066702727188034,
+          "best_lag_ms": 30.0,
+          "best_rmse": 0.011362664731618856,
+          "boundary_optimum": false
+        },
+        "own_observer": {
+          "zero_shift_rmse": 0.10599916847484867,
+          "best_lag_ms": -10.0,
+          "best_rmse": 0.10433441961370972,
+          "boundary_optimum": false
+        }
+      }
+    },
+    "vy": {
+      "reference_topic": "/rear_axle/lio_odom",
+      "unit": "m/s",
+      "n": 35000,
+      "estimators": {
+        "robot_localization": {
+          "zero_shift_rmse": 0.09929993150735664,
+          "best_lag_ms": 265.0,
+          "best_rmse": 0.04677156649397349,
+          "boundary_optimum": false
+        },
+        "own_observer": {
+          "zero_shift_rmse": 0.0700128088510216,
+          "best_lag_ms": 25.0,
+          "best_rmse": 0.06839026368147488,
+          "boundary_optimum": false
+        }
+      }
+    },
+    "yaw_rate": {
+      "reference_topic": "/rear_axle/imu",
+      "unit": "rad/s",
+      "n": 35000,
+      "estimators": {
+        "robot_localization": {
+          "zero_shift_rmse": 0.1478117913987208,
+          "best_lag_ms": 50.0,
+          "best_rmse": 0.06424390224918322,
+          "boundary_optimum": false
+        },
+        "own_observer": {
+          "zero_shift_rmse": 0.04290696992714385,
+          "best_lag_ms": 5.0,
+          "best_rmse": 0.03073858622950585,
+          "boundary_optimum": false
+        }
+      }
+    }
+  }
+}

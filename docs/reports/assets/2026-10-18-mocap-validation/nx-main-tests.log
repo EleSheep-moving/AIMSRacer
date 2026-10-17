@@ -1,0 +1,74 @@
+Starting >>> aims_mocap_validation
+SetCTestConfiguration:BuildDirectory:/home/aims/AIMSRacer/build/aims_mocap_validation
+UpdateCTestConfiguration  from :/home/aims/AIMSRacer/build/aims_mocap_validation/CTestConfiguration.ini
+Parse Config file:/home/aims/AIMSRacer/build/aims_mocap_validation/CTestConfiguration.ini
+SetCMakeVariable:CTEST_SITE:aims-desktop
+SetCMakeVariable:CTEST_SOURCE_DIRECTORY:/home/aims/AIMSRacer/src/mocap_validation/aims_mocap_validation
+SetCMakeVariable:CTEST_BINARY_DIRECTORY:/home/aims/AIMSRacer/build/aims_mocap_validation
+SetCMakeVariable:CTEST_CONFIGURE_COMMAND:"/usr/bin/cmake" "/home/aims/AIMSRacer/src/mocap_validation/aims_mocap_validation"
+SetCMakeVariable:CTEST_TEST_TIMEOUT:10000000
+UpdateCTestConfiguration  from :/home/aims/AIMSRacer/build/aims_mocap_validation/CTestConfiguration.ini
+Parse Config file:/home/aims/AIMSRacer/build/aims_mocap_validation/CTestConfiguration.ini
+SetCMakeVariable:CTEST_SITE:aims-desktop
+SetCMakeVariable:CTEST_SOURCE_DIRECTORY:/home/aims/AIMSRacer/src/mocap_validation/aims_mocap_validation
+SetCMakeVariable:CTEST_BINARY_DIRECTORY:/home/aims/AIMSRacer/build/aims_mocap_validation
+SetCMakeVariable:CTEST_CONFIGURE_COMMAND:"/usr/bin/cmake" "/home/aims/AIMSRacer/src/mocap_validation/aims_mocap_validation"
+SetCTestConfiguration:BuildDirectory:/home/aims/AIMSRacer/build/aims_mocap_validation
+SetCTestConfiguration:SourceDirectory:/home/aims/AIMSRacer/src/mocap_validation/aims_mocap_validation
+Test project /home/aims/AIMSRacer/build/aims_mocap_validation
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: mocap_tools
+
+1: Test command: /usr/bin/python3 "-u" "/opt/ros/humble/share/ament_cmake_test/cmake/run_test.py" "/home/aims/AIMSRacer/build/aims_mocap_validation/test_results/aims_mocap_validation/mocap_tools.xunit.xml" "--package-name" "aims_mocap_validation" "--output-file" "/home/aims/AIMSRacer/build/aims_mocap_validation/ament_cmake_pytest/mocap_tools.txt" "--env" "MOCAP_CAPTURE_EXECUTABLE=/home/aims/AIMSRacer/build/aims_mocap_validation/mocap_capture" "MOCAP_VRPN_FIXTURE=/home/aims/AIMSRacer/build/aims_mocap_validation/vrpn_fixture_server" "ROS_DOMAIN_ID=212" "ROS_LOCALHOST_ONLY=1" "OPENBLAS_NUM_THREADS=1" "--command" "/usr/bin/python3" "-u" "-m" "pytest" "/home/aims/AIMSRacer/src/mocap_validation/aims_mocap_validation/tests" "-o" "cache_dir=/home/aims/AIMSRacer/build/aims_mocap_validation/ament_cmake_pytest/mocap_tools/.cache" "--junit-xml=/home/aims/AIMSRacer/build/aims_mocap_validation/test_results/aims_mocap_validation/mocap_tools.xunit.xml" "--junit-prefix=aims_mocap_validation"
+1: Working Directory: /home/aims/AIMSRacer/build/aims_mocap_validation
+1: Test timeout computed to be: 180
+1: -- run_test.py: extra environment variables:
+1:  - MOCAP_CAPTURE_EXECUTABLE=/home/aims/AIMSRacer/build/aims_mocap_validation/mocap_capture
+1:  - MOCAP_VRPN_FIXTURE=/home/aims/AIMSRacer/build/aims_mocap_validation/vrpn_fixture_server
+1:  - OPENBLAS_NUM_THREADS=1
+1:  - ROS_DOMAIN_ID=212
+1:  - ROS_LOCALHOST_ONLY=1
+1: -- run_test.py: invoking following command in '/home/aims/AIMSRacer/build/aims_mocap_validation':
+1:  - /usr/bin/python3 -u -m pytest /home/aims/AIMSRacer/src/mocap_validation/aims_mocap_validation/tests -o cache_dir=/home/aims/AIMSRacer/build/aims_mocap_validation/ament_cmake_pytest/mocap_tools/.cache --junit-xml=/home/aims/AIMSRacer/build/aims_mocap_validation/test_results/aims_mocap_validation/mocap_tools.xunit.xml --junit-prefix=aims_mocap_validation
+1: ============================= test session starts ==============================
+1: platform linux -- Python 3.10.12, pytest-6.2.5, py-1.10.0, pluggy-0.13.0
+1: cachedir: build/aims_mocap_validation/ament_cmake_pytest/mocap_tools/.cache
+1: rootdir: /home/aims/AIMSRacer
+1: plugins: launch-testing-1.0.14, ament-xmllint-0.12.15, launch-testing-ros-0.19.13, ament-copyright-0.12.15, ament-lint-0.12.15, ament-pep257-0.12.15, ament-flake8-0.12.15, colcon-core-0.21.0, cov-3.0.0
+1: collected 51 items
+1: 
+1: ../../src/mocap_validation/aims_mocap_validation/tests/test_actuator.py . [  1%]
+1: .................                                                        [ 35%]
+1: ../../src/mocap_validation/aims_mocap_validation/tests/test_capture_extraction.py . [ 37%]
+1: ......                                                                   [ 49%]
+1: ../../src/mocap_validation/aims_mocap_validation/tests/test_fastlio.py . [ 50%]
+1: .................                                                        [ 84%]
+[Processing: aims_mocap_validation]
+1: ../../src/mocap_validation/aims_mocap_validation/tests/test_state_segments.py . [ 86%]
+1: ....                                                                     [ 94%]
+1: ../../src/mocap_validation/aims_mocap_validation/tests/test_timing_cli.py . [ 96%]
+1: .                                                                        [ 98%]
+1: ../../src/mocap_validation/aims_mocap_validation/tests/test_vrpn_live.py . [100%]
+1: 
+1: - generated xml file: /home/aims/AIMSRacer/build/aims_mocap_validation/test_results/aims_mocap_validation/mocap_tools.xunit.xml -
+1: ============================= 51 passed in 38.20s ==============================
+1: -- run_test.py: return code 0
+1: -- run_test.py: verify result file '/home/aims/AIMSRacer/build/aims_mocap_validation/test_results/aims_mocap_validation/mocap_tools.xunit.xml'
+1/1 Test #1: mocap_tools ......................   Passed   39.26 sec
+
+100% tests passed out of 1
+
+Label Time Summary:
+pytest    =  39.26 sec*proc (1 test)
+
+Total Test time (real) =  39.26 sec
+Finished <<< aims_mocap_validation [39.3s]
+
+Summary: 1 package finished [39.9s]
+Summary: 51 tests, 0 errors, 0 failures, 0 skipped

@@ -1,0 +1,43 @@
+Internal ctest changing into directory: /tmp/calib-native-build/aims_calibration
+Test project /tmp/calib-native-build/aims_calibration
+      Start  2: native_engine_parity
+      Start  3: native_node_process
+ 1/17 Test  #3: native_node_process .................   Passed   19.55 sec
+      Start  4: native_operator_runtime
+ 2/17 Test  #4: native_operator_runtime .............   Passed    2.42 sec
+      Start 14: reference_steady
+ 3/17 Test #14: reference_steady ....................   Passed    0.49 sec
+      Start 11: reference_io
+ 4/17 Test #11: reference_io ........................   Passed    0.50 sec
+      Start  5: reference_engine
+ 5/17 Test  #5: reference_engine ....................   Passed    0.41 sec
+      Start  6: reference_full_step_engine
+ 6/17 Test  #6: reference_full_step_engine ..........   Passed    0.34 sec
+      Start 12: reference_full_step_io
+ 7/17 Test #12: reference_full_step_io ..............   Passed    0.36 sec
+      Start  7: reference_configuration
+ 8/17 Test  #7: reference_configuration .............   Passed    0.31 sec
+      Start 15: reference_predictive_exit
+ 9/17 Test #15: reference_predictive_exit ...........   Passed    0.31 sec
+      Start  9: reference_planner
+10/17 Test  #9: reference_planner ...................   Passed    0.32 sec
+      Start 13: reference_operator
+11/17 Test #13: reference_operator ..................   Passed    0.30 sec
+      Start 17: reference_cli
+12/17 Test #17: reference_cli .......................   Passed    0.30 sec
+      Start  8: reference_full_step_configuration
+13/17 Test  #8: reference_full_step_configuration ...   Passed    0.29 sec
+      Start 10: reference_full_step_planner
+14/17 Test #10: reference_full_step_planner .........   Passed    0.28 sec
+      Start 16: reference_package
+15/17 Test #16: reference_package ...................   Passed    0.28 sec
+      Start  1: native_runtime_contracts
+16/17 Test  #1: native_runtime_contracts ............   Passed    0.00 sec
+17/17 Test  #2: native_engine_parity ................   Passed   42.32 sec
+
+100% tests passed, 0 tests failed out of 17
+
+Label Time Summary:
+pytest    =  26.46 sec*proc (15 tests)
+
+Total Test time (real) =  42.32 sec

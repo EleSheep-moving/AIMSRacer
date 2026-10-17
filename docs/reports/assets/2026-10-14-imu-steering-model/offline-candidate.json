@@ -1,0 +1,19 @@
+{
+  "status": "offline_candidate_not_deployed",
+  "model": "six-state equivalent steering response, no separate dead-time term",
+  "parameters": {
+    "steering_tau": 0.10990106703655375,
+    "understeer_coefficient": 0.04165370594684592,
+    "effective_delay_s": 0.0,
+    "command_gain": 1.0,
+    "command_bias_rad": 0.0
+  },
+  "identification_target": "/rear_axle/imu.angular_velocity.z",
+  "validation": {
+    "model": "tau_K",
+    "equal_run_cv_rmse": 0.06962241987962238,
+    "equal_run_entry_cv_rmse": 0.08497158772650483
+  },
+  "scope": "same-car same-track six-run held-out yaw-response validation using measured wheel speed; excludes free trajectory and closed-loop acceptance",
+  "runtime_note": "Changing these values requires consistent solver-bundle regeneration, state-history propagation, rollout and validation. Do not copy a tau fitted against EKF into the physical response model."
+}

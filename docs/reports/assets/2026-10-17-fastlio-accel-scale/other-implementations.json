@@ -1,0 +1,130 @@
+{
+  "sources": {
+    "fastlio": {
+      "repository": "hku-mars/FAST_LIO",
+      "commit": "7cc4175de6f8ba2edf34bab02a42195b141027e9",
+      "path": "src/IMU_Processing.hpp",
+      "snapshot": "fastlio__IMU_Processing.hpp",
+      "url": "https://github.com/hku-mars/FAST_LIO/blob/7cc4175de6f8ba2edf34bab02a42195b141027e9/src/IMU_Processing.hpp",
+      "sha256": "a456016e268680555919f58ae066354fd297a27f49be197292452f4147e1e0f5",
+      "lines": {
+        "266": "    acc_avr     = acc_avr * G_m_s2 / mean_acc.norm(); // - state_inout.ba;"
+      }
+    },
+    "fastlio_ros2": {
+      "repository": "Ericsii/FAST_LIO_ROS2",
+      "commit": "2fffc570a25d0df172720bac034fbdb6a13d2162",
+      "path": "src/IMU_Processing.hpp",
+      "snapshot": "fastlio_ros2__IMU_Processing.hpp",
+      "url": "https://github.com/Ericsii/FAST_LIO_ROS2/blob/2fffc570a25d0df172720bac034fbdb6a13d2162/src/IMU_Processing.hpp",
+      "sha256": "2b786c50c255a118fe95c9b017ef13af9e27a79b0624a718d4e192c3e5ca138d",
+      "lines": {
+        "260": "    acc_avr     = acc_avr * G_m_s2 / mean_acc.norm(); // - state_inout.ba;"
+      }
+    },
+    "fastlio_ros2_mid360": {
+      "repository": "Ericsii/FAST_LIO_ROS2",
+      "commit": "2fffc570a25d0df172720bac034fbdb6a13d2162",
+      "path": "config/mid360.yaml",
+      "snapshot": "fastlio_ros2_mid360__mid360.yaml",
+      "url": "https://github.com/Ericsii/FAST_LIO_ROS2/blob/2fffc570a25d0df172720bac034fbdb6a13d2162/config/mid360.yaml",
+      "sha256": "0fba8e5d317235b964b84813c9f6019dabd4267f29bedfa03595f29c0cf80aa1",
+      "lines": {
+        "14": "            imu_topic:  \"/livox/imu\""
+      }
+    },
+    "fastlivo2": {
+      "repository": "hku-mars/FAST-LIVO2",
+      "commit": "0d2c0346107b75b59934975adec9a6eeeb913c64",
+      "path": "src/IMU_Processing.cpp",
+      "snapshot": "fastlivo2__IMU_Processing.cpp",
+      "url": "https://github.com/hku-mars/FAST-LIVO2/blob/0d2c0346107b75b59934975adec9a6eeeb913c64/src/IMU_Processing.cpp",
+      "sha256": "fd455b17293a05421f9bd0b3d238aa2d58bbea4e7b0fbb8d63744f74d3d4b7db",
+      "lines": {
+        "143": "  IMU_mean_acc_norm = mean_acc.norm();",
+        "353": "      acc_avr = acc_avr * G_m_s2 / mean_acc.norm() - state_inout.bias_a;"
+      }
+    },
+    "pointlio": {
+      "repository": "hku-mars/Point-LIO",
+      "commit": "4b86a469eb5572e70ed575af25b5f15dd06e8e3c",
+      "path": "src/laserMapping.cpp",
+      "snapshot": "pointlio__laserMapping.cpp",
+      "url": "https://github.com/hku-mars/Point-LIO/blob/4b86a469eb5572e70ed575af25b5f15dd06e8e3c/src/laserMapping.cpp",
+      "sha256": "89d0207b6e11c6eeda8a3d05a4acf6253255d98418b8b9568e6488d1a08393a7",
+      "lines": {
+        "837": "                            input_in.acc = input_in.acc * G_m_s2 / acc_norm;",
+        "847": "                        input_in.acc    = input_in.acc * G_m_s2 / acc_norm; ",
+        "957": "                            input_in.acc = input_in.acc * G_m_s2 / acc_norm;",
+        "980": "                        input_in.acc = input_in.acc * G_m_s2 / acc_norm;"
+      }
+    },
+    "pointlio_config": {
+      "repository": "hku-mars/Point-LIO",
+      "commit": "4b86a469eb5572e70ed575af25b5f15dd06e8e3c",
+      "path": "config/avia.yaml",
+      "snapshot": "pointlio_config__avia.yaml",
+      "url": "https://github.com/hku-mars/Point-LIO/blob/4b86a469eb5572e70ed575af25b5f15dd06e8e3c/config/avia.yaml",
+      "sha256": "e31cb38d322135fde7558bca3e2e830fa4d133ddb5c6fa7f360f03183c3be7e3",
+      "lines": {
+        "23": "    acc_norm: 1.0 # 9.810 # 1.0 for g as unit, 9.81 for m/s^2 as unit of the IMU's acceleration",
+        "36": "    gravity: [0.0, 0.0, -9.810] # [0.0, 9.810, 0.0] # # [0.0, 0.0, -9.787561] # gvins # "
+      }
+    },
+    "glim_ros2": {
+      "repository": "koide3/glim_ros2",
+      "commit": "4d4ec524ccf1b02aa09b0af2af767ecc54343798",
+      "path": "src/glim_ros/glim_ros.cpp",
+      "snapshot": "glim_ros2__glim_ros.cpp",
+      "url": "https://github.com/koide3/glim_ros2/blob/4d4ec524ccf1b02aa09b0af2af767ecc54343798/src/glim_ros/glim_ros.cpp",
+      "sha256": "250357f3dcedc953f2177657ba947b7683931d6b045444a89d75d9e8448289bc",
+      "lines": {
+        "229": "  if (std::abs(acc_scale) < 1e-6) {",
+        "235": "      acc_scale = 9.80665;",
+        "244": "  const Eigen::Vector3d linear_acc = acc_scale * Eigen::Vector3d(msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);"
+      }
+    },
+    "glim_config": {
+      "repository": "koide3/glim",
+      "commit": "1a197c999e4865f5cab7c9cd25474128413ebbca",
+      "path": "config/config_ros.json",
+      "snapshot": "glim_config__config_ros.json",
+      "url": "https://github.com/koide3/glim/blob/1a197c999e4865f5cab7c9cd25474128413ebbca/config/config_ros.json",
+      "sha256": "ae8f026a320091b9d331919a8e45bb6921d737c3174a32a7aa1d30e501b8384f",
+      "lines": {
+        "13": "  // acc_scale              : Accelerometer scale factor (Set to 9.80665 for Livox sensors)",
+        "56": "    \"acc_scale\": 0.0, // Auto-detect if zero"
+      }
+    }
+  },
+  "normalization_constant_cancellation": [
+    {
+      "prescale": 1,
+      "normalized_output": [
+        1.9735973381703824,
+        -2.9603960072555733,
+        10.854785359937104
+      ],
+      "max_error_vs_no_prescale": 0.0
+    },
+    {
+      "prescale": 9.81,
+      "normalized_output": [
+        1.973597338170382,
+        -2.960396007255573,
+        10.854785359937102
+      ],
+      "max_error_vs_no_prescale": 1.7763568394002505e-15
+    },
+    {
+      "prescale": 10,
+      "normalized_output": [
+        1.973597338170382,
+        -2.960396007255573,
+        10.8547853599371
+      ],
+      "max_error_vs_no_prescale": 3.552713678800501e-15
+    }
+  ],
+  "performance_scope": "Arithmetic reasoning only. No end-to-end runtime or LIO A/B replay measured."
+}

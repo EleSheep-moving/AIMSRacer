@@ -1,0 +1,82 @@
+Starting >>> aims_pp
+Finished <<< aims_pp [1min 14s]
+Starting >>> aims_calibration
+Finished <<< aims_calibration [3min 15s]
+Starting >>> aims_racer_system
+--- stderr: aims_racer_system
+CMake Warning (policy) at /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:146 (find_package):
+  Policy CMP0144 is not set: find_package uses upper-case <PACKAGENAME>_ROOT
+  variables.  Run "cmake --help-policy CMP0144" for policy details.  Use the
+  cmake_policy command to set the policy and suppress this warning.
+
+  CMake variable EIGEN_ROOT is set to:
+
+    /usr/include/eigen3
+
+  For compatibility, find_package is ignoring the variable, but code in a
+  .cmake module might still use it.
+Call Stack (most recent call first):
+  /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:299 (find_eigen)
+  /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:543 (find_external_library)
+  CMakeLists.txt:19 (find_package)
+This warning is for project developers.  Use -Wno-author or -Wno-policy to
+suppress it.
+
+CMake Warning (policy) at /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:128 (find_package):
+  Policy CMP0167 is not set: The FindBoost module is removed.  Run "cmake
+  --help-policy CMP0167" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+Call Stack (most recent call first):
+  /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:297 (find_boost)
+  /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:543 (find_external_library)
+  CMakeLists.txt:19 (find_package)
+This warning is for project developers.  Use -Wno-author or -Wno-policy to
+suppress it.
+
+** WARNING ** io features related to pcap will be disabled
+** WARNING ** io features related to png will be disabled
+CMake Warning (policy) at /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:128 (find_package):
+  Policy CMP0167 is not set: The FindBoost module is removed.  Run "cmake
+  --help-policy CMP0167" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+Call Stack (most recent call first):
+  /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:297 (find_boost)
+  /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:543 (find_external_library)
+  CMakeLists.txt:19 (find_package)
+This warning is for project developers.  Use -Wno-author or -Wno-policy to
+suppress it.
+
+CMake Warning (policy) at /usr/lib/aarch64-linux-gnu/cmake/pcl/Modules/FindFLANN.cmake:44 (find_package):
+  Policy CMP0144 is not set: find_package uses upper-case <PACKAGENAME>_ROOT
+  variables.  Run "cmake --help-policy CMP0144" for policy details.  Use the
+  cmake_policy command to set the policy and suppress this warning.
+
+  CMake variable FLANN_ROOT is set to:
+
+    /usr
+
+  For compatibility, find_package is ignoring the variable, but code in a
+  .cmake module might still use it.
+Call Stack (most recent call first):
+  /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:256 (find_package)
+  /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:301 (find_flann)
+  /usr/lib/aarch64-linux-gnu/cmake/pcl/PCLConfig.cmake:543 (find_external_library)
+  CMakeLists.txt:19 (find_package)
+This warning is for project developers.  Use -Wno-author or -Wno-policy to
+suppress it.
+
+CMake Warning (deprecated) at /opt/ros/humble/src/gtest_vendor/CMakeLists.txt:2 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+---
+Finished <<< aims_racer_system [2min 51s]
+
+Summary: 3 packages finished [7min 21s]
+  1 package had stderr output: aims_racer_system

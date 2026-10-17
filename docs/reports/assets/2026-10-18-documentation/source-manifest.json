@@ -1,0 +1,1846 @@
+{
+  "date": "2026-10-18",
+  "base_commit": "098976b93ef14696aaf0bf229eaffc062b787b5c",
+  "scope": "documentation and small evidence only; no runtime code or raw bags",
+  "self_excluded": true,
+  "files": [
+    {
+      "published_path": "docs/README.md",
+      "published_sha256": "cba436ed323ec9a176bc1e407f893ae3095180a413a14db919a67262ba3ef7e5",
+      "bytes": 7183,
+      "source": "/home/elesheep/AIMSRacer/docs/README.md",
+      "source_sha256": "55b2c85542006368bc9debb90f18bf1d565152d936a2d4d42c6ae4e40ba3f1cb"
+    },
+    {
+      "published_path": "docs/README.zh-CN.md",
+      "published_sha256": "d3f1383c1b17cfc094442990edc9aef9004dcd3de64766863c5006059d63b726",
+      "bytes": 6672,
+      "source": "/home/elesheep/AIMSRacer/docs/README.zh-CN.md",
+      "source_sha256": "9400ba2d7a23d97f1ce4524d6554f4c9527045b89fe74a2f3bd2c3ecbd95345f"
+    },
+    {
+      "published_path": "docs/assets/vx-observer-20261015/mpcc-baselines.png",
+      "published_sha256": "689d677d0a4b0dd3cca43eb4eeaea4e7b92aaa7e9c85d8ca7882e2205f8f0707",
+      "bytes": 532843,
+      "source": "/home/elesheep/AIMSRacer/docs/assets/vx-observer-20261015/mpcc-baselines.png",
+      "source_sha256": "689d677d0a4b0dd3cca43eb4eeaea4e7b92aaa7e9c85d8ca7882e2205f8f0707"
+    },
+    {
+      "published_path": "docs/assets/vx-observer-20261015/mpcc-input-age.png",
+      "published_sha256": "a3562f94b9fe94c7ba3253289fed723063d6c568950821e4f6338ff72910f6ee",
+      "bytes": 321489,
+      "source": "/home/elesheep/AIMSRacer/docs/assets/vx-observer-20261015/mpcc-input-age.png",
+      "source_sha256": "a3562f94b9fe94c7ba3253289fed723063d6c568950821e4f6338ff72910f6ee"
+    },
+    {
+      "published_path": "docs/assets/vx-observer-20261015/mpcc-vx.png",
+      "published_sha256": "c044bc4446ccdf65bd464b6dbfca834145e5e8742eeda9ec1a49db534e9b6501",
+      "bytes": 711449,
+      "source": "/home/elesheep/AIMSRacer/docs/assets/vx-observer-20261015/mpcc-vx.png",
+      "source_sha256": "c044bc4446ccdf65bd464b6dbfca834145e5e8742eeda9ec1a49db534e9b6501"
+    },
+    {
+      "published_path": "docs/operations/body-acceleration.md",
+      "published_sha256": "ee0525dd354a236ab8f96d7b299bd570c59031c8a0d483303d0a55d3db057e12",
+      "bytes": 6404,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/body-acceleration.md",
+      "source_sha256": "7c07fa02d114aa293969f5241df3808110d4738c5f45de891d1d7742a7f40e4a"
+    },
+    {
+      "published_path": "docs/operations/body-acceleration.zh-CN.md",
+      "published_sha256": "ec8d1abedaa57ccd0f2a109cb90020faa88c69e5f706af16805ad46b2c2d84dc",
+      "bytes": 6228,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/body-acceleration.zh-CN.md",
+      "source_sha256": "5ac1c238e3a0f93025580fbd27a6fbd2b8f3923a08655401bcdf6ef3282b7183"
+    },
+    {
+      "published_path": "docs/operations/full-step-current.zh-CN.md",
+      "published_sha256": "360da0fb3e1311b995589f5f21787d219586e3e61448dc14b3ca59c57cf2d93b",
+      "bytes": 8739,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/full-step-current.zh-CN.md",
+      "source_sha256": "4c5cd831344ac4407b4222e835c46820135bf8026009fd7ca3e1f99f74a1e21f"
+    },
+    {
+      "published_path": "docs/operations/mocap-validation.zh-CN.md",
+      "published_sha256": "886a8bcbb93aa70c76fb8559eaa66e2f50712ac0c2413f247f5599988cb1ce3a",
+      "bytes": 8500,
+      "source": "authored or edited during documentation curation"
+    },
+    {
+      "published_path": "docs/operations/planar-acceleration.md",
+      "published_sha256": "f74c8f7fadbcacab58cc11f393f4dca374f6b467fd7e680c305d8e9446aa25a5",
+      "bytes": 6972,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/planar-acceleration.md",
+      "source_sha256": "1f510e2209eadef4799b0ff181647ff0b376d2a3eefbb249a50d026a1a2c7939"
+    },
+    {
+      "published_path": "docs/operations/planar-acceleration.zh-CN.md",
+      "published_sha256": "b02343bde542c31dde6682e098de394aeafb81284afccf99c32477379131916d",
+      "bytes": 6928,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/planar-acceleration.zh-CN.md",
+      "source_sha256": "56796f8dfc9ad0ee0447c8b665337d141d354d7980138d3ff8ec3dd68c6d3bf7"
+    },
+    {
+      "published_path": "docs/operations/state-observer.zh-CN.md",
+      "published_sha256": "ed074d8d79b962d7cc93312ca86f5d0886afbdeec98046887e9ab53c32d4457e",
+      "bytes": 11289,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/state-observer.zh-CN.md",
+      "source_sha256": "9de92e63ca638e83c6d56e39294abce2b9ef11cf755c262891ad96f3704ecf94"
+    },
+    {
+      "published_path": "docs/operations/velocity.md",
+      "published_sha256": "439b4993ab39f2fe7ddd04f6a3b54b7565f8fa64529c017e13b515650da2f52a",
+      "bytes": 4634,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/velocity.md",
+      "source_sha256": "14a405d87dfe9bb047323af3bca9516774f2236b7738070f8055eba84ac7a9c2"
+    },
+    {
+      "published_path": "docs/operations/velocity.zh-CN.md",
+      "published_sha256": "f11c99ec293ed6e93b39588a5e035c587a5ff64180a9412e15dfdf4d7cbf6603",
+      "bytes": 4989,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/velocity.zh-CN.md",
+      "source_sha256": "659aff56de846fc032b76789d2ef265befb83e3b6d0b257f9df07b0c57fa67f3"
+    },
+    {
+      "published_path": "docs/operations/vicon-observer-validation.zh-CN.md",
+      "published_sha256": "d19d0c348b9b7ecf1bef4c7d68a146861d1f105892a3c80cf66029ebf800734d",
+      "bytes": 7522,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/vicon-observer-validation.zh-CN.md",
+      "source_sha256": "0eee4b86943c0a99e4103237f203fe3400f2c499b904fbe595509181f8af2b21"
+    },
+    {
+      "published_path": "docs/operations/yaw-rate.md",
+      "published_sha256": "e1ff91465874d98d88a0ec06cb3918c945c77902e2e410972805e71fad0ec8b5",
+      "bytes": 3598,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/yaw-rate.md",
+      "source_sha256": "d12c0a7bbc665230daebda2213c0cdf3725dcdd331808ded6f78464535301632"
+    },
+    {
+      "published_path": "docs/operations/yaw-rate.zh-CN.md",
+      "published_sha256": "80fcadbe7ef711cfc44642f00f090cdfde16417c3ffa4fdc94a56210557a5cdb",
+      "bytes": 4707,
+      "source": "/home/elesheep/AIMSRacer/docs/operations/yaw-rate.zh-CN.md",
+      "source_sha256": "ee2e4cdd9ed3923dedd8182120d37b9698cf83278fe7390db2108a53ae1d731a"
+    },
+    {
+      "published_path": "docs/reports/2026-10-13-steady-current-voltage-model.md",
+      "published_sha256": "ddcbd32a00b353e82812eee592768ab6ed88213df04cd082c14db958f24e337a",
+      "bytes": 10689,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-13-steady-current-voltage-model.md",
+      "source_sha256": "3edd268dd1f4a47593369209e0296420981f514624bf93b950878d964e943762"
+    },
+    {
+      "published_path": "docs/reports/2026-10-13-steady-current-voltage-model.zh-CN.md",
+      "published_sha256": "d6aba76050c5dbad746b86af027a848b4a4391e514fb82c50beb43a241f724ac",
+      "bytes": 9213,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-13-steady-current-voltage-model.zh-CN.md",
+      "source_sha256": "8eae73cc5ca55fe8515081c5ddb272533b2d68c46ad70b6cf4e53568270952b0"
+    },
+    {
+      "published_path": "docs/reports/2026-10-14-ekf-component-latency.md",
+      "published_sha256": "d27db73b12e880efa2122e57b8cbb6d67c93fb7e945c02b8b1c774458b822075",
+      "bytes": 16913,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-14-ekf-component-latency.md",
+      "source_sha256": "d27db73b12e880efa2122e57b8cbb6d67c93fb7e945c02b8b1c774458b822075"
+    },
+    {
+      "published_path": "docs/reports/2026-10-14-ekf-component-latency.zh-CN.md",
+      "published_sha256": "7c6cb1323d6070000de14ae6ec47888fd9114d4dd69f564badfa4b5983925d7d",
+      "bytes": 14803,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-14-ekf-component-latency.zh-CN.md",
+      "source_sha256": "7c6cb1323d6070000de14ae6ec47888fd9114d4dd69f564badfa4b5983925d7d"
+    },
+    {
+      "published_path": "docs/reports/2026-10-14-imu-steering-model.md",
+      "published_sha256": "2ebaa49d264979e9244fca99cbe1312e47fe9118248f9150263f87fd20bfc407",
+      "bytes": 14690,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-14-imu-steering-model.md",
+      "source_sha256": "2ebaa49d264979e9244fca99cbe1312e47fe9118248f9150263f87fd20bfc407"
+    },
+    {
+      "published_path": "docs/reports/2026-10-14-imu-steering-model.zh-CN.md",
+      "published_sha256": "6697e2a9e7d56af97d3a55056ebf6369672077eff0e0293bbd91190952eac49e",
+      "bytes": 13119,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-14-imu-steering-model.zh-CN.md",
+      "source_sha256": "6697e2a9e7d56af97d3a55056ebf6369672077eff0e0293bbd91190952eac49e"
+    },
+    {
+      "published_path": "docs/reports/2026-10-14-longitudinal-filter-tuning.md",
+      "published_sha256": "8dfa72b9dd97d0c3369777d1cd1692cf4361e3f6ea8902d625e1363d18051100",
+      "bytes": 2306,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-14-longitudinal-filter-tuning.md",
+      "source_sha256": "668567a73ae7b95a27cf9c9d5094f4600e9d719444b51993bde02004f9d2019f"
+    },
+    {
+      "published_path": "docs/reports/2026-10-14-longitudinal-filter-tuning.zh-CN.md",
+      "published_sha256": "9206c5b88321b50ec3ae61c3472a4157f8f29f4f149a9ffbbae5b78af4a866d2",
+      "bytes": 9502,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-14-longitudinal-filter-tuning.zh-CN.md",
+      "source_sha256": "b0e6bb201e0f8da3ff6219f45d86b951bd0156a1b62b28bcaa35dd6fa5404881"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-body-acceleration-quality.zh-CN.md",
+      "published_sha256": "91e20462eeeae8247129a025125152712261708debe790e40ce51d1d10da4f94",
+      "bytes": 13342,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-body-acceleration-quality.zh-CN.md",
+      "source_sha256": "14bbf60063f7d82f1ba49ec70a79692305b11ed51f4a0f4263f9df6970560f66"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-current-response-identification.md",
+      "published_sha256": "0f0edbd935cf955c5a64032fa540078df0284d79443288ea986c2d4711b0cc63",
+      "bytes": 12035,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-current-response-identification.md",
+      "source_sha256": "0f0edbd935cf955c5a64032fa540078df0284d79443288ea986c2d4711b0cc63"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-current-response-identification.zh-CN.md",
+      "published_sha256": "a63d2c4568c736a65e16d4231259e3dbc17b03d1b5ec2102156cb7aff89ea54c",
+      "bytes": 10434,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-current-response-identification.zh-CN.md",
+      "source_sha256": "a63d2c4568c736a65e16d4231259e3dbc17b03d1b5ec2102156cb7aff89ea54c"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-estimator-replay-comparison.md",
+      "published_sha256": "600fbe7293566c86b5805ac579d022bf42565f02a1ef274a5819e3581e8dc17b",
+      "bytes": 10411,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-estimator-replay-comparison.md",
+      "source_sha256": "600fbe7293566c86b5805ac579d022bf42565f02a1ef274a5819e3581e8dc17b"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-estimator-replay-comparison.zh-CN.md",
+      "published_sha256": "702860bbb22514413b395ca5e4f3d4d22ec3772c4aa6c6f5b5107089515c0eff",
+      "bytes": 9153,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-estimator-replay-comparison.zh-CN.md",
+      "source_sha256": "702860bbb22514413b395ca5e4f3d4d22ec3772c4aa6c6f5b5107089515c0eff"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-mpcc-multilap-review.md",
+      "published_sha256": "f8dc59b676a1e383df23a5fa119e12241729115ceae73d78e3e8c361000237c0",
+      "bytes": 11412,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-mpcc-multilap-review.md",
+      "source_sha256": "f8dc59b676a1e383df23a5fa119e12241729115ceae73d78e3e8c361000237c0"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-mpcc-multilap-review.zh-CN.md",
+      "published_sha256": "4c0cc2bd5f85d5155a63fe6daeff671fd2c5d60ac2aa23c833c3aac04a43ead5",
+      "bytes": 9626,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-mpcc-multilap-review.zh-CN.md",
+      "source_sha256": "4c0cc2bd5f85d5155a63fe6daeff671fd2c5d60ac2aa23c833c3aac04a43ead5"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-native-state-nodes.md",
+      "published_sha256": "081662e330aa27f0f65a9e91e6d4b355651e1c3600d7819ca96ddf597f7ba228",
+      "bytes": 5753,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-native-state-nodes.md",
+      "source_sha256": "081662e330aa27f0f65a9e91e6d4b355651e1c3600d7819ca96ddf597f7ba228"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-native-state-nodes.zh-CN.md",
+      "published_sha256": "68076fb7c195b190ba412f1903d5a87397ffd4cdecc48a7f3e24f5d42a5059b6",
+      "bytes": 4999,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-native-state-nodes.zh-CN.md",
+      "source_sha256": "68076fb7c195b190ba412f1903d5a87397ffd4cdecc48a7f3e24f5d42a5059b6"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-planar-acceleration-quality.md",
+      "published_sha256": "5196b10984c754f058c2ec25f4085302c147b6a66b33ec945b3696b5878b178a",
+      "bytes": 15427,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-planar-acceleration-quality.md",
+      "source_sha256": "2d018d72ae41f092c183b17c0d7053fe855268e539abbff61e8496852b4f64fa"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-planar-acceleration-quality.zh-CN.md",
+      "published_sha256": "c6bad61721a739cfc805a8753fb282b66b89f7f6bd4495bd4108f7febf66e988",
+      "bytes": 14722,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-planar-acceleration-quality.zh-CN.md",
+      "source_sha256": "8690a3b35713f721a64fe45bf0a9c16285492f5822d344a9b3fb76626a593656"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-vx-quality.zh-CN.md",
+      "published_sha256": "4d790d9fdce72baae682b771b4d423c52d10e7b721dbdb98444b7a81318b5ea8",
+      "bytes": 14520,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-vx-quality.zh-CN.md",
+      "source_sha256": "b109396bed0b83a2e32e2f0ff98579e369e4bda2043801745d32054b78075981"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-yaw-rate-quality.md",
+      "published_sha256": "92cb28887eaaa79ad4a43d14575d2e5545f56a9c94abc18eabd8e1d7fdfae86c",
+      "bytes": 4295,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-yaw-rate-quality.md",
+      "source_sha256": "92cb28887eaaa79ad4a43d14575d2e5545f56a9c94abc18eabd8e1d7fdfae86c"
+    },
+    {
+      "published_path": "docs/reports/2026-10-15-yaw-rate-quality.zh-CN.md",
+      "published_sha256": "275fc1c991ef10fcb8a1586434d61e3c4db51bffc61442cd35eb354017fcbc85",
+      "bytes": 6601,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-15-yaw-rate-quality.zh-CN.md",
+      "source_sha256": "a36bfbeddc64f2263662d46760476b0b05663556fd006d0af9a79a15afdd8a0d"
+    },
+    {
+      "published_path": "docs/reports/2026-10-16-native-calibration.zh-CN.md",
+      "published_sha256": "fa1ea0b8401bb43a18cdaa1dc17aba5a202b861fd8ca363918975baed28b910f",
+      "bytes": 7153,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-16-native-calibration.zh-CN.md",
+      "source_sha256": "fd6acd1520bcf05c121911dd0fce1830b148ff0368a3b37dcce33e211fd7da3c"
+    },
+    {
+      "published_path": "docs/reports/2026-10-17-current-affine-selection.zh-CN.md",
+      "published_sha256": "148cccbd4e08ffda3cb96cdf40eddb384fe3a9fc7cc9d117a8450f4d9dce5fae",
+      "bytes": 6558,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-17-current-affine-selection.zh-CN.md",
+      "source_sha256": "473ea05b3114a1cd175ec2d20339ff427d6741cedd71ab051f54f70142ae8af8"
+    },
+    {
+      "published_path": "docs/reports/2026-10-17-dual-reference-state-validation.zh-CN.md",
+      "published_sha256": "46c62c0bd156102f8581f7fea101cafcfc0e3d3ead93c4fa1888281a35170c74",
+      "bytes": 12343,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-17-dual-reference-state-validation.zh-CN.md",
+      "source_sha256": "db4c4af8f0915c928ad458d96e940d32b1b6cc45e934c4900614e457af2b96c0"
+    },
+    {
+      "published_path": "docs/reports/2026-10-17-fastlio-accel-scale.zh-CN.md",
+      "published_sha256": "a1250c12ee3937ca02a6147786e4f0179c33b3d0937c555485bb5e5541f366dc",
+      "bytes": 4135,
+      "source": "authored or edited during documentation curation"
+    },
+    {
+      "published_path": "docs/reports/2026-10-17-localization-cpu.zh-CN.md",
+      "published_sha256": "6a98b0c9d7487303b2453c65090e6f331d74a681a15d35edc6e020565fa8ece7",
+      "bytes": 4332,
+      "source": "nx:/home/aims/aimsracer-data/sessions/2026-10-17/localization-cpu-review/REVIEW.zh-CN.md",
+      "source_sha256": "7d5964b126b248f8ae4a48320d5b49f4e7580f692502edcc52fd85922cb6e4a9"
+    },
+    {
+      "published_path": "docs/reports/2026-10-17-ndt-5hz.zh-CN.md",
+      "published_sha256": "c5ab8521553274ab7e8c21f2feca145291cbe45068f8f6d8a222285da888de31",
+      "bytes": 5461,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-17-ndt-5hz.zh-CN.md",
+      "source_sha256": "7fe8cd1e117d468949c1182d77c994b022cbfb633fc4d76a34d1b677f4e2e4c4"
+    },
+    {
+      "published_path": "docs/reports/2026-10-17-state-observer-latency-policy.zh-CN.md",
+      "published_sha256": "a4995c092e860161b3ea3c35cf0e36866eeb6b0e18ab3cedaeff057d72454e7b",
+      "bytes": 12129,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-17-state-observer-latency-policy.zh-CN.md",
+      "source_sha256": "89103eea9742fc7bf12e96947493c1ee5ac9dda84b3f2f422e327410953a5912"
+    },
+    {
+      "published_path": "docs/reports/2026-10-17-state-output-quality.zh-CN.md",
+      "published_sha256": "c1677d888c414ca3db37be7690702536867e2bf57b3093c017641189861b3491",
+      "bytes": 34764,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-17-state-output-quality.zh-CN.md",
+      "source_sha256": "803fa7430b0249474e6377c6700eaef3a830a5a1b797cc7e23f075bb9472580e"
+    },
+    {
+      "published_path": "docs/reports/2026-10-17-vicon-comparison-preparation.zh-CN.md",
+      "published_sha256": "2b24609eff8b67f5680862276866452e8ea52a0367f11a2dcdfc26697336b744",
+      "bytes": 4101,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-17-vicon-comparison-preparation.zh-CN.md",
+      "source_sha256": "ab0eca53e6d37687ff2505927821af1a7dab64a6a38ada67b8eea9c38e7abbc6"
+    },
+    {
+      "published_path": "docs/reports/2026-10-18-mocap-validation.zh-CN.md",
+      "published_sha256": "80bf1e5e8149b82e128b89d02e3d6b26b90af66a8302bcfd3dbec5d94c972fb4",
+      "bytes": 6671,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-18-mocap-validation.zh-CN.md",
+      "source_sha256": "a16564b24c7bf183acb4ef9ab3a84ab971bb73b58b4026529d4e028f66538889"
+    },
+    {
+      "published_path": "docs/reports/2026-10-18-state-observer-nx-deployment.zh-CN.md",
+      "published_sha256": "e7bdfebda050e50d5a7114cc768b7d1976e68a1b50c4e92b9c03561fc55d717e",
+      "bytes": 5535,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-18-state-observer-nx-deployment.zh-CN.md",
+      "source_sha256": "33cca58784150e4c7cf5361027466c20b5e20e796f12a7366b6f486647d76b39"
+    },
+    {
+      "published_path": "docs/reports/2026-10-18-vy-quality.zh-CN.md",
+      "published_sha256": "d6a73776519cd5e4de6cdbc9dec422162826d5cb39f9a405c8b8c89fea7c18c6",
+      "bytes": 6270,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/2026-10-18-vy-quality.zh-CN.md",
+      "source_sha256": "c11e5a7dbe62af5a4f8191eee34d6643c62340fae2ebf85de196f90ebf3d88a5"
+    },
+    {
+      "published_path": "docs/reports/README.md",
+      "published_sha256": "85339071a17e505d4c89679686715a2df9d7bb3fdfcc26efdea2367b633b4b3b",
+      "bytes": 7827,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/README.md",
+      "source_sha256": "af5b79f08f9b9f56cffa14e818f0ce2c4a619de8bc4b382ebfe1bea66b7a5448"
+    },
+    {
+      "published_path": "docs/reports/README.zh-CN.md",
+      "published_sha256": "7b5cd9bcf0cad72eb59e7a164a1ab686f4af6b6cb163d2423cc526420da61592",
+      "bytes": 7991,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/README.zh-CN.md",
+      "source_sha256": "45123461396dfa778cd54bb92d895ae96ab9471c24c2086d4948e50996963f61"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/accepted_trials.csv",
+      "published_sha256": "e75d23def17e004d22a8922a60e529e1557b9dc64385a9b45fbb5a013cb2fb46",
+      "bytes": 33430,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/accepted_trials.csv",
+      "source_sha256": "e75d23def17e004d22a8922a60e529e1557b9dc64385a9b45fbb5a013cb2fb46"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/analysis_provenance.json",
+      "published_sha256": "2f88229f6347bcdf4b116363827d5582adbac0a6dff4e742eaf8bbe75aa3a588",
+      "bytes": 694,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/analysis_provenance.json",
+      "source_sha256": "2f88229f6347bcdf4b116363827d5582adbac0a6dff4e742eaf8bbe75aa3a588"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/artifact_sha256.json",
+      "published_sha256": "45a37fbafa09aa62ec0590f1cae213816c2e1ea41266952fc4dfb7c3de01891a",
+      "bytes": 2531,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/artifact_sha256.json",
+      "source_sha256": "45a37fbafa09aa62ec0590f1cae213816c2e1ea41266952fc4dfb7c3de01891a"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/battery_groups.json",
+      "published_sha256": "7ed127ef12eb14c4685b979dd6c0973c15d37b6e6b688bf7db101217c73a117d",
+      "bytes": 884,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/battery_groups.json",
+      "source_sha256": "7ed127ef12eb14c4685b979dd6c0973c15d37b6e6b688bf7db101217c73a117d"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/current_voltage_comparison.png",
+      "published_sha256": "8567db3ddb609493d3dcb0653f96677da894ec00749cf6bbbfb5d74c95bbf290",
+      "bytes": 260264,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/current_voltage_comparison.png",
+      "source_sha256": "8567db3ddb609493d3dcb0653f96677da894ec00749cf6bbbfb5d74c95bbf290"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/held_out_predictions.csv",
+      "published_sha256": "f52d24545a1c378905483664220f64177da7b1344df26683032b366c8913d419",
+      "bytes": 56773,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/held_out_predictions.csv",
+      "source_sha256": "f52d24545a1c378905483664220f64177da7b1344df26683032b366c8913d419"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/iq0_speed_curve.png",
+      "published_sha256": "94fe8eb06e59175c29bcffdd2cd4760865d9cacde0cc950d52c5ed48e1b7d3f1",
+      "bytes": 218279,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/iq0_speed_curve.png",
+      "source_sha256": "94fe8eb06e59175c29bcffdd2cd4760865d9cacde0cc950d52c5ed48e1b7d3f1"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/iq0_speed_curve.svg",
+      "published_sha256": "ee91e9ebfa8a39fda6e96bdcaccd90617dbf9d735cf260d2dc2a221c031a5966",
+      "bytes": 88662,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/iq0_speed_curve.svg",
+      "source_sha256": "ee91e9ebfa8a39fda6e96bdcaccd90617dbf9d735cf260d2dc2a221c031a5966"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/iq0_speed_fit.json",
+      "published_sha256": "3c65ef1bbc7972b681bd6cbb9637b594c6e0773a19ef78f0251029c714df7470",
+      "bytes": 3557,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/iq0_speed_fit.json",
+      "source_sha256": "3c65ef1bbc7972b681bd6cbb9637b594c6e0773a19ef78f0251029c714df7470"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/iq0_speed_predictions.csv",
+      "published_sha256": "8939848e5e1f074e25928dc6562aa16d0eebd568ad5773695aa3317cfb2fe38c",
+      "bytes": 221,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/iq0_speed_predictions.csv",
+      "source_sha256": "8939848e5e1f074e25928dc6562aa16d0eebd568ad5773695aa3317cfb2fe38c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/model_comparison.json",
+      "published_sha256": "a84a010bf771f39309198e827e6155c7c9f73e7075903265d22af94ed4062717",
+      "bytes": 28164,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/model_comparison.json",
+      "source_sha256": "a84a010bf771f39309198e827e6155c7c9f73e7075903265d22af94ed4062717"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/model_comparison.png",
+      "published_sha256": "0571c04ef6076fa2851f365ba6192719d9b489a0415372ddea6c9e59f40339b1",
+      "bytes": 336137,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/model_comparison.png",
+      "source_sha256": "0571c04ef6076fa2851f365ba6192719d9b489a0415372ddea6c9e59f40339b1"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/model_metrics.csv",
+      "published_sha256": "740a615647a50a0cedc04163d449d1da80b1801c3fa5dbc428baf183f8c79b60",
+      "bytes": 1673,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/curve-fit-iq-v2/model_metrics.csv",
+      "source_sha256": "740a615647a50a0cedc04163d449d1da80b1801c3fa5dbc428baf183f8c79b60"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/heavy_battery_voltage_effect.png",
+      "published_sha256": "43dc8787f47bd8559a316f0b52014a52e456e2f0822a7dee305c967cf0a4270a",
+      "bytes": 209308,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/heavy_battery_voltage_effect.png",
+      "source_sha256": "43dc8787f47bd8559a316f0b52014a52e456e2f0822a7dee305c967cf0a4270a"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/segments.csv",
+      "published_sha256": "6ae62fc39cc19f77e755f4310c934c539e04ca8bfe4f02c4aefb227edb046a38",
+      "bytes": 66299,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/segments.csv",
+      "source_sha256": "6ae62fc39cc19f77e755f4310c934c539e04ca8bfe4f02c4aefb227edb046a38"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/sessions.csv",
+      "published_sha256": "f5dd24f1c5b7ecc193f4b037aeb8bd8d2a1ed11ac42c9fa96639b7fd034ba799",
+      "bytes": 3339,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/sessions.csv",
+      "source_sha256": "f5dd24f1c5b7ecc193f4b037aeb8bd8d2a1ed11ac42c9fa96639b7fd034ba799"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/speed_current_voltage.csv",
+      "published_sha256": "ff2a02ee634d27aac2aabb443081aa7f6dd7ca5b75501f07b6f324b3d6840ea5",
+      "bytes": 6777,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/speed_current_voltage.csv",
+      "source_sha256": "ff2a02ee634d27aac2aabb443081aa7f6dd7ca5b75501f07b6f324b3d6840ea5"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/steady_segment_sensitivity.png",
+      "published_sha256": "6c300afab6f35932f28322fcee9ce7f91643eac017a5ddc2f01855eddf89bc45",
+      "bytes": 295580,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/steady_segment_sensitivity.png",
+      "source_sha256": "6c300afab6f35932f28322fcee9ce7f91643eac017a5ddc2f01855eddf89bc45"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/trials.csv",
+      "published_sha256": "b7aa0913f11fa368b43157edf0ca035fc99b56a8f555f9f1e877807dd143b2bd",
+      "bytes": 34548,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/trials.csv",
+      "source_sha256": "b7aa0913f11fa368b43157edf0ca035fc99b56a8f555f9f1e877807dd143b2bd"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-13-steady-current/validation.json",
+      "published_sha256": "485d870503c6a61bac73cd965eb206e7fcf832d8cbdd6e63b51889a15c4a94cb",
+      "bytes": 19532,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-13-steady-current/validation.json",
+      "source_sha256": "485d870503c6a61bac73cd965eb206e7fcf832d8cbdd6e63b51889a15c4a94cb"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-ekf-components/pose.png",
+      "published_sha256": "4adc7d350df4dd548167b91ec9f26259a0790fc8446734a722d40cf473d8f66d",
+      "bytes": 286545,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-ekf-components/pose.png",
+      "source_sha256": "4adc7d350df4dd548167b91ec9f26259a0790fc8446734a722d40cf473d8f66d"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-ekf-components/response.png",
+      "published_sha256": "2dfc2a14e79a4127040d5efb6e0072f3f67fab2822a5eb7c4d5838e33805c244",
+      "bytes": 298546,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-ekf-components/response.png",
+      "source_sha256": "2dfc2a14e79a4127040d5efb6e0072f3f67fab2822a5eb7c4d5838e33805c244"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/artifact-manifest.json",
+      "published_sha256": "fbebd4f892d4b31852a40726c89b18d9e2bfa9b4a61aa032b8074947ad8be03c",
+      "bytes": 920,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-imu-steering-model/artifact-manifest.json",
+      "source_sha256": "fbebd4f892d4b31852a40726c89b18d9e2bfa9b4a61aa032b8074947ad8be03c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/assets-sha256.json",
+      "published_sha256": "89282494f20606447e6ae848916880396e380083131d19428b3e21ef7590fbde",
+      "bytes": 835,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-imu-steering-model/assets-sha256.json",
+      "source_sha256": "89282494f20606447e6ae848916880396e380083131d19428b3e21ef7590fbde"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/delay-profile.json",
+      "published_sha256": "6ce05b9b1727217c9240f42ec3dc0e64fa7840cab0877001626a1b1676982235",
+      "bytes": 4131,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-imu-steering-model/delay-profile.json",
+      "source_sha256": "6ce05b9b1727217c9240f42ec3dc0e64fa7840cab0877001626a1b1676982235"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/delay-profile.png",
+      "published_sha256": "2abc0a48745f6de1d91219020f8346cb865533608028ac17e846dd40e378e0ce",
+      "bytes": 59133,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-imu-steering-model/delay-profile.png",
+      "source_sha256": "2abc0a48745f6de1d91219020f8346cb865533608028ac17e846dd40e378e0ce"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/held-out-entries.png",
+      "published_sha256": "2c3187258b93a2f15c5eaf0234c1f80497680868c31c32b5913165855e836f7b",
+      "bytes": 310772,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-imu-steering-model/held-out-entries.png",
+      "source_sha256": "2c3187258b93a2f15c5eaf0234c1f80497680868c31c32b5913165855e836f7b"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/held-out-entries.svg",
+      "published_sha256": "67397214b68788c7186537090b0410a5a4b3a90c4ac78da166dbda88e77c5252",
+      "bytes": 115361,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-imu-steering-model/held-out-entries.svg",
+      "source_sha256": "67397214b68788c7186537090b0410a5a4b3a90c4ac78da166dbda88e77c5252"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/held-out-metrics.csv",
+      "published_sha256": "e839b49a342ca7484dfcd3346d627c868c4a1b6f47d725a4c8fe306092bbccbd",
+      "bytes": 2454,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-imu-steering-model/held-out-metrics.csv",
+      "source_sha256": "e839b49a342ca7484dfcd3346d627c868c4a1b6f47d725a4c8fe306092bbccbd"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/offline-candidate.json",
+      "published_sha256": "8762025688190a6ef864dde71982ef18cd2f72d0bdd5334ece72368a8ae1ea72",
+      "bytes": 902,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-imu-steering-model/offline-candidate.json",
+      "source_sha256": "8762025688190a6ef864dde71982ef18cd2f72d0bdd5334ece72368a8ae1ea72"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/results.json",
+      "published_sha256": "0562efb0305cb941c1ad4b24d76a3ade16acd04499e826fab490c0c1668e0ea3",
+      "bytes": 38689,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-imu-steering-model/results.json",
+      "source_sha256": "0562efb0305cb941c1ad4b24d76a3ade16acd04499e826fab490c0c1668e0ea3"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-imu-steering-model/validation.json",
+      "published_sha256": "a8c28a4eb114ded54647b363e54917e796f198fcbd5e65a415e1aa06d7a84f3d",
+      "bytes": 3346,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-imu-steering-model/validation.json",
+      "source_sha256": "a8c28a4eb114ded54647b363e54917e796f198fcbd5e65a415e1aa06d7a84f3d"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/baseline_recording_comparison.csv",
+      "published_sha256": "c3e97650fc93baffc366bced7e92a5aae442078e01dbfd0f2f675d02dc859256",
+      "bytes": 494,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/baseline_recording_comparison.csv",
+      "source_sha256": "c3e97650fc93baffc366bced7e92a5aae442078e01dbfd0f2f675d02dc859256"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/cross_run_metrics.csv",
+      "published_sha256": "827dab6e3b7c48c7754ccbf0c2d6706a4599bb4b755225d5e1d4fef88433044b",
+      "bytes": 4089,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/cross_run_metrics.csv",
+      "source_sha256": "827dab6e3b7c48c7754ccbf0c2d6706a4599bb4b755225d5e1d4fef88433044b"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/current-kernel-validation.json",
+      "published_sha256": "b22df663d7c38d68c820d2832c7eba8dcb42ac89c93e3d0e20f98e47ff76b74c",
+      "bytes": 9259,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/current-kernel-validation.json",
+      "source_sha256": "b22df663d7c38d68c820d2832c7eba8dcb42ac89c93e3d0e20f98e47ff76b74c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/held_out_transients.png",
+      "published_sha256": "f3e4003193a56f95867122ceb085ca522a3c1d1887968abb2bfe39e38809e4de",
+      "bytes": 217442,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/held_out_transients.png",
+      "source_sha256": "f3e4003193a56f95867122ceb085ca522a3c1d1887968abb2bfe39e38809e4de"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/imu_steady_noise.csv",
+      "published_sha256": "7759483a9efae4853158b0b4d2567b2bd2ae4ec2d226e90c092350300d6876e8",
+      "bytes": 4640,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/imu_steady_noise.csv",
+      "source_sha256": "7759483a9efae4853158b0b4d2567b2bd2ae4ec2d226e90c092350300d6876e8"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial-validation.json",
+      "published_sha256": "dc55ef688dfe2598f6baab2061148a367743b75ef7b82f8046c4d67035d78ee9",
+      "bytes": 448,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial-validation.json",
+      "source_sha256": "dc55ef688dfe2598f6baab2061148a367743b75ef7b82f8046c4d67035d78ee9"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_cross_run_metrics.csv",
+      "published_sha256": "70e64326bd3e7c8400a4f15c26b0cb13f2252b00c420831e728e709611195f93",
+      "bytes": 4364,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_cross_run_metrics.csv",
+      "source_sha256": "70e64326bd3e7c8400a4f15c26b0cb13f2252b00c420831e728e709611195f93"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_pulse_lags.csv",
+      "published_sha256": "750df0723b8e188c289bc12d7611f3478735453544530045cdbd3afc6b6c0a43",
+      "bytes": 8535,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_pulse_lags.csv",
+      "source_sha256": "750df0723b8e188c289bc12d7611f3478735453544530045cdbd3afc6b6c0a43"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_selected.json",
+      "published_sha256": "02920afd60b0b123bce1774189c3fa1c0931a36b6d0dd103712d01d34e362d9e",
+      "bytes": 1333,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_selected.json",
+      "source_sha256": "02920afd60b0b123bce1774189c3fa1c0931a36b6d0dd103712d01d34e362d9e"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_slow_metrics.csv",
+      "published_sha256": "22aca72b4292cc6565552f3d8c5446c3c19ce98f0a105d5ef13772318b1187ae",
+      "bytes": 2398,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_slow_metrics.csv",
+      "source_sha256": "22aca72b4292cc6565552f3d8c5446c3c19ce98f0a105d5ef13772318b1187ae"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_slow_pulse_lags.csv",
+      "published_sha256": "5c9f081e7834ac971833e9a87e5e1d50551f6d83088ca3e9686c003b05c43177",
+      "bytes": 4489,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_slow_pulse_lags.csv",
+      "source_sha256": "5c9f081e7834ac971833e9a87e5e1d50551f6d83088ca3e9686c003b05c43177"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_slow_selected.json",
+      "published_sha256": "801fcc5e93f505f4c396ece64884eda4d3c0f7be166072ddda02a9b3ed6df416",
+      "bytes": 473,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_slow_selected.json",
+      "source_sha256": "801fcc5e93f505f4c396ece64884eda4d3c0f7be166072ddda02a9b3ed6df416"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_training_grid.csv",
+      "published_sha256": "73398d5e566bf20b56c0eacaf126078bcda850b6cfc873a8ae0dcbc67cc80fa3",
+      "bytes": 14409,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/inertial_training_grid.csv",
+      "source_sha256": "73398d5e566bf20b56c0eacaf126078bcda850b6cfc873a8ae0dcbc67cc80fa3"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/method_comparison.png",
+      "published_sha256": "264d2d9c6354192f00075f994687ea06e0041a6b47a0366d7d9058ec11ce0b09",
+      "bytes": 138197,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/method_comparison.png",
+      "source_sha256": "264d2d9c6354192f00075f994687ea06e0041a6b47a0366d7d9058ec11ce0b09"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/provenance.json",
+      "published_sha256": "17c3458cdd09414c100d188810d42e9597091d81df738f739b5c8be065da9404",
+      "bytes": 2132,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/provenance.json",
+      "source_sha256": "17c3458cdd09414c100d188810d42e9597091d81df738f739b5c8be065da9404"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/pulse_lags.csv",
+      "published_sha256": "910398ffae435dc010b440149c4d2a2c1e32246154377af8efada6d85115516b",
+      "bytes": 8073,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/pulse_lags.csv",
+      "source_sha256": "910398ffae435dc010b440149c4d2a2c1e32246154377af8efada6d85115516b"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/selected.json",
+      "published_sha256": "c73dfc4881c3c9e03828ac3c01c7397682d290d6853ca712cd1e61b0e074751d",
+      "bytes": 5421,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/selected.json",
+      "source_sha256": "c73dfc4881c3c9e03828ac3c01c7397682d290d6853ca712cd1e61b0e074751d"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/training_grid.csv",
+      "published_sha256": "ce7293afa5952e57c56e8d141b6ca4616789bc8421831f6b69503d1a094d38c6",
+      "bytes": 11008,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/training_grid.csv",
+      "source_sha256": "ce7293afa5952e57c56e8d141b6ca4616789bc8421831f6b69503d1a094d38c6"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/turning_checks.csv",
+      "published_sha256": "e686b58a3bb7de6cfbc8f806b430db157b36d7d0dbfb857db934b21091c79295",
+      "bytes": 11572,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/turning_checks.csv",
+      "source_sha256": "e686b58a3bb7de6cfbc8f806b430db157b36d7d0dbfb857db934b21091c79295"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/validation.json",
+      "published_sha256": "bdffea9d71aaa23142c88366b46b6b6877e57b8763f3938f3816db6a14e9cd06",
+      "bytes": 412,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/validation.json",
+      "source_sha256": "bdffea9d71aaa23142c88366b46b6b6877e57b8763f3938f3816db6a14e9cd06"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-14-longitudinal-filter-tuning/wheel_only_ablation.csv",
+      "published_sha256": "3f30c48705ef93041af17228d2757b5ed5e65541969e6d9f25b732515786b7bb",
+      "bytes": 1406,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-14-longitudinal-filter-tuning/wheel_only_ablation.csv",
+      "source_sha256": "3f30c48705ef93041af17228d2757b5ed5e65541969e6d9f25b732515786b7bb"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/causal-native-stages.png",
+      "published_sha256": "594e90f0711a949eae7391bb459d8d2c7e0302d8d3f9e44096f0a1aa60df592f",
+      "bytes": 411274,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-body-acceleration/causal-native-stages.png",
+      "source_sha256": "594e90f0711a949eae7391bb459d8d2c7e0302d8d3f9e44096f0a1aa60df592f"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/desktop-ctest.txt",
+      "published_sha256": "53f6c9a03c8470ebf0c077a5d9a883ce14325a7a0e3fa0793f4899a8993b4543",
+      "bytes": 2614,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-body-acceleration/desktop-ctest.txt",
+      "source_sha256": "53f6c9a03c8470ebf0c077a5d9a883ce14325a7a0e3fa0793f4899a8993b4543"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/lever-decomposition.png",
+      "published_sha256": "e0c692b6dea68e6c97814708a2bac9f56bdbe462debc1c754d8d3d6765e7498c",
+      "bytes": 473725,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-body-acceleration/lever-decomposition.png",
+      "source_sha256": "e0c692b6dea68e6c97814708a2bac9f56bdbe462debc1c754d8d3d6765e7498c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/nx-ctest.txt",
+      "published_sha256": "17cb94534b961244ef265e9e59bcb7e0d2f972f3627542d26ae42c892ff060d7",
+      "bytes": 2650,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-body-acceleration/nx-ctest.txt",
+      "source_sha256": "17cb94534b961244ef265e9e59bcb7e0d2f972f3627542d26ae42c892ff060d7"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/quality-summary.json",
+      "published_sha256": "930f12cce2327a13aa3c57528d3d4d4e8707292ca146dafe5b87c4d82478a1ea",
+      "bytes": 31489,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-body-acceleration/quality-summary.json",
+      "source_sha256": "930f12cce2327a13aa3c57528d3d4d4e8707292ca146dafe5b87c4d82478a1ea"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/running-psd.png",
+      "published_sha256": "cc68f529fb0aba59c2ec95d655982e225ae2e1cac6e9507db09d1a31bf7e26f2",
+      "bytes": 308512,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-body-acceleration/running-psd.png",
+      "source_sha256": "cc68f529fb0aba59c2ec95d655982e225ae2e1cac6e9507db09d1a31bf7e26f2"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/short-static-allan.png",
+      "published_sha256": "a38e66a11f9d851d20131263e8b53996cc89eaf1ef2fbc0efc71b992d5eefdc8",
+      "bytes": 113117,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-body-acceleration/short-static-allan.png",
+      "source_sha256": "a38e66a11f9d851d20131263e8b53996cc89eaf1ef2fbc0efc71b992d5eefdc8"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/static-six-axis.png",
+      "published_sha256": "7c3c70d4c121b150b16028575ad6867cc87a9818c73f0a5589c83937d42e72ee",
+      "bytes": 450184,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-body-acceleration/static-six-axis.png",
+      "source_sha256": "7c3c70d4c121b150b16028575ad6867cc87a9818c73f0a5589c83937d42e72ee"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/validation-manifest.json",
+      "published_sha256": "4c1a77323150b06f41520328e0f7b3f4bcfeeae6c7c91dc04c8e2cfa5ffb8338",
+      "bytes": 2671,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-body-acceleration/validation-manifest.json",
+      "source_sha256": "4c1a77323150b06f41520328e0f7b3f4bcfeeae6c7c91dc04c8e2cfa5ffb8338"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-body-acceleration/validation-summary.json",
+      "published_sha256": "41470e5549de228f27c8938cb24176c0aa8b566e446be50e823c7924b87f2f8e",
+      "bytes": 27122,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-body-acceleration/validation-summary.json",
+      "source_sha256": "41470e5549de228f27c8938cb24176c0aa8b566e446be50e823c7924b87f2f8e"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-current-response/collection-coverage.csv",
+      "published_sha256": "d3efbe1a41092fd119b3d72d94ed7829fdee9f6e2698bbe3ddf4243f9bc634c5",
+      "bytes": 287,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-current-response/collection-coverage.csv",
+      "source_sha256": "d3efbe1a41092fd119b3d72d94ed7829fdee9f6e2698bbe3ddf4243f9bc634c5"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-current-response/coverage.png",
+      "published_sha256": "37356a8c8e1b332f62862472db028501e5d0b6024470ab42d30bcce3d7b8a968",
+      "bytes": 109215,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-current-response/coverage.png",
+      "source_sha256": "37356a8c8e1b332f62862472db028501e5d0b6024470ab42d30bcce3d7b8a968"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-current-response/grouped-validation.csv",
+      "published_sha256": "1688a39308065a18ba617c53867b7210a0c97a2fe7346ebb4bc3b361e9bc6f7e",
+      "bytes": 1051,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-current-response/grouped-validation.csv",
+      "source_sha256": "1688a39308065a18ba617c53867b7210a0c97a2fe7346ebb4bc3b361e9bc6f7e"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-current-response/high-current-comparison.csv",
+      "published_sha256": "d92d9c2dc66c313ab8522347bf5ca69aebbdf0c778d79ae31254506b8fcf4c56",
+      "bytes": 1147,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-current-response/high-current-comparison.csv",
+      "source_sha256": "d92d9c2dc66c313ab8522347bf5ca69aebbdf0c778d79ae31254506b8fcf4c56"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-current-response/measured-window-summary.json",
+      "published_sha256": "c58a6377f3bc40a84eacadff5a89e8b8dc4d18a65cce97e5854ad2ff7efd634d",
+      "bytes": 4024,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-current-response/measured-window-summary.json",
+      "source_sha256": "c58a6377f3bc40a84eacadff5a89e8b8dc4d18a65cce97e5854ad2ff7efd634d"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-current-response/response-curves.png",
+      "published_sha256": "0b46e9d4461129e0dac3aa9c92baf4c990a99b7539d25b42f763d86323bb2788",
+      "bytes": 323656,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-current-response/response-curves.png",
+      "source_sha256": "0b46e9d4461129e0dac3aa9c92baf4c990a99b7539d25b42f763d86323bb2788"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-current-response/source-manifest.json",
+      "published_sha256": "7b676b1e308728a9f0ad38f3b65d5b7ad2ec7af8c64bb1415590bdd150fc95c5",
+      "bytes": 5542,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-current-response/source-manifest.json",
+      "source_sha256": "7b676b1e308728a9f0ad38f3b65d5b7ad2ec7af8c64bb1415590bdd150fc95c5"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-current-response/wheel-only-summary.json",
+      "published_sha256": "645aaadb04d0464cdc8e83653300661f0820e8827036efeb6a735378536f4672",
+      "bytes": 5749,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-current-response/wheel-only-summary.json",
+      "source_sha256": "645aaadb04d0464cdc8e83653300661f0820e8827036efeb6a735378536f4672"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-estimator-replay/ekf-run-metrics.csv",
+      "published_sha256": "288fed0803832c320f9d1d75bb32411e4bec8f2607486ed7b9432e1b23d11e9c",
+      "bytes": 721,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-estimator-replay/ekf-run-metrics.csv",
+      "source_sha256": "288fed0803832c320f9d1d75bb32411e4bec8f2607486ed7b9432e1b23d11e9c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-estimator-replay/ekf-summary.json",
+      "published_sha256": "c9f1569750d002dfc56feb09e5ece810a88e03226abe9dcdb87699b21c19d4f8",
+      "bytes": 6034,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-estimator-replay/ekf-summary.json",
+      "source_sha256": "c9f1569750d002dfc56feb09e5ece810a88e03226abe9dcdb87699b21c19d4f8"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-estimator-replay/fir-calibration-metrics.csv",
+      "published_sha256": "c5d4063bded4e84e71ab8eb68195a05c352b5960c7ce07f36531a1f6e134eb2e",
+      "bytes": 1564,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-estimator-replay/fir-calibration-metrics.csv",
+      "source_sha256": "c5d4063bded4e84e71ab8eb68195a05c352b5960c7ce07f36531a1f6e134eb2e"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-estimator-replay/fir-mpcc-turning.csv",
+      "published_sha256": "9c31041e34d259488e3f6eca8593eb1489feab4eec2ed3f5669ee199b28c0829",
+      "bytes": 602,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-estimator-replay/fir-mpcc-turning.csv",
+      "source_sha256": "9c31041e34d259488e3f6eca8593eb1489feab4eec2ed3f5669ee199b28c0829"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-estimator-replay/fir-summary.json",
+      "published_sha256": "173ce5b4fdfb3f80e3f3bd0cc6cc4c0092ccc7aa9a81a910cb157676d6b4f6d5",
+      "bytes": 10802,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-estimator-replay/fir-summary.json",
+      "source_sha256": "173ce5b4fdfb3f80e3f3bd0cc6cc4c0092ccc7aa9a81a910cb157676d6b4f6d5"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-estimator-replay/source-manifest.json",
+      "published_sha256": "f7b707ceea94ea346007da517f39083e5c71dc5511fbc96ba24ff0e571d01649",
+      "bytes": 3311,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-estimator-replay/source-manifest.json",
+      "source_sha256": "f7b707ceea94ea346007da517f39083e5c71dc5511fbc96ba24ff0e571d01649"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-mpcc-multilap/artifact-manifest.json",
+      "published_sha256": "73b0d524eb0b4da49290644f62d8b42a095869e5db526f4d05efdd69f207e24f",
+      "bytes": 3665,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-mpcc-multilap/artifact-manifest.json",
+      "source_sha256": "73b0d524eb0b4da49290644f62d8b42a095869e5db526f4d05efdd69f207e24f"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-mpcc-multilap/laps-and-path.png",
+      "published_sha256": "afc7f1587bf9cee304f973363958c76edff232706c4f0a5ab5d7f10376454c88",
+      "bytes": 260511,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-mpcc-multilap/laps-and-path.png",
+      "source_sha256": "afc7f1587bf9cee304f973363958c76edff232706c4f0a5ab5d7f10376454c88"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-mpcc-multilap/laps.csv",
+      "published_sha256": "297e57c067bf5658ba1d350cbbf93811cee860d42f91baf3d88072d95451f2f5",
+      "bytes": 1861,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-mpcc-multilap/laps.csv",
+      "source_sha256": "297e57c067bf5658ba1d350cbbf93811cee860d42f91baf3d88072d95451f2f5"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-mpcc-multilap/summary.json",
+      "published_sha256": "670e54258ca03e29c204671e664223e7621de8c845f90bd2dcdd955a4256d6bf",
+      "bytes": 15689,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-mpcc-multilap/summary.json",
+      "source_sha256": "670e54258ca03e29c204671e664223e7621de8c845f90bd2dcdd955a4256d6bf"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-native-state-nodes/artifact-manifest.json",
+      "published_sha256": "b294e12e9f376ba56ffac552d109f2eae36e08b5b04ec618228b760d93478b2b",
+      "bytes": 817,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-native-state-nodes/artifact-manifest.json",
+      "source_sha256": "b294e12e9f376ba56ffac552d109f2eae36e08b5b04ec618228b760d93478b2b"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-native-state-nodes/desktop-ctest.txt",
+      "published_sha256": "69209147a3ec4d06ff23b2b6dff4fc27d5832d53f2a986a6a4c04e481a5e11f7",
+      "bytes": 2424,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-native-state-nodes/desktop-ctest.txt",
+      "source_sha256": "69209147a3ec4d06ff23b2b6dff4fc27d5832d53f2a986a6a4c04e481a5e11f7"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-native-state-nodes/nx-ctest.txt",
+      "published_sha256": "105312338a562b2eb5592252d3a69f32d0e23531fb0a7aead1f7675f14ddcb35",
+      "bytes": 2388,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-native-state-nodes/nx-ctest.txt",
+      "source_sha256": "105312338a562b2eb5592252d3a69f32d0e23531fb0a7aead1f7675f14ddcb35"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-native-state-nodes/validation-summary.json",
+      "published_sha256": "da463f5234ca41fbc8775e8caa578379793d43c733d251c998ec2c58703b2717",
+      "bytes": 3604,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-native-state-nodes/validation-summary.json",
+      "source_sha256": "da463f5234ca41fbc8775e8caa578379793d43c733d251c998ec2c58703b2717"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/B-extreme-event.json",
+      "published_sha256": "210250ac400599d47f4b6805eb13cdc71670731af85c7ee433d5f2a071f88f2f",
+      "bytes": 3116,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/B-extreme-event.json",
+      "source_sha256": "210250ac400599d47f4b6805eb13cdc71670731af85c7ee433d5f2a071f88f2f"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/ax-rate-ay-comparison.png",
+      "published_sha256": "d3828e669ba7e90cf8ffe26b6af7772b0bfe79b7259b1b35b3c50e24184c6ac5",
+      "bytes": 831653,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/ax-rate-ay-comparison.png",
+      "source_sha256": "d3828e669ba7e90cf8ffe26b6af7772b0bfe79b7259b1b35b3c50e24184c6ac5"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/kinematic-comparison.json",
+      "published_sha256": "ed534666bc472b93016be96e233d0cde0c962c37323f2a3c9b130afdbf563133",
+      "bytes": 7046,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/kinematic-comparison.json",
+      "source_sha256": "ed534666bc472b93016be96e233d0cde0c962c37323f2a3c9b130afdbf563133"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/lateral-compensation.png",
+      "published_sha256": "7c42bc56add47b198b690cc97822ca5e92f1f9d0ceb12337311d0f19133a04db",
+      "bytes": 453851,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/lateral-compensation.png",
+      "source_sha256": "7c42bc56add47b198b690cc97822ca5e92f1f9d0ceb12337311d0f19133a04db"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/lateral-g-and-gg.png",
+      "published_sha256": "36ab3a36ebf7ee7b1069dbac8b99452866c9a504d9133a08d52f2d25cb2476e8",
+      "bytes": 721201,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/lateral-g-and-gg.png",
+      "source_sha256": "36ab3a36ebf7ee7b1069dbac8b99452866c9a504d9133a08d52f2d25cb2476e8"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/mpcc-ay-details.png",
+      "published_sha256": "e01c26f22e71499195c5f82c7bab48eb432b897555ebefb2375880436fb9353e",
+      "bytes": 505911,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/mpcc-ay-details.png",
+      "source_sha256": "e01c26f22e71499195c5f82c7bab48eb432b897555ebefb2375880436fb9353e"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/mpcc-ay-overview.png",
+      "published_sha256": "406e27b242578f94a0d8265ac560d74565e9b75303fb6d27e17e44f80e22dca1",
+      "bytes": 611433,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/mpcc-ay-overview.png",
+      "source_sha256": "406e27b242578f94a0d8265ac560d74565e9b75303fb6d27e17e44f80e22dca1"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/mpcc-native-recheck.json",
+      "published_sha256": "921029f21992d75827b64a915cc4921029230d084a6d25b2ffb7aebd803b0f36",
+      "bytes": 1110,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/mpcc-native-recheck.json",
+      "source_sha256": "921029f21992d75827b64a915cc4921029230d084a6d25b2ffb7aebd803b0f36"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/mpcc-review.json",
+      "published_sha256": "106b9c76a6a6cb4be7baf171c302915f8fea218ce0fc54c69571aa1b87bc993a",
+      "bytes": 3889,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/mpcc-review.json",
+      "source_sha256": "106b9c76a6a6cb4be7baf171c302915f8fea218ce0fc54c69571aa1b87bc993a"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/native-parity.json",
+      "published_sha256": "20191c9ca412235309ef6324153709de8446345b5884a05374ed991265923c52",
+      "bytes": 1407,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/native-parity.json",
+      "source_sha256": "20191c9ca412235309ef6324153709de8446345b5884a05374ed991265923c52"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/planar-ctest.log",
+      "published_sha256": "beb6b5db499c99f89dfb6f4fe4f4e28d8562d3ae00bc61934a9f473c9bfcb5e6",
+      "bytes": 2991,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/planar-ctest.log",
+      "source_sha256": "beb6b5db499c99f89dfb6f4fe4f4e28d8562d3ae00bc61934a9f473c9bfcb5e6"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/planar-nx-ctest.log",
+      "published_sha256": "251b0fabc8ca98fec3899f98e7e6bb36e03b1572124747d9345b4395c5a99dba",
+      "bytes": 2957,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/planar-nx-ctest.log",
+      "source_sha256": "251b0fabc8ca98fec3899f98e7e6bb36e03b1572124747d9345b4395c5a99dba"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/runtime-summary.json",
+      "published_sha256": "27e3892693469871cd087d26c9afea0fecb980f8fc709200fd978d595ba37980",
+      "bytes": 3451,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/runtime-summary.json",
+      "source_sha256": "27e3892693469871cd087d26c9afea0fecb980f8fc709200fd978d595ba37980"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/source-hashes.json",
+      "published_sha256": "4f72d3e503aebb5fbc2544aa4e0ec16b8d18e14c56e943f691e4da1439b5f362",
+      "bytes": 14422,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/source-hashes.json",
+      "source_sha256": "4f72d3e503aebb5fbc2544aa4e0ec16b8d18e14c56e943f691e4da1439b5f362"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/summary.json",
+      "published_sha256": "1b8300770dc04369116b6a2582c5911ed0f8374b231e6d7abf971d213ff89823",
+      "bytes": 14110,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/summary.json",
+      "source_sha256": "1b8300770dc04369116b6a2582c5911ed0f8374b231e6d7abf971d213ff89823"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-planar-acceleration/synthetic-physics.json",
+      "published_sha256": "a026a547036f268f7d9b51bf91afcf4446decb0c0d161499bb2f8dc3680939df",
+      "bytes": 2558,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-planar-acceleration/synthetic-physics.json",
+      "source_sha256": "a026a547036f268f7d9b51bf91afcf4446decb0c0d161499bb2f8dc3680939df"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-yaw-rate/desktop-ctest.txt",
+      "published_sha256": "c9a6f9d3b5f07270f5fd46c8f74b2be760827b17ec5037b4c091da03efd0bd53",
+      "bytes": 2892,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-yaw-rate/desktop-ctest.txt",
+      "source_sha256": "c9a6f9d3b5f07270f5fd46c8f74b2be760827b17ec5037b4c091da03efd0bd53"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-yaw-rate/native-parity.json",
+      "published_sha256": "5fef9186145b243a8c77acd962811ba78cadcce9a379d1a7d1d8bd215dd48a28",
+      "bytes": 490,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-yaw-rate/native-parity.json",
+      "source_sha256": "5fef9186145b243a8c77acd962811ba78cadcce9a379d1a7d1d8bd215dd48a28"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-yaw-rate/nx-ctest.txt",
+      "published_sha256": "397f78c14699e7c66a9d42a82e33c28005bd30213e5c5f6b91dfd412252fd544",
+      "bytes": 2838,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-yaw-rate/nx-ctest.txt",
+      "source_sha256": "397f78c14699e7c66a9d42a82e33c28005bd30213e5c5f6b91dfd412252fd544"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-yaw-rate/quality-summary.json",
+      "published_sha256": "9f4d0d3656ed7f76e670ba6e455d4331b493c0d285e5e77db1f5a50d19da51d9",
+      "bytes": 31920,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-yaw-rate/quality-summary.json",
+      "source_sha256": "9f4d0d3656ed7f76e670ba6e455d4331b493c0d285e5e77db1f5a50d19da51d9"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-yaw-rate/validation-summary.json",
+      "published_sha256": "c95eaf769f093e6be3f7363558b602737d47fb2ff77b5d924fb086151cda8b51",
+      "bytes": 5147,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-yaw-rate/validation-summary.json",
+      "source_sha256": "c95eaf769f093e6be3f7363558b602737d47fb2ff77b5d924fb086151cda8b51"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-15-yaw-rate/yaw-rate-comparison.png",
+      "published_sha256": "838c7d58dbf40136e2de91b1a6baae57b93cf4518f2bd95ec29dc2c8b818dd5c",
+      "bytes": 632267,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-15-yaw-rate/yaw-rate-comparison.png",
+      "source_sha256": "838c7d58dbf40136e2de91b1a6baae57b93cf4518f2bd95ec29dc2c8b818dd5c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/calibration-frozen-clock-causality.log",
+      "published_sha256": "a4701b2a9bc0a139d4429a56263a85a23a9889f74e615adefc4c2d4ac75697bc",
+      "bytes": 98,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/calibration-frozen-clock-causality.log",
+      "source_sha256": "a4701b2a9bc0a139d4429a56263a85a23a9889f74e615adefc4c2d4ac75697bc"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/calibration-registered-ctest.log",
+      "published_sha256": "44bf362b32a28eb24b2b344e3b16fb6095e81fa18a5765564b3b582fcdd01f40",
+      "bytes": 2192,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/calibration-registered-ctest.log",
+      "source_sha256": "44bf362b32a28eb24b2b344e3b16fb6095e81fa18a5765564b3b582fcdd01f40"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/deployed-binary-sha256.json",
+      "published_sha256": "91380bc685bf7b3c0468e2526baeb53c1bba2dcc1257f3669ef6d42568b5411a",
+      "bytes": 990,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/deployed-binary-sha256.json",
+      "source_sha256": "91380bc685bf7b3c0468e2526baeb53c1bba2dcc1257f3669ef6d42568b5411a"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/deployed-calibration-process-tests.log",
+      "published_sha256": "3c64d049d1c8c203420ee15f39d2c32dd3b3706e9d161b633d2263eff574701f",
+      "bytes": 100,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/deployed-calibration-process-tests.log",
+      "source_sha256": "3c64d049d1c8c203420ee15f39d2c32dd3b3706e9d161b633d2263eff574701f"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/deployed-library-resolution.txt",
+      "published_sha256": "a8d51aec851d6005beb25215a65a58f27ccc312aa4a427c6b108a6c69bd28380",
+      "bytes": 3966,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/deployed-library-resolution.txt",
+      "source_sha256": "a8d51aec851d6005beb25215a65a58f27ccc312aa4a427c6b108a6c69bd28380"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/deployed-native-install.json",
+      "published_sha256": "dfa756eb074e4a611dbcfa9e29318cdc92ba3f1cbd2abbc53957a08fd8ffdfca",
+      "bytes": 1718,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/deployed-native-install.json",
+      "source_sha256": "dfa756eb074e4a611dbcfa9e29318cdc92ba3f1cbd2abbc53957a08fd8ffdfca"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/deployed-pp-process-tests.log",
+      "published_sha256": "0c752b238a8ae9b11a67ce71882038852baea83fef9023de810506420f374853",
+      "bytes": 99,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/deployed-pp-process-tests.log",
+      "source_sha256": "0c752b238a8ae9b11a67ce71882038852baea83fef9023de810506420f374853"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/deployed-source-sha256.json",
+      "published_sha256": "9c3af170befda33eef40f4777e2f12d64c4f40f40ae93005b664ff279b1c5454",
+      "bytes": 22831,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/deployed-source-sha256.json",
+      "source_sha256": "9c3af170befda33eef40f4777e2f12d64c4f40f40ae93005b664ff279b1c5454"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/deployed-source-verification.json",
+      "published_sha256": "583fdf85c80cd4255c2f983a08d9983c5c6dcd7db8a57ffd47ac6604a273cadf",
+      "bytes": 105,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/deployed-source-verification.json",
+      "source_sha256": "583fdf85c80cd4255c2f983a08d9983c5c6dcd7db8a57ffd47ac6604a273cadf"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/main-calibration-launch-tests.log",
+      "published_sha256": "5851eafcb168e30414eeefd996c2b92bbb8debffb6fa3d7992f601c24b4c11c7",
+      "bytes": 99,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/main-calibration-launch-tests.log",
+      "source_sha256": "5851eafcb168e30414eeefd996c2b92bbb8debffb6fa3d7992f601c24b4c11c7"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/native_engine_parity_console.log",
+      "published_sha256": "b4e7e5b8282fe4f4d1745a3144a3a368751852cc1be38a3f85831f92f2e235de",
+      "bytes": 628,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/native_engine_parity_console.log",
+      "source_sha256": "b4e7e5b8282fe4f4d1745a3144a3a368751852cc1be38a3f85831f92f2e235de"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/nx-stage-build.log",
+      "published_sha256": "8fa650363190bf199ea5770418d3732eaadcb746f9d40871266c2758d854efe2",
+      "bytes": 3847,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/nx-stage-build.log",
+      "source_sha256": "8fa650363190bf199ea5770418d3732eaadcb746f9d40871266c2758d854efe2"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/nx-test-result-final.log",
+      "published_sha256": "d0ec751b455dac11c71851a9c9e1ab4090f2ad03639fbedf23d1be1b27bb8f10",
+      "bytes": 52,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/nx-test-result-final.log",
+      "source_sha256": "d0ec751b455dac11c71851a9c9e1ab4090f2ad03639fbedf23d1be1b27bb8f10"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/pp-native-tests.txt",
+      "published_sha256": "df9c7777218405dcb9cd32269cb6981791c3607bb9ba87122da308ec67bbdd6a",
+      "bytes": 100,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/pp-native-tests.txt",
+      "source_sha256": "df9c7777218405dcb9cd32269cb6981791c3607bb9ba87122da308ec67bbdd6a"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-16-native-calibration/validation-summary.json",
+      "published_sha256": "f3e6b29a4a78cf4ce76e8b054b6f7066ae12daad0ab60db96830dd1e0ae402b2",
+      "bytes": 2709,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-16-native-calibration/validation-summary.json",
+      "source_sha256": "f3e6b29a4a78cf4ce76e8b054b6f7066ae12daad0ab60db96830dd1e0ae402b2"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/citation-evidence.json",
+      "published_sha256": "d0afeb003eb94ba546af0afc0c4d2dd417986232b6bd056f7b71f2fb71e1701e",
+      "bytes": 1665,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-current-affine-selection/citation-evidence.json",
+      "source_sha256": "d0afeb003eb94ba546af0afc0c4d2dd417986232b6bd056f7b71f2fb71e1701e"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/interval-features.csv",
+      "published_sha256": "fa7374c46c859ab0a4ddc7683cfdc4bc3b6bc562670be129aef5361e537b7fdc",
+      "bytes": 22854,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-current-affine-selection/interval-features.csv",
+      "source_sha256": "fa7374c46c859ab0a4ddc7683cfdc4bc3b6bc562670be129aef5361e537b7fdc"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/manifest.json",
+      "published_sha256": "4172fbfc6ad1bc4d17cf7ea117edc1fe99b53fcafc09406b5dda3f243b8f6984",
+      "bytes": 740,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-current-affine-selection/manifest.json",
+      "source_sha256": "4172fbfc6ad1bc4d17cf7ea117edc1fe99b53fcafc09406b5dda3f243b8f6984"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/metrics.json",
+      "published_sha256": "cedefcf73814a2116813f059ba959eafac02988d3dc7364fe2bf57cb8b7fcea9",
+      "bytes": 94592,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-current-affine-selection/metrics.json",
+      "source_sha256": "cedefcf73814a2116813f059ba959eafac02988d3dc7364fe2bf57cb8b7fcea9"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/model-metrics.csv",
+      "published_sha256": "a51f13b0f1979548a51f5abd5acaec5ed9a3528d8d866b103014efd45b7fee76",
+      "bytes": 19777,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-current-affine-selection/model-metrics.csv",
+      "source_sha256": "a51f13b0f1979548a51f5abd5acaec5ed9a3528d8d866b103014efd45b7fee76"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/numerical-verification.json",
+      "published_sha256": "39c223f2f64195a3640217ba4ec4184a47fe7065429ad4eca9db1a735bf61fc4",
+      "bytes": 658,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-current-affine-selection/numerical-verification.json",
+      "source_sha256": "39c223f2f64195a3640217ba4ec4184a47fe7065429ad4eca9db1a735bf61fc4"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/references.bib",
+      "published_sha256": "7f04eba4368d850e71e2b13cba48465e0fcf6926e8f0432ce77f43071e908fdd",
+      "bytes": 776,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-current-affine-selection/references.bib",
+      "source_sha256": "7f04eba4368d850e71e2b13cba48465e0fcf6926e8f0432ce77f43071e908fdd"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/selected-model.json",
+      "published_sha256": "7b1e4e637c9a348a972ecffae337441d17143bff1990007b70ab368020227828",
+      "bytes": 2053,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-current-affine-selection/selected-model.json",
+      "source_sha256": "7b1e4e637c9a348a972ecffae337441d17143bff1990007b70ab368020227828"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-current-affine-selection/selection.csv",
+      "published_sha256": "7d88c9bedb37cf7dc6640d4d79b0f2b651e7845ad2d4543e5e50de46558f0016",
+      "bytes": 1654,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-current-affine-selection/selection.csv",
+      "source_sha256": "7d88c9bedb37cf7dc6640d4d79b0f2b651e7845ad2d4543e5e50de46558f0016"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-dual-reference-state/ctest-x86.txt",
+      "published_sha256": "c1d27958a09cfe4c8e89fc38b336a7acdd5169a5c9c05de7c99c5419d2775eb3",
+      "bytes": 3529,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-dual-reference-state/ctest-x86.txt",
+      "source_sha256": "c1d27958a09cfe4c8e89fc38b336a7acdd5169a5c9c05de7c99c5419d2775eb3"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-dual-reference-state/legacy-planar-parity.json",
+      "published_sha256": "d361e4a050d3888942acfd04df5f204fdb9f74c97e0be181e454faf208432179",
+      "bytes": 994,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-dual-reference-state/legacy-planar-parity.json",
+      "source_sha256": "d361e4a050d3888942acfd04df5f204fdb9f74c97e0be181e454faf208432179"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-dual-reference-state/legacy-velocity-parity.json",
+      "published_sha256": "d7eec87747ad525541562bedd3b859e05e80838ca42ca1285382b690f491c605",
+      "bytes": 280,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-dual-reference-state/legacy-velocity-parity.json",
+      "source_sha256": "d7eec87747ad525541562bedd3b859e05e80838ca42ca1285382b690f491c605"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-dual-reference-state/output-statistics.json",
+      "published_sha256": "5f9095aee6e5bd35c4cb85d4f2b0a850592e830ef4211371659ca69f7c1fccb8",
+      "bytes": 5017,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-dual-reference-state/output-statistics.json",
+      "source_sha256": "5f9095aee6e5bd35c4cb85d4f2b0a850592e830ef4211371659ca69f7c1fccb8"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-dual-reference-state/replay-summary.json",
+      "published_sha256": "3ef669d24d5d87f6f866a985b2ca2ab89b9d6cc255929cb0df7471efe320eeb4",
+      "bytes": 7947,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-dual-reference-state/replay-summary.json",
+      "source_sha256": "3ef669d24d5d87f6f866a985b2ca2ab89b9d6cc255929cb0df7471efe320eeb4"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-dual-reference-state/validation-summary.json",
+      "published_sha256": "9599588872889d7938ccd29a04a925c1084936cf4dfe591fc0d951578896d8bd",
+      "bytes": 7257,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-dual-reference-state/validation-summary.json",
+      "source_sha256": "9599588872889d7938ccd29a04a925c1084936cf4dfe591fc0d951578896d8bd"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-fastlio-accel-scale/comparison.png",
+      "published_sha256": "059be52ba2e0fa9638d5c93c598022ce410a367f9560615ad2ee29ff32ff1e00",
+      "bytes": 1002463,
+      "source": "/home/elesheep/aimsracer-data/experiments/fastlio-accel-scale-20261017/mpcc-replay/analysis/comparison.png",
+      "source_sha256": "059be52ba2e0fa9638d5c93c598022ce410a367f9560615ad2ee29ff32ff1e00"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-fastlio-accel-scale/lap-boundary-gaps.csv",
+      "published_sha256": "af4174027fdc14dfa85b9777e53a5f7e8a19ed3f8b7c160fc00bf9d3d2415075",
+      "bytes": 4472,
+      "source": "/home/elesheep/aimsracer-data/experiments/fastlio-accel-scale-20261017/mpcc-replay/analysis/lap-boundary-gaps.csv",
+      "source_sha256": "af4174027fdc14dfa85b9777e53a5f7e8a19ed3f8b7c160fc00bf9d3d2415075"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-fastlio-accel-scale/metrics.json",
+      "published_sha256": "5e5616d11050f71385df8fd25661115ee2b0f403442e15af49a718680c031b7f",
+      "bytes": 81002,
+      "source": "/home/elesheep/aimsracer-data/experiments/fastlio-accel-scale-20261017/mpcc-replay/analysis/metrics.json",
+      "source_sha256": "5e5616d11050f71385df8fd25661115ee2b0f403442e15af49a718680c031b7f"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-fastlio-accel-scale/original-readout.zh-CN.txt",
+      "published_sha256": "1ccb36f9edac9ae9ac68898c04ec20e19aa45415f2c684929d911564dd051f15",
+      "bytes": 4652,
+      "source": "/home/elesheep/aimsracer-data/experiments/fastlio-accel-scale-20261017/mpcc-replay/READOUT.zh-CN.txt",
+      "source_sha256": "1ccb36f9edac9ae9ac68898c04ec20e19aa45415f2c684929d911564dd051f15"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-fastlio-accel-scale/other-implementations.json",
+      "published_sha256": "a776a28d2023a56ec19fb2e805f12169dc91a0668b07464105033e975d31504a",
+      "bytes": 5799,
+      "source": "/home/elesheep/aimsracer-data/experiments/fastlio-accel-scale-20261017/other-implementations/comparison.json",
+      "source_sha256": "a776a28d2023a56ec19fb2e805f12169dc91a0668b07464105033e975d31504a"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-fastlio-accel-scale/runtime-and-laps.png",
+      "published_sha256": "218bf6e0b165092177418e88f85b246813126417c5bcec1de008d0fb4db41898",
+      "bytes": 155784,
+      "source": "/home/elesheep/aimsracer-data/experiments/fastlio-accel-scale-20261017/mpcc-replay/analysis/runtime-and-laps.png",
+      "source_sha256": "218bf6e0b165092177418e88f85b246813126417c5bcec1de008d0fb4db41898"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-localization-cpu/installed-provenance.json",
+      "published_sha256": "3dc6a71d6b22b9aa7067c567dff87412cc560f3c2412de6b9398e94e603e9f2f",
+      "bytes": 783,
+      "source": "nx:/home/aims/aimsracer-data/sessions/2026-10-17/localization-cpu-review/installed-provenance.json",
+      "source_sha256": "3dc6a71d6b22b9aa7067c567dff87412cc560f3c2412de6b9398e94e603e9f2f"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-localization-cpu/paired-output-comparison.json",
+      "published_sha256": "7c1637695afbd0d17c3d6df7d1f4a1055e7270810e428306a51f178bb22c0566",
+      "bytes": 546,
+      "source": "nx:/home/aims/aimsracer-data/sessions/2026-10-17/localization-cpu-review/paired-output-comparison.json",
+      "source_sha256": "7c1637695afbd0d17c3d6df7d1f4a1055e7270810e428306a51f178bb22c0566"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-localization-cpu/summary.json",
+      "published_sha256": "02de540c36bcb2b3e9b22af09edcd65087ba7915736fa74ea7f04a9a98497b53",
+      "bytes": 2563,
+      "source": "nx:/home/aims/aimsracer-data/sessions/2026-10-17/localization-cpu-review/summary.json",
+      "source_sha256": "02de540c36bcb2b3e9b22af09edcd65087ba7915736fa74ea7f04a9a98497b53"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-ndt-5hz/installed-binaries.json",
+      "published_sha256": "3bb3c2c5b6d3abf0a320de89de9a0cb08e1064390d3dfd199126985c0dcd36a4",
+      "bytes": 585,
+      "source": "nx:/home/aims/aimsracer-data/sessions/2026-10-17/ndt-5hz-deployment/installed-binaries.json",
+      "source_sha256": "3bb3c2c5b6d3abf0a320de89de9a0cb08e1064390d3dfd199126985c0dcd36a4"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-ndt-5hz/installed-configs.json",
+      "published_sha256": "d31299eff754b0ca88a00911aa32d3ad40d938587bb88ee7776d5e105615381b",
+      "bytes": 823,
+      "source": "nx:/home/aims/aimsracer-data/sessions/2026-10-17/ndt-5hz-deployment/installed-configs.json",
+      "source_sha256": "d31299eff754b0ca88a00911aa32d3ad40d938587bb88ee7776d5e105615381b"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-ndt-5hz/relative-comparison.json",
+      "published_sha256": "3a800a651741806572466009989fd7a171f33d7c7c4a372390e57a3317902f6e",
+      "bytes": 3968,
+      "source": "nx:/home/aims/aimsracer-data/sessions/2026-10-17/ndt-5hz-deployment/relative-comparison.json",
+      "source_sha256": "3a800a651741806572466009989fd7a171f33d7c7c4a372390e57a3317902f6e"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-ndt-5hz/verification.json",
+      "published_sha256": "7b8286ac87e22cc5b6f400cc54bc0cb1c7ce63bc7e4c0dc8b0d9103576262e6e",
+      "bytes": 883,
+      "source": "nx:/home/aims/aimsracer-data/sessions/2026-10-17/ndt-5hz-deployment/verification.json",
+      "source_sha256": "7b8286ac87e22cc5b6f400cc54bc0cb1c7ce63bc7e4c0dc8b0d9103576262e6e"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-observer-latency-policy/ctest-x86.txt",
+      "published_sha256": "ac2c99cdc8ad34b307b24891458da26b7514a16388f9e58c8c952fe2d0b1e2cf",
+      "bytes": 3529,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-observer-latency-policy/ctest-x86.txt",
+      "source_sha256": "ac2c99cdc8ad34b307b24891458da26b7514a16388f9e58c8c952fe2d0b1e2cf"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-observer-latency-policy/replay-summary.json",
+      "published_sha256": "c72fcf80d91725f1ea80cadd09b24a4726040b89840bd35c09ca5bf50c725b1f",
+      "bytes": 8349,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-observer-latency-policy/replay-summary.json",
+      "source_sha256": "c72fcf80d91725f1ea80cadd09b24a4726040b89840bd35c09ca5bf50c725b1f"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-observer-latency-policy/validation-summary.json",
+      "published_sha256": "70fd288ecc09ec2e0407c8de0fc410259024d2216bf6f9791e470c3147fd4a09",
+      "bytes": 2986,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-observer-latency-policy/validation-summary.json",
+      "source_sha256": "70fd288ecc09ec2e0407c8de0fc410259024d2216bf6f9791e470c3147fd4a09"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-observer-latency-policy/waveform-comparison.json",
+      "published_sha256": "6552241f8165a36f99cbc66c70e315e17c9ce801fd9c5dc8ced9683d85f10cfd",
+      "bytes": 2453,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-observer-latency-policy/waveform-comparison.json",
+      "source_sha256": "6552241f8165a36f99cbc66c70e315e17c9ce801fd9c5dc8ced9683d85f10cfd"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-output-quality/five-output-overview.png",
+      "published_sha256": "2bc2cf930a79fad6888d73f0ded19754f448b60b8ab577605d4aaccf4f1a985b",
+      "bytes": 1288633,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-output-quality/five-output-overview.png",
+      "source_sha256": "2bc2cf930a79fad6888d73f0ded19754f448b60b8ab577605d4aaccf4f1a985b"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-output-quality/metrics.csv",
+      "published_sha256": "4bfc5c4ca71605f62d212bcce1909c39a7cfc5bd9af1eb369d3ea0cdf21ffcda",
+      "bytes": 2285,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-output-quality/metrics.csv",
+      "source_sha256": "4bfc5c4ca71605f62d212bcce1909c39a7cfc5bd9af1eb369d3ea0cdf21ffcda"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-output-quality/output-psd.json",
+      "published_sha256": "dce417a196b5390fa6edaef1721443de8fae49c7e6a20ed49063e5a3ebfbfb28",
+      "bytes": 279044,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-output-quality/output-psd.json",
+      "source_sha256": "dce417a196b5390fa6edaef1721443de8fae49c7e6a20ed49063e5a3ebfbfb28"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-output-quality/output-psd.png",
+      "published_sha256": "79fe6ab595c8e80b4285f1cd04eed636acd9d2ad9b5edd01ed10b5d949751ebe",
+      "bytes": 408173,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-output-quality/output-psd.png",
+      "source_sha256": "79fe6ab595c8e80b4285f1cd04eed636acd9d2ad9b5edd01ed10b5d949751ebe"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-output-quality/summary.json",
+      "published_sha256": "ad528110fe9b2b618c3e2d91f5064a3fae433ba982a0b110fb4e2e66a073077a",
+      "bytes": 35540,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-output-quality/summary.json",
+      "source_sha256": "ad528110fe9b2b618c3e2d91f5064a3fae433ba982a0b110fb4e2e66a073077a"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-state-output-quality/verification.json",
+      "published_sha256": "e3b750395d03d782854873e361e3f53586b1282bf722c6800bad590a69f347af",
+      "bytes": 1116,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-state-output-quality/verification.json",
+      "source_sha256": "e3b750395d03d782854873e361e3f53586b1282bf722c6800bad590a69f347af"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-vicon-comparison-preparation/demo-metrics.json",
+      "published_sha256": "2fbce213bbf7ea3edfcd8d9559cea111143f74c4d227608006d2c73e52906813",
+      "bytes": 37465,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-vicon-comparison-preparation/demo-metrics.json",
+      "source_sha256": "2fbce213bbf7ea3edfcd8d9559cea111143f74c4d227608006d2c73e52906813"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-vicon-comparison-preparation/demo-rear-axle.png",
+      "published_sha256": "3a573a20498cd8fcf55ee16268ec265e6557ce889f0fa26cd910b01c54918611",
+      "bytes": 393098,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-vicon-comparison-preparation/demo-rear-axle.png",
+      "source_sha256": "3a573a20498cd8fcf55ee16268ec265e6557ce889f0fa26cd910b01c54918611"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-vicon-comparison-preparation/pytest.txt",
+      "published_sha256": "6674c0790bb190ef3583ae40b8a9c6af0eaac49c48d93571b20bd4a4583675f6",
+      "bytes": 181,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-vicon-comparison-preparation/pytest.txt",
+      "source_sha256": "6674c0790bb190ef3583ae40b8a9c6af0eaac49c48d93571b20bd4a4583675f6"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-vicon-comparison-preparation/unconfigured-inspect.json",
+      "published_sha256": "6aa9d398ab3350af16faf7bf95396429f1a1fd7eca19fca5b2b3c9f9f326aef5",
+      "bytes": 920,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-vicon-comparison-preparation/unconfigured-inspect.json",
+      "source_sha256": "6aa9d398ab3350af16faf7bf95396429f1a1fd7eca19fca5b2b3c9f9f326aef5"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-17-vicon-comparison-preparation/validation-summary.json",
+      "published_sha256": "e129821811a2eb5c7cb80f3b02817eb239800970679c0424b252976b8a1a6fb2",
+      "bytes": 4385,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-17-vicon-comparison-preparation/validation-summary.json",
+      "source_sha256": "e129821811a2eb5c7cb80f3b02817eb239800970679c0424b252976b8a1a6fb2"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/config.template.json",
+      "published_sha256": "0764bb7cfd7754f52a4b11d53501911ab7d06663cbdca289c8d56e8475538a87",
+      "bytes": 4608,
+      "source": "/home/elesheep/AIMSRacer/src/mocap_validation/aims_mocap_validation/aims_mocap_validation/config.template.json",
+      "source_sha256": "0764bb7cfd7754f52a4b11d53501911ab7d06663cbdca289c8d56e8475538a87"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/actuator/actuator.png",
+      "published_sha256": "ab1f7a20c104873a35ec027494cf9753bc328ea63bf480adbc69a64dd2e696f6",
+      "bytes": 114903,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/actuator/actuator.png",
+      "source_sha256": "ab1f7a20c104873a35ec027494cf9753bc328ea63bf480adbc69a64dd2e696f6"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/actuator/events.csv",
+      "published_sha256": "c98189fc3a85c9666bd267f84b472bc3d016a0f6ac54f40790bba498ce0e1967",
+      "bytes": 1257,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/actuator/events.csv",
+      "source_sha256": "c98189fc3a85c9666bd267f84b472bc3d016a0f6ac54f40790bba498ce0e1967"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/actuator/metrics.json",
+      "published_sha256": "b82f9d8d82aff692c080d9de22d24dd4fd90c0898adcf367981ef2c9e01c3385",
+      "bytes": 42703,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/actuator/metrics.json",
+      "source_sha256": "b82f9d8d82aff692c080d9de22d24dd4fd90c0898adcf367981ef2c9e01c3385"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/actuator/report.zh-CN.md",
+      "published_sha256": "6537aa7acb381d63614daa9a35827c83e1217577da685cf46b5675757c4c492d",
+      "bytes": 2747,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/actuator/report.zh-CN.md",
+      "source_sha256": "6537aa7acb381d63614daa9a35827c83e1217577da685cf46b5675757c4c492d"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/actuator/response_signals.csv",
+      "published_sha256": "7920ba8f047cd9f7340937c7434dd744d7852dd9f6905a35eb57267e29945653",
+      "bytes": 470503,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/actuator/response_signals.csv",
+      "source_sha256": "7920ba8f047cd9f7340937c7434dd744d7852dd9f6905a35eb57267e29945653"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/config.analysis.json",
+      "published_sha256": "fe2fa6bfffb3a6f072c092af70416d586d22915a9dda5ce1ee66b658de60f09c",
+      "bytes": 4950,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/config.analysis.json",
+      "source_sha256": "fe2fa6bfffb3a6f072c092af70416d586d22915a9dda5ce1ee66b658de60f09c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/fastlio/aligned.csv",
+      "published_sha256": "96e12a4715bae6d66c0aa683bc36324f6b43e3998cfe13853615d209557eaa88",
+      "bytes": 29096,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/fastlio/aligned.csv",
+      "source_sha256": "96e12a4715bae6d66c0aa683bc36324f6b43e3998cfe13853615d209557eaa88"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/fastlio/fastlio.png",
+      "published_sha256": "b61c6267c89ee81ead02e249d30deda70f4c3d86366d1e172082cf05a1405d75",
+      "bytes": 78813,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/fastlio/fastlio.png",
+      "source_sha256": "b61c6267c89ee81ead02e249d30deda70f4c3d86366d1e172082cf05a1405d75"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/fastlio/metrics.json",
+      "published_sha256": "3aed2c02e5973d9549b623360eb88d3fc27968ec792f1f8f8aa7396a686abc71",
+      "bytes": 12008,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/fastlio/metrics.json",
+      "source_sha256": "3aed2c02e5973d9549b623360eb88d3fc27968ec792f1f8f8aa7396a686abc71"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/fastlio/report.zh-CN.md",
+      "published_sha256": "59d7c7d6ab8a0dc655110e4f5754a5184986e0c1c902bdd061bf388570fdbc4c",
+      "bytes": 976,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/fastlio/report.zh-CN.md",
+      "source_sha256": "59d7c7d6ab8a0dc655110e4f5754a5184986e0c1c902bdd061bf388570fdbc4c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/metrics.json",
+      "published_sha256": "202c3af6f83e7ca96027f2ca1751a23247ec8434297fa4bd9df941d8623c0ef8",
+      "bytes": 3683,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/metrics.json",
+      "source_sha256": "202c3af6f83e7ca96027f2ca1751a23247ec8434297fa4bd9df941d8623c0ef8"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/report.zh-CN.md",
+      "published_sha256": "c43aede23318c047fce7799010994a737ee856789b9907fd13010127c11292bd",
+      "bytes": 369,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/report.zh-CN.md",
+      "source_sha256": "c43aede23318c047fce7799010994a737ee856789b9907fd13010127c11292bd"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/state/aligned.csv",
+      "published_sha256": "8eeabd3f82667acba32544996a6500bb1f26872f48397f0d96e3ddd7bbb5d46c",
+      "bytes": 2857111,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/state/aligned.csv",
+      "source_sha256": "8eeabd3f82667acba32544996a6500bb1f26872f48397f0d96e3ddd7bbb5d46c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/state/center_of_mass.png",
+      "published_sha256": "0319cc54cd4c97e38396afeb5c14fbd5d72bc90be28b153aafdaf02d48116b32",
+      "bytes": 215931,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/state/center_of_mass.png",
+      "source_sha256": "0319cc54cd4c97e38396afeb5c14fbd5d72bc90be28b153aafdaf02d48116b32"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/state/metrics.json",
+      "published_sha256": "ff194f117a6441bb451701b66e6c6c9f6439c5c5032b63c411e6fa0f8681f75d",
+      "bytes": 111054,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/state/metrics.json",
+      "source_sha256": "ff194f117a6441bb451701b66e6c6c9f6439c5c5032b63c411e6fa0f8681f75d"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/state/rear_axle.png",
+      "published_sha256": "71cf2c15f3219a9817d1c8374c05c350955114549899af1362fb5e5397ba206c",
+      "bytes": 224146,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/state/rear_axle.png",
+      "source_sha256": "71cf2c15f3219a9817d1c8374c05c350955114549899af1362fb5e5397ba206c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/state/regime_labels.csv",
+      "published_sha256": "2e3f60a213315633cf56eea8d46473fe8f494cc0350a09ae49727ababb1152f0",
+      "bytes": 273,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/state/regime_labels.csv",
+      "source_sha256": "2e3f60a213315633cf56eea8d46473fe8f494cc0350a09ae49727ababb1152f0"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/state/report.zh-CN.md",
+      "published_sha256": "f36108bee699e72cebe861c52d748cea7df1ee890083e6e5c7dd77564c98a7a3",
+      "bytes": 17796,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/state/report.zh-CN.md",
+      "source_sha256": "f36108bee699e72cebe861c52d748cea7df1ee890083e6e5c7dd77564c98a7a3"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/timing/metrics.json",
+      "published_sha256": "cba417d611458ff8eda319d5dc14e8279c8cd8fdc1f381d2af5cea5048417047",
+      "bytes": 1113,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/timing/metrics.json",
+      "source_sha256": "cba417d611458ff8eda319d5dc14e8279c8cd8fdc1f381d2af5cea5048417047"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/demo/timing/report.zh-CN.md",
+      "published_sha256": "0c3626f2c82559acf215f6e91ed07ee839a747e856249f32997f19d88a0ba46c",
+      "bytes": 491,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/demo-final/report/timing/report.zh-CN.md",
+      "source_sha256": "0c3626f2c82559acf215f6e91ed07ee839a747e856249f32997f19d88a0ba46c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/final-verification.json",
+      "published_sha256": "d1f45eebd4acb9ef5569f9c7e3b73287de4b5024c1ca361680fb7dbfd4c30360",
+      "bytes": 630,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/final-verification.json",
+      "source_sha256": "d1f45eebd4acb9ef5569f9c7e3b73287de4b5024c1ca361680fb7dbfd4c30360"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/host-main-tests.log",
+      "published_sha256": "ac6e08c5a91d0319e7618c83c2eea0988e51ffc813550ed7406b66b7e23a74b8",
+      "bytes": 4515,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/host-main-tests.log",
+      "source_sha256": "ac6e08c5a91d0319e7618c83c2eea0988e51ffc813550ed7406b66b7e23a74b8"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/host-receipt.json",
+      "published_sha256": "8aa4f767a9c3447d147e0ce0abd75cbeb92c4c760a5cebc500f61a7f33f25d4d",
+      "bytes": 153407,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/host-receipt.json",
+      "source_sha256": "8aa4f767a9c3447d147e0ce0abd75cbeb92c4c760a5cebc500f61a7f33f25d4d"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/nx-main-tests.log",
+      "published_sha256": "34d4ff06cc14b2fa44babed308ad5ab05e3e96c4708f67f4c41a1ae25ce8cc9c",
+      "bytes": 5834,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/nx-main-tests.log",
+      "source_sha256": "34d4ff06cc14b2fa44babed308ad5ab05e3e96c4708f67f4c41a1ae25ce8cc9c"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/nx-protected-runtime-after.json",
+      "published_sha256": "9e25c30a567d99435e102790579aab4fb65c9625f3500ca172e7a0b1ef1749d9",
+      "bytes": 38,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/nx-protected-runtime-after.json",
+      "source_sha256": "9e25c30a567d99435e102790579aab4fb65c9625f3500ca172e7a0b1ef1749d9"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/nx-receipt.json",
+      "published_sha256": "d4677b6dc715366c004a347be4286fe55937d2588519272e19de40cd549a1099",
+      "bytes": 153408,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/nx-receipt.json",
+      "source_sha256": "d4677b6dc715366c004a347be4286fe55937d2588519272e19de40cd549a1099"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/real-bag-metadata.json",
+      "published_sha256": "e52a2a0775ff8b730486f2148613a2660c1a42a995196a29bbbf248f0e29831d",
+      "bytes": 11525,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/real-bag-metadata.json",
+      "source_sha256": "e52a2a0775ff8b730486f2148613a2660c1a42a995196a29bbbf248f0e29831d"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/source-parity.json",
+      "published_sha256": "4c975d88c5930904eb59d5523b5569f47b81540b514485cbf44a3f0610ac71cc",
+      "bytes": 134,
+      "source": "/home/elesheep/aimsracer-data/experiments/mocap-validation-20261018/source-parity.json",
+      "source_sha256": "4c975d88c5930904eb59d5523b5569f47b81540b514485cbf44a3f0610ac71cc"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-mocap-validation/sources.lock.json",
+      "published_sha256": "862da7cd07eb819b4fb21186783899f9e7560e7efb1379fc23d00d9bfdbf1581",
+      "bytes": 351,
+      "source": "/home/elesheep/AIMSRacer/src/mocap_validation/sources.lock.json",
+      "source_sha256": "862da7cd07eb819b4fb21186783899f9e7560e7efb1379fc23d00d9bfdbf1581"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-state-observer-nx/completion.json",
+      "published_sha256": "477fda2230a0e2de08196a90a8ad4d44e7e644fae822bd41c4de05e20f4fd572",
+      "bytes": 968,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-18-state-observer-nx/completion.json",
+      "source_sha256": "477fda2230a0e2de08196a90a8ad4d44e7e644fae822bd41c4de05e20f4fd572"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-state-observer-nx/deployed-verification.json",
+      "published_sha256": "e6ab11964d33ec0e4c9767b56c41dd06e848f4c260e11dd4eefd023def1a9f1a",
+      "bytes": 545,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-18-state-observer-nx/deployed-verification.json",
+      "source_sha256": "e6ab11964d33ec0e4c9767b56c41dd06e848f4c260e11dd4eefd023def1a9f1a"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-state-observer-nx/full-replay-summary.json",
+      "published_sha256": "241edf8b776f313ed77f74ede2548aceb54c07f02285b956b4523dc9e906a006",
+      "bytes": 8870,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-18-state-observer-nx/full-replay-summary.json",
+      "source_sha256": "241edf8b776f313ed77f74ede2548aceb54c07f02285b956b4523dc9e906a006"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-state-observer-nx/hi13-retirement-verification.json",
+      "published_sha256": "50587be912f2d9bc564c399985c01f8c73ddc0acbada2f757f2f55bf012f1475",
+      "bytes": 451,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-18-state-observer-nx/hi13-retirement-verification.json",
+      "source_sha256": "50587be912f2d9bc564c399985c01f8c73ddc0acbada2f757f2f55bf012f1475"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-state-observer-nx/nx-ctest.log",
+      "published_sha256": "04a45d7a5ea25681aebae7f95d1f26fa0db439a9e6241e59f335309cfc34aff4",
+      "bytes": 3530,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-18-state-observer-nx/nx-ctest.log",
+      "source_sha256": "04a45d7a5ea25681aebae7f95d1f26fa0db439a9e6241e59f335309cfc34aff4"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-state-observer-nx/nx-vicon-tests.log",
+      "published_sha256": "b4c9ecc5bcbd2d3164d55328c4e9de567e589e29fbbed2c4fda312c0ce477aa1",
+      "bytes": 100,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-18-state-observer-nx/nx-vicon-tests.log",
+      "source_sha256": "b4c9ecc5bcbd2d3164d55328c4e9de567e589e29fbbed2c4fda312c0ce477aa1"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-vy-quality/metrics.json",
+      "published_sha256": "d0aa790b14c3a92f4258c97f392a65b7f36926dd8acfdf022a82f49c23d208be",
+      "bytes": 3618,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-18-vy-quality/metrics.json",
+      "source_sha256": "d0aa790b14c3a92f4258c97f392a65b7f36926dd8acfdf022a82f49c23d208be"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-vy-quality/vy-alignment.png",
+      "published_sha256": "ca53959ca277d54d91f9092e75a0210233243a904d1e640584b68def1d8ebdc2",
+      "bytes": 133939,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-18-vy-quality/vy-alignment.png",
+      "source_sha256": "ca53959ca277d54d91f9092e75a0210233243a904d1e640584b68def1d8ebdc2"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-vy-quality/vy-comparison.png",
+      "published_sha256": "97444999360365d4ed72d979a4d462d315abdc9d233cab9088cfb037a76f9960",
+      "bytes": 737586,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-18-vy-quality/vy-comparison.png",
+      "source_sha256": "97444999360365d4ed72d979a4d462d315abdc9d233cab9088cfb037a76f9960"
+    },
+    {
+      "published_path": "docs/reports/assets/2026-10-18-vy-quality/vy-comparison.svg",
+      "published_sha256": "a3d6b0521f673b48759914e88da29f9b1026a9a884df214568c2faaec96052ad",
+      "bytes": 1123742,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/assets/2026-10-18-vy-quality/vy-comparison.svg",
+      "source_sha256": "a3d6b0521f673b48759914e88da29f9b1026a9a884df214568c2faaec96052ad"
+    },
+    {
+      "published_path": "docs/reports/latest-results.md",
+      "published_sha256": "64248b529e353f146099f14c17e42a97a773ada95e0303b8835fd0d5cd50108c",
+      "bytes": 2423,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/latest-results.md",
+      "source_sha256": "b19e133352c860271bf2e4f5cfd9025e0534ae770ad77ba86f4ca176c1cf7eaf"
+    },
+    {
+      "published_path": "docs/reports/latest-results.zh-CN.md",
+      "published_sha256": "ef4640fdd9437a04660272aff868504844bd33ec889eaf8928a00f7530919f92",
+      "bytes": 6959,
+      "source": "/home/elesheep/AIMSRacer/docs/reports/latest-results.zh-CN.md",
+      "source_sha256": "01db86567301a72ff5b83dfd0698bdec9c6969e8c5bfb297eb629b6a9e2703b4"
+    },
+    {
+      "published_path": "docs/system-latency.md",
+      "published_sha256": "b8f727f42fa5bf6dd70269b6bbe6ea554bbd91145ada037fa2c5ab9c9846176b",
+      "bytes": 37420,
+      "source": "/home/elesheep/AIMSRacer/docs/system-latency.md",
+      "source_sha256": "1b742743397fc6af0982892faae0add3fbc12f4e780acea0037a6e54ae5e49ac"
+    },
+    {
+      "published_path": "docs/system-latency.zh-CN.md",
+      "published_sha256": "19509b73c69a6183201fd33516bc8e910fc96ebe12cdf0516d6180fe55265040",
+      "bytes": 32350,
+      "source": "/home/elesheep/AIMSRacer/docs/system-latency.zh-CN.md",
+      "source_sha256": "f3ab7a9376ba4338620d66e737d45ac12ce2e304115b94598a2607f6e87d8dc0"
+    },
+    {
+      "published_path": "docs/.gitattributes",
+      "published_sha256": "e1ca4a53c30c742af0cd31d37c761d3e6211ccad35e6cd3220caa60e551d0bdd",
+      "bytes": 240,
+      "source": "authored during documentation curation to preserve raw exported artifact bytes"
+    }
+  ]
+}

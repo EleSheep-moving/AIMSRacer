@@ -1,0 +1,50 @@
+[
+  {
+    "run": "134131-mpcc-baseline-lat1p0",
+    "raw_npz_sha256": "7ad72abb09101cca79706af6cb3a7fb2574771e94b6bd862adf458b215d751bb",
+    "derived_sha256": "a7528e5af6a3604aa28c0541fbcca73f5dc1de026310dcc0142f8c743ba8acfa",
+    "replay_input_events": 110518
+  },
+  {
+    "run": "135222-mpcc-lat1p5",
+    "raw_npz_sha256": "d158b352882534e3f97c32bdf70038273261d2a363158ac0f972359b4443261f",
+    "derived_sha256": "21a9001237397f55796b834c5da26074a057d7c5380c8a1f50be38c1fff53de2",
+    "replay_input_events": 23697
+  },
+  {
+    "run": "135509-mpcc-lat2p0",
+    "raw_npz_sha256": "b56263a0035888a7c5fd3515ce00a0d87f22f206afc2f2db20244751c8f6cf98",
+    "derived_sha256": "12f886a4b77d4a055547f50575c22e8dcc9a7d9bedd5ec0576828f3ca16ee1e6",
+    "replay_input_events": 19389
+  },
+  {
+    "run": "135727-mpcc-lat2p5",
+    "raw_npz_sha256": "e25b8d4f8b8c1e20fde8e17afc1522545c91a8232687a1248c321b7f3a7b3515",
+    "derived_sha256": "764dddce3a621f7d00cc1a514ef76579a7199e8db5e45f7f7e8efdfb534ca81d",
+    "replay_input_events": 112970
+  },
+  {
+    "run": "141211-mpcc-lat3p0",
+    "raw_npz_sha256": "fd57b23efc6f238ce17e62205b4c74a33350863d05465bf21f7d5587ae3b4d61",
+    "derived_sha256": "7fa444ca7fbff303f3ac7563fe77b90150dc5cd0b7eafb1d9105328c29a73f17",
+    "replay_input_events": 74820
+  },
+  {
+    "run": "142308-mpcc-lat3p0-acc1p5-brake1p5",
+    "raw_npz_sha256": "8ff4d7e490aaeed524494eede1a6f7aed0a1227aee0b5d7e49bd330d7daa75ee",
+    "derived_sha256": "28d54afa615c3641fb9f382a2812b4cdb2e5d4bf6cf11aad902ebfb4ac8dce18",
+    "replay_input_events": 38705
+  },
+  {
+    "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+    "raw_npz_sha256": "8662f47e26f20358e22048274e6b3cc44670dffdf2fd1f70cc5b67b21f534b55",
+    "derived_sha256": "c889c7ee2db12ceae823c7234c6709ce87b68b2f5c19e6e8677bb40298b5497d",
+    "replay_input_events": 126476
+  },
+  {
+    "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+    "raw_npz_sha256": "cb9c9b52559aebebb5e450243100dbfe7d68d27dd1f9c0ac459dd05f6abe13dc",
+    "derived_sha256": "501d4f0cb46161a9ac5db17eb44d0202bed0a2f9accf9d63a661d3283cf8335f",
+    "replay_input_events": 100818
+  }
+]

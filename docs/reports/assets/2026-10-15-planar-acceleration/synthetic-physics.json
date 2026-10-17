@@ -1,0 +1,82 @@
+[
+  {
+    "kind": "lateral_translation",
+    "frequency_hz": 0.5,
+    "n": 1600,
+    "true_rear_ay_amplitude": 1.0,
+    "raw_reconstruction_error_rms": 3.685052464654048e-17,
+    "filtered_error_rms": 0.0009141659303520452,
+    "filtered_error_abs_p95_g": 0.0001313879109758368,
+    "gain": 1.0012905839717672,
+    "equivalent_filter_lag_ms": 0.02420880764888145
+  },
+  {
+    "kind": "yaw_pivot_about_rear",
+    "frequency_hz": 0.5,
+    "n": 1600,
+    "true_rear_ay_amplitude": 0.0,
+    "raw_reconstruction_error_rms": 0.026166707884484712,
+    "filtered_error_rms": 0.026200495918279002,
+    "filtered_error_abs_p95_g": 0.0037649280934019627
+  },
+  {
+    "kind": "lateral_translation",
+    "frequency_hz": 1,
+    "n": 1600,
+    "true_rear_ay_amplitude": 1.0,
+    "raw_reconstruction_error_rms": 3.748769139724479e-17,
+    "filtered_error_rms": 0.00365658507715942,
+    "filtered_error_abs_p95_g": 0.0005253697962006324,
+    "gain": 1.0051353728853734,
+    "equivalent_filter_lag_ms": 0.09645472783608916
+  },
+  {
+    "kind": "yaw_pivot_about_rear",
+    "frequency_hz": 1,
+    "n": 1600,
+    "true_rear_ay_amplitude": 0.0,
+    "raw_reconstruction_error_rms": 0.10461844996130475,
+    "filtered_error_rms": 0.10515598400028843,
+    "filtered_error_abs_p95_g": 0.015114130014936153
+  },
+  {
+    "kind": "lateral_translation",
+    "frequency_hz": 2,
+    "n": 1600,
+    "true_rear_ay_amplitude": 1.0,
+    "raw_reconstruction_error_rms": 3.7758040750714955e-17,
+    "filtered_error_rms": 0.014621309835386759,
+    "filtered_error_abs_p95_g": 0.0021023718121192685,
+    "gain": 1.0201079186957223,
+    "equivalent_filter_lag_ms": 0.3798023045519054
+  },
+  {
+    "kind": "yaw_pivot_about_rear",
+    "frequency_hz": 2,
+    "n": 1600,
+    "true_rear_ay_amplitude": 0.0,
+    "raw_reconstruction_error_rms": 0.41770046187382875,
+    "filtered_error_rms": 0.42610376421854373,
+    "filtered_error_abs_p95_g": 0.061231488711608134
+  },
+  {
+    "kind": "lateral_translation",
+    "frequency_hz": 3,
+    "n": 1600,
+    "true_rear_ay_amplitude": 1.0,
+    "raw_reconstruction_error_rms": 3.6699140102110006e-17,
+    "filtered_error_rms": 0.03284903461481441,
+    "filtered_error_abs_p95_g": 0.0047221989050422256,
+    "gain": 1.0436018953251667,
+    "equivalent_filter_lag_ms": 0.8325233908791004
+  },
+  {
+    "kind": "yaw_pivot_about_rear",
+    "frequency_hz": 3,
+    "n": 1600,
+    "true_rear_ay_amplitude": 0.0,
+    "raw_reconstruction_error_rms": 0.9369321539373947,
+    "filtered_error_rms": 0.9778033367294955,
+    "filtered_error_abs_p95_g": 0.14049444361000687
+  }
+]

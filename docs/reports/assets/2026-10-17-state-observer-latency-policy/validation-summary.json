@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-17",
+  "purpose": "warning-first publication policy; source-time Robot Localization comparison",
+  "source_sha256": {
+    "src/aims_racer_system/include/aims_racer_system/velocity.hpp": "7eb45d61691f39fc117342ef9f8da399953a18b4ec2083abbfbd7b06714fee8b",
+    "src/aims_racer_system/src/velocity.cpp": "f7dbd2badc055dd4af5b37406a67aa52fca06705610e91996e45f6af4a130b35",
+    "src/aims_racer_system/include/aims_racer_system/body_acceleration.hpp": "5920a75a267165e296837cf83d583ac35a00b8ce080c90608cf0eb2eca45599b",
+    "src/aims_racer_system/src/body_acceleration.cpp": "3b0dd07d821d3eed5480be8639d225ced6838fb1f08390f03397ed0302413c07",
+    "src/aims_racer_system/src/state_observer_node.cpp": "590b961baa383d0a2fb4771158a7965698d349b9d95cf7c877778e81b266c926",
+    "src/aims_racer_system/params/state_observer.yaml": "6db3c9bbf6278738c05c692791ae7a53fcdd5bb00a0f6e13a646fba91483df83",
+    "src/aims_racer_system/tests/test_velocity.cpp": "73f28c93082ff171f6fd0464913820a4fd2ce08f65ce43b764976fb0e0087276",
+    "src/aims_racer_system/tests/test_body_acceleration.cpp": "7a25682e9a5245ea222459e818fb6993063e08f7595d5f6b6ff91ad954ef1cff",
+    "src/aims_racer_system/tests/test_state_observer_runtime.py": "bbdb3d5fc1fe0fc77828cb9689adb3d9a0e6b10d5043632c6fc305b7e8473610",
+    "docs/operations/state-observer.zh-CN.md": "ebe472031479a9cd10c9a3ba0fee3de15595a0d9fdcfad3d9028513ec84fb897",
+    "docs/plans/2026-10-17-dual-reference-state.md": "f2bffb0e355c506def8a985ab652b5ac0997a0cb2e757bae3296168ef906c844",
+    "docs/reports/2026-10-17-dual-reference-state-validation.zh-CN.md": "db4c4af8f0915c928ad458d96e940d32b1b6cc45e934c4900614e457af2b96c0",
+    "verification/dual_reference/README.md": "072b2ac647d28c06765dcf29e51a3add9b6a5b210303ba17f4cc046e250f5258",
+    "verification/dual_reference/compare_reference.py": "12d211a850259b1f6bf34eb6fdaa9447063bd2c3eed15763d010f0617f354dcf",
+    "docs/reports/2026-10-17-state-observer-latency-policy.zh-CN.md": "89103eea9742fc7bf12e96947493c1ee5ac9dda84b3f2f422e327410953a5912"
+  },
+  "ctest_groups_passed": 30,
+  "ctest_groups_total": 30,
+  "xml": {
+    "files": 26,
+    "testcases": 192,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "real_ros_cases": 10,
+  "runtime_red_log": "warning-policy/runtime-red-correct-env.log",
+  "full_replay_receipt_duration_s": 221.92998957600003,
+  "actual_executable_sha256": "9d1aa3b796b385bcc3d7a5a45558eef1dea8612dd642cfb5ccf0ffd5fea86c1c",
+  "nominal_window_comparison_identical_to_previous_implementation": true,
+  "artifact_sha256": {
+    "ctest-x86.txt": "ac2c99cdc8ad34b307b24891458da26b7514a16388f9e58c8c952fe2d0b1e2cf",
+    "waveform-comparison.json": "6552241f8165a36f99cbc66c70e315e17c9ce801fd9c5dc8ced9683d85f10cfd",
+    "replay-summary.json": "c72fcf80d91725f1ea80cadd09b24a4726040b89840bd35c09ca5bf50c725b1f"
+  },
+  "controller_input_changed": false,
+  "navigation_configuration_changed": false,
+  "nx_install_replaced": false,
+  "independent_truth": false
+}

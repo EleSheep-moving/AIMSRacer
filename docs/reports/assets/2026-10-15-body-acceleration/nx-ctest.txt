@@ -1,0 +1,53 @@
+Test project /home/aims/aimsracer-body-observer-20261015/build/aims_racer_system
+      Start  1: rear_axle_imu_test
+ 1/22 Test  #1: rear_axle_imu_test ...............   Passed    0.11 sec
+      Start  2: rear_axle_odometry_test
+ 2/22 Test  #2: rear_axle_odometry_test ..........   Passed    0.10 sec
+      Start  3: longitudinal_observer_test
+ 3/22 Test  #3: longitudinal_observer_test .......   Passed    0.14 sec
+      Start  4: native_gyro_bias
+ 4/22 Test  #4: native_gyro_bias .................   Passed    0.01 sec
+      Start  5: rear_axle_force
+ 5/22 Test  #5: rear_axle_force ..................   Passed    0.00 sec
+      Start  6: localization_alignment
+ 6/22 Test  #6: localization_alignment ...........   Passed    0.00 sec
+      Start  7: body_acceleration_core_test
+ 7/22 Test  #7: body_acceleration_core_test ......   Passed    0.14 sec
+      Start  8: rear_axle_contract
+ 8/22 Test  #8: rear_axle_contract ...............   Passed    1.17 sec
+      Start  9: rear_axle_timestamps
+ 9/22 Test  #9: rear_axle_timestamps .............   Passed    3.76 sec
+      Start 10: gyro_bias
+10/22 Test #10: gyro_bias ........................   Passed    2.65 sec
+      Start 11: current_launch
+11/22 Test #11: current_launch ...................   Passed    0.91 sec
+      Start 12: longitudinal_observer
+12/22 Test #12: longitudinal_observer ............   Passed    3.28 sec
+      Start 13: longitudinal_acceleration
+13/22 Test #13: longitudinal_acceleration ........   Passed    4.39 sec
+      Start 14: native_acceleration_runtime
+14/22 Test #14: native_acceleration_runtime ......   Passed    4.83 sec
+      Start 15: body_acceleration_runtime
+15/22 Test #15: body_acceleration_runtime ........   Passed   29.31 sec
+      Start 16: native_gyro_runtime
+16/22 Test #16: native_gyro_runtime ..............   Passed    3.52 sec
+      Start 17: native_observer_parity
+17/22 Test #17: native_observer_parity ...........   Passed    1.75 sec
+      Start 18: localization_policy
+18/22 Test #18: localization_policy ..............   Passed    0.92 sec
+      Start 19: initializer_lifecycle
+19/22 Test #19: initializer_lifecycle ............   Passed    1.30 sec
+      Start 20: replay_sensor_qos
+20/22 Test #20: replay_sensor_qos ................   Passed    1.08 sec
+      Start 21: replay_acceptance
+21/22 Test #21: replay_acceptance ................   Passed    0.79 sec
+      Start 22: monitor_alignment_delivery
+22/22 Test #22: monitor_alignment_delivery .......   Passed    2.36 sec
+
+100% tests passed out of 22
+
+Label Time Summary:
+gtest     =   0.49 sec*proc (4 tests)
+pytest    =  62.03 sec*proc (15 tests)
+
+Total Test time (real) =  62.55 sec

@@ -1,0 +1,366 @@
+{
+  "verified_cases": 24,
+  "all_archived_outputs_match_current_kernel": true,
+  "checks": [
+    {
+      "run": "134131-mpcc-baseline-lat1p0",
+      "candidate": "inertial_fixed",
+      "native_outputs": 72833,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 20,
+        "speed_variance": 0.01,
+        "bias_psd": 0.1,
+        "acceleration_psd": 0.08,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "134131-mpcc-baseline-lat1p0",
+      "candidate": "inertial_tuned",
+      "native_outputs": 72833,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 100,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "134131-mpcc-baseline-lat1p0",
+      "candidate": "inertial_tuned_slow",
+      "native_outputs": 72833,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 50,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "135222-mpcc-lat1p5",
+      "candidate": "inertial_fixed",
+      "native_outputs": 14932,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 20,
+        "speed_variance": 0.01,
+        "bias_psd": 0.1,
+        "acceleration_psd": 0.08,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "135222-mpcc-lat1p5",
+      "candidate": "inertial_tuned",
+      "native_outputs": 14932,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 100,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "135222-mpcc-lat1p5",
+      "candidate": "inertial_tuned_slow",
+      "native_outputs": 14932,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 50,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "135509-mpcc-lat2p0",
+      "candidate": "inertial_fixed",
+      "native_outputs": 12108,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 20,
+        "speed_variance": 0.01,
+        "bias_psd": 0.1,
+        "acceleration_psd": 0.08,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "135509-mpcc-lat2p0",
+      "candidate": "inertial_tuned",
+      "native_outputs": 12108,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 100,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "135509-mpcc-lat2p0",
+      "candidate": "inertial_tuned_slow",
+      "native_outputs": 12108,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 50,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "135727-mpcc-lat2p5",
+      "candidate": "inertial_fixed",
+      "native_outputs": 74493,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 20,
+        "speed_variance": 0.01,
+        "bias_psd": 0.1,
+        "acceleration_psd": 0.08,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "135727-mpcc-lat2p5",
+      "candidate": "inertial_tuned",
+      "native_outputs": 74493,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 100,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "135727-mpcc-lat2p5",
+      "candidate": "inertial_tuned_slow",
+      "native_outputs": 74493,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 50,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "141211-mpcc-lat3p0",
+      "candidate": "inertial_fixed",
+      "native_outputs": 49079,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 20,
+        "speed_variance": 0.01,
+        "bias_psd": 0.1,
+        "acceleration_psd": 0.08,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "141211-mpcc-lat3p0",
+      "candidate": "inertial_tuned",
+      "native_outputs": 49079,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 100,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "141211-mpcc-lat3p0",
+      "candidate": "inertial_tuned_slow",
+      "native_outputs": 49079,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 50,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "142308-mpcc-lat3p0-acc1p5-brake1p5",
+      "candidate": "inertial_fixed",
+      "native_outputs": 24907,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 20,
+        "speed_variance": 0.01,
+        "bias_psd": 0.1,
+        "acceleration_psd": 0.08,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "142308-mpcc-lat3p0-acc1p5-brake1p5",
+      "candidate": "inertial_tuned",
+      "native_outputs": 24907,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 100,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "142308-mpcc-lat3p0-acc1p5-brake1p5",
+      "candidate": "inertial_tuned_slow",
+      "native_outputs": 24907,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 50,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "candidate": "inertial_fixed",
+      "native_outputs": 83481,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 20,
+        "speed_variance": 0.01,
+        "bias_psd": 0.1,
+        "acceleration_psd": 0.08,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "candidate": "inertial_tuned",
+      "native_outputs": 83481,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 100,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "215303_268004918-pp-speed-hold-1to5-new-battery",
+      "candidate": "inertial_tuned_slow",
+      "native_outputs": 83481,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 50,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "candidate": "inertial_fixed",
+      "native_outputs": 66373,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 20,
+        "speed_variance": 0.01,
+        "bias_psd": 0.1,
+        "acceleration_psd": 0.08,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "candidate": "inertial_tuned",
+      "native_outputs": 66373,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 100,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    },
+    {
+      "run": "222944_118387098-pp-speed-hold-1to5-repeat-battery",
+      "candidate": "inertial_tuned_slow",
+      "native_outputs": 66373,
+      "config": {
+        "tau_s": 0.04,
+        "wheel_hz": 50,
+        "speed_variance": 0.0025,
+        "bias_psd": 0.01,
+        "acceleration_psd": 0.32,
+        "history_ns": 2000000000,
+        "max_history": 4096
+      },
+      "identical": true
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# Preserve exported experiment evidence byte-for-byte for provenance hashes.
+reports/assets/** -whitespace
+assets/** -whitespace
+# Generated vector plots are reviewed as images, not thousands of path commands.
+reports/assets/**/*.svg -diff

@@ -1,0 +1,13 @@
+{
+  "checked_at": "2026-10-18T00:27:46.784390+08:00",
+  "hi13_launch_removed": true,
+  "hi13_recording_removed": true,
+  "livox_inputs_and_dual_reference_recording_preserved": true,
+  "mpcc_target_speed_preserved": true,
+  "protected_runtime_files_unchanged": 174,
+  "existing_parameters_unchanged": 12,
+  "state_observer_binary_unchanged": true,
+  "candidate_launch_tests_passed": 12,
+  "vehicle_started": false,
+  "historical_data_deleted": false
+}

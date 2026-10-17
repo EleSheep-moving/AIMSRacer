@@ -1,0 +1,60 @@
+Internal ctest changing into directory: /tmp/yaw-build
+Test project /tmp/yaw-build
+      Start  1: yaw_rate_core
+ 1/25 Test  #1: yaw_rate_core ....................   Passed    0.00 sec
+      Start  2: rear_axle_imu_test
+ 2/25 Test  #2: rear_axle_imu_test ...............   Passed    0.05 sec
+      Start  3: rear_axle_odometry_test
+ 3/25 Test  #3: rear_axle_odometry_test ..........   Passed    0.05 sec
+      Start  4: longitudinal_observer_test
+ 4/25 Test  #4: longitudinal_observer_test .......   Passed    0.07 sec
+      Start  5: native_gyro_bias
+ 5/25 Test  #5: native_gyro_bias .................   Passed    0.00 sec
+      Start  6: rear_axle_force
+ 6/25 Test  #6: rear_axle_force ..................   Passed    0.00 sec
+      Start  7: localization_alignment
+ 7/25 Test  #7: localization_alignment ...........   Passed    0.00 sec
+      Start  8: body_acceleration_core_test
+ 8/25 Test  #8: body_acceleration_core_test ......   Passed    0.07 sec
+      Start  9: planar_acceleration_runtime
+ 9/25 Test  #9: planar_acceleration_runtime ......   Passed    3.87 sec
+      Start 10: yaw_rate_runtime
+10/25 Test #10: yaw_rate_runtime .................   Passed    6.14 sec
+      Start 11: rear_axle_contract
+11/25 Test #11: rear_axle_contract ...............   Passed    0.50 sec
+      Start 12: rear_axle_timestamps
+12/25 Test #12: rear_axle_timestamps .............   Passed    2.89 sec
+      Start 13: gyro_bias
+13/25 Test #13: gyro_bias ........................   Passed    0.92 sec
+      Start 14: current_launch
+14/25 Test #14: current_launch ...................   Passed    0.36 sec
+      Start 15: longitudinal_observer
+15/25 Test #15: longitudinal_observer ............   Passed    1.26 sec
+      Start 16: longitudinal_acceleration
+16/25 Test #16: longitudinal_acceleration ........   Passed    2.80 sec
+      Start 17: native_acceleration_runtime
+17/25 Test #17: native_acceleration_runtime ......   Passed    4.07 sec
+      Start 18: body_acceleration_runtime
+18/25 Test #18: body_acceleration_runtime ........   Passed   28.21 sec
+      Start 19: native_gyro_runtime
+19/25 Test #19: native_gyro_runtime ..............   Passed    2.73 sec
+      Start 20: native_observer_parity
+20/25 Test #20: native_observer_parity ...........   Passed    0.70 sec
+      Start 21: localization_policy
+21/25 Test #21: localization_policy ..............   Passed    0.39 sec
+      Start 22: initializer_lifecycle
+22/25 Test #22: initializer_lifecycle ............   Passed    0.47 sec
+      Start 23: replay_sensor_qos
+23/25 Test #23: replay_sensor_qos ................   Passed    0.42 sec
+      Start 24: replay_acceptance
+24/25 Test #24: replay_acceptance ................   Passed    0.31 sec
+      Start 25: monitor_alignment_delivery
+25/25 Test #25: monitor_alignment_delivery .......   Passed    1.62 sec
+
+100% tests passed, 0 tests failed out of 25
+
+Label Time Summary:
+gtest     =   0.23 sec*proc (4 tests)
+pytest    =  57.64 sec*proc (17 tests)
+
+Total Test time (real) =  57.89 sec

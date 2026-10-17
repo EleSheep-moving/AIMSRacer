@@ -1,0 +1,15 @@
+{
+  "install_prefix": "/home/aims/AIMSRacer/install/aims_racer_system",
+  "python_module": "/home/aims/AIMSRacer/install/aims_racer_system/local/lib/python3.10/dist-packages/aims_racer_system/launch_support.py",
+  "executable_sha256": "5d4564ad02a99afaa680a9beae16a6e4a506559f4d17951f33358b94d89eeb3d",
+  "protected_runtime_files_verified": 174,
+  "field_hipnuc_and_target_speed_preserved": true,
+  "observer_opt_in": true,
+  "warning_policy": true,
+  "cg_offset_m": [
+    -0.09,
+    -0.03,
+    -0.03
+  ],
+  "controller_inputs_changed": false
+}

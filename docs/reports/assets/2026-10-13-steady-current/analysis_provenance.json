@@ -1,0 +1,9 @@
+{
+  "primary_current_signal": "avg_iq",
+  "raw_evidence_root": "/home/elesheep/aimsracer-data/sessions/2026-10-13/constant-speed-current-review",
+  "raw_inventory_sha256": "3074f59ef33181291288fc01aa34a419b6bd47b8fb4a16d0aec8bd413f1eeff9",
+  "recomputed_root": "/home/elesheep/aimsracer-data/sessions/2026-10-14/iq-current-correction/recomputed",
+  "original_motor_analysis_archive": "/home/elesheep/aimsracer-data/sessions/2026-10-14/iq-current-correction/original-motor-analysis",
+  "source_sample_selection": "Exact original admitted paired wheel/telemetry boundaries, raw q-axis matched within 2 us",
+  "runtime_baseline": "Measured mean_iq/std_iq points; no fitted voltage compensation"
+}

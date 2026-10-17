@@ -1,0 +1,24 @@
+{
+  "verified_at_utc": "2026-10-17T11:26:35.845266+00:00",
+  "report": "/home/elesheep/AIMSRacer/docs/reports/2026-10-17-state-output-quality.zh-CN.md",
+  "checks": [
+    "links_or_syntax_whitespace:2026-10-17-state-output-quality.zh-CN.md",
+    "links_or_syntax_whitespace:README.md",
+    "links_or_syntax_whitespace:audit_outputs.py",
+    "ast_valid",
+    "script_hash_matches_final_run",
+    "trace_and_npz_hashes_rechecked",
+    "output_asset_hashes_rechecked",
+    "12_current_runtime_files_match_archives",
+    "independent_stdlib_statistics_4_signals_x_2_windows_x_5_metrics",
+    "scoped_git_diff_check"
+  ],
+  "scope": "report/data verification only; no new CTest, ROS, NX or physical run",
+  "images_visually_inspected": [
+    "five-output-overview.png",
+    "output-psd.png"
+  ],
+  "new_report_lines": 362,
+  "unrelated_workspace_check_note": "Unscoped git diff --check found inherited trailing whitespace in dependencies/ndt-trusted-anchor.patch:368; untouched; authored files and report index checked separately.",
+  "report_sha256": "3c4d9413d48cdd9e116592205300ff5c441a233d917b1ed7018747db81e8ac24"
+}

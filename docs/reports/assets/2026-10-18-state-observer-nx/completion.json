@@ -1,0 +1,24 @@
+{
+  "completed_at": "2026-10-18T00:19:31.175208+08:00",
+  "architecture": "aarch64",
+  "deployment_verified": true,
+  "ctest_groups_passed": 30,
+  "vicon_tests_passed": 19,
+  "full_replay_seconds": 221.92998957600003,
+  "output_counts": {
+    "rear_axle/yaw_rate": 42313,
+    "center_of_mass/yaw_rate": 42313,
+    "rear_axle/acceleration": 42293,
+    "center_of_mass/acceleration": 42293,
+    "rear_axle/velocity": 42255,
+    "center_of_mass/velocity": 42255
+  },
+  "actual_binary_sha256": "5d4564ad02a99afaa680a9beae16a6e4a506559f4d17951f33358b94d89eeb3d",
+  "replay_observer_stopped": true,
+  "vehicle_started": false,
+  "physical_accuracy_validated": false,
+  "protected_runtime_files_verified": 174,
+  "field_readout": "/home/aims/aimsracer-data/code/state-observer-20261018/field/README.zh-CN.md",
+  "vicon_config": "/home/aims/aimsracer-data/sessions/2026-10-19/vicon-state-validation/config.capture.json",
+  "existing_installed_parameter_files_preserved": 12
+}

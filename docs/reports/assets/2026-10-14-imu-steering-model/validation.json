@@ -1,0 +1,107 @@
+{
+  "independent_rmse_recalculation_pass": true,
+  "all_source_hashes_unchanged": true,
+  "propagation_check": "Independent 50 microsecond uniform-grid command hold and scipy.signal.lfilter, compared with native-edge exact propagation for all 18 held-out curves; tolerance 0.002 rad/s",
+  "checks": [
+    {
+      "run": "134131-mpcc-baseline-lat1p0",
+      "model": "baseline",
+      "fine_grid_max_yaw_difference_rad_s": 0.00014216393156502027
+    },
+    {
+      "run": "134131-mpcc-baseline-lat1p0",
+      "model": "tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 0.00010825327996466516
+    },
+    {
+      "run": "134131-mpcc-baseline-lat1p0",
+      "model": "D_tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 0.00011000492895194003
+    },
+    {
+      "run": "135222-mpcc-lat1p5",
+      "model": "baseline",
+      "fine_grid_max_yaw_difference_rad_s": 0.00014204316642663084
+    },
+    {
+      "run": "135222-mpcc-lat1p5",
+      "model": "tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 0.00010464709591961885
+    },
+    {
+      "run": "135222-mpcc-lat1p5",
+      "model": "D_tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 0.00010770974142004786
+    },
+    {
+      "run": "135509-mpcc-lat2p0",
+      "model": "baseline",
+      "fine_grid_max_yaw_difference_rad_s": 0.00013607065391343237
+    },
+    {
+      "run": "135509-mpcc-lat2p0",
+      "model": "tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 8.321392309651454e-05
+    },
+    {
+      "run": "135509-mpcc-lat2p0",
+      "model": "D_tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 8.545603714771657e-05
+    },
+    {
+      "run": "135727-mpcc-lat2p5",
+      "model": "baseline",
+      "fine_grid_max_yaw_difference_rad_s": 0.00018427419951261292
+    },
+    {
+      "run": "135727-mpcc-lat2p5",
+      "model": "tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 0.0001322986732547049
+    },
+    {
+      "run": "135727-mpcc-lat2p5",
+      "model": "D_tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 0.00013433269742157972
+    },
+    {
+      "run": "141211-mpcc-lat3p0",
+      "model": "baseline",
+      "fine_grid_max_yaw_difference_rad_s": 0.00015175134525413636
+    },
+    {
+      "run": "141211-mpcc-lat3p0",
+      "model": "tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 9.45616068783739e-05
+    },
+    {
+      "run": "141211-mpcc-lat3p0",
+      "model": "D_tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 9.456160625448407e-05
+    },
+    {
+      "run": "142308-mpcc-lat3p0-acc1p5-brake1p5",
+      "model": "baseline",
+      "fine_grid_max_yaw_difference_rad_s": 0.00018388750928055586
+    },
+    {
+      "run": "142308-mpcc-lat3p0-acc1p5-brake1p5",
+      "model": "tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 0.00011568859349342375
+    },
+    {
+      "run": "142308-mpcc-lat3p0-acc1p5-brake1p5",
+      "model": "D_tau_K",
+      "fine_grid_max_yaw_difference_rad_s": 0.000115688597775776
+    }
+  ],
+  "delay_profile_normalization_pass": true,
+  "low_speed_supplement": {
+    "name": "2026-10-10 19:04 / 1.5 m/s low-speed record",
+    "samples": 4907,
+    "rmse": {
+      "baseline": 0.06232055805831165,
+      "candidate": 0.054761080138648804
+    },
+    "limitation": "Input is /drive published steering, not retained authoritative forwarded command. Different day. Supplement only, excluded from all fitting and primary validation."
+  }
+}

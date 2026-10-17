@@ -1,0 +1,29 @@
+{
+  "actual_configured_hz": 5.0,
+  "actual_ndt_threads": 2,
+  "full_rate_input_clouds": 600,
+  "measured_steady_commit_hz": 5.0,
+  "ndt_cpu_percent_one_core": 44.69058455651425,
+  "scan_processing_ms": {
+    "n": 284,
+    "mean": 46.32469589788734,
+    "p50": 44.103112,
+    "p95": 83.358671,
+    "maximum": 113.601632
+  },
+  "anchor_age_s": {
+    "n": 852,
+    "mean": 0.1984888304495308,
+    "p50": 0.146741116,
+    "p95": 0.34397362,
+    "maximum": 0.443989076
+  },
+  "steady_health_ready_fraction": 1.0,
+  "first_ready_seconds": 0.5753490789938951,
+  "cpu_thread_set_stable": true,
+  "disabled_sampler_commit_hz": 10.0,
+  "disabled_sampler_requested_hz": 0.0,
+  "node_package_prefix": "/home/aims/AIMSRacer/install/lidar_localization_ros2",
+  "vehicle_nodes_started": false,
+  "scope": "Installed binary, recorded-cloud/odom replay. No live vehicle or closed-loop acceptance."
+}
